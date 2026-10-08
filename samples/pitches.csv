@@ -1,0 +1,4 @@
+route_key,number,grade,grade_system,length_m,description
+example-multi,1,V,kr,30,
+example-multi,2,V+,kr,30,
+example-multi,3,IV,kr,30,

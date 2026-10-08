@@ -1,0 +1,348 @@
+<title>Projekt dziennika wspinaczkowego</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: wąska kolumna dokumentu + siatka makiet telefonów. Ton: kamień, mech, znak szlaku. */
+:root{
+  --bg:#eceeea; --surface:#f8f9f6; --ink:#16211e; --muted:#5b6965; --line:#d2d8d2;
+  --moss:#1d6b57; --moss-ink:#ffffff; --sun:#e9b02f; --sun-ink:#2a2006; --alert:#c4433b;
+  --soft:#dde7e1;
+  --f-display:'Barlow Condensed','Arial Narrow',sans-serif;
+  --f-body:'Barlow',system-ui,sans-serif;
+  --f-mono:'JetBrains Mono',ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1715; --surface:#17211e; --ink:#e6ece8; --muted:#92a39c; --line:#2a3833;
+  --moss:#4fb596; --moss-ink:#06201a; --sun:#e9b02f; --sun-ink:#2a2006; --alert:#ef7a72; --soft:#203029; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1715; --surface:#17211e; --ink:#e6ece8; --muted:#92a39c; --line:#2a3833;
+  --moss:#4fb596; --moss-ink:#06201a; --sun:#e9b02f; --sun-ink:#2a2006; --alert:#ef7a72; --soft:#203029; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.55;padding-inline:16px}
+.wrap{max-width:1080px;margin:0 auto;padding-block:40px 80px}
+h1,h2,h3{font-family:var(--f-display);font-weight:700;line-height:1.05;text-wrap:balance;margin:0}
+h1{font-size:clamp(2.6rem,7vw,4.4rem);letter-spacing:.01em}
+h2{font-size:2rem;margin-bottom:14px}
+h3{font-size:1.3rem;margin-bottom:6px}
+p{margin:0 0 12px;max-width:68ch}
+section{padding-top:48px}
+.eyebrow{font-family:var(--f-mono);font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.lead{font-size:1.15rem;color:var(--muted);max-width:60ch;margin-top:14px}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px;min-width:0}
+.card p{font-size:.95rem;max-width:none}
+.k{font-family:var(--f-mono);font-size:.78rem;color:var(--moss)}
+table{border-collapse:collapse;width:100%;font-size:.92rem}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--f-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500}
+td code,.mono{font-family:var(--f-mono);font-size:.82rem}
+.scroll{overflow-x:auto}
+ul{margin:0 0 12px;padding-left:20px} li{margin-bottom:5px;max-width:68ch}
+.names{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.name{border:1px solid var(--line);border-radius:6px;padding:14px;background:var(--surface)}
+.name b{font-family:var(--f-display);font-size:1.7rem;display:block;line-height:1}
+.name span{color:var(--muted);font-size:.88rem}
+.road{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.phase{border-top:4px solid var(--moss);padding-top:10px}
+.phase.later{border-color:var(--sun)} .phase.far{border-color:var(--line)}
+.q li{margin-bottom:8px}
+
+/* ---- Makiety ---- */
+.phones{display:grid;gap:28px 20px;grid-template-columns:repeat(auto-fit,minmax(272px,1fr));justify-items:center;margin-top:20px}
+.fig{width:272px;max-width:100%}
+.fig figcaption{margin-top:10px;font-size:.88rem;color:var(--muted)}
+.fig figcaption b{color:var(--ink);font-family:var(--f-display);font-size:1.15rem;display:block}
+.phone{width:272px;max-width:100%;height:540px;background:var(--surface);border:8px solid #101614;border-radius:30px;overflow:hidden;position:relative;display:flex;flex-direction:column;font-size:12px;line-height:1.35}
+.status{display:flex;justify-content:space-between;padding:8px 14px 2px;font-size:10px;color:var(--muted);font-family:var(--f-mono)}
+.appbar{padding:6px 14px 8px;display:flex;align-items:baseline;justify-content:space-between}
+.appbar b{font-family:var(--f-display);font-size:21px;letter-spacing:.01em}
+.appbar span{color:var(--muted);font-size:11px}
+.body{flex:1;overflow:hidden;padding:0 12px;display:flex;flex-direction:column;gap:8px}
+.tabs{display:flex;border-top:1px solid var(--line);background:var(--surface)}
+.tabs div{flex:1;text-align:center;padding:8px 0 10px;font-size:10px;color:var(--muted)}
+.tabs div.on{color:var(--moss);font-weight:600;box-shadow:inset 0 2px 0 var(--moss)}
+.day{font-family:var(--f-mono);font-size:10px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-top:4px}
+.crag{font-weight:600;font-size:13px}
+.row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}
+.row .nm{flex:1;min-width:0}
+.row .nm b{display:block;font-weight:600;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .nm i{font-style:normal;color:var(--muted);font-size:10.5px}
+.gr{font-family:var(--f-mono);font-size:11px;background:var(--soft);border-radius:4px;padding:2px 6px;white-space:nowrap}
+.st{font-family:var(--f-mono);font-size:10px;font-weight:500;border-radius:3px;padding:2px 5px;background:var(--moss);color:var(--moss-ink)}
+.st.f{background:var(--sun);color:var(--sun-ink)} .st.x{background:transparent;border:1px solid var(--alert);color:var(--alert)} .st.o{background:var(--ink);color:var(--bg)}
+.fab{position:absolute;right:14px;bottom:56px;width:44px;height:44px;border-radius:50%;background:var(--moss);color:var(--moss-ink);display:grid;place-items:center;font-size:24px;box-shadow:0 3px 8px rgba(0,0,0,.25)}
+.lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-family:var(--f-mono);margin-top:4px}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{border:1px solid var(--line);border-radius:14px;padding:4px 9px;font-size:11px}
+.chip.on{background:var(--moss);color:var(--moss-ink);border-color:var(--moss)}
+.field{border:1px solid var(--line);border-radius:6px;padding:7px 9px;font-size:12px}
+.field small{display:block;color:var(--muted);font-size:9.5px}
+.btn{background:var(--moss);color:var(--moss-ink);text-align:center;border-radius:6px;padding:9px;font-weight:600;margin-top:auto;margin-bottom:8px}
+.stars{color:var(--sun);letter-spacing:2px;font-size:14px}
+.pyr{display:flex;flex-direction:column;gap:3px}
+.pyr div{display:flex;align-items:center;gap:6px;font-family:var(--f-mono);font-size:10px}
+.pyr em{display:block;height:11px;background:var(--moss);border-radius:2px}
+.pyr div.top em{background:var(--sun)}
+.pyr span{width:34px;text-align:right;color:var(--muted)}
+.tiles{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.tile{background:var(--soft);border-radius:6px;padding:7px}
+.tile b{font-family:var(--f-display);font-size:22px;display:block;line-height:1}
+.tile span{font-size:9.5px;color:var(--muted)}
+.heat{display:grid;grid-template-columns:repeat(18,1fr);gap:2px}
+.heat i{aspect-ratio:1;border-radius:2px;background:var(--line);display:block}
+.heat i.a{background:#9ccfbe} .heat i.b{background:#4fb596} .heat i.c{background:var(--moss)}
+.map{flex:1;margin:0 -12px;position:relative;background:var(--soft);overflow:hidden}
+.map svg{position:absolute;inset:0;width:100%;height:100%}
+.sheet{background:var(--surface);border-top:1px solid var(--line);margin:0 -12px;padding:10px 12px;border-radius:14px 14px 0 0;box-shadow:0 -4px 10px rgba(0,0,0,.08)}
+.bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-top:4px}
+.bar i{display:block;height:100%;background:var(--moss)}
+.note{font-size:.82rem;color:var(--muted);margin-top:14px}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">Projekt aplikacji · wersja robocza do akceptacji</div>
+  <h1>Dziennik wspinaczkowy i przewodnik po skałach</h1>
+  <p class="lead">Natywna aplikacja na Androida, potem iOS. Działa w pełni offline, bez konta i bez urządzeń zewnętrznych. Dane są od początku gotowe pod funkcje społecznościowe, mapy i topo.</p>
+</header>
+
+<section>
+  <h2>Ustalenia</h2>
+  <div class="grid">
+    <div class="card"><h3>Platforma</h3><p>React Native + Expo (TypeScript). Jedna baza kodu na Androida i iOS. Typy, logikę statystyk i część store'ów można przenieść z obecnego PWA.</p></div>
+    <div class="card"><h3>Dane</h3><p>Lokalnie w SQLite, bez konta. Eksport i import pliku jako kopia zapasowa, tak jak <span class="mono">backup.ts</span> w PWA. Chmura dopiero przy funkcjach społecznościowych.</p></div>
+    <div class="card"><h3>Regiony na start</h3><p>Podkarpacie, wschodnia Słowacja, Jura oraz Tatry polskie i słowackie.</p></div>
+    <div class="card"><h3>Typy wspinaczki</h3><p>Drogi sportowe, boulder, drogi wielowyciągowe.</p></div>
+    <div class="card"><h3>Mapa</h3><p>Pinezka drogi lub skały oraz Twoja pozycja. Bez śladów GPS i tras dojścia. Kafelki OpenStreetMap, pobieranie regionów offline (MapLibre).</p></div>
+    <div class="card"><h3>Język i repo</h3><p>Polski i angielski od pierwszej wersji (i18n). Nowe, prywatne repozytorium.</p></div>
+    <div class="card"><h3>Wielowyciągi</h3><p>Wpis całej drogi z rozbiciem na wyciągi i informacją, kto prowadził każdy z nich.</p></div>
+    <div class="card"><h3>Dane o skałach</h3><p>Import z plików CSV przygotowanych ręcznie lub z przewodników. Skany mogę sparsować do CSV, a Ty je sprawdzisz przed importem.</p></div>
+  </div>
+</section>
+
+<section>
+  <h2>Propozycje nazw</h2>
+  <p>Nazwy robocze. Przed wyborem trzeba sprawdzić dostępność w Google Play i App Store oraz domenę.</p>
+  <div class="names">
+    <div class="name"><b>Crux Log</b><span>Twoja propozycja. Spójna z projektem CruxTracker, zrozumiała na całym świecie.</span></div>
+    <div class="name"><b>Betalog</b><span>„Beta” to wspinaczkowe określenie na wiedzę o przejściu drogi. Dziennik plus przewodnik.</span></div>
+    <div class="name"><b>Sendbook</b><span>„Send” to przejście drogi. Brzmi jak dziennik i łatwo je zapamiętać.</span></div>
+    <div class="name"><b>Chalkbook</b><span>Magnezja plus książka. Ciepła, przyjazna nazwa.</span></div>
+    <div class="name"><b>Pitchbook</b><span>Wyciąg (pitch) w nazwie, pasuje do wielowyciągów. Uwaga: znaczenie finansowe.</span></div>
+    <div class="name"><b>Topolog</b><span>Topo plus log. Dobrze zapowiada późniejsze mapy i zdjęcia topo.</span></div>
+    <div class="name"><b>Rockbook</b><span>Najbardziej opisowa, pewnie zajęta w sklepach.</span></div>
+    <div class="name"><b>Cairn</b><span>Kopczyk wyznaczający szlak. Krótka, mocna nazwa, ale dość zajęta.</span></div>
+  </div>
+</section>
+
+<section>
+  <h2>Ekrany i makiety</h2>
+  <p>Pięć głównych ekranów. Dane na makietach są przykładowe.</p>
+  <div class="phones">
+
+    <figure class="fig" style="margin:0">
+      <div class="phone">
+        <div class="status"><span>18:42</span><span>●●● 87%</span></div>
+        <div class="appbar"><b>Dziennik</b><span>2026</span></div>
+        <div class="body">
+          <div class="day">Sob 4 paź</div>
+          <div class="crag">Podzamcze · Jura</div>
+          <div class="row"><div class="nm"><b>Filar Abazego</b><i>Sektor Centralny · sport</i></div><span class="gr">VI.3+</span><span class="st o">OS</span></div>
+          <div class="row"><div class="nm"><b>Rysa Kurtyki</b><i>Sektor Centralny · sport</i></div><span class="gr">VI.4</span><span class="st f">RP</span></div>
+          <div class="row"><div class="nm"><b>Zacięcie</b><i>Sektor Lewy · sport</i></div><span class="gr">VI.5</span><span class="st x">próba ×3</span></div>
+          <div class="day">Nd 28 wrz</div>
+          <div class="crag">Zamczysko · Podkarpacie</div>
+          <div class="row"><div class="nm"><b>Płyta Marzeń</b><i>boulder</i></div><span class="gr">6B</span><span class="st f">flash</span></div>
+          <div class="row"><div class="nm"><b>Okap</b><i>boulder</i></div><span class="gr">6C+</span><span class="st">RP</span></div>
+          <div class="row"><div class="nm"><b>Grań Kozich</b><i>Tatry · 6 wyciągów</i></div><span class="gr">V+</span><span class="st o">OS</span></div>
+        </div>
+        <div class="fab">+</div>
+        <div class="tabs"><div class="on">Dziennik</div><div>Postępy</div><div>Skały</div><div>Cele</div></div>
+      </div>
+      <figcaption><b>Dziennik</b>Wpisy pogrupowane po dniu i skale. Gradacja i styl widoczne od razu. Przycisk plus dodaje przejście.</figcaption>
+    </figure>
+
+    <figure class="fig" style="margin:0">
+      <div class="phone">
+        <div class="status"><span>18:44</span><span>●●● 87%</span></div>
+        <div class="appbar"><b>Nowe przejście</b><span>Anuluj</span></div>
+        <div class="body">
+          <div class="field"><small>Droga</small>Rysa Kurtyki · Podzamcze</div>
+          <div class="field"><small>Data</small>4 paź 2026</div>
+          <div class="lbl">Styl</div>
+          <div class="chips"><span class="chip">OS</span><span class="chip">Flash</span><span class="chip on">RP</span><span class="chip">PP</span><span class="chip">TR</span><span class="chip">Próba</span></div>
+          <div class="lbl">Podejścia · 3</div>
+          <div class="lbl">Ocena drogi</div>
+          <div class="stars">★★★★☆</div>
+          <div class="field"><small>Partner</small>Marta K.</div>
+          <div class="field"><small>Warunki</small>14 °C · sucho · wiatr słaby</div>
+          <div class="field"><small>Notatka</small>Kluczowy chwyt na lewą, trzeba stanąć wysoko.</div>
+          <div class="btn">Zapisz</div>
+        </div>
+      </div>
+      <figcaption><b>Nowe przejście</b>Droga, styl, podejścia, ocena, partner, warunki, notatka i zdjęcia. Wszystko poza drogą i datą jest opcjonalne.</figcaption>
+    </figure>
+
+    <figure class="fig" style="margin:0">
+      <div class="phone">
+        <div class="status"><span>18:46</span><span>●●● 87%</span></div>
+        <div class="appbar"><b>Postępy</b><span>Rok 2026</span></div>
+        <div class="body">
+          <div class="tiles">
+            <div class="tile"><b>142</b><span>przejść</span></div>
+            <div class="tile"><b>38</b><span>dni na skale</span></div>
+            <div class="tile"><b>VI.5</b><span>najtrudniejsze RP</span></div>
+          </div>
+          <div class="lbl">Piramida trudności</div>
+          <div class="pyr">
+            <div class="top"><span>VI.5</span><em style="width:12%"></em></div>
+            <div><span>VI.4</span><em style="width:28%"></em></div>
+            <div><span>VI.3</span><em style="width:52%"></em></div>
+            <div><span>VI.2</span><em style="width:74%"></em></div>
+            <div><span>VI.1</span><em style="width:90%"></em></div>
+            <div><span>V+</span><em style="width:60%"></em></div>
+          </div>
+          <div class="lbl">Aktywność</div>
+          <div class="heat" id="heat"></div>
+        </div>
+        <div class="tabs"><div>Dziennik</div><div class="on">Postępy</div><div>Skały</div><div>Cele</div></div>
+      </div>
+      <figcaption><b>Postępy</b>Statystyki roczne, piramida trudności, rekordy i kalendarz aktywności. Przełączane filtrami: typ, region, rok.</figcaption>
+    </figure>
+
+    <figure class="fig" style="margin:0">
+      <div class="phone">
+        <div class="status"><span>18:48</span><span>●●● 87%</span></div>
+        <div class="appbar"><b>Skały</b><span>Offline: Jura ✓</span></div>
+        <div class="body">
+          <div class="field" style="margin-bottom:2px"><small>Szukaj</small>Skała, sektor lub droga</div>
+          <div class="map">
+            <svg viewBox="0 0 250 230" role="img" aria-label="Schematyczna mapa z punktami skał">
+              <path d="M0 150 C60 120 90 170 150 140 S230 110 250 130 L250 230 L0 230Z" fill="#9ccfbe" opacity=".45"/>
+              <path d="M0 60 C50 40 110 80 170 50 S230 30 250 45" fill="none" stroke="#7fa497" stroke-width="2" opacity=".6"/>
+              <path d="M30 0 C40 70 90 110 80 230" fill="none" stroke="#7fa497" stroke-width="1.5" opacity=".5"/>
+              <g fill="#1d6b57"><circle cx="70" cy="95" r="8"/><circle cx="150" cy="70" r="8"/><circle cx="185" cy="140" r="8"/></g>
+              <circle cx="120" cy="115" r="10" fill="#e9b02f"/>
+              <g fill="#fff" font-size="9" font-family="monospace" text-anchor="middle"><text x="70" y="98">12</text><text x="150" y="73">7</text><text x="185" y="143">21</text><text x="120" y="118" fill="#2a2006">9</text></g>
+            </svg>
+          </div>
+          <div class="sheet">
+            <b style="font-size:14px">Podzamcze</b>
+            <div style="color:var(--muted);font-size:11px;margin:2px 0 6px">Jura · 41 dróg · 6 sektorów</div>
+            <div class="chips"><span class="chip on">Sport</span><span class="chip">Boulder</span><span class="chip">VI.1–VI.6</span></div>
+            <div style="margin-top:8px;color:var(--moss);font-weight:600">Przejdź do przewodnika →</div>
+          </div>
+        </div>
+        <div class="tabs"><div>Dziennik</div><div>Postępy</div><div class="on">Skały</div><div>Cele</div></div>
+      </div>
+      <figcaption><b>Skały</b>Mapa z punktami, przewodnik po sektorach i drogach. Mapa działa offline po pobraniu regionu. Topo i zdjęcia dodamy później w tym samym miejscu.</figcaption>
+    </figure>
+
+    <figure class="fig" style="margin:0">
+      <div class="phone">
+        <div class="status"><span>18:50</span><span>●●● 87%</span></div>
+        <div class="appbar"><b>Cele</b><span>Projekty</span></div>
+        <div class="body">
+          <div class="lbl">Cel roczny</div>
+          <div class="card" style="padding:9px"><b>200 przejść</b><div class="bar"><i style="width:71%"></i></div><span style="color:var(--muted);font-size:10px">142 z 200 · 71%</span></div>
+          <div class="card" style="padding:9px"><b>Pierwsze VI.6 na skale</b><div class="bar"><i style="width:30%"></i></div><span style="color:var(--muted);font-size:10px">Najwyższe: VI.5</span></div>
+          <div class="lbl">Projekty w toku</div>
+          <div class="row"><div class="nm"><b>Zacięcie</b><i>Podzamcze · 3 podejścia</i></div><span class="gr">VI.5</span></div>
+          <div class="row"><div class="nm"><b>Wielka Płyta</b><i>Słowacja · Raj · 1 podejście</i></div><span class="gr">VI.4</span></div>
+          <div class="lbl">Lista życzeń</div>
+          <div class="row"><div class="nm"><b>Mnich północną ścianą</b><i>Tatry</i></div><span class="gr">V</span></div>
+        </div>
+        <div class="tabs"><div>Dziennik</div><div>Postępy</div><div>Skały</div><div class="on">Cele</div></div>
+      </div>
+      <figcaption><b>Cele</b>Cele roczne i wycenowe, projekty z licznikiem podejść oraz lista życzeń. Zrobienie projektu tworzy wpis w dzienniku.</figcaption>
+    </figure>
+
+  </div>
+</section>
+
+<section>
+  <h2>Model danych</h2>
+  <p>Wszystkie encje mają identyfikator UUID, <span class="mono">createdAt</span>, <span class="mono">updatedAt</span> i <span class="mono">deletedAt</span>. Dzięki temu późniejsza synchronizacja z chmurą nie wymaga przebudowy bazy.</p>
+  <div class="scroll"><table>
+    <tr><th>Tabela</th><th>Najważniejsze pola</th><th>Uwagi</th></tr>
+    <tr><td><code>region</code></td><td>nazwa, kraj, obwiednia mapy</td><td>Podkarpacie, Jura, Tatry PL, Tatry SK, wschodnia Słowacja.</td></tr>
+    <tr><td><code>crag</code></td><td>nazwa, region, lat/lng, opis, dojście, typy</td><td>Skała lub rejon.</td></tr>
+    <tr><td><code>sector</code></td><td>nazwa, crag, lat/lng, ekspozycja</td><td>Poziom pośredni, opcjonalny dla małych skał.</td></tr>
+    <tr><td><code>route</code></td><td>nazwa, sector, typ (sport/boulder/multi), wyciągi, wycena kanoniczna, autor, rok, lat/lng</td><td>Wielowyciąg ma <code>pitch</code> z własnymi wycenami.</td></tr>
+    <tr><td><code>ascent</code></td><td>route, data, styl, podejścia, ocena, subiektywna wycena, notatka, partner, warunki, zdjęcia</td><td>To jest wpis dziennika.</td></tr>
+    <tr><td><code>pitch</code></td><td>route, numer, wycena, długość, opis</td><td>Wyciągi drogi wielowyciągowej, część katalogu.</td></tr>
+    <tr><td><code>ascent_pitch</code></td><td>ascent, pitch, prowadzący (ja, partner, zmiana), styl wyciągu</td><td>Wpis całej drogi zawiera wiersz na każdy wyciąg.</td></tr>
+    <tr><td><code>partner</code></td><td>imię, notatka, <code>profileId</code> (puste do czasu social)</td><td>Partnera wybierasz z listy albo wpisujesz na miejscu. Po dodaniu social można go powiązać z profilem znajomego bez zmiany wpisów.</td></tr>
+    <tr><td><code>pitch.leader</code></td><td><code>self</code> | <code>partnerId</code></td><td>„Ja” jest zawsze dostępne. Drugi prowadzący to partner z listy lub wpisany ręcznie.</td></tr>
+    <tr><td><code>goal</code></td><td>typ (liczba, wycena, projekt, lista życzeń), cel, termin, route</td><td>Postęp liczony z <code>ascent</code>.</td></tr>
+  </table></div>
+  <h3 style="margin-top:22px">Wyceny</h3>
+  <p>Wycena drogi jest zapisana jako jedna wartość kanoniczna (indeks na wspólnej skali trudności), a skale (kręgowa, UIAA, francuska, Fontainebleau, V-scale) są tabelami przeliczeń do wyświetlania. Użytkownik wybiera w ustawieniach skalę główną osobno dla dróg i dla boulderów, a źródłowa wycena z przewodnika pozostaje zachowana. Przeliczenia między skalami są przybliżone, więc interfejs pokazuje oryginał, gdy jest znany.</p>
+  <h3>Własne i proponowane drogi</h3>
+  <p>Każdy użytkownik może dodać skałę, sektor lub drogę ręcznie. Każdy taki rekord ma pola <span class="mono">source</span> (wbudowany, własny, import, społeczność), <span class="mono">createdBy</span> i <span class="mono">status</span> (prywatny, zgłoszony, zaakceptowany, odrzucony). W pierwszej wersji wszystkie własne rekordy są prywatne. Z funkcjami społecznościowymi dojdzie przycisk „Zaproponuj do katalogu”, kolejka moderacji i akceptacja przez administratora lub zaufanych moderatorów.</p>
+  <h3>Pozycja użytkownika</h3>
+  <p>Pozycja jest pokazywana na mapie i służy do podpowiadania pobliskich skał przy dodawaniu wpisu. Używamy jej tylko na urządzeniu, za zgodą systemu i bez wysyłania na serwer. Polityka prywatności musi to opisywać, bo sklepy tego wymagają.</p>
+  <h3>Import CSV</h3>
+  <p>Trzy pliki: <span class="mono">crags.csv</span>, <span class="mono">sectors.csv</span>, <span class="mono">routes.csv</span> (oraz opcjonalnie <span class="mono">pitches.csv</span>). Powiązania idą przez klucze tekstowe, które nadajemy ręcznie lub przy parsowaniu. Aplikacja pokazuje podgląd i raport błędów przed zapisem.</p>
+  <div class="scroll"><table>
+    <tr><th>Plik</th><th>Kolumny</th></tr>
+    <tr><td><code>crags.csv</code></td><td class="mono">key, region, name, country, lat, lng, description, approach</td></tr>
+    <tr><td><code>sectors.csv</code></td><td class="mono">key, crag_key, name, lat, lng, aspect</td></tr>
+    <tr><td><code>routes.csv</code></td><td class="mono">key, sector_key, name, type, grade, grade_system, length_m, bolts, author, year, lat, lng, description</td></tr>
+    <tr><td><code>pitches.csv</code></td><td class="mono">route_key, number, grade, grade_system, length_m, description</td></tr>
+  </table></div>
+  <p class="note">Współrzędne są opcjonalne. Drogi bez nich nie mają pinezki, ale pojawiają się w przewodniku. Pole <span class="mono">type</span> przyjmuje: sport, boulder, multipitch.</p>
+  <h3>Style przejścia</h3>
+  <p>OS, flash, RP, PP, TR i próba (nieudana). Boulder dodatkowo używa „flash” i „RP”. Do piramidy trudności liczą się tylko style zaliczające drogę.</p>
+</section>
+
+<section>
+  <h2>Architektura</h2>
+  <div class="scroll"><table>
+    <tr><th>Warstwa</th><th>Wybór</th><th>Powód</th></tr>
+    <tr><td>Framework</td><td>Expo (dev build), TypeScript, expo-router</td><td>Nawigacja plikowa, jedna baza na obie platformy. Mapy wymagają dev builda, więc Expo Go nie wystarczy.</td></tr>
+    <tr><td>Baza lokalna</td><td>expo-sqlite + Drizzle ORM</td><td>Relacyjny model (skała → sektor → droga → przejście) i migracje schematu. Zastępuje Dexie z PWA.</td></tr>
+    <tr><td>Stan</td><td>Zustand</td><td>Jak w PWA, więc można przenieść wzorce.</td></tr>
+    <tr><td>Wykresy</td><td>victory-native lub react-native-svg</td><td>Recharts nie działa w React Native. Piramida i kalendarz to proste wykresy własne.</td></tr>
+    <tr><td>Mapy</td><td>MapLibre React Native + OSM</td><td>Pakiety offline i brak kosztów API.</td></tr>
+    <tr><td>Zdjęcia</td><td>expo-image-picker, pliki lokalne</td><td>Zapis w katalogu aplikacji, w bazie tylko ścieżka.</td></tr>
+    <tr><td>i18n</td><td>i18next + expo-localization</td><td>Polski domyślnie.</td></tr>
+    <tr><td>Kopia zapasowa</td><td>JSON z wersją formatu + zdjęcia w archiwum</td><td>Import łączy dane i pomija duplikaty po UUID.</td></tr>
+  </table></div>
+  <h3 style="margin-top:22px">Ryzyka, które trzeba rozstrzygnąć</h3>
+  <ul>
+    <li><b>Kafelki OSM offline.</b> Serwery <span class="mono">tile.openstreetmap.org</span> zabraniają masowego pobierania. Potrzebny jest własny lub zewnętrzny dostawca (np. wektorowe pliki PMTiles z wycinkami regionów).</li>
+    <li><b>Źródło danych o drogach.</b> Dane z OpenStreetMap są na licencji ODbL. Przewodniki i bazy takie jak thecrag, 8a czy słowackie serwisy mają własne warunki i nie wolno ich po prostu kopiować.</li>
+    <li><b>Przeliczanie wycen.</b> Skale nie przeliczają się jednoznacznie, szczególnie UIAA i kręgowa.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Kolejność prac</h2>
+  <div class="road">
+    <div class="phase"><div class="eyebrow">Etap 1 · MVP</div><h3>Dziennik</h3><ul><li>Szkielet Expo, baza, nawigacja</li><li>Ręczne dodawanie skał, sektorów i dróg</li><li>Wpisy przejść ze stylem, oceną, partnerem i warunkami</li><li>Eksport i import pliku</li></ul></div>
+    <div class="phase"><div class="eyebrow">Etap 2</div><h3>Postępy i cele</h3><ul><li>Statystyki, piramida, kalendarz</li><li>Cele i projekty</li><li>Wybór skal wycen</li></ul></div>
+    <div class="phase"><div class="eyebrow">Etap 3</div><h3>Przewodnik i mapa</h3><ul><li>Mapa OSM z pakietami offline</li><li>Startowa baza skał wybranych regionów</li><li>Mapka lokalizacji we wpisie</li></ul></div>
+    <div class="phase later"><div class="eyebrow">Etap 4</div><h3>iOS</h3><ul><li>Build na iOS, testy</li><li>Publikacja w obu sklepach</li></ul></div>
+    <div class="phase far"><div class="eyebrow">Później</div><h3>Social i topo</h3><ul><li>Konta, synchronizacja, kanał aktywności jak w Stravie</li><li>Zdjęcia topo z nałożonymi liniami dróg</li></ul></div>
+  </div>
+</section>
+
+<section>
+  <h2>Pytania otwarte</h2>
+  <ul class="q">
+    <li>Nazwa: Cruxlog. Do zrobienia: sprawdzenie dostępności w Google Play i App Store oraz domeny.</li>
+    <li>Prawa autorskie do danych katalogowych. Aplikacja ma trafić do sklepów, więc przed publikacją trzeba to ustalić z prawnikiem (opis niżej w rozmowie).</li>
+    <li>Parsowanie skanów przewodników jest odłożone na później.</li>
+    <li>Zasady moderacji propozycji dróg: kto akceptuje, jakie minimum danych jest wymagane.</li>
+  </ul>
+</section>
+</div>
+
+<script>
+(function(){
+  var h=document.getElementById('heat');if(!h)return;
+  var seed=7,out='';
+  for(var i=0;i<18*7;i++){seed=(seed*9301+49297)%233280;var r=seed/233280;
+    out+='<i class="'+(r>.9?'c':r>.78?'b':r>.66?'a':'')+'"></i>';}
+  h.innerHTML=out;
+})();
+</script>

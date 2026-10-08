@@ -1,0 +1,26 @@
+{
+  "tabs": { "journal": "Journal", "progress": "Progress", "crags": "Crags", "goals": "Goals" },
+  "common": { "save": "Save", "cancel": "Cancel", "add": "Add", "search": "Search", "none": "Nothing here yet" },
+  "styles": { "os": "OS", "flash": "Flash", "rp": "RP", "pp": "PP", "tr": "TR", "attempt": "Attempt" },
+  "types": { "sport": "Sport", "boulder": "Boulder", "multipitch": "Multipitch" },
+  "journal": { "empty": "No ascents yet. Tap + to log your first.", "attempts": "{{count}} tries" },
+  "ascent": {
+    "title": "New ascent", "route": "Route", "searchRoute": "Search routes", "newRoute": "Create a new route",
+    "style": "Style", "attempts": "Attempts", "rating": "Rating", "partner": "Partner", "weather": "Conditions",
+    "notes": "Notes", "date": "Date", "crag": "Crag", "sector": "Sector", "name": "Name", "grade": "Grade", "type": "Type",
+    "pickRoute": "Choose a route first"
+  },
+  "progress": {
+    "title": "Progress", "sends": "Sends", "days": "Days out", "hardestRoute": "Hardest route", "hardestBoulder": "Hardest boulder",
+    "pyramidRoutes": "Route pyramid", "pyramidBoulders": "Boulder pyramid", "activity": "Activity"
+  },
+  "crags": { "title": "Crags", "routes": "{{count}} routes", "empty": "No crags yet. Import a CSV in Settings or log a new route." },
+  "goals": { "title": "Goals", "count": "Count", "project": "Project", "wishlist": "Wishlist", "newTitle": "Goal title", "target": "Target" },
+  "settings": {
+    "title": "Settings", "language": "Language", "routeGrades": "Route grades", "boulderGrades": "Boulder grades",
+    "backup": "Backup", "export": "Export backup", "import": "Import backup", "csv": "Import crags from CSV",
+    "csvHelp": "Pick crags.csv, routes.csv and optionally sectors.csv and pitches.csv.",
+    "importDone": "Imported {{count}} records.", "csvDone": "Imported {{crags}} crags, {{sectors}} sectors, {{routes}} routes, {{pitches}} pitches.",
+    "csvErrors": "{{count}} problems found. Nothing was imported.", "failed": "Something went wrong: {{message}}"
+  }
+}

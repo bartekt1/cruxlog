@@ -1,0 +1,4 @@
+key,sector_key,name,type,grade,grade_system,length_m,bolts,author,year,lat,lng,description
+example-sport,example-sector,Example sport route,sport,VI.3,kr,25,8,,,,,
+example-boulder,example-sector,Example boulder,boulder,6B,font,,,,,,,
+example-multi,example-sector,Example multipitch,multipitch,V+,kr,90,,,,,,

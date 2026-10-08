@@ -1,0 +1,2 @@
+key,region,name,country,lat,lng,description,approach
+example-crag,Example region,Example crag,PL,50.0,19.9,Fictional sample row for testing the importer,
