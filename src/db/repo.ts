@@ -5,8 +5,13 @@ import { newId, now } from './ids';
 
 export type RouteRow = {
   id: string; name: string; type: RouteType; grade_label: string; grade_system: GradeSystem; grade_index: number;
-  sector_name: string; crag_name: string;
+  sector_id: string; sector_name: string; sector_source: string; crag_id: string; crag_name: string;
+  /** 'user' for routes the user created; imported ones are edited through the CSV file. */
+  source: string;
 };
+
+const ROUTE_COLS = `r.id, r.name, r.type, r.grade_label, r.grade_system, r.grade_index, r.source,
+  s.id AS sector_id, s.name AS sector_name, s.source AS sector_source, c.id AS crag_id, c.name AS crag_name`;
 
 export type AscentRow = {
   id: string; date: string; style: AscentStyle; attempts: number; rating: number | null; notes: string;
@@ -25,7 +30,7 @@ export async function listAscents(db: SQLiteDatabase): Promise<AscentRow[]> {
 
 export async function searchRoutes(db: SQLiteDatabase, query: string): Promise<RouteRow[]> {
   return db.getAllAsync<RouteRow>(
-    `SELECT r.id, r.name, r.type, r.grade_label, r.grade_system, r.grade_index, s.name AS sector_name, c.name AS crag_name
+    `SELECT ${ROUTE_COLS}
      FROM route r JOIN sector s ON s.id = r.sector_id JOIN crag c ON c.id = s.crag_id
      WHERE r.deleted_at IS NULL AND (r.name LIKE ? OR c.name LIKE ? OR s.name LIKE ?)
      ORDER BY r.name LIMIT 50`,
@@ -98,9 +103,9 @@ export async function getAscent(db: SQLiteDatabase, id: string): Promise<AscentD
 
 export async function getRoute(db: SQLiteDatabase, id: string): Promise<RouteRow | null> {
   return db.getFirstAsync<RouteRow>(
-    `SELECT r.id, r.name, r.type, r.grade_label, r.grade_system, r.grade_index, s.name AS sector_name, c.name AS crag_name
+    `SELECT ${ROUTE_COLS}
      FROM route r JOIN sector s ON s.id = r.sector_id JOIN crag c ON c.id = s.crag_id
-     WHERE r.id = ?`,
+     WHERE r.id = ? AND r.deleted_at IS NULL`,
     [id],
   );
 }
@@ -117,48 +122,190 @@ export async function addUserRoute(db: SQLiteDatabase, r: NewRoute): Promise<str
       crag = { id: newId() };
       await db.runAsync('INSERT INTO crag (id, name, created_at, updated_at) VALUES (?,?,?,?)', [crag.id, r.cragName, t, t]);
     }
-    let sector = await db.getFirstAsync<{ id: string }>(
-      'SELECT id FROM sector WHERE crag_id = ? AND name = ? AND deleted_at IS NULL', [crag.id, r.sectorName]);
-    if (!sector) {
-      sector = { id: newId() };
-      await db.runAsync('INSERT INTO sector (id, crag_id, name, created_at, updated_at) VALUES (?,?,?,?,?)', [sector.id, crag.id, r.sectorName, t, t]);
-    }
+    const sectorId = await sectorIdFor(db, crag.id, r.sectorName, t);
     await db.runAsync(
       `INSERT INTO route (id, sector_id, name, type, grade_label, grade_system, grade_index, created_at, updated_at)
        VALUES (?,?,?,?,?,?,?,?,?)`,
-      [routeId, sector.id, r.name, r.type, r.gradeLabel, r.gradeSystem, r.gradeIndex, t, t],
+      [routeId, sectorId, r.name, r.type, r.gradeLabel, r.gradeSystem, r.gradeIndex, t, t],
     );
   });
   return routeId;
 }
 
-export type CragRow = { id: string; name: string; lat: number | null; lng: number | null; routes: number };
+export type CragRow = {
+  id: string; name: string; lat: number | null; lng: number | null; routes: number; source: string;
+  region_id: string | null; region_name: string | null; region_source: string | null;
+};
 
 export async function listCrags(db: SQLiteDatabase): Promise<CragRow[]> {
   return db.getAllAsync<CragRow>(
-    `SELECT c.id, c.name, c.lat, c.lng,
+    `SELECT c.id, c.name, c.lat, c.lng, c.source, g.id AS region_id, g.name AS region_name, g.source AS region_source,
             (SELECT COUNT(*) FROM route r JOIN sector s ON s.id = r.sector_id
              WHERE s.crag_id = c.id AND r.deleted_at IS NULL) AS routes
-     FROM crag c WHERE c.deleted_at IS NULL ORDER BY c.name`,
+     FROM crag c LEFT JOIN region g ON g.id = c.region_id AND g.deleted_at IS NULL
+     WHERE c.deleted_at IS NULL ORDER BY g.name IS NULL, g.name, c.name`,
   );
 }
 
-export type CragDetail = { id: string; name: string; description: string; approach: string; region: string | null };
+export type CragDetail = { id: string; name: string; description: string; approach: string; region: string | null; source: string };
 
 export async function getCrag(db: SQLiteDatabase, id: string): Promise<CragDetail | null> {
   return db.getFirstAsync<CragDetail>(
-    `SELECT c.id, c.name, c.description, c.approach, g.name AS region
-     FROM crag c LEFT JOIN region g ON g.id = c.region_id WHERE c.id = ? AND c.deleted_at IS NULL`,
+    `SELECT c.id, c.name, c.description, c.approach, c.source, g.name AS region
+     FROM crag c LEFT JOIN region g ON g.id = c.region_id AND g.deleted_at IS NULL WHERE c.id = ? AND c.deleted_at IS NULL`,
     [id],
   );
 }
 
-export type CragRouteRow = RouteRow & { sector_id: string; ascents: number; sends: number };
+// ---- Editing the user's own crags, sectors, routes and regions ----
+
+/** What a delete would take with it, shown in the confirmation. */
+export type Usage = { sectors: number; routes: number; ascents: number };
+
+const count = async (db: SQLiteDatabase, sql: string, params: string[]) => (await db.getFirstAsync<{ n: number }>(sql, params))?.n ?? 0;
+
+async function usage(db: SQLiteDatabase, routeFilter: string, sectorFilter: string | null, id: string): Promise<Usage> {
+  return {
+    sectors: sectorFilter ? await count(db, `SELECT COUNT(*) AS n FROM sector s WHERE s.deleted_at IS NULL AND ${sectorFilter}`, [id]) : 0,
+    routes: await count(db, `SELECT COUNT(*) AS n FROM route r JOIN sector s ON s.id = r.sector_id WHERE r.deleted_at IS NULL AND ${routeFilter}`, [id]),
+    ascents: await count(db,
+      `SELECT COUNT(*) AS n FROM ascent a JOIN route r ON r.id = a.route_id JOIN sector s ON s.id = r.sector_id
+       WHERE a.deleted_at IS NULL AND r.deleted_at IS NULL AND ${routeFilter}`, [id]),
+  };
+}
+
+export const cragUsage = (db: SQLiteDatabase, id: string) => usage(db, 's.crag_id = ?', 's.crag_id = ?', id);
+export const sectorUsage = (db: SQLiteDatabase, id: string) => usage(db, 's.id = ?', null, id);
+export const routeUsage = (db: SQLiteDatabase, id: string) => usage(db, 'r.id = ?', null, id);
+
+/** Soft-deletes routes matching the filter, with their pitches and ascents. */
+async function deleteRoutesWhere(db: SQLiteDatabase, routeFilter: string, id: string, t: number) {
+  const routeIds = `SELECT r.id FROM route r JOIN sector s ON s.id = r.sector_id WHERE ${routeFilter}`;
+  await db.runAsync(`UPDATE ascent SET deleted_at = ?, updated_at = ? WHERE deleted_at IS NULL AND route_id IN (${routeIds})`, [t, t, id]);
+  await db.runAsync(`UPDATE pitch SET deleted_at = ?, updated_at = ? WHERE deleted_at IS NULL AND route_id IN (${routeIds})`, [t, t, id]);
+  await db.runAsync(`UPDATE route SET deleted_at = ?, updated_at = ? WHERE deleted_at IS NULL AND id IN (${routeIds})`, [t, t, id]);
+}
+
+export async function deleteRoute(db: SQLiteDatabase, id: string): Promise<void> {
+  const t = now();
+  await db.withTransactionAsync(() => deleteRoutesWhere(db, 'r.id = ?', id, t));
+}
+
+export async function deleteSector(db: SQLiteDatabase, id: string): Promise<void> {
+  const t = now();
+  await db.withTransactionAsync(async () => {
+    await deleteRoutesWhere(db, 's.id = ?', id, t);
+    await db.runAsync('UPDATE sector SET deleted_at = ?, updated_at = ? WHERE id = ?', [t, t, id]);
+  });
+}
+
+export async function deleteCrag(db: SQLiteDatabase, id: string): Promise<void> {
+  const t = now();
+  await db.withTransactionAsync(async () => {
+    await deleteRoutesWhere(db, 's.crag_id = ?', id, t);
+    await db.runAsync('UPDATE sector SET deleted_at = ?, updated_at = ? WHERE deleted_at IS NULL AND crag_id = ?', [t, t, id]);
+    await db.runAsync('UPDATE crag SET deleted_at = ?, updated_at = ? WHERE id = ?', [t, t, id]);
+  });
+}
+
+async function regionIdFor(db: SQLiteDatabase, name: string, t: number): Promise<string | null> {
+  const n = name.trim();
+  if (!n) return null;
+  const ex = await db.getFirstAsync<{ id: string }>('SELECT id FROM region WHERE name = ? AND deleted_at IS NULL', [n]);
+  if (ex) return ex.id;
+  const id = newId();
+  await db.runAsync('INSERT INTO region (id, name, created_at, updated_at) VALUES (?,?,?,?)', [id, n, t, t]);
+  return id;
+}
+
+async function sectorIdFor(db: SQLiteDatabase, cragId: string, name: string, t: number): Promise<string> {
+  const ex = await db.getFirstAsync<{ id: string }>('SELECT id FROM sector WHERE crag_id = ? AND name = ? AND deleted_at IS NULL', [cragId, name]);
+  if (ex) return ex.id;
+  const id = newId();
+  await db.runAsync('INSERT INTO sector (id, crag_id, name, created_at, updated_at) VALUES (?,?,?,?,?)', [id, cragId, name, t, t]);
+  return id;
+}
+
+export type CragInput = { name: string; regionName: string; description: string; approach: string };
+
+/** Creates a crag (no id) or updates one; the region is found or created by name. Returns the crag id. */
+export async function saveCrag(db: SQLiteDatabase, id: string | null, c: CragInput): Promise<string> {
+  const t = now();
+  const cragId = id ?? newId();
+  await db.withTransactionAsync(async () => {
+    const regionId = await regionIdFor(db, c.regionName, t);
+    if (id) {
+      await db.runAsync('UPDATE crag SET name = ?, region_id = ?, description = ?, approach = ?, updated_at = ? WHERE id = ?',
+        [c.name, regionId, c.description, c.approach, t, id]);
+    } else {
+      await db.runAsync('INSERT INTO crag (id, region_id, name, description, approach, created_at, updated_at) VALUES (?,?,?,?,?,?,?)',
+        [cragId, regionId, c.name, c.description, c.approach, t, t]);
+    }
+  });
+  return cragId;
+}
+
+export type RouteInput = { sectorName: string; name: string; type: RouteType; gradeLabel: string; gradeSystem: GradeSystem; gradeIndex: number };
+
+/** Updates a route; a new sector name moves it to that sector of the same crag (created if needed). */
+export async function updateRoute(db: SQLiteDatabase, id: string, r: RouteInput): Promise<void> {
+  const t = now();
+  await db.withTransactionAsync(async () => {
+    const cur = await db.getFirstAsync<{ crag_id: string }>('SELECT s.crag_id FROM route r JOIN sector s ON s.id = r.sector_id WHERE r.id = ?', [id]);
+    if (!cur) throw new Error('Route not found');
+    const sectorId = await sectorIdFor(db, cur.crag_id, r.sectorName, t);
+    await db.runAsync(
+      'UPDATE route SET sector_id = ?, name = ?, type = ?, grade_label = ?, grade_system = ?, grade_index = ?, updated_at = ? WHERE id = ?',
+      [sectorId, r.name, r.type, r.gradeLabel, r.gradeSystem, r.gradeIndex, t, id]);
+  });
+}
+
+export type NamedRow = { id: string; name: string; source: string; parent_id: string | null };
+
+export async function getSector(db: SQLiteDatabase, id: string): Promise<NamedRow | null> {
+  return db.getFirstAsync<NamedRow>('SELECT id, name, source, crag_id AS parent_id FROM sector WHERE id = ? AND deleted_at IS NULL', [id]);
+}
+
+export async function renameSector(db: SQLiteDatabase, id: string, name: string): Promise<void> {
+  await db.runAsync('UPDATE sector SET name = ?, updated_at = ? WHERE id = ?', [name, now(), id]);
+}
+
+export async function listSectorNames(db: SQLiteDatabase, cragId: string): Promise<string[]> {
+  const rows = await db.getAllAsync<{ name: string }>('SELECT name FROM sector WHERE crag_id = ? AND deleted_at IS NULL ORDER BY name', [cragId]);
+  return rows.map((r) => r.name);
+}
+
+export type RegionRow = { id: string; name: string; source: string; crags: number };
+
+export async function listRegions(db: SQLiteDatabase): Promise<RegionRow[]> {
+  return db.getAllAsync<RegionRow>(
+    `SELECT g.id, g.name, g.source, (SELECT COUNT(*) FROM crag c WHERE c.region_id = g.id AND c.deleted_at IS NULL) AS crags
+     FROM region g WHERE g.deleted_at IS NULL ORDER BY g.name`);
+}
+
+export async function getRegion(db: SQLiteDatabase, id: string): Promise<NamedRow | null> {
+  return db.getFirstAsync<NamedRow>('SELECT id, name, source, NULL AS parent_id FROM region WHERE id = ? AND deleted_at IS NULL', [id]);
+}
+
+export async function renameRegion(db: SQLiteDatabase, id: string, name: string): Promise<void> {
+  await db.runAsync('UPDATE region SET name = ?, updated_at = ? WHERE id = ?', [name, now(), id]);
+}
+
+/** Deletes a region only; its crags stay, without a region. */
+export async function deleteRegion(db: SQLiteDatabase, id: string): Promise<void> {
+  const t = now();
+  await db.withTransactionAsync(async () => {
+    await db.runAsync('UPDATE crag SET region_id = NULL, updated_at = ? WHERE region_id = ?', [t, id]);
+    await db.runAsync('UPDATE region SET deleted_at = ?, updated_at = ? WHERE id = ?', [t, t, id]);
+  });
+}
+
+export type CragRouteRow = RouteRow & { ascents: number; sends: number };
 
 /** Routes of a crag, by sector, with how many times the user climbed and sent each. */
 export async function listCragRoutes(db: SQLiteDatabase, cragId: string): Promise<CragRouteRow[]> {
   return db.getAllAsync<CragRouteRow>(
-    `SELECT r.id, r.name, r.type, r.grade_label, r.grade_system, r.grade_index, s.id AS sector_id, s.name AS sector_name, c.name AS crag_name,
+    `SELECT ${ROUTE_COLS},
             (SELECT COUNT(*) FROM ascent a WHERE a.route_id = r.id AND a.deleted_at IS NULL) AS ascents,
             (SELECT COUNT(*) FROM ascent a WHERE a.route_id = r.id AND a.deleted_at IS NULL AND a.style <> 'attempt') AS sends
      FROM route r JOIN sector s ON s.id = r.sector_id JOIN crag c ON c.id = s.crag_id
@@ -203,7 +350,7 @@ export async function applyImport(db: SQLiteDatabase, plan: ImportPlan): Promise
         if (!regionId) {
           const ex = await db.getFirstAsync<{ id: string }>('SELECT id FROM region WHERE name = ? AND deleted_at IS NULL', [c.region]);
           regionId = ex?.id ?? newId();
-          if (!ex) await db.runAsync('INSERT INTO region (id, name, country, created_at, updated_at) VALUES (?,?,?,?,?)', [regionId, c.region, c.country, t, t]);
+          if (!ex) await db.runAsync("INSERT INTO region (id, name, country, source, created_at, updated_at) VALUES (?,?,?,'import',?,?)", [regionId, c.region, c.country, t, t]);
           regionIds.set(c.region, regionId);
         }
       }

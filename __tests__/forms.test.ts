@@ -1,4 +1,4 @@
-import { isFirstTry, validateAscentDraft, validateGoalDraft, validateRouteDraft, type RouteDraft } from '../src/domain/forms';
+import { isFirstTry, validateAscentDraft, validateCragDraft, validateGoalDraft, validateName, validateRouteDraft, type RouteDraft } from '../src/domain/forms';
 import { parseGrade } from '../src/domain/grades';
 
 const route: RouteDraft = { crag: ' Test Crag ', sector: '', name: 'Route 1', type: 'sport', system: 'kr', grade: 'VI.3' };
@@ -49,5 +49,15 @@ describe('validateGoalDraft', () => {
   it('rejects a non-numeric count target instead of storing NaN', () => {
     expect(validateGoalDraft({ kind: 'count', title: 'x', target: 'abc' })).toEqual({ ok: false, error: 'goals.errors.target' });
     expect(validateGoalDraft({ kind: 'count', title: 'x', target: '0' })).toEqual({ ok: false, error: 'goals.errors.target' });
+  });
+});
+
+describe('crag and name drafts', () => {
+  it('requires a name and trims everything', () => {
+    expect(validateName('  ')).toEqual({ ok: false, error: 'edit.errors.name' });
+    expect(validateName(' Lewy ')).toEqual({ ok: true, value: 'Lewy' });
+    expect(validateCragDraft({ name: '', region: 'Jura', description: '', approach: '' })).toEqual({ ok: false, error: 'edit.errors.name' });
+    expect(validateCragDraft({ name: ' Okiennik ', region: ' Jura ', description: ' opis ', approach: '' }))
+      .toEqual({ ok: true, value: { name: 'Okiennik', regionName: 'Jura', description: 'opis', approach: '' } });
   });
 });

@@ -44,3 +44,15 @@ export function validateGoalDraft(g: { kind: GoalKind; title: string; target: st
   if (!Number.isInteger(target) || target < 1) return { ok: false, error: 'goals.errors.target' };
   return { ok: true, value: { title, target } };
 }
+
+/** A required name, e.g. of a sector or region. */
+export function validateName(name: string): Result<string> {
+  const n = name.trim();
+  return n ? { ok: true, value: n } : { ok: false, error: 'edit.errors.name' };
+}
+
+export function validateCragDraft(c: { name: string; region: string; description: string; approach: string }): Result<{ name: string; regionName: string; description: string; approach: string }> {
+  const name = c.name.trim();
+  if (!name) return { ok: false, error: 'edit.errors.name' };
+  return { ok: true, value: { name, regionName: c.region.trim(), description: c.description.trim(), approach: c.approach.trim() } };
+}

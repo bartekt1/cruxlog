@@ -5,8 +5,9 @@ import type { SQLiteDatabase } from 'expo-sqlite';
 import { BACKUP_VERSION, exportBackup, importBackup } from '../src/db/backup';
 import { MIGRATIONS, migrate } from '../src/db/migrate';
 import {
-  addAscent, addGoal, addUserRoute, applyImport, deleteAscent, deleteGoal, getAscent, getCrag, getRoute, listAscents, listCragRoutes, listCrags,
-  listGoals, searchRoutes, setGoalDone, updateAscent, type NewRoute,
+  addAscent, addGoal, addUserRoute, applyImport, cragUsage, deleteAscent, deleteCrag, deleteGoal, deleteRegion, deleteRoute, deleteSector,
+  getAscent, getCrag, getRegion, getRoute, getSector, listAscents, listCragRoutes, listCrags, listGoals, listRegions, listSectorNames,
+  renameRegion, renameSector, routeUsage, saveCrag, searchRoutes, sectorUsage, setGoalDone, updateAscent, updateRoute, type NewRoute,
 } from '../src/db/repo';
 import { buildImportPlan } from '../src/domain/csvImport';
 import { parseGrade } from '../src/domain/grades';
@@ -154,6 +155,87 @@ describe('repo', () => {
   });
 });
 
+describe('editing own crags, sectors, routes and regions', () => {
+  it('marks old regions as imported when migrating from version 1', async () => {
+    const db = openTestDb();
+    await db.execAsync(MIGRATIONS[0] + 'PRAGMA user_version = 1;');
+    await db.runAsync("INSERT INTO region (id, name, created_at, updated_at) VALUES ('g1', 'Jura', 1, 1)");
+    await migrate(db);
+    expect(await getRegion(db, 'g1')).toMatchObject({ name: 'Jura', source: 'import' });
+  });
+  it('creates and edits a crag with a region found or created by name', async () => {
+    const db = await freshDb();
+    const id = await saveCrag(db, null, { name: 'Okiennik', regionName: 'Jura', description: 'opis', approach: '10 min' });
+    await saveCrag(db, null, { name: 'Sokolica', regionName: 'Jura', description: '', approach: '' });
+    expect(await listRegions(db)).toEqual([expect.objectContaining({ name: 'Jura', source: 'user', crags: 2 })]);
+    await saveCrag(db, id, { name: 'Okiennik Wielki', regionName: '', description: '', approach: '' });
+    expect(await getCrag(db, id)).toMatchObject({ name: 'Okiennik Wielki', region: null, source: 'user' });
+    expect((await listCrags(db)).map((c) => [c.name, c.region_name])).toEqual([['Sokolica', 'Jura'], ['Okiennik Wielki', null]]);
+  });
+  it('edits a route and moves it to another sector of the same crag', async () => {
+    const db = await freshDb();
+    const r = await addUserRoute(db, route());
+    await updateRoute(db, r, { sectorName: 'Right', name: 'Renamed', type: 'boulder', gradeLabel: '6B', gradeSystem: 'font', gradeIndex: parseGrade('6B', 'font', 'boulder')! });
+    expect(await getRoute(db, r)).toMatchObject({ name: 'Renamed', type: 'boulder', sector_name: 'Right', crag_name: 'Test Crag', source: 'user' });
+    expect(await listSectorNames(db, (await getRoute(db, r))!.crag_id)).toEqual(['Main', 'Right']);
+  });
+  it('deletes a route with its ascents', async () => {
+    const db = await freshDb();
+    const r = await addUserRoute(db, route());
+    await addAscent(db, ascent(r));
+    expect(await routeUsage(db, r)).toEqual({ sectors: 0, routes: 1, ascents: 1 });
+    await deleteRoute(db, r);
+    expect(await getRoute(db, r)).toBeNull();
+    expect(await listAscents(db)).toEqual([]);
+    expect(await searchRoutes(db, 'Test')).toEqual([]);
+  });
+  it('renames and deletes a sector with its routes, leaving other sectors alone', async () => {
+    const db = await freshDb();
+    const r1 = await addUserRoute(db, route());
+    const r2 = await addUserRoute(db, route({ sectorName: 'Left', name: 'Other' }));
+    await addAscent(db, ascent(r1));
+    const main = (await getRoute(db, r1))!.sector_id;
+    await renameSector(db, main, 'Middle');
+    expect(await getSector(db, main)).toMatchObject({ name: 'Middle', source: 'user' });
+    expect(await sectorUsage(db, main)).toEqual({ sectors: 0, routes: 1, ascents: 1 });
+    await deleteSector(db, main);
+    expect(await getSector(db, main)).toBeNull();
+    expect(await getRoute(db, r1)).toBeNull();
+    expect(await getRoute(db, r2)).not.toBeNull();
+    expect(await listAscents(db)).toEqual([]);
+  });
+  it('deletes a crag with everything in it', async () => {
+    const db = await freshDb();
+    const r1 = await addUserRoute(db, route());
+    await addUserRoute(db, route({ sectorName: 'Left', name: 'Other' }));
+    const keep = await addUserRoute(db, route({ cragName: 'Elsewhere', name: 'Stay' }));
+    await addAscent(db, ascent(r1));
+    await addAscent(db, ascent(keep));
+    const crag = (await getRoute(db, r1))!.crag_id;
+    expect(await cragUsage(db, crag)).toEqual({ sectors: 2, routes: 2, ascents: 1 });
+    await deleteCrag(db, crag);
+    expect(await getCrag(db, crag)).toBeNull();
+    expect((await listCrags(db)).map((c) => c.name)).toEqual(['Elsewhere']);
+    expect((await listAscents(db)).map((a) => a.route_name)).toEqual(['Stay']);
+  });
+  it('renames a region and deletes it while keeping its crags', async () => {
+    const db = await freshDb();
+    const crag = await saveCrag(db, null, { name: 'Okiennik', regionName: 'Jura', description: '', approach: '' });
+    const [region] = await listRegions(db);
+    await renameRegion(db, region.id, 'Jura Krakowska');
+    expect((await getCrag(db, crag))!.region).toBe('Jura Krakowska');
+    await deleteRegion(db, region.id);
+    expect(await listRegions(db)).toEqual([]);
+    expect(await getCrag(db, crag)).toMatchObject({ name: 'Okiennik', region: null });
+  });
+  it('keeps imported data marked as imported', async () => {
+    const db = await freshDb();
+    await applyImport(db, samples());
+    const [c] = await listCrags(db);
+    expect(c).toMatchObject({ source: 'import', region_name: 'Example region', region_source: 'import' });
+  });
+});
+
 describe('backup', () => {
   async function seeded() {
     const db = await freshDb();
@@ -192,6 +274,15 @@ describe('backup', () => {
     await db.runAsync("UPDATE goal SET title = 'Edited', updated_at = updated_at + 1000");
     expect(await importBackup(db, backup)).toBe(0);
     expect((await listGoals(db))[0].title).toBe('Edited');
+  });
+  it('imports a version 1 backup and marks its regions as imported', async () => {
+    const source = await seeded();
+    const backup = JSON.parse(JSON.stringify(await exportBackup(source)));
+    backup.version = 1;
+    backup.tables.region = backup.tables.region.map(({ source: _s, ...rest }: Record<string, unknown>) => rest);
+    const target = await freshDb();
+    await importBackup(target, backup);
+    expect((await listRegions(target)).every((g) => g.source === 'import')).toBe(true);
   });
   it('rejects files that are not a backup or come from a newer version', async () => {
     const db = await freshDb();

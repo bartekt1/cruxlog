@@ -7,7 +7,7 @@
   "styles": { "os": "OS", "flash": "Flash", "rp": "RP", "pp": "PP", "tr": "TR", "attempt": "Attempt" },
   "types": { "sport": "Sport", "boulder": "Boulder", "multipitch": "Multipitch" },
   "journal": {
-    "empty": "No ascents yet", "emptyHint": "Tap + to log your first climb.", "attempts": "{{count}} tries", "add": "Log an ascent"
+    "empty": "No ascents yet", "emptyHint": "Tap Add to log your first climb.", "attempts": "{{count}} tries", "add": "Log an ascent", "addShort": "Add"
   },
   "ascent": {
     "title": "New ascent", "editTitle": "Edit ascent", "detailTitle": "Ascent", "notFound": "This ascent no longer exists.",
@@ -32,7 +32,18 @@
   },
   "crags": {
     "title": "Crags", "detailTitle": "Crag", "sends": "sends: {{count}}", "tried": "tried: {{count}}", "approach": "Approach",
-    "tapRoute": "Tap a route to log an ascent.", "logHint": "Opens a new ascent for this route", "noRoutes": "No routes in this crag yet.", "routes": "Routes: {{count}}", "empty": "No crags yet", "emptyHint": "Import a CSV in Settings or create a route when logging an ascent." },
+    "tapRoute": "Tap a route to log an ascent.", "logHint": "Opens a new ascent for this route", "noRoutes": "No routes in this crag yet.", "noRegion": "No region", "routes": "Routes: {{count}}", "empty": "No crags yet", "emptyHint": "Import a CSV in Settings or create a route when logging an ascent." },
+  "edit": {
+    "cragTitle": "Edit crag", "newCragTitle": "Add a crag", "routeTitle": "Edit route", "routeTitleNamed": "Edit route {{name}}",
+    "sectorTitle": "Edit sector", "regionTitle": "Edit region",
+    "name": "Name", "region": "Region (optional)", "regionPlaceholder": "e.g. Jura", "description": "Description", "sector": "Sector",
+    "deleteCrag": "Delete crag", "deleteRoute": "Delete route", "deleteSector": "Delete sector", "deleteRegion": "Delete region",
+    "deleteTitle": "Delete \"{{name}}\"?", "deleteAlso": "This also deletes:", "deleteSimple": "This cannot be undone.",
+    "countSectors": "sectors: {{count}}", "countRoutes": "routes: {{count}}", "countAscents": "your ascents: {{count}}",
+    "importedNote": "Imported from a CSV file. To change it, edit the file and import it again.",
+    "regionDeleteHint": "Deleting a region keeps its crags; they just lose the region.",
+    "errors": { "name": "Enter a name." }
+  },
   "goals": {
     "title": "Goals", "count": "Count", "project": "Project", "wishlist": "Wishlist", "newTitle": "Goal title", "target": "Target (number)",
     "kind": "Kind", "empty": "No goals yet", "emptyHint": "Add a yearly target, a project or a route you dream about.",

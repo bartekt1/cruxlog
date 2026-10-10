@@ -79,6 +79,16 @@ Severity: **H** blocks a task or loses/corrupts data, **M** slows a task or conf
 
 | N11 | Dates other than today or yesterday had to be typed as YYYY-MM-DD | M | Fixed: system calendar (`@react-native-community/datetimepicker`), future days blocked |
 
+## Round 3 (user feedback)
+
+| # | Issue | Sev | Status |
+|---|---|---|---|
+| R1 | Own crags, sectors, routes and regions could not be edited or deleted | H | Fixed: pencil buttons on own items, delete with a count of what goes with it; imported items show a note |
+| R2 | Bottom tab bar showed empty placeholder squares instead of icons | H | Fixed: Ionicons / MaterialCommunityIcons (`@expo/vector-icons`) |
+| R3 | The `+` button was hard to see | M | Fixed: larger "Add" button with icon and label, stronger shadow |
+| R4 | Settings "⚙" glyph too small and unclear | M | Fixed: 28 pt gear icon, 44 pt touch target |
+| R5 | No way to add a crag without logging an ascent | L | Fixed: "Add a crag" on the Crags tab |
+
 ## Open items
 
 1. Edit a goal's title or target; link a project goal to a route.

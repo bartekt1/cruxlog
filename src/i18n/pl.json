@@ -7,7 +7,7 @@
   "styles": { "os": "OS", "flash": "Flash", "rp": "RP", "pp": "PP", "tr": "TR", "attempt": "Próba" },
   "types": { "sport": "Sport", "boulder": "Boulder", "multipitch": "Wielowyciąg" },
   "journal": {
-    "empty": "Brak przejść", "emptyHint": "Dotknij +, aby dodać pierwsze.", "attempts": "podejścia: {{count}}", "add": "Dodaj przejście"
+    "empty": "Brak przejść", "emptyHint": "Dotknij „Dodaj”, aby zapisać pierwsze.", "attempts": "podejścia: {{count}}", "add": "Dodaj przejście", "addShort": "Dodaj"
   },
   "ascent": {
     "title": "Nowe przejście", "editTitle": "Edycja przejścia", "detailTitle": "Przejście", "notFound": "To przejście już nie istnieje.",
@@ -32,7 +32,18 @@
   },
   "crags": {
     "title": "Skały", "detailTitle": "Skała", "sends": "przejścia: {{count}}", "tried": "próby: {{count}}", "approach": "Dojście",
-    "tapRoute": "Dotknij drogę, aby dodać przejście.", "logHint": "Otwiera nowe przejście tej drogi", "noRoutes": "Ta skała nie ma jeszcze dróg.", "routes": "Drogi: {{count}}", "empty": "Brak skał", "emptyHint": "Zaimportuj CSV w ustawieniach lub utwórz drogę przy dodawaniu przejścia." },
+    "tapRoute": "Dotknij drogę, aby dodać przejście.", "logHint": "Otwiera nowe przejście tej drogi", "noRoutes": "Ta skała nie ma jeszcze dróg.", "noRegion": "Bez rejonu", "routes": "Drogi: {{count}}", "empty": "Brak skał", "emptyHint": "Zaimportuj CSV w ustawieniach lub utwórz drogę przy dodawaniu przejścia." },
+  "edit": {
+    "cragTitle": "Edycja skały", "newCragTitle": "Dodaj skałę", "routeTitle": "Edycja drogi", "routeTitleNamed": "Edytuj drogę {{name}}",
+    "sectorTitle": "Edycja sektora", "regionTitle": "Edycja rejonu",
+    "name": "Nazwa", "region": "Rejon (opcjonalnie)", "regionPlaceholder": "np. Jura", "description": "Opis", "sector": "Sektor",
+    "deleteCrag": "Usuń skałę", "deleteRoute": "Usuń drogę", "deleteSector": "Usuń sektor", "deleteRegion": "Usuń rejon",
+    "deleteTitle": "Usunąć „{{name}}”?", "deleteAlso": "Zostaną też usunięte:", "deleteSimple": "Tego nie można cofnąć.",
+    "countSectors": "sektory: {{count}}", "countRoutes": "drogi: {{count}}", "countAscents": "Twoje przejścia: {{count}}",
+    "importedNote": "Zaimportowane z pliku CSV. Aby to zmienić, popraw plik i zaimportuj go ponownie.",
+    "regionDeleteHint": "Usunięcie rejonu nie usuwa skał; zostaną po prostu bez rejonu.",
+    "errors": { "name": "Podaj nazwę." }
+  },
   "goals": {
     "title": "Cele", "count": "Liczba", "project": "Projekt", "wishlist": "Lista życzeń", "newTitle": "Nazwa celu", "target": "Cel (liczba)",
     "kind": "Rodzaj", "empty": "Brak celów", "emptyHint": "Dodaj roczny cel, projekt albo drogę marzeń.",

@@ -40,6 +40,12 @@ export const MIGRATIONS: string[] = [
   CREATE INDEX idx_ascent_date ON ascent(date);
   CREATE INDEX idx_route_sector ON route(sector_id);
   `,
+  // 2: regions remember where they came from, so only the user's own can be edited. Until now only CSV import created regions.
+  `
+  ALTER TABLE region ADD COLUMN source TEXT NOT NULL DEFAULT 'user';
+  UPDATE region SET source = 'import';
+  CREATE INDEX idx_sector_crag ON sector(crag_id);
+  `,
 ];
 
 export async function migrate(db: SQLiteDatabase): Promise<void> {

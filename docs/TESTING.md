@@ -38,8 +38,18 @@ Write down the result of every step (OK / problem). Report problems with: step n
 3a. Year switcher: with an entry in the previous year, tap ‹ next to the year. Expected: stats and pyramids for that year; the activity calendar is shown only for the current year; › goes back; the arrow is greyed out where there are no more years.
 4. Change the grade system in Settings (for example KR -> FR). Expected: Journal and Progress show the same routes in the new system (VI.3 -> 6c).
 
+## 3b. Icons
+1. The bottom bar shows an icon above each tab name (book, chart, mountains, flag); the selected tab's icon is filled. No empty squares.
+2. Top right: a clear gear icon opens Settings. Journal: a green "Add" button with a + icon, bottom right.
+
 ## 4. Crags and goals
 1. Crags tab. Expected: "Test Crag" with the number of routes. Tap it. Expected: the crag screen with routes grouped by sector; "Test Route 1" shows "✓ sends: 1" (green) or "tried: N". Tap the route. Expected: a new ascent form with this route already chosen.
+1a. Editing own data (only for crags, sectors, routes and regions you created; imported ones show a note and no pencils):
+   - Crags tab -> "Add a crag": name "Okiennik", region "Jura", save. Expected: the crag screen opens; the Crags list groups crags under "JURA", others under "No region".
+   - Pencil next to a region header: rename it; delete it. Expected: crags stay, now under "No region".
+   - On a crag screen: pencil at the top right edits name, region, description, approach; "Delete crag" asks first and lists how many sectors, routes and your ascents go with it.
+   - Pencil next to a sector header: rename or delete (lists routes and ascents that go with it).
+   - Pencil next to a route: change name, sector (moves the route), type, grade; "Delete route" lists your ascents of it. After deleting, those ascents are gone from the Journal and Progress.
 2. Goals tab: with an empty title the Add button is disabled. Add a Count goal ("200 sends", target 200), a Project and a Wishlist item. Expected: they appear in the list after Add, the title field clears and the keyboard closes. Count goal with target `abc`: error message, nothing added.
 3. The count goal shows a bar and "N / 200 sends in <year>" matching the Sends tile on Progress.
 4. Tap "Mark done" on the Project. Expected: crossed out with ✓, moved to the bottom; "Reopen" brings it back. Tap Delete: confirmation, then it disappears.

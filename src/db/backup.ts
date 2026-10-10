@@ -1,6 +1,7 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
-export const BACKUP_VERSION = 1;
+// 2: region.source added. Version 1 backups still import (their regions came from CSV).
+export const BACKUP_VERSION = 2;
 const TABLES = ['region', 'crag', 'sector', 'route', 'pitch', 'partner', 'ascent', 'ascent_pitch', 'goal'] as const;
 
 export type Backup = { app: 'cruxlog'; version: number; exportedAt: number; tables: Record<string, Record<string, unknown>[]> };
@@ -20,7 +21,8 @@ export async function importBackup(db: SQLiteDatabase, data: unknown): Promise<n
   await db.withTransactionAsync(async () => {
     await db.execAsync('PRAGMA defer_foreign_keys = ON');
     for (const t of TABLES) {
-      for (const row of b.tables[t] ?? []) {
+      for (const original of b.tables[t] ?? []) {
+        const row = t === 'region' && b.version < 2 && !('source' in original) ? { ...original, source: 'import' } : original;
         const cols = Object.keys(row);
         if (!cols.includes('id') || !cols.includes('updated_at')) continue;
         const existing = await db.getFirstAsync<{ updated_at: number }>(`SELECT updated_at FROM ${t} WHERE id = ?`, [row.id as string]);

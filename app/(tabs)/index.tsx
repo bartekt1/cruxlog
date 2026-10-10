@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Link, useFocusEffect, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useMemo, useState } from 'react';
@@ -65,9 +66,14 @@ export default function Journal() {
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={t('journal.add')}
-          style={({ pressed }) => ({ position: 'absolute', right: 20, bottom: 24, width: 56, height: 56, borderRadius: 28, backgroundColor: th.accent, alignItems: 'center', justifyContent: 'center', elevation: 4, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 4, shadowOffset: { width: 0, height: 2 }, opacity: pressed ? 0.85 : 1 })}
+          style={({ pressed }) => ({
+            position: 'absolute', right: 16, bottom: 20, height: 56, paddingLeft: 16, paddingRight: 20, borderRadius: 28,
+            flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: th.accent,
+            elevation: 6, shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 6, shadowOffset: { width: 0, height: 3 }, opacity: pressed ? 0.85 : 1,
+          })}
         >
-          <Text style={{ color: th.onAccent, fontSize: 28, lineHeight: 30 }}>+</Text>
+          <Ionicons name="add" size={30} color={th.onAccent} />
+          <Text style={{ color: th.onAccent, fontSize: 16, fontWeight: '700' }}>{t('journal.addShort')}</Text>
         </Pressable>
       </Link>
     </Screen>
