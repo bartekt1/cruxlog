@@ -57,11 +57,13 @@ export async function recentRoutes(db: SQLiteDatabase, limit = 5): Promise<Route
   );
 }
 
-export type CragChoice = { id: string; name: string; region_name: string | null };
+export type CragChoice = { id: string; name: string; region_name: string | null; routes: number };
 
 export async function listCragChoices(db: SQLiteDatabase): Promise<CragChoice[]> {
   return db.getAllAsync<CragChoice>(
-    `SELECT c.id, c.name, g.name AS region_name FROM crag c LEFT JOIN region g ON g.id = c.region_id AND g.deleted_at IS NULL
+    `SELECT c.id, c.name, g.name AS region_name,
+            (SELECT COUNT(*) FROM route r JOIN sector s ON s.id = r.sector_id WHERE s.crag_id = c.id AND r.deleted_at IS NULL) AS routes
+     FROM crag c LEFT JOIN region g ON g.id = c.region_id AND g.deleted_at IS NULL
      WHERE c.deleted_at IS NULL ORDER BY c.name`);
 }
 

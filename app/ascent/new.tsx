@@ -122,6 +122,14 @@ export default function NewAscent() {
     setCreating(true);
   }
 
+  /** From a crag found in the search: new route on that crag, crag and region already filled in. */
+  function startOnCrag(c: CragChoice) {
+    setName('');
+    setCrag(c.name); setSector(''); setRegion(c.region_name ?? '');
+    setCreating(true);
+  }
+  const cragHits = query.trim() ? suggest(crags, query, (c) => c.name, (c) => [c.region_name ?? ''], 3) : [];
+
   function pickDuplicate() {
     if (!duplicate) return;
     setRoute(duplicate);
@@ -284,11 +292,19 @@ export default function NewAscent() {
         <View style={{ gap: 4 }}>
           <Field value={query} onChangeText={setQuery} placeholder={t('ascent.searchRoute')} accessibilityLabel={t('ascent.searchRoute')} invalid={bad('route')} autoCorrect={false} />
           {query.trim() ? (
-            <Suggestions items={results.map(routeItem)} onPick={pickRoute(results)} />
+            <>
+              <Suggestions title={cragHits.length ? t('ascent.routesHeader') : undefined} items={results.map(routeItem)} onPick={pickRoute(results)} />
+              <Suggestions
+                title={t('ascent.cragsHeader')}
+                items={cragHits.map((c) => ({ key: c.id, title: c.name, subtitle: [c.region_name, t('crags.routes', { count: c.routes })].filter(Boolean).join(' · ') }))}
+                onPick={(key) => { const c = crags.find((x) => x.id === key); if (c) startOnCrag(c); }}
+              />
+              {cragHits.length ? <Text style={{ color: th.muted, fontSize: 12, marginTop: 2 }}>{t('ascent.cragHitHint')}</Text> : null}
+            </>
           ) : (
             <Suggestions title={t('ascent.recent')} items={recent.map(routeItem)} onPick={pickRoute(recent)} />
           )}
-          {query.trim() && results.length === 0 ? <Text style={{ color: th.muted, paddingVertical: 6 }}>{t('ascent.noResults', { query: query.trim() })}</Text> : null}
+          {query.trim() && results.length === 0 && cragHits.length === 0 ? <Text style={{ color: th.muted, paddingVertical: 6 }}>{t('ascent.noResults', { query: query.trim() })}</Text> : null}
           <LinkButton label={query.trim() ? t('ascent.newRouteNamed', { name: query.trim() }) : t('ascent.newRoute')} onPress={startCreating} />
         </View>
       )}

@@ -174,6 +174,12 @@ describe('suggestions and history', () => {
     await addAscent(db, ascent(r2, { partnerName: 'anna' }));
     expect(await listPartners(db)).toEqual(['Anna']);
   });
+  it('offers crags without routes too, with their route count', async () => {
+    const db = await freshDb();
+    await saveCrag(db, null, { name: 'Pusta Skała', regionName: 'Jura', description: '', approach: '' });
+    await addUserRoute(db, route({ cragName: 'Okiennik' }));
+    expect((await listCragChoices(db)).map((c) => [c.name, c.region_name, c.routes])).toEqual([['Okiennik', null, 1], ['Pusta Skała', 'Jura', 0]]);
+  });
   it('gives an existing crag without a region the region typed with a route', async () => {
     const db = await freshDb();
     await addUserRoute(db, route({ cragName: 'Okiennik' }));
