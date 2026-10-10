@@ -27,8 +27,9 @@ export async function searchRoutes(db: SQLiteDatabase, query: string): Promise<R
   return db.getAllAsync<RouteRow>(
     `SELECT r.id, r.name, r.type, r.grade_label, r.grade_system, r.grade_index, s.name AS sector_name, c.name AS crag_name
      FROM route r JOIN sector s ON s.id = r.sector_id JOIN crag c ON c.id = s.crag_id
-     WHERE r.deleted_at IS NULL AND r.name LIKE ? ORDER BY r.name LIMIT 50`,
-    [`%${query}%`],
+     WHERE r.deleted_at IS NULL AND (r.name LIKE ? OR c.name LIKE ? OR s.name LIKE ?)
+     ORDER BY r.name LIMIT 50`,
+    [`%${query.trim()}%`, `%${query.trim()}%`, `%${query.trim()}%`],
   );
 }
 

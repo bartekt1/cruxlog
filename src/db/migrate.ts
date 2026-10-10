@@ -5,7 +5,8 @@ import type { SQLiteDatabase } from 'expo-sqlite';
 const COMMON = `created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, deleted_at INTEGER`;
 const CATALOG = `source TEXT NOT NULL DEFAULT 'user', status TEXT NOT NULL DEFAULT 'private', created_by TEXT`;
 
-const MIGRATIONS: string[] = [
+// Append only. Never edit an entry that has shipped.
+export const MIGRATIONS: string[] = [
   `
   CREATE TABLE region (id TEXT PRIMARY KEY, name TEXT NOT NULL, country TEXT NOT NULL DEFAULT '', ${COMMON});
   CREATE TABLE crag (
