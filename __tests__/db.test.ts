@@ -8,7 +8,7 @@ import {
   addAscent, addGoal, addUserRoute, applyImport, cragUsage, deleteAscent, deleteCrag, deleteGoal, deleteRegion, deleteRoute, deleteSector,
   getAscent, getCrag, getRegion, getRoute, getSector, listAscents, listCragRoutes, listCrags, listGoals, listRegions, listSectorNames,
   renameRegion, renameSector, routeUsage, saveCrag, searchRoutes, sectorUsage, setGoalDone, updateAscent, updateRoute, type NewRoute,
-  listCragChoices, listPartners, listRouteAscents, recentRoutes,
+  listCragChoices, listPartners, listRouteAscents, recentRoutes, listSectors, addSector, createRoute,
 } from '../src/db/repo';
 import { buildImportPlan } from '../src/domain/csvImport';
 import { parseGrade } from '../src/domain/grades';
@@ -292,6 +292,23 @@ describe('editing own crags, sectors, routes and regions', () => {
     await applyImport(db, samples());
     const [c] = await listCrags(db);
     expect(c).toMatchObject({ source: 'import', region_name: 'Example region', region_source: 'import' });
+  });
+});
+
+describe('building a crag from its screen', () => {
+  it('creates a crag with sectors, adds sectors and routes without ascents', async () => {
+    const db = await freshDb();
+    const crag = await saveCrag(db, null, { name: 'Okiennik', regionName: 'Jura', description: '', approach: '', sectorNames: ['Lewy', 'Prawy'] });
+    expect((await listSectors(db, crag)).map((s) => s.name)).toEqual(['Lewy', 'Prawy']);
+    const again = await addSector(db, crag, 'lewy');
+    expect((await listSectors(db, crag)).find((s) => s.name === 'Lewy')!.id).toBe(again);
+    await addSector(db, crag, 'Środek');
+    const r = await createRoute(db, crag, { sectorName: 'Prawy', name: 'Rysa', type: 'sport', gradeLabel: 'VI.3', gradeSystem: 'kr', gradeIndex: parseGrade('VI.3', 'kr', 'sport')! });
+    const noSector = await createRoute(db, crag, { sectorName: '', name: 'Filar', type: 'sport', gradeLabel: 'VI', gradeSystem: 'kr', gradeIndex: parseGrade('VI', 'kr', 'sport')! });
+    expect(await getRoute(db, r)).toMatchObject({ sector_name: 'Prawy', crag_name: 'Okiennik', source: 'user' });
+    expect((await getRoute(db, noSector))!.sector_name).toBe('Okiennik');
+    expect((await listSectors(db, crag)).map((s) => s.name)).toEqual(['Lewy', 'Okiennik', 'Prawy', 'Środek']);
+    expect(await listAscents(db)).toEqual([]);
   });
 });
 

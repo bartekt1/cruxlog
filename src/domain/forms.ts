@@ -2,6 +2,7 @@
 
 import { isValidIsoDate } from './dates';
 import { parseGrade, type AscentStyle, type GradeSystem, type RouteType } from './grades';
+import { sameName } from './text';
 
 export type Result<T> = { ok: true; value: T } | { ok: false; error: string };
 
@@ -51,8 +52,18 @@ export function validateName(name: string): Result<string> {
   return n ? { ok: true, value: n } : { ok: false, error: 'edit.errors.name' };
 }
 
-export function validateCragDraft(c: { name: string; region: string; description: string; approach: string }): Result<{ name: string; regionName: string; description: string; approach: string }> {
+export type CragDraft = { name: string; region: string; description: string; approach: string; sectors?: string[] };
+
+/** A crag needs a region and a name; sectors are optional, de-duplicated ignoring case and Polish letters. */
+export function validateCragDraft(c: CragDraft): Result<{ name: string; regionName: string; description: string; approach: string; sectorNames: string[] }> {
+  const regionName = c.region.trim();
+  if (!regionName) return { ok: false, error: 'edit.errors.region' };
   const name = c.name.trim();
   if (!name) return { ok: false, error: 'edit.errors.name' };
-  return { ok: true, value: { name, regionName: c.region.trim(), description: c.description.trim(), approach: c.approach.trim() } };
+  const sectorNames: string[] = [];
+  for (const s of c.sectors ?? []) {
+    const n = s.trim();
+    if (n && !sectorNames.some((x) => sameName(x, n))) sectorNames.push(n);
+  }
+  return { ok: true, value: { name, regionName, description: c.description.trim(), approach: c.approach.trim(), sectorNames } };
 }

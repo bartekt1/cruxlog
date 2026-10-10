@@ -286,7 +286,7 @@ async function sectorIdFor(db: SQLiteDatabase, cragId: string, name: string, t: 
   return id;
 }
 
-export type CragInput = { name: string; regionName: string; description: string; approach: string };
+export type CragInput = { name: string; regionName: string; description: string; approach: string; sectorNames?: string[] };
 
 /** Creates a crag (no id) or updates one; the region is found or created by name. Returns the crag id. */
 export async function saveCrag(db: SQLiteDatabase, id: string | null, c: CragInput): Promise<string> {
@@ -301,11 +301,41 @@ export async function saveCrag(db: SQLiteDatabase, id: string | null, c: CragInp
       await db.runAsync('INSERT INTO crag (id, region_id, name, description, approach, created_at, updated_at) VALUES (?,?,?,?,?,?,?)',
         [cragId, regionId, c.name, c.description, c.approach, t, t]);
     }
+    for (const s of c.sectorNames ?? []) await sectorIdFor(db, cragId, s, t);
   });
   return cragId;
 }
 
 export type RouteInput = { sectorName: string; name: string; type: RouteType; gradeLabel: string; gradeSystem: GradeSystem; gradeIndex: number };
+
+export type SectorRow = { id: string; name: string; source: string };
+
+/** All sectors of a crag, also those without routes yet. */
+export async function listSectors(db: SQLiteDatabase, cragId: string): Promise<SectorRow[]> {
+  return db.getAllAsync<SectorRow>('SELECT id, name, source FROM sector WHERE crag_id = ? AND deleted_at IS NULL ORDER BY name', [cragId]);
+}
+
+/** Adds a sector to a crag; returns the existing one when the name already exists (ignoring case and Polish letters). */
+export async function addSector(db: SQLiteDatabase, cragId: string, name: string): Promise<string> {
+  return sectorIdFor(db, cragId, name, now());
+}
+
+/** Adds a route to a crag without an ascent; an empty sector name puts it in a sector named like the crag. */
+export async function createRoute(db: SQLiteDatabase, cragId: string, r: RouteInput): Promise<string> {
+  const t = now();
+  const id = newId();
+  await db.withTransactionAsync(async () => {
+    const crag = await db.getFirstAsync<{ name: string }>('SELECT name FROM crag WHERE id = ? AND deleted_at IS NULL', [cragId]);
+    if (!crag) throw new Error('Crag not found');
+    const sectorId = await sectorIdFor(db, cragId, r.sectorName.trim() || crag.name, t);
+    await db.runAsync(
+      `INSERT INTO route (id, sector_id, name, type, grade_label, grade_system, grade_index, created_at, updated_at)
+       VALUES (?,?,?,?,?,?,?,?,?)`,
+      [id, sectorId, r.name, r.type, r.gradeLabel, r.gradeSystem, r.gradeIndex, t, t],
+    );
+  });
+  return id;
+}
 
 /** Updates a route; a new sector name moves it to that sector of the same crag (created if needed). */
 export async function updateRoute(db: SQLiteDatabase, id: string, r: RouteInput): Promise<void> {

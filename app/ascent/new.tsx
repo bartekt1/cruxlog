@@ -16,10 +16,10 @@ import { Button, Chip, ChipRow, ErrorText, Field, HIT, Label, LinkButton, Sugges
 import { useSettings } from '../../src/ui/settingsStore';
 import { useTheme } from '../../src/ui/theme';
 
-type FieldName = 'route' | 'crag' | 'name' | 'grade' | 'date' | 'attempts';
+type FieldName = 'route' | 'crag' | 'name' | 'grade' | 'date' | 'attempts' | 'region';
 const FIELD_OF: Record<string, FieldName> = {
   'ascent.pickRoute': 'route', 'ascent.errors.crag': 'crag', 'ascent.errors.name': 'name', 'ascent.errors.grade': 'grade',
-  'ascent.errors.date': 'date', 'ascent.errors.attempts': 'attempts',
+  'ascent.errors.date': 'date', 'ascent.errors.attempts': 'attempts', 'ascent.errors.region': 'region',
 };
 
 // Also the edit screen: /ascent/new?id=<ascent> edits, /ascent/new?routeId=<route> starts on that route.
@@ -171,6 +171,7 @@ export default function NewAscent() {
     if (!route && creating) {
       const r = validateRouteDraft({ crag, sector, name, type, system, grade });
       if (!r.ok) return fail(r.error);
+      if (!existingCrag?.region_name && !region.trim()) return fail('ascent.errors.region');
       newRoute = r.value;
     }
     if (!route && !newRoute) return fail('ascent.pickRoute');
@@ -213,13 +214,13 @@ export default function NewAscent() {
       ) : creating ? (
         <View onLayout={(e) => { formY.current = e.nativeEvent.layout.y; }}>
           <View onLayout={(e) => { fieldY.current.region = e.nativeEvent.layout.y; }}>
-            <Text style={sub}>{t('edit.region')}</Text>
+            <Text style={sub}>{t('edit.regionRequired')}</Text>
             {existingCrag?.region_name ? (
               <Text style={{ color: th.ink, fontSize: 16, paddingVertical: 8 }}>{t('ascent.regionOfCrag', { region: existingCrag.region_name })}</Text>
             ) : (
               <>
                 <Field
-                  value={region} onChangeText={setRegion} placeholder={t('edit.regionPlaceholder')} accessibilityLabel={t('edit.region')}
+                  value={region} onChangeText={setRegion} placeholder={t('edit.regionPlaceholder')} accessibilityLabel={t('edit.region')} invalid={bad('region')}
                   onFocus={() => focusField('region')} onBlur={() => setFocus(null)}
                 />
                 <ChipRow>

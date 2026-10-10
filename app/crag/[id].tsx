@@ -3,10 +3,10 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, SectionList, Text, View } from 'react-native';
-import { getCrag, listCragRoutes, type CragDetail, type CragRouteRow } from '../../src/db/repo';
+import { getCrag, listCragRoutes, listSectors, type CragDetail, type CragRouteRow, type SectorRow } from '../../src/db/repo';
 import { formatGrade } from '../../src/domain/grades';
 import { IconButton } from '../../src/ui/icons';
-import { EmptyState, GradeBadge, Screen } from '../../src/ui/kit';
+import { Button, EmptyState, GradeBadge, Screen } from '../../src/ui/kit';
 import { useSettings } from '../../src/ui/settingsStore';
 import { useTheme } from '../../src/ui/theme';
 
@@ -19,6 +19,7 @@ export default function CragScreen() {
   const { routeSystem, boulderSystem } = useSettings();
   const [crag, setCrag] = useState<CragDetail | null>(null);
   const [routes, setRoutes] = useState<CragRouteRow[]>([]);
+  const [sectorRows, setSectorRows] = useState<SectorRow[]>([]);
 
   useFocusEffect(useCallback(() => {
     getCrag(db, id).then((c) => {
@@ -26,13 +27,17 @@ export default function CragScreen() {
       setCrag(c);
     });
     listCragRoutes(db, id).then(setRoutes);
+    listSectors(db, id).then(setSectorRows);
   }, [db, id, router]));
 
+  // Every sector, also empty ones, so a sector added without routes shows up.
   const sections = useMemo(() => {
     const bySector = new Map<string, CragRouteRow[]>();
     for (const r of routes) bySector.set(r.sector_id, [...(bySector.get(r.sector_id) ?? []), r]);
-    return [...bySector.values()].map((data) => ({ sectorId: data[0].sector_id, sector: data[0].sector_name, own: data[0].sector_source === 'user', data }));
-  }, [routes]);
+    return [...sectorRows]
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map((sec) => ({ sectorId: sec.id, sector: sec.name, own: sec.source === 'user', data: bySector.get(sec.id) ?? [] }));
+  }, [routes, sectorRows]);
 
   const status = (r: CragRouteRow) =>
     r.sends > 0 ? `✓ ${t('crags.sends', { count: r.sends })}` : r.ascents > 0 ? t('crags.tried', { count: r.ascents }) : '';
@@ -61,6 +66,14 @@ export default function CragScreen() {
               {crag.approach ? <Text style={{ color: th.muted }}>{t('crags.approach')}: {crag.approach}</Text> : null}
               <Text style={{ color: th.muted, fontSize: 12, marginTop: 4 }}>{t('crags.tapRoute')}</Text>
               {crag.source === 'user' ? null : <Text style={{ color: th.muted, fontSize: 12 }}>{t('edit.importedNote')}</Text>}
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                <View style={{ flex: 1 }}>
+                  <Button label={t('edit.addRoutes')} onPress={() => router.push({ pathname: '/route/new', params: { cragId: crag.id } })} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Button label={t('edit.addSector')} variant="plain" onPress={() => router.push({ pathname: '/sector/new', params: { cragId: crag.id } })} />
+                </View>
+              </View>
             </View>
           ) : null
         }
@@ -70,9 +83,14 @@ export default function CragScreen() {
             <Text accessibilityRole="header" style={{ flex: 1, color: th.muted, fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.8 }}>
               {section.sector}
             </Text>
+            <IconButton name="add-circle-outline" size={22} label={t('edit.addRouteInSector', { sector: section.sector })}
+              onPress={() => router.push({ pathname: '/route/new', params: { cragId: id, sector: section.sector } })} />
             {section.own ? <IconButton name="create-outline" size={20} label={t('edit.sectorTitle')} onPress={() => router.push(`/sector/${section.sectorId}`)} /> : null}
           </View>
         )}
+        renderSectionFooter={({ section }) =>
+          section.data.length ? null : <Text style={{ color: th.muted, fontSize: 12, paddingVertical: 8 }}>{t('edit.emptySector')}</Text>
+        }
         renderItem={({ item }) => (
           <Pressable
             onPress={() => router.push(`/route/${item.id}`)}

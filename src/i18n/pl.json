@@ -7,7 +7,7 @@
   "styles": { "os": "OS", "flash": "Flash", "rp": "RP", "pp": "PP", "tr": "TR", "attempt": "Próba" },
   "types": { "sport": "Sport", "boulder": "Boulder", "multipitch": "Wielowyciąg" },
   "journal": {
-    "empty": "Brak przejść", "emptyHint": "Dotknij „Dodaj”, aby zapisać pierwsze.", "attempts": "podejścia: {{count}}", "add": "Dodaj przejście", "addShort": "Dodaj",
+    "empty": "Brak przejść", "emptyHint": "Dotknij pomarańczowy „+” na dole, aby zapisać pierwsze.", "attempts": "podejścia: {{count}}", "add": "Dodaj przejście", "addShort": "Dodaj",
     "backupNever": "Nie masz jeszcze kopii zapasowej", "backupOld": "Ostatnia kopia: {{n}} dni temu", "backupHint": "Twoje przejścia są tylko w tym telefonie. Dotknij, aby zrobić kopię."
   },
   "ascent": {
@@ -24,7 +24,7 @@
     "errors": {
       "crag": "Podaj nazwę skały.", "name": "Podaj nazwę drogi.",
       "grade": "Takiej wyceny nie ma w wybranej skali. Przykład: {{example}}.",
-      "date": "Podaj prawdziwą datę w formacie RRRR-MM-DD.", "attempts": "Liczba podejść musi być liczbą całkowitą, co najmniej 1."
+      "date": "Podaj prawdziwą datę w formacie RRRR-MM-DD.", "region": "Wybierz albo wpisz rejon nowej skały.", "attempts": "Liczba podejść musi być liczbą całkowitą, co najmniej 1."
     }
   },
   "progress": {
@@ -44,13 +44,17 @@
   "edit": {
     "cragTitle": "Edycja skały", "newCragTitle": "Dodaj skałę", "routeTitle": "Edycja drogi", "routeTitleNamed": "Edytuj drogę {{name}}",
     "sectorTitle": "Edycja sektora", "regionTitle": "Edycja rejonu",
-    "name": "Nazwa", "region": "Rejon (opcjonalnie)", "regionPlaceholder": "np. Jura", "description": "Opis", "sector": "Sektor",
+    "name": "Nazwa", "region": "Rejon", "regionRequired": "Rejon", "cragName": "Nazwa skały", "sectors": "Sektory (opcjonalnie)",
+    "addAnotherSector": "+ Kolejny sektor", "sectorsHint": "Małe skały często nie mają sektorów; możesz je dodać później na ekranie skały.", "sectorOptional": "Opcjonalnie; puste = bez sektora",
+    "addRoutes": "+ Dodaj drogi", "addSector": "+ Dodaj sektor", "addRoutesTitle": "Dodaj drogi", "addSectorTitle": "Dodaj sektor", "addRouteInSector": "Dodaj drogę w sektorze {{sector}}",
+    "addCragInRegion": "Dodaj skałę w rejonie {{region}}", "emptySector": "Brak dróg. Dotknij +, aby dodać.", "addedRoutes": "Dodano: {{list}}",
+    "routeExists": "Ta skała ma już drogę „{{name}}” ({{sector}}).", "saveAndNext": "Zapisz i dodaj kolejną", "saveAndClose": "Zapisz i zamknij", "regionPlaceholder": "np. Jura", "description": "Opis", "sector": "Sektor",
     "deleteCrag": "Usuń skałę", "deleteRoute": "Usuń drogę", "deleteSector": "Usuń sektor", "deleteRegion": "Usuń rejon",
     "deleteTitle": "Usunąć „{{name}}”?", "deleteAlso": "Zostaną też usunięte:", "deleteSimple": "Tego nie można cofnąć.",
     "countSectors": "sektory: {{count}}", "countRoutes": "drogi: {{count}}", "countAscents": "Twoje przejścia: {{count}}",
     "importedNote": "Zaimportowane z pliku CSV. Aby to zmienić, popraw plik i zaimportuj go ponownie.",
     "regionDeleteHint": "Usunięcie rejonu nie usuwa skał; zostaną po prostu bez rejonu.",
-    "errors": { "name": "Podaj nazwę." }
+    "errors": { "name": "Podaj nazwę.", "region": "Wybierz albo wpisz rejon." }
   },
   "goals": {
     "title": "Cele", "count": "Liczba", "project": "Projekt", "wishlist": "Lista życzeń", "newTitle": "Nazwa celu", "target": "Cel (liczba)",

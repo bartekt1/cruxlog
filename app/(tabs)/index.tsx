@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Link, useFocusEffect, useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -40,7 +40,7 @@ export default function Journal() {
       <SectionList
         sections={sections}
         keyExtractor={(r) => r.id}
-        contentContainerStyle={{ paddingBottom: 96 }}
+        contentContainerStyle={{ paddingBottom: 32 }}
         ListHeaderComponent={
           backup.due ? (
             <Pressable
@@ -79,20 +79,6 @@ export default function Journal() {
           </Pressable>
         )}
       />
-      <Link href="/ascent/new" asChild>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={t('journal.add')}
-          style={({ pressed }) => ({
-            position: 'absolute', right: 16, bottom: 20, height: 56, paddingLeft: 16, paddingRight: 20, borderRadius: 28,
-            flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: th.accent,
-            elevation: 6, shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 6, shadowOffset: { width: 0, height: 3 }, opacity: pressed ? 0.85 : 1,
-          })}
-        >
-          <Ionicons name="add" size={30} color={th.onAccent} />
-          <Text style={{ color: th.onAccent, fontSize: 16, fontWeight: '700' }}>{t('journal.addShort')}</Text>
-        </Pressable>
-      </Link>
     </Screen>
   );
 }

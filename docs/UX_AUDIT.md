@@ -103,6 +103,16 @@ Severity: **H** blocks a task or loses/corrupts data, **M** slows a task or conf
 | F8 | No reminder to back up; data lives only on the phone | H | Fixed: Journal reminder after 30 days or when never backed up; last backup shown in Settings |
 | F9 | Year arrows could break after deleting all ascents of the shown year | L | Fixed |
 
+## Round 5 (crag building, after comparing theCrag, Mountain Project, KAYA)
+
+| # | Issue | Sev | Status |
+|---|---|---|---|
+| B1 | Routes and sectors could only be created while logging an ascent | H | Fixed: "+ Add routes" (several in a row) and "+ Add sector" on the crag screen, "+" per sector |
+| B2 | New crag form had no sectors; region optional | M | Fixed: region required, optional sectors in the form |
+| B3 | Crags without routes not found when logging | M | Fixed: search lists matching crags; tap opens the new-route form on that crag |
+| B4 | Empty sectors were invisible on the crag screen | M | Fixed: all sectors shown, empty ones with a hint |
+| B5 | "Add" button hard to see, especially in dark mode | H | Fixed: raised orange "+" in the middle of the tab bar, the only orange in the UI |
+
 ## Open items
 
 1. Edit a goal's title or target; link a project goal to a route.

@@ -7,7 +7,7 @@
   "styles": { "os": "OS", "flash": "Flash", "rp": "RP", "pp": "PP", "tr": "TR", "attempt": "Attempt" },
   "types": { "sport": "Sport", "boulder": "Boulder", "multipitch": "Multipitch" },
   "journal": {
-    "empty": "No ascents yet", "emptyHint": "Tap Add to log your first climb.", "attempts": "{{count}} tries", "add": "Log an ascent", "addShort": "Add",
+    "empty": "No ascents yet", "emptyHint": "Tap the orange + at the bottom to log your first climb.", "attempts": "{{count}} tries", "add": "Log an ascent", "addShort": "Add",
     "backupNever": "You have never made a backup", "backupOld": "Last backup {{n}} days ago", "backupHint": "Your climbs live only on this phone. Tap to export a backup."
   },
   "ascent": {
@@ -24,7 +24,7 @@
     "errors": {
       "crag": "Enter the crag name.", "name": "Enter the route name.",
       "grade": "This grade does not exist in the chosen system. Example: {{example}}.",
-      "date": "Enter a real date as YYYY-MM-DD.", "attempts": "Attempts must be a whole number, 1 or more."
+      "date": "Enter a real date as YYYY-MM-DD.", "region": "Choose or type the region of the new crag.", "attempts": "Attempts must be a whole number, 1 or more."
     }
   },
   "progress": {
@@ -44,13 +44,17 @@
   "edit": {
     "cragTitle": "Edit crag", "newCragTitle": "Add a crag", "routeTitle": "Edit route", "routeTitleNamed": "Edit route {{name}}",
     "sectorTitle": "Edit sector", "regionTitle": "Edit region",
-    "name": "Name", "region": "Region (optional)", "regionPlaceholder": "e.g. Jura", "description": "Description", "sector": "Sector",
+    "name": "Name", "region": "Region", "regionRequired": "Region", "cragName": "Crag name", "sectors": "Sectors (optional)",
+    "addAnotherSector": "+ Another sector", "sectorsHint": "Small crags often have no sectors; you can add them later on the crag screen.", "sectorOptional": "Optional; empty = no sector",
+    "addRoutes": "+ Add routes", "addSector": "+ Add sector", "addRoutesTitle": "Add routes", "addSectorTitle": "Add sector", "addRouteInSector": "Add a route in {{sector}}",
+    "addCragInRegion": "Add a crag in {{region}}", "emptySector": "No routes yet. Tap + to add one.", "addedRoutes": "Added: {{list}}",
+    "routeExists": "This crag already has \"{{name}}\" ({{sector}}).", "saveAndNext": "Save and add another", "saveAndClose": "Save and close", "regionPlaceholder": "e.g. Jura", "description": "Description", "sector": "Sector",
     "deleteCrag": "Delete crag", "deleteRoute": "Delete route", "deleteSector": "Delete sector", "deleteRegion": "Delete region",
     "deleteTitle": "Delete \"{{name}}\"?", "deleteAlso": "This also deletes:", "deleteSimple": "This cannot be undone.",
     "countSectors": "sectors: {{count}}", "countRoutes": "routes: {{count}}", "countAscents": "your ascents: {{count}}",
     "importedNote": "Imported from a CSV file. To change it, edit the file and import it again.",
     "regionDeleteHint": "Deleting a region keeps its crags; they just lose the region.",
-    "errors": { "name": "Enter a name." }
+    "errors": { "name": "Enter a name.", "region": "Choose or type a region." }
   },
   "goals": {
     "title": "Goals", "count": "Count", "project": "Project", "wishlist": "Wishlist", "newTitle": "Goal title", "target": "Target (number)",

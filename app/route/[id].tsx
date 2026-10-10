@@ -77,10 +77,10 @@ export default function RouteScreen() {
             <Pressable
               onPress={() => router.push({ pathname: '/ascent/new', params: { routeId: route.id } })}
               accessibilityRole="button"
-              style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: th.accent, borderRadius: 6, minHeight: 48, marginTop: 6, opacity: pressed ? 0.85 : 1 })}
+              style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: th.cta, borderRadius: 6, minHeight: 48, marginTop: 6, opacity: pressed ? 0.85 : 1 })}
             >
-              <Ionicons name="add" size={24} color={th.onAccent} />
-              <Text style={{ color: th.onAccent, fontWeight: '700', fontSize: 16 }}>{t('route.logAnother')}</Text>
+              <Ionicons name="add" size={24} color={th.onCta} />
+              <Text style={{ color: th.onCta, fontWeight: '700', fontSize: 16 }}>{t('route.logAnother')}</Text>
             </Pressable>
             {ascents.length ? <Text accessibilityRole="header" style={{ color: th.muted, fontSize: 12, fontWeight: '600', marginTop: 12, textTransform: 'uppercase', letterSpacing: 0.8 }}>{t('route.history')}</Text> : null}
           </View>

@@ -42,6 +42,10 @@ export default function Crags() {
               <Text accessibilityRole="header" style={{ flex: 1, color: th.muted, fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.8 }}>
                 {section.title}
               </Text>
+              {section.regionId ? (
+                <IconButton name="add-circle-outline" size={22} label={t('edit.addCragInRegion', { region: section.title })}
+                  onPress={() => router.push({ pathname: '/crag/edit', params: { region: section.title } })} />
+              ) : null}
               {section.own ? <IconButton name="create-outline" size={20} label={t('edit.regionTitle')} onPress={() => router.push(`/region/${section.regionId}`)} /> : null}
             </View>
           ) : null

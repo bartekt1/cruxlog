@@ -59,9 +59,19 @@ Write down the result of every step (OK / problem). Report problems with: step n
 3a. Year switcher: with an entry in the previous year, tap ‹ next to the year. Expected: stats and pyramids for that year; the activity calendar is shown only for the current year; › goes back; the arrow is greyed out where there are no more years.
 4. Change the grade system in Settings (for example KR -> FR). Expected: Journal and Progress show the same routes in the new system (VI.3 -> 6c).
 
+## 2e. Building a crag ("+" where the new thing goes)
+1. Crags tab -> "Add a crag". Expected order: Region (required, chips of existing regions), Crag name (required), Sectors (optional, "+ Another sector"), Description, Approach. Saving without a region shows "Choose or type a region."
+2. Fill region "Jura", name "Okiennik", sectors "Lewy" and "Prawy", save. Expected: the crag screen opens with sectors LEWY and PRAWY, each saying "No routes yet".
+3. On the Crags list, the "+" next to the JURA header opens "Add a crag" with Jura already filled in.
+4. Crag screen -> "+ Add routes": pick sector "Prawy", name "Rysa", grade, then "Save and add another". Expected: "Added: Rysa (...)" and an empty name field with sector and type kept. Add a second route, then "Save and close". Both routes are listed under PRAWY.
+5. The "+" next to a sector header opens "Add routes" with that sector selected. Typing a name that already exists on the crag shows a warning and does not save.
+6. "+ Add sector" adds an empty sector; adding "lewy" when "Lewy" exists does not create a second one.
+7. New ascent -> "Create a new route" with a new crag and no region: saving shows "Choose or type the region of the new crag."
+8. Search "Okiennik" in a new ascent before it has routes. Expected: it appears under "Crags"; tapping it opens the new-route form with crag and region filled in.
+
 ## 3b. Icons
 1. The bottom bar shows an icon above each tab name (book, chart, mountains, flag); the selected tab's icon is filled. No empty squares.
-2. Top right: a clear gear icon opens Settings. Journal: a green "Add" button with a + icon, bottom right.
+2. Top right: a clear gear icon opens Settings. In the middle of the bottom bar a raised orange "+" opens a new ascent from any tab, in light and dark mode. The route screen's "Log an ascent" button is orange too.
 
 ## 4. Crags and goals
 1. Crags tab. Expected: "Test Crag" with the number of routes. Tap it. Expected: the crag screen with routes grouped by sector; "Test Route 1" shows "✓ sends: 1" (green) or "tried: N". Tap the route. Expected: a new ascent form with this route already chosen.
