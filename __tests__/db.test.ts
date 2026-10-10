@@ -174,6 +174,12 @@ describe('suggestions and history', () => {
     await addAscent(db, ascent(r2, { partnerName: 'anna' }));
     expect(await listPartners(db)).toEqual(['Anna']);
   });
+  it('gives an existing crag without a region the region typed with a route', async () => {
+    const db = await freshDb();
+    await addUserRoute(db, route({ cragName: 'Okiennik' }));
+    await addUserRoute(db, route({ cragName: 'okiennik', regionName: 'Jura', name: 'Second' }));
+    expect(await listCragChoices(db)).toEqual([expect.objectContaining({ name: 'Okiennik', region_name: 'Jura' })]);
+  });
   it('gives a new crag the region typed with the route', async () => {
     const db = await freshDb();
     await addUserRoute(db, route({ cragName: 'Okiennik', regionName: 'Jura' }));

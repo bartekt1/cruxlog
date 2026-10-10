@@ -27,8 +27,10 @@ Write down the result of every step (OK / problem). Report problems with: step n
 ## 2a. Route search, suggestions, duplicates
 1. New ascent with an empty route field. Expected: "Recently climbed" lists up to 5 routes you logged last, newest first (none on a fresh install).
 2. Type "lysa", "ŁYSA" or "łysa" for a route or crag named "Łysa ...". Expected: it is found in every case; the list shrinks as you type and shows crag, sector and grade.
-3. Create a new route: in "Crag" start typing an existing crag. Expected: suggestions; pick one and its region is shown below. Type a new crag name. Expected: "New crag" and a Region field with suggestions of existing regions.
-4. Sector field: suggestions are the sectors of the chosen crag.
+3. Create a new route. Expected: labelled fields in this order: Region, Crag, Sector, Route name; region chips below the Region field.
+4. Tap a region chip, then start typing in Crag. Expected: crag suggestions (crags of that region first) appear right under the field and the field scrolls up so the keyboard does not cover them.
+5. Pick an existing crag with a region. Expected: Region shows "<region> (region of this crag)". Pick an existing crag without a region, choose a region and save. Expected: the crag now has that region (Crags tab groups it there).
+6. With an existing crag chosen, the Sector field shows chips of its sectors; tap one to fill it. For a new crag a hint says to type a sector or leave it empty.
 5. Type the name of a route that already exists on that crag (any case). Expected: a box "This crag already has ..." with "Use this route"; tapping it selects the existing route.
 6. Type "okiennik" when "Okiennik" exists and save. Expected: no second crag is created.
 7. Partner field: suggestions of partners, the most frequent first; "anna" and "Anna" are the same partner.

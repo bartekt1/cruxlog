@@ -13,7 +13,8 @@
   "ascent": {
     "title": "New ascent", "editTitle": "Edit ascent", "detailTitle": "Ascent", "notFound": "This ascent no longer exists.",
     "deleteTitle": "Delete ascent?", "deleteQuestion": "The ascent of \"{{name}}\" will be removed from your journal and stats.",
-    "pickDate": "Opens a calendar", "recent": "Recently climbed", "cragInRegion": "Region: {{region}}", "newCragHint": "New crag. You can add its region:",
+    "pickDate": "Opens a calendar", "recent": "Recently climbed", "regionOfCrag": "{{region}} (region of this crag)", "newCragHint": "New crag: it will be created when you save.", "cragPlaceholder": "Start typing to see crags",
+    "sectorPlaceholder": "e.g. Left wall", "noSectorsYet": "This crag has no sectors yet. Type a new one or leave empty.", "sectorNewCrag": "New crag: type a sector or leave empty.",
     "duplicate": "This crag already has \"{{name}}\" ({{sector}}, {{grade}}).", "useExisting": "Use this route", "route": "Route", "searchRoute": "Search by route, sector or crag", "newRoute": "Create a new route",
     "newRouteNamed": "Create route \"{{name}}\"", "noResults": "No routes match \"{{query}}\".",
     "style": "Style", "attempts": "Attempts", "rating": "Rating", "ratingStar": "{{n}} of 5", "partner": "Partner", "weather": "Conditions",

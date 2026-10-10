@@ -1,6 +1,6 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import {
@@ -131,6 +131,30 @@ export default function NewAscent() {
 
   const fail = (key: string) => setError({ key, field: FIELD_OF[key] });
 
+  // Scroll the focused field of the new-route form to the top, so its suggestions are not under the keyboard.
+  const scrollRef = useRef<ScrollView>(null);
+  const formY = useRef(0);
+  const fieldY = useRef<Record<string, number>>({});
+  function focusField(f: 'crag' | 'sector' | 'region' | 'name') {
+    if (f !== 'name') setFocus(f);
+    const y = formY.current + (fieldY.current[f] ?? 0);
+    setTimeout(() => scrollRef.current?.scrollTo({ y: Math.max(0, y - 8), animated: true }), 150);
+  }
+
+  // Crags offered while typing; when a region is chosen, its crags come first.
+  const cragOptions = suggest(crags, crag, (c) => c.name, (c) => [c.region_name ?? ''], 30)
+    .sort((a, b) => Number(!sameName(a.region_name ?? '', region)) - Number(!sameName(b.region_name ?? '', region)))
+    .slice(0, 5);
+
+  function pickCrag(c: CragChoice) {
+    setCrag(c.name);
+    if (c.region_name) setRegion(c.region_name);
+    setFocus(null);
+  }
+
+  const sub = { color: th.muted, fontSize: 12, marginTop: 12, marginBottom: 4 } as const;
+  const hint = { color: th.muted, fontSize: 12, marginTop: 4 } as const;
+
   async function save() {
     if (saving) return;
     setError(null);
@@ -162,6 +186,7 @@ export default function NewAscent() {
 
   return (
     <ScrollView
+      ref={scrollRef}
       style={{ backgroundColor: th.bg }}
       contentContainerStyle={{ padding: 16, paddingBottom: 48 }}
       keyboardShouldPersistTaps="handled"
@@ -178,55 +203,80 @@ export default function NewAscent() {
           <LinkButton label={t('common.change')} onPress={() => setRoute(null)} />
         </View>
       ) : creating ? (
-        <View style={{ gap: 8 }}>
-          <Field
-            value={crag} onChangeText={setCrag} placeholder={t('ascent.crag')} accessibilityLabel={t('ascent.crag')} invalid={bad('crag')} autoFocus
-            onFocus={() => setFocus('crag')} onBlur={() => setFocus(null)}
-          />
-          {focus === 'crag' ? (
-            <Suggestions
-              items={suggest(crags, crag, (c) => c.name, (c) => [c.region_name ?? ''], 5).filter((c) => !sameName(c.name, crag))
-                .map((c) => ({ key: c.id, title: c.name, subtitle: c.region_name ?? undefined }))}
-              onPick={(key) => { const c = crags.find((x) => x.id === key); if (c) setCrag(c.name); }}
+        <View onLayout={(e) => { formY.current = e.nativeEvent.layout.y; }}>
+          <View onLayout={(e) => { fieldY.current.region = e.nativeEvent.layout.y; }}>
+            <Text style={sub}>{t('edit.region')}</Text>
+            {existingCrag?.region_name ? (
+              <Text style={{ color: th.ink, fontSize: 16, paddingVertical: 8 }}>{t('ascent.regionOfCrag', { region: existingCrag.region_name })}</Text>
+            ) : (
+              <>
+                <Field
+                  value={region} onChangeText={setRegion} placeholder={t('edit.regionPlaceholder')} accessibilityLabel={t('edit.region')}
+                  onFocus={() => focusField('region')} onBlur={() => setFocus(null)}
+                />
+                <ChipRow>
+                  {suggest(regions.map((g) => g.name), region, (x) => x, () => [], 6).map((g) => (
+                    <Chip key={g} label={g} on={sameName(g, region)} onPress={() => setRegion(sameName(g, region) ? '' : g)} />
+                  ))}
+                </ChipRow>
+              </>
+            )}
+          </View>
+
+          <View onLayout={(e) => { fieldY.current.crag = e.nativeEvent.layout.y; }}>
+            <Text style={sub}>{t('ascent.crag')}</Text>
+            <Field
+              value={crag} onChangeText={setCrag} placeholder={t('ascent.cragPlaceholder')} accessibilityLabel={t('ascent.crag')} invalid={bad('crag')}
+              onFocus={() => focusField('crag')} onBlur={() => setFocus(null)}
             />
-          ) : null}
-          {existingCrag ? (
-            existingCrag.region_name ? <Text style={{ color: th.muted, fontSize: 12 }}>{t('ascent.cragInRegion', { region: existingCrag.region_name })}</Text> : null
-          ) : crag.trim() ? (
-            <>
-              <Text style={{ color: th.muted, fontSize: 12 }}>{t('ascent.newCragHint')}</Text>
-              <Field
-                value={region} onChangeText={setRegion} placeholder={t('edit.region')} accessibilityLabel={t('edit.region')}
-                onFocus={() => setFocus('region')} onBlur={() => setFocus(null)}
+            {focus === 'crag' || (crag.trim() && !existingCrag) ? (
+              <Suggestions
+                items={cragOptions.filter((c) => !sameName(c.name, crag)).map((c) => ({ key: c.id, title: c.name, subtitle: c.region_name ?? undefined }))}
+                onPick={(key) => { const c = crags.find((x) => x.id === key); if (c) pickCrag(c); }}
               />
-              {focus === 'region' ? <Suggestions items={nameItems(regions.map((g) => g.name), region)} onPick={setRegion} /> : null}
-            </>
-          ) : null}
-          <Field
-            value={sector} onChangeText={setSector} placeholder={t('ascent.sector')} accessibilityLabel={t('ascent.sector')}
-            onFocus={() => setFocus('sector')} onBlur={() => setFocus(null)}
-          />
-          {focus === 'sector' ? <Suggestions items={nameItems(sectorNames, sector)} onPick={setSector} /> : null}
-          <Field value={name} onChangeText={setName} placeholder={t('ascent.name')} accessibilityLabel={t('ascent.name')} invalid={bad('name')} />
+            ) : null}
+            {crag.trim() && !existingCrag ? <Text style={hint}>{t('ascent.newCragHint')}</Text> : null}
+          </View>
+
+          <View onLayout={(e) => { fieldY.current.sector = e.nativeEvent.layout.y; }}>
+            <Text style={sub}>{t('ascent.sector')}</Text>
+            <Field
+              value={sector} onChangeText={setSector} placeholder={t('ascent.sectorPlaceholder')} accessibilityLabel={t('ascent.sector')}
+              onFocus={() => focusField('sector')} onBlur={() => setFocus(null)}
+            />
+            {sectorNames.length ? (
+              <ChipRow>
+                {suggest(sectorNames, sector, (x) => x, () => [], 8).map((x) => (
+                  <Chip key={x} label={x} on={sameName(x, sector)} onPress={() => setSector(sameName(x, sector) ? '' : x)} />
+                ))}
+              </ChipRow>
+            ) : crag.trim() ? <Text style={hint}>{existingCrag ? t('ascent.noSectorsYet') : t('ascent.sectorNewCrag')}</Text> : null}
+          </View>
+
+          <View onLayout={(e) => { fieldY.current.name = e.nativeEvent.layout.y; }}>
+            <Text style={sub}>{t('ascent.name')}</Text>
+            <Field value={name} onChangeText={setName} accessibilityLabel={t('ascent.name')} invalid={bad('name')} onFocus={() => focusField('name')} />
+          </View>
           {duplicate ? (
-            <View style={{ padding: 12, borderRadius: 6, backgroundColor: th.soft, gap: 4 }}>
+            <View style={{ padding: 12, borderRadius: 6, backgroundColor: th.soft, gap: 4, marginTop: 8 }}>
               <Text style={{ color: th.ink }}>
                 {t('ascent.duplicate', { name: duplicate.name, sector: duplicate.sector_name, grade: formatGrade(duplicate.grade_index, duplicate.grade_system, duplicate.type) })}
               </Text>
               <LinkButton label={t('ascent.useExisting')} onPress={pickDuplicate} />
             </View>
           ) : null}
-          <Text style={{ color: th.muted, fontSize: 12 }}>{t('ascent.type')}</Text>
+          <Text style={sub}>{t('ascent.type')}</Text>
           <ChipRow>
             {(['sport', 'boulder', 'multipitch'] as RouteType[]).map((x) => <Chip key={x} label={t(`types.${x}`)} on={type === x} onPress={() => pickType(x)} />)}
           </ChipRow>
-          <Text style={{ color: th.muted, fontSize: 12 }}>{t('ascent.gradeSystem')}</Text>
+          <Text style={sub}>{t('ascent.gradeSystem')}</Text>
           <ChipRow>
             {systemsFor(type).map((s) => <Chip key={s} label={s.toUpperCase()} on={system === s} onPress={() => setSystem(s)} />)}
           </ChipRow>
+          <Text style={sub}>{t('ascent.grade')}</Text>
           <Field
             value={grade} onChangeText={setGrade} invalid={bad('grade')} autoCapitalize="characters" autoCorrect={false}
-            placeholder={`${t('ascent.grade')} (${t('ascent.gradeExample', { example: gradeExample(system, type) })})`} accessibilityLabel={t('ascent.grade')}
+            placeholder={t('ascent.gradeExample', { example: gradeExample(system, type) })} accessibilityLabel={t('ascent.grade')}
           />
           <LinkButton label={t('common.cancel')} onPress={() => setCreating(false)} />
         </View>

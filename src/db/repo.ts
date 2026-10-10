@@ -173,6 +173,12 @@ export async function addUserRoute(db: SQLiteDatabase, r: NewRoute): Promise<str
       crag = { id: newId() };
       const regionId = await regionIdFor(db, r.regionName ?? '', t);
       await db.runAsync('INSERT INTO crag (id, region_id, name, created_at, updated_at) VALUES (?,?,?,?,?)', [crag.id, regionId, r.cragName, t, t]);
+    } else if (r.regionName?.trim()) {
+      // An existing crag without a region gets the one typed with the route; an existing region is never changed here.
+      const cur = await db.getFirstAsync<{ region_id: string | null }>('SELECT region_id FROM crag WHERE id = ?', [crag.id]);
+      if (cur && !cur.region_id) {
+        await db.runAsync('UPDATE crag SET region_id = ?, updated_at = ? WHERE id = ?', [await regionIdFor(db, r.regionName, t), t, crag.id]);
+      }
     }
     const sectorId = await sectorIdFor(db, crag.id, r.sectorName, t);
     await db.runAsync(

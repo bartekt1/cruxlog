@@ -13,7 +13,8 @@
   "ascent": {
     "title": "Nowe przejście", "editTitle": "Edycja przejścia", "detailTitle": "Przejście", "notFound": "To przejście już nie istnieje.",
     "deleteTitle": "Usunąć przejście?", "deleteQuestion": "Przejście drogi „{{name}}” zniknie z dziennika i statystyk.",
-    "pickDate": "Otwiera kalendarz", "recent": "Ostatnio wspinane", "cragInRegion": "Rejon: {{region}}", "newCragHint": "Nowa skała. Możesz dodać jej rejon:",
+    "pickDate": "Otwiera kalendarz", "recent": "Ostatnio wspinane", "regionOfCrag": "{{region}} (rejon tej skały)", "newCragHint": "Nowa skała: zostanie utworzona przy zapisie.", "cragPlaceholder": "Zacznij pisać, aby zobaczyć skały",
+    "sectorPlaceholder": "np. Lewa ściana", "noSectorsYet": "Ta skała nie ma jeszcze sektorów. Wpisz nowy albo zostaw puste.", "sectorNewCrag": "Nowa skała: wpisz sektor albo zostaw puste.",
     "duplicate": "Ta skała ma już drogę „{{name}}” ({{sector}}, {{grade}}).", "useExisting": "Użyj tej drogi", "route": "Droga", "searchRoute": "Szukaj po drodze, sektorze lub skale", "newRoute": "Utwórz nową drogę",
     "newRouteNamed": "Utwórz drogę „{{name}}”", "noResults": "Brak dróg pasujących do „{{query}}”.",
     "style": "Styl", "attempts": "Podejścia", "rating": "Ocena", "ratingStar": "{{n}} z 5", "partner": "Partner", "weather": "Warunki",
