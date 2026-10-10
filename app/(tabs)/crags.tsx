@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, Text, View } from 'react-native';
 import { listCrags, type CragRow } from '../../src/db/repo';
-import { Screen } from '../../src/ui/kit';
+import { EmptyState, Screen } from '../../src/ui/kit';
 import { useTheme } from '../../src/ui/theme';
 
 export default function Crags() {
@@ -19,7 +19,7 @@ export default function Crags() {
       <FlatList
         data={rows}
         keyExtractor={(r) => r.id}
-        ListEmptyComponent={<Text style={{ color: th.muted, marginTop: 24 }}>{t('crags.empty')}</Text>}
+        ListEmptyComponent={<EmptyState title={t('crags.empty')} hint={t('crags.emptyHint')} />}
         renderItem={({ item }) => (
           <View style={{ paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: th.line }}>
             <Text style={{ color: th.ink, fontWeight: '600', fontSize: 16 }}>{item.name}</Text>

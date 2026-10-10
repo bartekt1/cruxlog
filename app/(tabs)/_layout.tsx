@@ -1,6 +1,7 @@
 import { Link, Tabs } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Text } from 'react-native';
+import { Pressable, Text } from 'react-native';
+import { HIT } from '../../src/ui/kit';
 import { useTheme } from '../../src/ui/theme';
 
 export default function TabsLayout() {
@@ -10,12 +11,15 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: th.accent,
+        tabBarInactiveTintColor: th.muted,
         tabBarStyle: { backgroundColor: th.surface, borderTopColor: th.line },
         headerStyle: { backgroundColor: th.surface },
         headerTintColor: th.ink,
         headerRight: () => (
-          <Link href="/settings" style={{ marginRight: 16 }}>
-            <Text style={{ color: th.accent }}>⚙</Text>
+          <Link href="/settings" asChild>
+            <Pressable hitSlop={HIT} accessibilityRole="button" accessibilityLabel={t('settings.title')} style={{ marginRight: 12, padding: 6 }}>
+              <Text style={{ color: th.accent, fontSize: 22 }}>⚙</Text>
+            </Pressable>
           </Link>
         ),
       }}

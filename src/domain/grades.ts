@@ -97,3 +97,8 @@ export const ASCENT_STYLES: AscentStyle[] = ['os', 'flash', 'rp', 'pp', 'tr', 'a
 export function isSend(style: AscentStyle): boolean {
   return style !== 'attempt';
 }
+
+/** A typical mid-range grade in the given system, used as a hint in forms. */
+export function gradeExample(system: GradeSystem, type: RouteType): string {
+  return formatGrade(isBoulder(type) ? 5 : 9, system, type);
+}

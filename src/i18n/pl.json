@@ -1,26 +1,47 @@
 {
   "tabs": { "journal": "Dziennik", "progress": "Postępy", "crags": "Skały", "goals": "Cele" },
-  "common": { "save": "Zapisz", "cancel": "Anuluj", "add": "Dodaj", "search": "Szukaj", "none": "Na razie pusto" },
+  "common": {
+    "save": "Zapisz", "saving": "Zapisywanie…", "cancel": "Anuluj", "add": "Dodaj", "change": "Zmień", "search": "Szukaj", "none": "Na razie pusto",
+    "today": "Dziś", "yesterday": "Wczoraj", "failed": "Coś poszło nie tak: {{message}}"
+  },
   "styles": { "os": "OS", "flash": "Flash", "rp": "RP", "pp": "PP", "tr": "TR", "attempt": "Próba" },
   "types": { "sport": "Sport", "boulder": "Boulder", "multipitch": "Wielowyciąg" },
-  "journal": { "empty": "Brak przejść. Dotknij +, aby dodać pierwsze.", "attempts": "podejścia: {{count}}" },
+  "journal": {
+    "empty": "Brak przejść", "emptyHint": "Dotknij +, aby dodać pierwsze.", "attempts": "podejścia: {{count}}", "add": "Dodaj przejście"
+  },
   "ascent": {
-    "title": "Nowe przejście", "route": "Droga", "searchRoute": "Szukaj dróg", "newRoute": "Utwórz nową drogę",
-    "style": "Styl", "attempts": "Podejścia", "rating": "Ocena", "partner": "Partner", "weather": "Warunki",
-    "notes": "Notatka", "date": "Data", "crag": "Skała", "sector": "Sektor", "name": "Nazwa", "grade": "Wycena", "type": "Typ",
-    "pickRoute": "Najpierw wybierz drogę"
+    "title": "Nowe przejście", "route": "Droga", "searchRoute": "Szukaj po drodze, sektorze lub skale", "newRoute": "Utwórz nową drogę",
+    "newRouteNamed": "Utwórz drogę „{{name}}”", "noResults": "Brak dróg pasujących do „{{query}}”.",
+    "style": "Styl", "attempts": "Podejścia", "rating": "Ocena", "ratingStar": "{{n}} z 5", "partner": "Partner", "weather": "Warunki",
+    "notes": "Notatka", "date": "Data", "datePlaceholder": "RRRR-MM-DD", "crag": "Skała", "sector": "Sektor (opcjonalnie)", "name": "Nazwa drogi",
+    "grade": "Wycena", "gradeExample": "np. {{example}}", "type": "Typ", "gradeSystem": "Skala wycen",
+    "pickRoute": "Najpierw wybierz drogę",
+    "errors": {
+      "crag": "Podaj nazwę skały.", "name": "Podaj nazwę drogi.",
+      "grade": "Takiej wyceny nie ma w wybranej skali. Przykład: {{example}}.",
+      "date": "Podaj prawdziwą datę w formacie RRRR-MM-DD.", "attempts": "Liczba podejść musi być liczbą całkowitą, co najmniej 1."
+    }
   },
   "progress": {
     "title": "Postępy", "sends": "Przejścia", "days": "Dni na skale", "hardestRoute": "Najtrudniejsza droga", "hardestBoulder": "Najtrudniejszy boulder",
-    "pyramidRoutes": "Piramida dróg", "pyramidBoulders": "Piramida boulderów", "activity": "Aktywność"
+    "pyramidRoutes": "Piramida dróg", "pyramidBoulders": "Piramida boulderów", "activity": "Aktywność (ostatnie 18 tygodni)",
+    "empty": "Brak przejść w {{year}}", "emptyHint": "Dodaj przejście w Dzienniku, aby zobaczyć statystyki.", "noSends": "Brak przejść w tym roku.",
+    "legendNone": "Bez wspinania", "legendSome": "1–2 przejścia", "legendMany": "3 i więcej"
   },
-  "crags": { "title": "Skały", "routes": "drogi: {{count}}", "empty": "Brak skał. Zaimportuj CSV w ustawieniach lub dodaj nową drogę." },
-  "goals": { "title": "Cele", "count": "Liczba", "project": "Projekt", "wishlist": "Lista życzeń", "newTitle": "Nazwa celu", "target": "Cel" },
+  "crags": { "title": "Skały", "routes": "Drogi: {{count}}", "empty": "Brak skał", "emptyHint": "Zaimportuj CSV w ustawieniach lub utwórz drogę przy dodawaniu przejścia." },
+  "goals": {
+    "title": "Cele", "count": "Liczba", "project": "Projekt", "wishlist": "Lista życzeń", "newTitle": "Nazwa celu", "target": "Cel (liczba)",
+    "kind": "Rodzaj", "empty": "Brak celów", "emptyHint": "Dodaj roczny cel, projekt albo drogę marzeń.",
+    "errors": { "title": "Podaj nazwę celu.", "target": "Cel musi być liczbą całkowitą, co najmniej 1." }
+  },
   "settings": {
     "title": "Ustawienia", "language": "Język", "routeGrades": "Wyceny dróg", "boulderGrades": "Wyceny boulderów",
-    "backup": "Kopia zapasowa", "export": "Eksportuj kopię", "import": "Importuj kopię", "csv": "Importuj skały z CSV",
+    "backup": "Kopia zapasowa", "backupHelp": "Eksport zapisuje wszystkie dane w jednym pliku. Import scala plik z aplikacją; nowsze wpisy wygrywają, nic nie jest usuwane.",
+    "export": "Eksportuj kopię", "import": "Importuj kopię", "csv": "Importuj skały z CSV",
     "csvHelp": "Wybierz crags.csv, routes.csv oraz opcjonalnie sectors.csv i pitches.csv.",
     "importDone": "Zaimportowano rekordów: {{count}}.", "csvDone": "Zaimportowano: skały {{crags}}, sektory {{sectors}}, drogi {{routes}}, wyciągi {{pitches}}.",
-    "csvErrors": "Znaleziono problemów: {{count}}. Nic nie zaimportowano.", "failed": "Coś poszło nie tak: {{message}}"
+    "csvErrors": "Znaleziono problemów: {{count}}. Nic nie zaimportowano.", "csvMissing": "Wymagane są crags.csv i routes.csv. Wybrano: {{files}}.",
+    "notBackup": "Ten plik nie jest kopią zapasową Cruxlog.",
+    "done": "Gotowe", "problem": "Problem"
   }
 }
