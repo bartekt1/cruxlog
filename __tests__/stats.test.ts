@@ -1,5 +1,5 @@
 import { parseGrade } from '../src/domain/grades';
-import { activityByDay, pyramid, yearStats, type StatAscent } from '../src/domain/stats';
+import { activityByDay, ascentYears, countGoalProgress, pyramid, yearStats, type StatAscent } from '../src/domain/stats';
 
 const g = (l: string) => parseGrade(l, 'kr', 'sport');
 const data: StatAscent[] = [
@@ -24,5 +24,19 @@ describe('stats', () => {
   });
   it('groups by day', () => {
     expect(activityByDay(data).get('2026-05-01')).toBe(2);
+  });
+});
+
+describe('ascentYears', () => {
+  it('lists years with ascents and the current year, newest first', () => {
+    expect(ascentYears(data, 2027)).toEqual([2027, 2026, 2025]);
+    expect(ascentYears([], 2026)).toEqual([2026]);
+  });
+});
+
+describe('countGoalProgress', () => {
+  it('caps the bar at 100% and marks the goal reached', () => {
+    expect(countGoalProgress(200, 50)).toEqual({ value: 50, target: 200, ratio: 0.25, reached: false });
+    expect(countGoalProgress(10, 12)).toEqual({ value: 12, target: 10, ratio: 1, reached: true });
   });
 });

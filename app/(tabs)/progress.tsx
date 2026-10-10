@@ -2,12 +2,12 @@ import { useFocusEffect } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { listAscents } from '../../src/db/repo';
 import { isoDate } from '../../src/domain/dates';
 import { BOULDER_LADDER, ROUTE_LADDER, formatGrade } from '../../src/domain/grades';
-import { activityByDay, pyramid, yearStats, type StatAscent } from '../../src/domain/stats';
-import { EmptyState, Label, Screen } from '../../src/ui/kit';
+import { activityByDay, ascentYears, pyramid, yearStats, type StatAscent } from '../../src/domain/stats';
+import { EmptyState, HIT, Label, Screen } from '../../src/ui/kit';
 import { useSettings } from '../../src/ui/settingsStore';
 import { useTheme } from '../../src/ui/theme';
 
@@ -65,13 +65,32 @@ function Calendar({ days }: { days: Map<string, number> }) {
   );
 }
 
+function YearArrow({ label, hint, target, onPress }: { label: string; hint: string; target: number | undefined; onPress: (y: number) => void }) {
+  const th = useTheme();
+  const disabled = target == null;
+  return (
+    <Pressable
+      onPress={() => target != null && onPress(target)}
+      disabled={disabled}
+      hitSlop={HIT}
+      accessibilityRole="button"
+      accessibilityLabel={hint}
+      accessibilityState={{ disabled }}
+      style={{ paddingHorizontal: 12, paddingVertical: 4 }}
+    >
+      <Text style={{ fontSize: 28, color: disabled ? th.line : th.accent }}>{label}</Text>
+    </Pressable>
+  );
+}
+
 export default function Progress() {
   const db = useSQLiteContext();
   const { t } = useTranslation();
   const th = useTheme();
   const { routeSystem, boulderSystem } = useSettings();
   const [ascents, setAscents] = useState<StatAscent[]>([]);
-  const year = new Date().getFullYear();
+  const currentYear = new Date().getFullYear();
+  const [year, setYear] = useState(currentYear);
 
   useFocusEffect(useCallback(() => {
     listAscents(db).then((rows) => setAscents(rows.map((r) => ({ date: r.date, type: r.type, gradeIndex: r.grade_index, style: r.style }))));
@@ -81,6 +100,7 @@ export default function Progress() {
   const routes = useMemo(() => pyramid(ascents, year, 'route'), [ascents, year]);
   const boulders = useMemo(() => pyramid(ascents, year, 'boulder'), [ascents, year]);
   const days = useMemo(() => activityByDay(ascents), [ascents]);
+  const years = useMemo(() => ascentYears(ascents, currentYear), [ascents, currentYear]);
 
   const tile = (value: string, label: string) => (
     <View accessible accessibilityLabel={`${label}: ${value}`} style={{ flex: 1, backgroundColor: th.soft, borderRadius: 6, padding: 10 }}>
@@ -92,7 +112,11 @@ export default function Progress() {
   return (
     <Screen>
       <ScrollView contentContainerStyle={{ paddingVertical: 16 }}>
-        <Text accessibilityRole="header" style={{ color: th.ink, fontSize: 18, fontWeight: '700' }}>{year}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 24 }}>
+          <YearArrow label="‹" hint={t('progress.prevYear')} target={years[years.indexOf(year) + 1]} onPress={setYear} />
+          <Text accessibilityRole="header" style={{ color: th.ink, fontSize: 20, fontWeight: '700', minWidth: 64, textAlign: 'center' }}>{year}</Text>
+          <YearArrow label="›" hint={t('progress.nextYear')} target={years[years.indexOf(year) - 1]} onPress={setYear} />
+        </View>
         {stats.sends === 0 ? <EmptyState title={t('progress.empty', { year })} hint={t('progress.emptyHint')} /> : null}
         <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
           {tile(String(stats.sends), t('progress.sends'))}
@@ -106,8 +130,12 @@ export default function Progress() {
         <Pyramid data={routes} kind="route" />
         <Label>{t('progress.pyramidBoulders')}</Label>
         <Pyramid data={boulders} kind="boulder" />
-        <Label>{t('progress.activity')}</Label>
-        <Calendar days={days} />
+        {year === currentYear ? (
+          <>
+            <Label>{t('progress.activity')}</Label>
+            <Calendar days={days} />
+          </>
+        ) : null}
       </ScrollView>
     </Screen>
   );

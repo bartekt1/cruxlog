@@ -38,27 +38,71 @@ export type NewAscent = {
   notes: string; partnerName: string; weather: string;
 };
 
+async function partnerId(db: SQLiteDatabase, partnerName: string, t: number): Promise<string | null> {
+  const name = partnerName.trim();
+  if (!name) return null;
+  const existing = await db.getFirstAsync<{ id: string }>('SELECT id FROM partner WHERE name = ? AND deleted_at IS NULL', [name]);
+  if (existing) return existing.id;
+  const id = newId();
+  await db.runAsync('INSERT INTO partner (id, name, created_at, updated_at) VALUES (?,?,?,?)', [id, name, t, t]);
+  return id;
+}
+
 export async function addAscent(db: SQLiteDatabase, a: NewAscent): Promise<string> {
   const id = newId();
   const t = now();
   await db.withTransactionAsync(async () => {
-    let partnerId: string | null = null;
-    const name = a.partnerName.trim();
-    if (name) {
-      const existing = await db.getFirstAsync<{ id: string }>(
-        'SELECT id FROM partner WHERE name = ? AND deleted_at IS NULL', [name]);
-      partnerId = existing?.id ?? newId();
-      if (!existing) {
-        await db.runAsync('INSERT INTO partner (id, name, created_at, updated_at) VALUES (?,?,?,?)', [partnerId, name, t, t]);
-      }
-    }
+    const pid = await partnerId(db, a.partnerName, t);
     await db.runAsync(
       `INSERT INTO ascent (id, route_id, date, style, attempts, rating, notes, partner_id, weather, created_at, updated_at)
        VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
-      [id, a.routeId, a.date, a.style, a.attempts, a.rating, a.notes, partnerId, a.weather, t, t],
+      [id, a.routeId, a.date, a.style, a.attempts, a.rating, a.notes, pid, a.weather, t, t],
     );
   });
   return id;
+}
+
+export async function updateAscent(db: SQLiteDatabase, id: string, a: NewAscent): Promise<void> {
+  const t = now();
+  await db.withTransactionAsync(async () => {
+    const pid = await partnerId(db, a.partnerName, t);
+    await db.runAsync(
+      `UPDATE ascent SET route_id = ?, date = ?, style = ?, attempts = ?, rating = ?, notes = ?, partner_id = ?, weather = ?, updated_at = ?
+       WHERE id = ?`,
+      [a.routeId, a.date, a.style, a.attempts, a.rating, a.notes, pid, a.weather, t, id],
+    );
+  });
+}
+
+/** Soft delete: the row stays (with deleted_at) so backups and a later sync carry the deletion. */
+export async function deleteAscent(db: SQLiteDatabase, id: string): Promise<void> {
+  const t = now();
+  await db.runAsync('UPDATE ascent SET deleted_at = ?, updated_at = ? WHERE id = ?', [t, t, id]);
+}
+
+export type AscentDetail = AscentRow & { weather: string; route: RouteRow };
+
+export async function getAscent(db: SQLiteDatabase, id: string): Promise<AscentDetail | null> {
+  const a = await db.getFirstAsync<AscentRow & { weather: string }>(
+    `SELECT a.id, a.date, a.style, a.attempts, a.rating, a.notes, a.weather, r.id AS route_id, r.name AS route_name, r.type,
+            r.grade_index, c.name AS crag_name, p.name AS partner_name
+     FROM ascent a JOIN route r ON r.id = a.route_id JOIN sector s ON s.id = r.sector_id JOIN crag c ON c.id = s.crag_id
+     LEFT JOIN partner p ON p.id = a.partner_id
+     WHERE a.id = ? AND a.deleted_at IS NULL`,
+    [id],
+  );
+  if (!a) return null;
+  const route = await getRoute(db, a.route_id);
+  return route ? { ...a, route } : null;
+}
+
+export async function getRoute(db: SQLiteDatabase, id: string): Promise<RouteRow | null> {
+  return db.getFirstAsync<RouteRow>(
+    `SELECT r.id, r.name, r.type, r.grade_label, r.grade_system, r.grade_index, s.name AS sector_name, c.name AS crag_name
+     FROM route r JOIN sector s ON s.id = r.sector_id JOIN crag c ON c.id = s.crag_id
+     WHERE r.id = ?`,
+    [id],
+  );
 }
 
 export type NewRoute = { cragName: string; sectorName: string; name: string; type: RouteType; gradeLabel: string; gradeSystem: GradeSystem; gradeIndex: number };
@@ -99,15 +143,50 @@ export async function listCrags(db: SQLiteDatabase): Promise<CragRow[]> {
   );
 }
 
+export type CragDetail = { id: string; name: string; description: string; approach: string; region: string | null };
+
+export async function getCrag(db: SQLiteDatabase, id: string): Promise<CragDetail | null> {
+  return db.getFirstAsync<CragDetail>(
+    `SELECT c.id, c.name, c.description, c.approach, g.name AS region
+     FROM crag c LEFT JOIN region g ON g.id = c.region_id WHERE c.id = ? AND c.deleted_at IS NULL`,
+    [id],
+  );
+}
+
+export type CragRouteRow = RouteRow & { sector_id: string; ascents: number; sends: number };
+
+/** Routes of a crag, by sector, with how many times the user climbed and sent each. */
+export async function listCragRoutes(db: SQLiteDatabase, cragId: string): Promise<CragRouteRow[]> {
+  return db.getAllAsync<CragRouteRow>(
+    `SELECT r.id, r.name, r.type, r.grade_label, r.grade_system, r.grade_index, s.id AS sector_id, s.name AS sector_name, c.name AS crag_name,
+            (SELECT COUNT(*) FROM ascent a WHERE a.route_id = r.id AND a.deleted_at IS NULL) AS ascents,
+            (SELECT COUNT(*) FROM ascent a WHERE a.route_id = r.id AND a.deleted_at IS NULL AND a.style <> 'attempt') AS sends
+     FROM route r JOIN sector s ON s.id = r.sector_id JOIN crag c ON c.id = s.crag_id
+     WHERE c.id = ? AND r.deleted_at IS NULL AND s.deleted_at IS NULL
+     ORDER BY s.name, r.name`,
+    [cragId],
+  );
+}
+
 export type GoalRow = { id: string; kind: string; title: string; target: number | null; done_at: number | null };
 
 export async function listGoals(db: SQLiteDatabase): Promise<GoalRow[]> {
-  return db.getAllAsync<GoalRow>('SELECT id, kind, title, target, done_at FROM goal WHERE deleted_at IS NULL ORDER BY created_at DESC');
+  return db.getAllAsync<GoalRow>('SELECT id, kind, title, target, done_at FROM goal WHERE deleted_at IS NULL ORDER BY done_at IS NOT NULL, created_at DESC');
 }
 
 export async function addGoal(db: SQLiteDatabase, kind: 'count' | 'project' | 'wishlist', title: string, target: number | null): Promise<void> {
   const t = now();
   await db.runAsync('INSERT INTO goal (id, kind, title, target, created_at, updated_at) VALUES (?,?,?,?,?,?)', [newId(), kind, title, target, t, t]);
+}
+
+export async function setGoalDone(db: SQLiteDatabase, id: string, done: boolean): Promise<void> {
+  const t = now();
+  await db.runAsync('UPDATE goal SET done_at = ?, updated_at = ? WHERE id = ?', [done ? t : null, t, id]);
+}
+
+export async function deleteGoal(db: SQLiteDatabase, id: string): Promise<void> {
+  const t = now();
+  await db.runAsync('UPDATE goal SET deleted_at = ?, updated_at = ? WHERE id = ?', [t, t, id]);
 }
 
 /** Writes a validated import plan. Re-importing the same keys updates existing rows. */

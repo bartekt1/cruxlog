@@ -46,7 +46,7 @@ export function Chip({ label, on, onPress }: { label: string; on?: boolean; onPr
   );
 }
 
-export function Button({ label, onPress, variant = 'primary', disabled }: { label: string; onPress: () => void; variant?: 'primary' | 'plain'; disabled?: boolean }) {
+export function Button({ label, onPress, variant = 'primary', disabled }: { label: string; onPress: () => void; variant?: 'primary' | 'plain' | 'danger'; disabled?: boolean }) {
   const t = useTheme();
   const primary = variant === 'primary';
   return (
@@ -55,9 +55,9 @@ export function Button({ label, onPress, variant = 'primary', disabled }: { labe
       disabled={disabled}
       accessibilityRole="button"
       accessibilityState={{ disabled: !!disabled }}
-      style={({ pressed }) => ({ backgroundColor: primary ? t.accent : 'transparent', borderWidth: primary ? 0 : 1, borderColor: t.outline, borderRadius: 6, minHeight: 48, paddingHorizontal: 12, alignItems: 'center', justifyContent: 'center', marginTop: 12, opacity: disabled ? 0.5 : pressed ? 0.8 : 1 })}
+      style={({ pressed }) => ({ backgroundColor: primary ? t.accent : 'transparent', borderWidth: primary ? 0 : 1, borderColor: variant === 'danger' ? t.warn : t.outline, borderRadius: 6, minHeight: 48, paddingHorizontal: 12, alignItems: 'center', justifyContent: 'center', marginTop: 12, opacity: disabled ? 0.5 : pressed ? 0.8 : 1 })}
     >
-      <Text style={{ color: primary ? t.onAccent : t.ink, fontWeight: '600', fontSize: 16 }}>{label}</Text>
+      <Text style={{ color: primary ? t.onAccent : variant === 'danger' ? t.warn : t.ink, fontWeight: '600', fontSize: 16 }}>{label}</Text>
     </Pressable>
   );
 }

@@ -1,7 +1,7 @@
 {
   "tabs": { "journal": "Dziennik", "progress": "Postępy", "crags": "Skały", "goals": "Cele" },
   "common": {
-    "save": "Zapisz", "saving": "Zapisywanie…", "cancel": "Anuluj", "add": "Dodaj", "change": "Zmień", "search": "Szukaj", "none": "Na razie pusto",
+    "save": "Zapisz", "saving": "Zapisywanie…", "edit": "Edytuj", "delete": "Usuń", "cancel": "Anuluj", "add": "Dodaj", "change": "Zmień", "search": "Szukaj", "none": "Na razie pusto",
     "today": "Dziś", "yesterday": "Wczoraj", "failed": "Coś poszło nie tak: {{message}}"
   },
   "styles": { "os": "OS", "flash": "Flash", "rp": "RP", "pp": "PP", "tr": "TR", "attempt": "Próba" },
@@ -10,7 +10,9 @@
     "empty": "Brak przejść", "emptyHint": "Dotknij +, aby dodać pierwsze.", "attempts": "podejścia: {{count}}", "add": "Dodaj przejście"
   },
   "ascent": {
-    "title": "Nowe przejście", "route": "Droga", "searchRoute": "Szukaj po drodze, sektorze lub skale", "newRoute": "Utwórz nową drogę",
+    "title": "Nowe przejście", "editTitle": "Edycja przejścia", "detailTitle": "Przejście", "notFound": "To przejście już nie istnieje.",
+    "deleteTitle": "Usunąć przejście?", "deleteQuestion": "Przejście drogi „{{name}}” zniknie z dziennika i statystyk.",
+    "pickDate": "Otwiera kalendarz", "route": "Droga", "searchRoute": "Szukaj po drodze, sektorze lub skale", "newRoute": "Utwórz nową drogę",
     "newRouteNamed": "Utwórz drogę „{{name}}”", "noResults": "Brak dróg pasujących do „{{query}}”.",
     "style": "Styl", "attempts": "Podejścia", "rating": "Ocena", "ratingStar": "{{n}} z 5", "partner": "Partner", "weather": "Warunki",
     "notes": "Notatka", "date": "Data", "datePlaceholder": "RRRR-MM-DD", "crag": "Skała", "sector": "Sektor (opcjonalnie)", "name": "Nazwa drogi",
@@ -25,13 +27,17 @@
   "progress": {
     "title": "Postępy", "sends": "Przejścia", "days": "Dni na skale", "hardestRoute": "Najtrudniejsza droga", "hardestBoulder": "Najtrudniejszy boulder",
     "pyramidRoutes": "Piramida dróg", "pyramidBoulders": "Piramida boulderów", "activity": "Aktywność (ostatnie 18 tygodni)",
-    "empty": "Brak przejść w {{year}}", "emptyHint": "Dodaj przejście w Dzienniku, aby zobaczyć statystyki.", "noSends": "Brak przejść w tym roku.",
+    "empty": "Brak przejść w {{year}}", "emptyHint": "Dodaj przejście w Dzienniku, aby zobaczyć statystyki.", "noSends": "Brak przejść.", "prevYear": "Poprzedni rok", "nextYear": "Następny rok",
     "legendNone": "Bez wspinania", "legendSome": "1–2 przejścia", "legendMany": "3 i więcej"
   },
-  "crags": { "title": "Skały", "routes": "Drogi: {{count}}", "empty": "Brak skał", "emptyHint": "Zaimportuj CSV w ustawieniach lub utwórz drogę przy dodawaniu przejścia." },
+  "crags": {
+    "title": "Skały", "detailTitle": "Skała", "sends": "przejścia: {{count}}", "tried": "próby: {{count}}", "approach": "Dojście",
+    "tapRoute": "Dotknij drogę, aby dodać przejście.", "logHint": "Otwiera nowe przejście tej drogi", "noRoutes": "Ta skała nie ma jeszcze dróg.", "routes": "Drogi: {{count}}", "empty": "Brak skał", "emptyHint": "Zaimportuj CSV w ustawieniach lub utwórz drogę przy dodawaniu przejścia." },
   "goals": {
     "title": "Cele", "count": "Liczba", "project": "Projekt", "wishlist": "Lista życzeń", "newTitle": "Nazwa celu", "target": "Cel (liczba)",
     "kind": "Rodzaj", "empty": "Brak celów", "emptyHint": "Dodaj roczny cel, projekt albo drogę marzeń.",
+    "progress": "{{value}} / {{target}} przejść w {{year}}", "markDone": "Oznacz jako zrobione", "reopen": "Przywróć",
+    "deleteTitle": "Usunąć cel?", "deleteQuestion": "„{{title}}” zostanie usunięty.",
     "errors": { "title": "Podaj nazwę celu.", "target": "Cel musi być liczbą całkowitą, co najmniej 1." }
   },
   "settings": {

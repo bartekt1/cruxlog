@@ -4,7 +4,10 @@ import { join } from 'node:path';
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { BACKUP_VERSION, exportBackup, importBackup } from '../src/db/backup';
 import { MIGRATIONS, migrate } from '../src/db/migrate';
-import { addAscent, addGoal, addUserRoute, applyImport, listAscents, listCrags, listGoals, searchRoutes, type NewRoute } from '../src/db/repo';
+import {
+  addAscent, addGoal, addUserRoute, applyImport, deleteAscent, deleteGoal, getAscent, getCrag, getRoute, listAscents, listCragRoutes, listCrags,
+  listGoals, searchRoutes, setGoalDone, updateAscent, type NewRoute,
+} from '../src/db/repo';
 import { buildImportPlan } from '../src/domain/csvImport';
 import { parseGrade } from '../src/domain/grades';
 import { openTestDb } from './helpers/sqlite';
@@ -95,6 +98,50 @@ describe('repo', () => {
     await addGoal(db, 'count', '200 sends', 200);
     expect(await listGoals(db)).toEqual([expect.objectContaining({ kind: 'count', title: '200 sends', target: 200 })]);
   });
+  it('reads, edits and soft-deletes an ascent', async () => {
+    const db = await freshDb();
+    const r1 = await addUserRoute(db, route());
+    const r2 = await addUserRoute(db, route({ name: 'Test Route 2' }));
+    const id = await addAscent(db, ascent(r1, { weather: 'sunny' }));
+    expect(await getAscent(db, id)).toMatchObject({ id, route_name: 'Test Route 1', weather: 'sunny', partner_name: 'Anna', route: { id: r1, sector_name: 'Main' } });
+
+    await updateAscent(db, id, ascent(r2, { date: '2026-10-01', style: 'os', attempts: 1, partnerName: 'Bartek', rating: null }));
+    expect(await getAscent(db, id)).toMatchObject({ route_name: 'Test Route 2', date: '2026-10-01', style: 'os', attempts: 1, rating: null, partner_name: 'Bartek' });
+
+    const before = (await db.getFirstAsync<{ updated_at: number }>('SELECT updated_at FROM ascent WHERE id = ?', [id]))!.updated_at;
+    await deleteAscent(db, id);
+    expect(await getAscent(db, id)).toBeNull();
+    expect(await listAscents(db)).toEqual([]);
+    const row = await db.getFirstAsync<{ deleted_at: number; updated_at: number }>('SELECT deleted_at, updated_at FROM ascent WHERE id = ?', [id]);
+    expect(row!.deleted_at).toBeGreaterThan(0);
+    expect(row!.updated_at).toBeGreaterThanOrEqual(before);
+  });
+  it('shows a crag with its routes and the user\'s ascents per route', async () => {
+    const db = await freshDb();
+    const r1 = await addUserRoute(db, route());
+    await addUserRoute(db, route({ sectorName: 'Left', name: 'Another' }));
+    await addAscent(db, ascent(r1, { style: 'attempt' }));
+    await addAscent(db, ascent(r1, { style: 'rp' }));
+    const gone = await addAscent(db, ascent(r1, { style: 'os' }));
+    await deleteAscent(db, gone);
+    const [crag] = await listCrags(db);
+    expect(await getCrag(db, crag.id)).toMatchObject({ name: 'Test Crag', region: null });
+    const rows = await listCragRoutes(db, crag.id);
+    expect(rows.map((r) => [r.sector_name, r.name, r.ascents, r.sends])).toEqual([['Left', 'Another', 0, 0], ['Main', 'Test Route 1', 2, 1]]);
+    expect(await getRoute(db, r1)).toMatchObject({ name: 'Test Route 1', crag_name: 'Test Crag' });
+  });
+  it('completes, reopens and deletes goals; done goals go last', async () => {
+    const db = await freshDb();
+    await addGoal(db, 'project', 'First', null);
+    await addGoal(db, 'wishlist', 'Second', null);
+    const first = (await listGoals(db)).find((g) => g.title === 'First')!;
+    await setGoalDone(db, first.id, true);
+    expect((await listGoals(db)).map((g) => [g.title, g.done_at != null])).toEqual([['Second', false], ['First', true]]);
+    await setGoalDone(db, first.id, false);
+    expect((await listGoals(db)).find((g) => g.title === 'First')!.done_at).toBeNull();
+    await deleteGoal(db, first.id);
+    expect((await listGoals(db)).map((g) => g.title)).toEqual(['Second']);
+  });
   it('imports the sample CSV files idempotently', async () => {
     const db = await freshDb();
     const plan = samples();
@@ -127,6 +174,17 @@ describe('backup', () => {
     expect(await listAscents(target)).toEqual(await listAscents(source));
     expect(await listCrags(target)).toEqual(await listCrags(source));
     expect(await listGoals(target)).toEqual(await listGoals(source));
+  });
+  it('carries a deletion to another device through a backup', async () => {
+    const source = await seeded();
+    const target = await freshDb();
+    await importBackup(target, await exportBackup(source));
+    const [a] = await listAscents(source);
+    const later = jest.spyOn(Date, 'now').mockReturnValue(Date.now() + 60_000);
+    await deleteAscent(source, a.id);
+    later.mockRestore();
+    await importBackup(target, await exportBackup(source));
+    expect(await listAscents(target)).toEqual([]);
   });
   it('does not duplicate when imported twice and keeps newer local edits', async () => {
     const db = await seeded();

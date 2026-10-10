@@ -1,4 +1,4 @@
-import { Link, useFocusEffect } from 'expo-router';
+import { Link, useFocusEffect, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -12,6 +12,7 @@ import { useTheme } from '../../src/ui/theme';
 
 export default function Journal() {
   const db = useSQLiteContext();
+  const router = useRouter();
   const { t, i18n } = useTranslation();
   const th = useTheme();
   const { routeSystem, boulderSystem } = useSettings();
@@ -44,7 +45,11 @@ export default function Journal() {
           </Text>
         )}
         renderItem={({ item }) => (
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: th.line }}>
+          <Pressable
+            onPress={() => router.push(`/ascent/${item.id}`)}
+            accessibilityRole="button"
+            style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: th.line, opacity: pressed ? 0.6 : 1 })}
+          >
             <View style={{ flex: 1 }}>
               <Text style={{ color: th.ink, fontWeight: '600' }}>{item.route_name}</Text>
               <Text style={{ color: th.muted, fontSize: 12 }}>
@@ -53,7 +58,7 @@ export default function Journal() {
             </View>
             <GradeBadge text={formatGrade(item.grade_index, item.type === 'boulder' ? boulderSystem : routeSystem, item.type)} />
             <Text style={{ color: item.style === 'attempt' ? th.muted : th.accent, fontWeight: '700', minWidth: 52, textAlign: 'right' }}>{t(`styles.${item.style as AscentStyle}`)}</Text>
-          </View>
+          </Pressable>
         )}
       />
       <Link href="/ascent/new" asChild>

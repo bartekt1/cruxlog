@@ -1,12 +1,13 @@
-import { useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
-import { addAscent, addUserRoute, searchRoutes, type RouteRow } from '../../src/db/repo';
+import { addAscent, addUserRoute, getAscent, getRoute, searchRoutes, updateAscent, type RouteRow } from '../../src/db/repo';
 import { isoDate, shiftDay } from '../../src/domain/dates';
 import { isFirstTry, validateAscentDraft, validateRouteDraft } from '../../src/domain/forms';
 import { ASCENT_STYLES, formatGrade, gradeExample, systemsFor, type AscentStyle, type GradeSystem, type RouteType } from '../../src/domain/grades';
+import { DateField } from '../../src/ui/DateField';
 import { Button, Chip, ChipRow, ErrorText, Field, HIT, Label, LinkButton } from '../../src/ui/kit';
 import { useSettings } from '../../src/ui/settingsStore';
 import { useTheme } from '../../src/ui/theme';
@@ -17,7 +18,9 @@ const FIELD_OF: Record<string, FieldName> = {
   'ascent.errors.date': 'date', 'ascent.errors.attempts': 'attempts',
 };
 
+// Also the edit screen: /ascent/new?id=<ascent> edits, /ascent/new?routeId=<route> starts on that route.
 export default function NewAscent() {
+  const { id, routeId } = useLocalSearchParams<{ id?: string; routeId?: string }>();
   const db = useSQLiteContext();
   const router = useRouter();
   const { t } = useTranslation();
@@ -45,6 +48,18 @@ export default function NewAscent() {
   const [notes, setNotes] = useState('');
   const [error, setError] = useState<{ key: string; field?: FieldName; message?: string } | null>(null);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (id) {
+      getAscent(db, id).then((a) => {
+        if (!a) return;
+        setRoute(a.route); setDate(a.date); setStyle(a.style); setAttempts(String(a.attempts)); setRating(a.rating);
+        setPartner(a.partner_name ?? ''); setWeather(a.weather); setNotes(a.notes);
+      });
+    } else if (routeId) {
+      getRoute(db, routeId).then((r) => { if (r) setRoute(r); });
+    }
+  }, [db, id, routeId]);
 
   useEffect(() => {
     let live = true;
@@ -84,8 +99,10 @@ export default function NewAscent() {
 
     setSaving(true);
     try {
-      const routeId = route?.id ?? await addUserRoute(db, { ...newRoute!, type, gradeSystem: system });
-      await addAscent(db, { routeId, date: draft.value.date, style, attempts: draft.value.attempts, rating, notes: notes.trim(), partnerName: partner, weather: weather.trim() });
+      const rid = route?.id ?? await addUserRoute(db, { ...newRoute!, type, gradeSystem: system });
+      const values = { routeId: rid, date: draft.value.date, style, attempts: draft.value.attempts, rating, notes: notes.trim(), partnerName: partner, weather: weather.trim() };
+      if (id) await updateAscent(db, id, values);
+      else await addAscent(db, values);
       router.back();
     } catch (e) {
       setError({ key: 'common.failed', message: (e as Error).message });
@@ -103,6 +120,7 @@ export default function NewAscent() {
       keyboardShouldPersistTaps="handled"
       automaticallyAdjustKeyboardInsets
     >
+      {id ? <Stack.Screen options={{ title: t('ascent.editTitle') }} /> : null}
       <Label>{t('ascent.route')}</Label>
       {route ? (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, padding: 12, borderRadius: 6, backgroundColor: th.soft }}>
@@ -149,7 +167,7 @@ export default function NewAscent() {
         <Chip label={t('common.today')} on={date === today} onPress={() => setDate(today)} />
         <Chip label={t('common.yesterday')} on={date === shiftDay(today, -1)} onPress={() => setDate(shiftDay(today, -1))} />
       </ChipRow>
-      <Field value={date} onChangeText={setDate} placeholder={t('ascent.datePlaceholder')} accessibilityLabel={t('ascent.date')} invalid={bad('date')} keyboardType="numbers-and-punctuation" />
+      <DateField value={date} onChange={setDate} label={t('ascent.date')} />
 
       <Label>{t('ascent.style')}</Label>
       <ChipRow>

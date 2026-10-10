@@ -22,18 +22,27 @@ Write down the result of every step (OK / problem). Report problems with: step n
 4b. Pick style OS or Flash. Expected: the Attempts field disappears (always 1).
 5. Add a boulder: new route, type Boulder, system FONT, grade `6B`. Expected: saved, shown as 6B.
 6. Error checks: try to save with no route (message "Choose a route first"); new route without crag or name (message names the missing field, the field gets a red border); a grade that does not exist for the system, for example `9z`, or `VI.3` with Boulder type (message with an example grade); date `2026-02-30` or `10.10.2026` (date error); attempts `0` or `abc` (attempts error). Expected: nothing saved in each case.
-7. Tap "Yesterday", save. Then type a date 3 weeks ago and one in the previous year. Expected: headers "Yesterday", a localized day such as "Sat, 19 September", and for the previous year the year is included; newest first.
+7. Tap "Yesterday", save. Then tap the date field, pick a day 3 weeks ago in the calendar, save; repeat with a day in the previous year. Days in the future cannot be picked. Expected: headers "Yesterday", a localized day such as "Sat, 19 September", and for the previous year the year is included; newest first.
+
+## 2b. Ascent detail, edit, delete
+1. Tap an entry in the Journal. Expected: a screen with route, crag, sector, grade, date, style, rating, partner, conditions and notes (empty fields are not shown).
+2. Tap Edit, change the style to Flash and the date to another day, Save. Expected: back on the detail, then in the Journal the entry shows the new style under the new date; Progress numbers update.
+3. Tap Delete. Expected: a question "Delete ascent?"; Cancel keeps it; Delete removes it from the Journal and from Progress.
+4. Export a backup on phone A (or before deleting), delete an ascent, export again and import that backup on a phone that has the old data. Expected: the ascent disappears there too.
 
 ## 3. Progress
 0. Before adding any ascent (fresh install): Progress shows "No sends in <year> yet" with a hint, and "No sends this year." under each pyramid.
 1. Open Progress. Expected: totals for the current year match what you entered (sends do not count attempts), "days out" counts distinct dates.
 2. Hardest route and hardest boulder show the grades you entered; the previous-year entry is not counted.
 3. Route and boulder pyramids show bars for the grades you logged; the calendar shows coloured cells for your dates and a legend below it.
+3a. Year switcher: with an entry in the previous year, tap ‹ next to the year. Expected: stats and pyramids for that year; the activity calendar is shown only for the current year; › goes back; the arrow is greyed out where there are no more years.
 4. Change the grade system in Settings (for example KR -> FR). Expected: Journal and Progress show the same routes in the new system (VI.3 -> 6c).
 
 ## 4. Crags and goals
-1. Crags tab. Expected: "Test Crag" with the number of routes.
+1. Crags tab. Expected: "Test Crag" with the number of routes. Tap it. Expected: the crag screen with routes grouped by sector; "Test Route 1" shows "✓ sends: 1" (green) or "tried: N". Tap the route. Expected: a new ascent form with this route already chosen.
 2. Goals tab: with an empty title the Add button is disabled. Add a Count goal ("200 sends", target 200), a Project and a Wishlist item. Expected: they appear in the list after Add, the title field clears and the keyboard closes. Count goal with target `abc`: error message, nothing added.
+3. The count goal shows a bar and "N / 200 sends in <year>" matching the Sends tile on Progress.
+4. Tap "Mark done" on the Project. Expected: crossed out with ✓, moved to the bottom; "Reopen" brings it back. Tap Delete: confirmation, then it disappears.
 
 ## 5. CSV import
 1. Settings -> Import crags from CSV. Select all four sample files at once. Expected: an alert with counts (1 crag, 1 sector, 3 routes, 3 pitches). Buttons are disabled with a spinner while it runs.

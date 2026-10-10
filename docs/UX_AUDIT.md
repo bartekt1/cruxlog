@@ -24,7 +24,7 @@ Severity: **H** blocks a task or loses/corrupts data, **M** slows a task or conf
 | J2 | The `+` button covered the last entry | M | Fixed: bottom padding |
 | J3 | Plain one-line empty state | L | Fixed: `EmptyState` with hint |
 | J4 | Partner not visible; attempts looked like sends | L | Fixed: partner shown, "Attempt" in muted color |
-| J5 | Entries cannot be opened, edited or deleted | H | Open: needs an ascent detail screen (NEXT.md #3) |
+| J5 | Entries cannot be opened, edited or deleted | H | Fixed: tap an entry → detail with Edit and Delete (with confirmation; soft delete, carried by backups) |
 
 ## New ascent
 
@@ -48,14 +48,14 @@ Severity: **H** blocks a task or loses/corrupts data, **M** slows a task or conf
 | P1 | With no data: zeros and empty headings, no guidance | M | Fixed: empty state; "No sends this year" under each pyramid |
 | P2 | Calendar had no legend and relied on color only | M | Fixed: legend; light cells also get an outline |
 | P3 | Tiles were read as two separate texts by screen readers | L | Fixed: one label "Sends: 12" |
-| P4 | Only the current year; no way to look back | M | Open: year switcher |
+| P4 | Only the current year; no way to look back | M | Fixed: ‹ year › switcher over years with ascents |
 
 ## Crags
 
 | # | Issue | Sev | Status |
 |---|---|---|---|
 | C1 | "1 routes" in English | L | Fixed: "Routes: 1" (plural rules not verified on Hermes) |
-| C2 | Crags cannot be opened | M | Open: crag and sector detail (NEXT.md #3) |
+| C2 | Crags cannot be opened | M | Fixed: crag screen with routes by sector and your sends; tap a route to log it |
 
 ## Goals
 
@@ -64,7 +64,7 @@ Severity: **H** blocks a task or loses/corrupts data, **M** slows a task or conf
 | G1 | Non-numeric target (`abc`) was stored as NaN | H | Fixed: `validateGoalDraft` |
 | G2 | Empty title: Add did nothing, no feedback | M | Fixed: button disabled, message |
 | G3 | Keyboard stayed open after Add; no "done" key | L | Fixed |
-| G4 | Goals cannot be completed, edited or deleted; no progress | H | Open: NEXT.md #5 |
+| G4 | Goals cannot be completed, edited or deleted; no progress | H | Fixed: progress bar for count goals (sends this year), mark done / reopen, delete. Editing a goal is still open |
 
 ## Settings
 
@@ -77,10 +77,10 @@ Severity: **H** blocks a task or loses/corrupts data, **M** slows a task or conf
 | S5 | Missing crags.csv or routes.csv gave confusing parser errors | M | Fixed: names the required files and what was selected |
 | S6 | Import behavior (merge, newer wins) was not explained | L | Fixed: help text |
 
-## Open, larger items (not done here)
+| N11 | Dates other than today or yesterday had to be typed as YYYY-MM-DD | M | Fixed: system calendar (`@react-native-community/datetimepicker`), future days blocked |
 
-1. Ascent detail with edit and soft delete (J5), then crag/route detail (C2).
-2. Goals: complete, delete, progress from stats (G4).
-3. Year switcher on Progress (P4).
-4. A native date picker instead of the text field (needs `@react-native-community/datetimepicker` and a new build).
-5. Device checks: localized dates on Hermes, keyboard behavior, large font sizes, TalkBack labels.
+## Open items
+
+1. Edit a goal's title or target; link a project goal to a route.
+2. Activity calendar only for the current year.
+3. Device checks: localized dates on Hermes, calendar picker, keyboard behavior, large font sizes, TalkBack labels.

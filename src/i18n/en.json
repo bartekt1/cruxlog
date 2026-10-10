@@ -1,7 +1,7 @@
 {
   "tabs": { "journal": "Journal", "progress": "Progress", "crags": "Crags", "goals": "Goals" },
   "common": {
-    "save": "Save", "saving": "Saving…", "cancel": "Cancel", "add": "Add", "change": "Change", "search": "Search", "none": "Nothing here yet",
+    "save": "Save", "saving": "Saving…", "edit": "Edit", "delete": "Delete", "cancel": "Cancel", "add": "Add", "change": "Change", "search": "Search", "none": "Nothing here yet",
     "today": "Today", "yesterday": "Yesterday", "failed": "Something went wrong: {{message}}"
   },
   "styles": { "os": "OS", "flash": "Flash", "rp": "RP", "pp": "PP", "tr": "TR", "attempt": "Attempt" },
@@ -10,7 +10,9 @@
     "empty": "No ascents yet", "emptyHint": "Tap + to log your first climb.", "attempts": "{{count}} tries", "add": "Log an ascent"
   },
   "ascent": {
-    "title": "New ascent", "route": "Route", "searchRoute": "Search by route, sector or crag", "newRoute": "Create a new route",
+    "title": "New ascent", "editTitle": "Edit ascent", "detailTitle": "Ascent", "notFound": "This ascent no longer exists.",
+    "deleteTitle": "Delete ascent?", "deleteQuestion": "The ascent of \"{{name}}\" will be removed from your journal and stats.",
+    "pickDate": "Opens a calendar", "route": "Route", "searchRoute": "Search by route, sector or crag", "newRoute": "Create a new route",
     "newRouteNamed": "Create route \"{{name}}\"", "noResults": "No routes match \"{{query}}\".",
     "style": "Style", "attempts": "Attempts", "rating": "Rating", "ratingStar": "{{n}} of 5", "partner": "Partner", "weather": "Conditions",
     "notes": "Notes", "date": "Date", "datePlaceholder": "YYYY-MM-DD", "crag": "Crag", "sector": "Sector (optional)", "name": "Route name",
@@ -25,13 +27,17 @@
   "progress": {
     "title": "Progress", "sends": "Sends", "days": "Days out", "hardestRoute": "Hardest route", "hardestBoulder": "Hardest boulder",
     "pyramidRoutes": "Route pyramid", "pyramidBoulders": "Boulder pyramid", "activity": "Activity (last 18 weeks)",
-    "empty": "No sends in {{year}} yet", "emptyHint": "Log an ascent in the Journal to see your stats.", "noSends": "No sends this year.",
+    "empty": "No sends in {{year}} yet", "emptyHint": "Log an ascent in the Journal to see your stats.", "noSends": "No sends.", "prevYear": "Previous year", "nextYear": "Next year",
     "legendNone": "No climbing", "legendSome": "1–2 ascents", "legendMany": "3 or more"
   },
-  "crags": { "title": "Crags", "routes": "Routes: {{count}}", "empty": "No crags yet", "emptyHint": "Import a CSV in Settings or create a route when logging an ascent." },
+  "crags": {
+    "title": "Crags", "detailTitle": "Crag", "sends": "sends: {{count}}", "tried": "tried: {{count}}", "approach": "Approach",
+    "tapRoute": "Tap a route to log an ascent.", "logHint": "Opens a new ascent for this route", "noRoutes": "No routes in this crag yet.", "routes": "Routes: {{count}}", "empty": "No crags yet", "emptyHint": "Import a CSV in Settings or create a route when logging an ascent." },
   "goals": {
     "title": "Goals", "count": "Count", "project": "Project", "wishlist": "Wishlist", "newTitle": "Goal title", "target": "Target (number)",
     "kind": "Kind", "empty": "No goals yet", "emptyHint": "Add a yearly target, a project or a route you dream about.",
+    "progress": "{{value}} / {{target}} sends in {{year}}", "markDone": "Mark done", "reopen": "Reopen",
+    "deleteTitle": "Delete goal?", "deleteQuestion": "\"{{title}}\" will be removed.",
     "errors": { "title": "Enter a goal title.", "target": "The target must be a whole number, 1 or more." }
   },
   "settings": {

@@ -22,7 +22,7 @@ function sources(dir: string): string[] {
 const files = [...sources(join(ROOT, 'app')), ...sources(join(ROOT, 'src'))].map((p) => ({ path: relative(ROOT, p), text: readFileSync(p, 'utf8') }));
 
 // Text that is intentionally the same in every language.
-const ALLOWED_LITERALS = new Set(['Polski', 'English', '+', '★', '⚙', '·']);
+const ALLOWED_LITERALS = new Set(['Polski', 'English', '+', '★', '⚙', '·', '›', '‹', '✓']);
 
 describe('i18n', () => {
   const enKeys = keys(en);
