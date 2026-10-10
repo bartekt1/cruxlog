@@ -1,6 +1,7 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { type AscentStyle, type GradeSystem, type RouteType } from '../domain/grades';
 import type { ImportPlan } from '../domain/csvImport';
+import { sameName, suggest } from '../domain/text';
 import { newId, now } from './ids';
 
 export type RouteRow = {
@@ -28,13 +29,59 @@ export async function listAscents(db: SQLiteDatabase): Promise<AscentRow[]> {
   );
 }
 
-export async function searchRoutes(db: SQLiteDatabase, query: string): Promise<RouteRow[]> {
+/** Finds an existing row whose name matches ignoring case and Polish letters. */
+async function findByName(db: SQLiteDatabase, sql: string, params: string[], name: string): Promise<{ id: string } | null> {
+  const rows = await db.getAllAsync<{ id: string; name: string }>(sql, params);
+  return rows.find((r) => sameName(r.name, name)) ?? null;
+}
+
+/** Type-ahead route search over route, sector and crag names, ignoring case and Polish letters. */
+export async function searchRoutes(db: SQLiteDatabase, query: string, limit = 8): Promise<RouteRow[]> {
+  const all = await db.getAllAsync<RouteRow>(
+    `SELECT ${ROUTE_COLS}
+     FROM route r JOIN sector s ON s.id = r.sector_id JOIN crag c ON c.id = s.crag_id
+     WHERE r.deleted_at IS NULL`,
+  );
+  return suggest(all, query, (r) => r.name, (r) => [r.sector_name, r.crag_name], limit);
+}
+
+/** Routes the user climbed most recently, newest first. */
+export async function recentRoutes(db: SQLiteDatabase, limit = 5): Promise<RouteRow[]> {
   return db.getAllAsync<RouteRow>(
     `SELECT ${ROUTE_COLS}
      FROM route r JOIN sector s ON s.id = r.sector_id JOIN crag c ON c.id = s.crag_id
-     WHERE r.deleted_at IS NULL AND (r.name LIKE ? OR c.name LIKE ? OR s.name LIKE ?)
-     ORDER BY r.name LIMIT 50`,
-    [`%${query.trim()}%`, `%${query.trim()}%`, `%${query.trim()}%`],
+     JOIN (SELECT route_id, MAX(date || created_at) AS last FROM ascent WHERE deleted_at IS NULL GROUP BY route_id) a ON a.route_id = r.id
+     WHERE r.deleted_at IS NULL
+     ORDER BY a.last DESC LIMIT ?`,
+    [limit],
+  );
+}
+
+export type CragChoice = { id: string; name: string; region_name: string | null };
+
+export async function listCragChoices(db: SQLiteDatabase): Promise<CragChoice[]> {
+  return db.getAllAsync<CragChoice>(
+    `SELECT c.id, c.name, g.name AS region_name FROM crag c LEFT JOIN region g ON g.id = c.region_id AND g.deleted_at IS NULL
+     WHERE c.deleted_at IS NULL ORDER BY c.name`);
+}
+
+/** Partner names, the most frequent first. */
+export async function listPartners(db: SQLiteDatabase): Promise<string[]> {
+  const rows = await db.getAllAsync<{ name: string }>(
+    `SELECT p.name FROM partner p LEFT JOIN ascent a ON a.partner_id = p.id AND a.deleted_at IS NULL
+     WHERE p.deleted_at IS NULL GROUP BY p.id ORDER BY COUNT(a.id) DESC, p.name`);
+  return rows.map((r) => r.name);
+}
+
+/** All of the user's ascents of one route, newest first. */
+export async function listRouteAscents(db: SQLiteDatabase, routeId: string): Promise<AscentRow[]> {
+  return db.getAllAsync<AscentRow>(
+    `SELECT a.id, a.date, a.style, a.attempts, a.rating, a.notes, r.id AS route_id, r.name AS route_name, r.type,
+            r.grade_index, c.name AS crag_name, p.name AS partner_name
+     FROM ascent a JOIN route r ON r.id = a.route_id JOIN sector s ON s.id = r.sector_id JOIN crag c ON c.id = s.crag_id
+     LEFT JOIN partner p ON p.id = a.partner_id
+     WHERE a.route_id = ? AND a.deleted_at IS NULL ORDER BY a.date DESC, a.created_at DESC`,
+    [routeId],
   );
 }
 
@@ -46,7 +93,7 @@ export type NewAscent = {
 async function partnerId(db: SQLiteDatabase, partnerName: string, t: number): Promise<string | null> {
   const name = partnerName.trim();
   if (!name) return null;
-  const existing = await db.getFirstAsync<{ id: string }>('SELECT id FROM partner WHERE name = ? AND deleted_at IS NULL', [name]);
+  const existing = await findByName(db, 'SELECT id, name FROM partner WHERE deleted_at IS NULL', [], name);
   if (existing) return existing.id;
   const id = newId();
   await db.runAsync('INSERT INTO partner (id, name, created_at, updated_at) VALUES (?,?,?,?)', [id, name, t, t]);
@@ -110,17 +157,22 @@ export async function getRoute(db: SQLiteDatabase, id: string): Promise<RouteRow
   );
 }
 
-export type NewRoute = { cragName: string; sectorName: string; name: string; type: RouteType; gradeLabel: string; gradeSystem: GradeSystem; gradeIndex: number };
+export type NewRoute = {
+  cragName: string; sectorName: string; name: string; type: RouteType; gradeLabel: string; gradeSystem: GradeSystem; gradeIndex: number;
+  /** Used only when the crag is new. */
+  regionName?: string;
+};
 
 /** A user-created route: private by default, ready to be proposed to the catalog later. */
 export async function addUserRoute(db: SQLiteDatabase, r: NewRoute): Promise<string> {
   const t = now();
   const routeId = newId();
   await db.withTransactionAsync(async () => {
-    let crag = await db.getFirstAsync<{ id: string }>('SELECT id FROM crag WHERE name = ? AND deleted_at IS NULL', [r.cragName]);
+    let crag = await findByName(db, 'SELECT id, name FROM crag WHERE deleted_at IS NULL', [], r.cragName);
     if (!crag) {
       crag = { id: newId() };
-      await db.runAsync('INSERT INTO crag (id, name, created_at, updated_at) VALUES (?,?,?,?)', [crag.id, r.cragName, t, t]);
+      const regionId = await regionIdFor(db, r.regionName ?? '', t);
+      await db.runAsync('INSERT INTO crag (id, region_id, name, created_at, updated_at) VALUES (?,?,?,?,?)', [crag.id, regionId, r.cragName, t, t]);
     }
     const sectorId = await sectorIdFor(db, crag.id, r.sectorName, t);
     await db.runAsync(
@@ -211,7 +263,7 @@ export async function deleteCrag(db: SQLiteDatabase, id: string): Promise<void> 
 async function regionIdFor(db: SQLiteDatabase, name: string, t: number): Promise<string | null> {
   const n = name.trim();
   if (!n) return null;
-  const ex = await db.getFirstAsync<{ id: string }>('SELECT id FROM region WHERE name = ? AND deleted_at IS NULL', [n]);
+  const ex = await findByName(db, 'SELECT id, name FROM region WHERE deleted_at IS NULL', [], n);
   if (ex) return ex.id;
   const id = newId();
   await db.runAsync('INSERT INTO region (id, name, created_at, updated_at) VALUES (?,?,?,?)', [id, n, t, t]);
@@ -219,7 +271,7 @@ async function regionIdFor(db: SQLiteDatabase, name: string, t: number): Promise
 }
 
 async function sectorIdFor(db: SQLiteDatabase, cragId: string, name: string, t: number): Promise<string> {
-  const ex = await db.getFirstAsync<{ id: string }>('SELECT id FROM sector WHERE crag_id = ? AND name = ? AND deleted_at IS NULL', [cragId, name]);
+  const ex = await findByName(db, 'SELECT id, name FROM sector WHERE crag_id = ? AND deleted_at IS NULL', [cragId], name);
   if (ex) return ex.id;
   const id = newId();
   await db.runAsync('INSERT INTO sector (id, crag_id, name, created_at, updated_at) VALUES (?,?,?,?,?)', [id, cragId, name, t, t]);

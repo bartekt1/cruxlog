@@ -3,12 +3,16 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
-import { addAscent, addUserRoute, getAscent, getRoute, searchRoutes, updateAscent, type RouteRow } from '../../src/db/repo';
+import {
+  addAscent, addUserRoute, getAscent, getRoute, listCragChoices, listCragRoutes, listPartners, listRegions, listSectorNames, recentRoutes, searchRoutes,
+  updateAscent, type CragChoice, type CragRouteRow, type RegionRow, type RouteRow,
+} from '../../src/db/repo';
 import { isoDate, shiftDay } from '../../src/domain/dates';
 import { isFirstTry, validateAscentDraft, validateRouteDraft } from '../../src/domain/forms';
 import { ASCENT_STYLES, formatGrade, gradeExample, systemsFor, type AscentStyle, type GradeSystem, type RouteType } from '../../src/domain/grades';
 import { DateField } from '../../src/ui/DateField';
-import { Button, Chip, ChipRow, ErrorText, Field, HIT, Label, LinkButton } from '../../src/ui/kit';
+import { sameName, suggest } from '../../src/domain/text';
+import { Button, Chip, ChipRow, ErrorText, Field, HIT, Label, LinkButton, Suggestions, type SuggestionItem } from '../../src/ui/kit';
 import { useSettings } from '../../src/ui/settingsStore';
 import { useTheme } from '../../src/ui/theme';
 
@@ -37,6 +41,14 @@ export default function NewAscent() {
   const [type, setType] = useState<RouteType>('sport');
   const [grade, setGrade] = useState('');
   const [system, setSystem] = useState<GradeSystem>(settings.routeSystem);
+  const [region, setRegion] = useState('');
+  const [recent, setRecent] = useState<RouteRow[]>([]);
+  const [crags, setCrags] = useState<CragChoice[]>([]);
+  const [regions, setRegions] = useState<RegionRow[]>([]);
+  const [sectorNames, setSectorNames] = useState<string[]>([]);
+  const [cragRoutes, setCragRoutes] = useState<CragRouteRow[]>([]);
+  const [partners, setPartners] = useState<string[]>([]);
+  const [focus, setFocus] = useState<'crag' | 'sector' | 'region' | 'partner' | null>(null);
 
   const today = isoDate(new Date());
   const [date, setDate] = useState(today);
@@ -62,10 +74,37 @@ export default function NewAscent() {
   }, [db, id, routeId]);
 
   useEffect(() => {
+    recentRoutes(db).then(setRecent);
+    listCragChoices(db).then(setCrags);
+    listRegions(db).then(setRegions);
+    listPartners(db).then(setPartners);
+  }, [db]);
+
+  useEffect(() => {
+    if (!query.trim()) { setResults([]); return; }
     let live = true;
     searchRoutes(db, query).then((r) => { if (live) setResults(r); });
     return () => { live = false; };
   }, [db, query]);
+
+  // The crag typed in the new-route form, if it already exists (ignoring case and Polish letters).
+  const existingCrag = crags.find((c) => sameName(c.name, crag)) ?? null;
+  useEffect(() => {
+    if (!existingCrag) { setSectorNames([]); setCragRoutes([]); return; }
+    listSectorNames(db, existingCrag.id).then(setSectorNames);
+    listCragRoutes(db, existingCrag.id).then(setCragRoutes);
+  }, [db, existingCrag?.id]);
+  const duplicate = name.trim() ? cragRoutes.find((r) => sameName(r.name, name)) ?? null : null;
+
+  const routeItem = (r: RouteRow): SuggestionItem => ({
+    key: r.id, title: r.name, subtitle: `${r.crag_name} · ${r.sector_name}`, badge: formatGrade(r.grade_index, r.grade_system, r.type),
+  });
+  const pickRoute = (rows: RouteRow[]) => (key: string) => {
+    const r = rows.find((x) => x.id === key);
+    if (r) { setRoute(r); setError(null); }
+  };
+  const nameItems = (names: string[], typed: string, limit = 5): SuggestionItem[] =>
+    suggest(names, typed, (x) => x, () => [], limit).filter((x) => !sameName(x, typed)).map((x) => ({ key: x, title: x }));
 
   function pickType(next: RouteType) {
     setType(next);
@@ -79,7 +118,15 @@ export default function NewAscent() {
 
   function startCreating() {
     setName(query.trim());
+    setCrag(''); setSector(''); setRegion('');
     setCreating(true);
+  }
+
+  function pickDuplicate() {
+    if (!duplicate) return;
+    setRoute(duplicate);
+    setCreating(false);
+    setError(null);
   }
 
   const fail = (key: string) => setError({ key, field: FIELD_OF[key] });
@@ -99,7 +146,7 @@ export default function NewAscent() {
 
     setSaving(true);
     try {
-      const rid = route?.id ?? await addUserRoute(db, { ...newRoute!, type, gradeSystem: system });
+      const rid = route?.id ?? await addUserRoute(db, { ...newRoute!, cragName: existingCrag?.name ?? newRoute!.cragName, type, gradeSystem: system, regionName: region.trim() });
       const values = { routeId: rid, date: draft.value.date, style, attempts: draft.value.attempts, rating, notes: notes.trim(), partnerName: partner, weather: weather.trim() };
       if (id) await updateAscent(db, id, values);
       else await addAscent(db, values);
@@ -132,9 +179,43 @@ export default function NewAscent() {
         </View>
       ) : creating ? (
         <View style={{ gap: 8 }}>
-          <Field value={crag} onChangeText={setCrag} placeholder={t('ascent.crag')} accessibilityLabel={t('ascent.crag')} invalid={bad('crag')} autoFocus />
-          <Field value={sector} onChangeText={setSector} placeholder={t('ascent.sector')} accessibilityLabel={t('ascent.sector')} />
+          <Field
+            value={crag} onChangeText={setCrag} placeholder={t('ascent.crag')} accessibilityLabel={t('ascent.crag')} invalid={bad('crag')} autoFocus
+            onFocus={() => setFocus('crag')} onBlur={() => setFocus(null)}
+          />
+          {focus === 'crag' ? (
+            <Suggestions
+              items={suggest(crags, crag, (c) => c.name, (c) => [c.region_name ?? ''], 5).filter((c) => !sameName(c.name, crag))
+                .map((c) => ({ key: c.id, title: c.name, subtitle: c.region_name ?? undefined }))}
+              onPick={(key) => { const c = crags.find((x) => x.id === key); if (c) setCrag(c.name); }}
+            />
+          ) : null}
+          {existingCrag ? (
+            existingCrag.region_name ? <Text style={{ color: th.muted, fontSize: 12 }}>{t('ascent.cragInRegion', { region: existingCrag.region_name })}</Text> : null
+          ) : crag.trim() ? (
+            <>
+              <Text style={{ color: th.muted, fontSize: 12 }}>{t('ascent.newCragHint')}</Text>
+              <Field
+                value={region} onChangeText={setRegion} placeholder={t('edit.region')} accessibilityLabel={t('edit.region')}
+                onFocus={() => setFocus('region')} onBlur={() => setFocus(null)}
+              />
+              {focus === 'region' ? <Suggestions items={nameItems(regions.map((g) => g.name), region)} onPick={setRegion} /> : null}
+            </>
+          ) : null}
+          <Field
+            value={sector} onChangeText={setSector} placeholder={t('ascent.sector')} accessibilityLabel={t('ascent.sector')}
+            onFocus={() => setFocus('sector')} onBlur={() => setFocus(null)}
+          />
+          {focus === 'sector' ? <Suggestions items={nameItems(sectorNames, sector)} onPick={setSector} /> : null}
           <Field value={name} onChangeText={setName} placeholder={t('ascent.name')} accessibilityLabel={t('ascent.name')} invalid={bad('name')} />
+          {duplicate ? (
+            <View style={{ padding: 12, borderRadius: 6, backgroundColor: th.soft, gap: 4 }}>
+              <Text style={{ color: th.ink }}>
+                {t('ascent.duplicate', { name: duplicate.name, sector: duplicate.sector_name, grade: formatGrade(duplicate.grade_index, duplicate.grade_system, duplicate.type) })}
+              </Text>
+              <LinkButton label={t('ascent.useExisting')} onPress={pickDuplicate} />
+            </View>
+          ) : null}
           <Text style={{ color: th.muted, fontSize: 12 }}>{t('ascent.type')}</Text>
           <ChipRow>
             {(['sport', 'boulder', 'multipitch'] as RouteType[]).map((x) => <Chip key={x} label={t(`types.${x}`)} on={type === x} onPress={() => pickType(x)} />)}
@@ -152,11 +233,11 @@ export default function NewAscent() {
       ) : (
         <View style={{ gap: 4 }}>
           <Field value={query} onChangeText={setQuery} placeholder={t('ascent.searchRoute')} accessibilityLabel={t('ascent.searchRoute')} invalid={bad('route')} autoCorrect={false} />
-          {results.slice(0, 6).map((r) => (
-            <Pressable key={r.id} onPress={() => { setRoute(r); setError(null); }} accessibilityRole="button" style={({ pressed }) => ({ paddingVertical: 10, opacity: pressed ? 0.6 : 1 })}>
-              <Text style={{ color: th.ink }}>{r.name} <Text style={{ color: th.muted }}>· {r.crag_name} · {formatGrade(r.grade_index, r.grade_system, r.type)}</Text></Text>
-            </Pressable>
-          ))}
+          {query.trim() ? (
+            <Suggestions items={results.map(routeItem)} onPick={pickRoute(results)} />
+          ) : (
+            <Suggestions title={t('ascent.recent')} items={recent.map(routeItem)} onPick={pickRoute(recent)} />
+          )}
           {query.trim() && results.length === 0 ? <Text style={{ color: th.muted, paddingVertical: 6 }}>{t('ascent.noResults', { query: query.trim() })}</Text> : null}
           <LinkButton label={query.trim() ? t('ascent.newRouteNamed', { name: query.trim() }) : t('ascent.newRoute')} onPress={startCreating} />
         </View>
@@ -198,7 +279,11 @@ export default function NewAscent() {
       </View>
 
       <Label>{t('ascent.partner')}</Label>
-      <Field value={partner} onChangeText={setPartner} accessibilityLabel={t('ascent.partner')} autoCapitalize="words" />
+      <Field
+        value={partner} onChangeText={setPartner} accessibilityLabel={t('ascent.partner')} autoCapitalize="words"
+        onFocus={() => setFocus('partner')} onBlur={() => setFocus(null)}
+      />
+      {focus === 'partner' ? <Suggestions items={nameItems(partners, partner)} onPick={(p) => { setPartner(p); setFocus(null); }} /> : null}
       <Label>{t('ascent.weather')}</Label>
       <Field value={weather} onChangeText={setWeather} accessibilityLabel={t('ascent.weather')} />
       <Label>{t('ascent.notes')}</Label>

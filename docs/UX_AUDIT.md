@@ -89,6 +89,20 @@ Severity: **H** blocks a task or loses/corrupts data, **M** slows a task or conf
 | R4 | Settings "⚙" glyph too small and unclear | M | Fixed: 28 pt gear icon, 44 pt touch target |
 | R5 | No way to add a crag without logging an ascent | L | Fixed: "Add a crag" on the Crags tab |
 
+## Round 4 (user feedback and review)
+
+| # | Issue | Sev | Status |
+|---|---|---|---|
+| F1 | Route search missed Polish letters and case ("łysa" did not find "Łysa"; SQLite LIKE is ASCII-only) | H | Fixed: matching in `src/domain/text.ts` |
+| F2 | "okiennik" and "Okiennik" became two crags; same for sectors, regions, partners | H | Fixed: names matched ignoring case and Polish letters |
+| F3 | Empty route search showed 6 arbitrary routes | M | Fixed: "Recently climbed"; list narrows while typing |
+| F4 | New-route form had no region and no crag/sector suggestions | M | Fixed: crag and sector suggestions; region field (with suggestions) for a new crag |
+| F5 | Same route could be created twice on a crag | M | Fixed: warning with "Use this route" |
+| F6 | No history per route | M | Fixed: route screen with summary, ascents and "Log an ascent" |
+| F7 | Partner typed every time | L | Fixed: partner suggestions, most frequent first |
+| F8 | No reminder to back up; data lives only on the phone | H | Fixed: Journal reminder after 30 days or when never backed up; last backup shown in Settings |
+| F9 | Year arrows could break after deleting all ascents of the shown year | L | Fixed |
+
 ## Open items
 
 1. Edit a goal's title or target; link a project goal to a route.

@@ -1,6 +1,6 @@
 import { useFocusEffect } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { listAscents } from '../../src/db/repo';
@@ -101,6 +101,8 @@ export default function Progress() {
   const boulders = useMemo(() => pyramid(ascents, year, 'boulder'), [ascents, year]);
   const days = useMemo(() => activityByDay(ascents), [ascents]);
   const years = useMemo(() => ascentYears(ascents, currentYear), [ascents, currentYear]);
+  // The chosen year may have lost all its ascents (deleted); fall back to the current year.
+  useEffect(() => { if (!years.includes(year)) setYear(currentYear); }, [years, year, currentYear]);
 
   const tile = (value: string, label: string) => (
     <View accessible accessibilityLabel={`${label}: ${value}`} style={{ flex: 1, backgroundColor: th.soft, borderRadius: 6, padding: 10 }}>

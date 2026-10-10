@@ -2,11 +2,12 @@ import * as DocumentPicker from 'expo-document-picker';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { useSQLiteContext } from 'expo-sqlite';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, ScrollView, Text } from 'react-native';
 import { exportBackup, importBackup } from '../src/db/backup';
-import { applyImport } from '../src/db/repo';
+import { applyImport, listAscents } from '../src/db/repo';
+import { backupStatus } from '../src/domain/history';
 import { buildImportPlan } from '../src/domain/csvImport';
 import { BOULDER_SYSTEMS, ROUTE_SYSTEMS } from '../src/domain/grades';
 import type { Lang } from '../src/domain/settings';
@@ -23,6 +24,9 @@ export default function Settings() {
   const th = useTheme();
   const s = useSettings();
   const [busy, setBusy] = useState(false);
+  const [hasData, setHasData] = useState(false);
+  useEffect(() => { listAscents(db).then((a) => setHasData(a.length > 0)); }, [db]);
+  const backup = backupStatus(s.lastBackupAt, Date.now(), hasData);
 
   // Results go to an alert so they are seen even when the button is far down the screen.
   const run = async (fn: () => Promise<string | void>) => {
@@ -47,6 +51,7 @@ export default function Settings() {
     file.create();
     file.write(JSON.stringify(await exportBackup(db)));
     await Sharing.shareAsync(file.uri, { mimeType: 'application/json' });
+    s.setLastBackupAt(Date.now());
   });
 
   const doImport = () => run(async () => {
@@ -99,6 +104,9 @@ export default function Settings() {
       <Button label={t('settings.csv')} onPress={doCsv} disabled={busy} />
       <Label>{t('settings.backup')}</Label>
       <Text style={{ color: th.muted }}>{t('settings.backupHelp')}</Text>
+      <Text style={{ color: backup.due ? th.warn : th.ink, marginTop: 8, fontWeight: '600' }}>
+        {backup.days == null ? t('settings.lastBackupNever') : backup.days === 0 ? t('settings.lastBackupToday') : t('settings.lastBackupDays', { n: backup.days })}
+      </Text>
       <Button label={t('settings.export')} onPress={doExport} variant="plain" disabled={busy} />
       <Button label={t('settings.import')} onPress={doImport} variant="plain" disabled={busy} />
       {busy ? <ActivityIndicator color={th.accent} style={{ marginTop: 16 }} /> : null}

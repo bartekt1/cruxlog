@@ -8,6 +8,7 @@ import {
   addAscent, addGoal, addUserRoute, applyImport, cragUsage, deleteAscent, deleteCrag, deleteGoal, deleteRegion, deleteRoute, deleteSector,
   getAscent, getCrag, getRegion, getRoute, getSector, listAscents, listCragRoutes, listCrags, listGoals, listRegions, listSectorNames,
   renameRegion, renameSector, routeUsage, saveCrag, searchRoutes, sectorUsage, setGoalDone, updateAscent, updateRoute, type NewRoute,
+  listCragChoices, listPartners, listRouteAscents, recentRoutes,
 } from '../src/db/repo';
 import { buildImportPlan } from '../src/domain/csvImport';
 import { parseGrade } from '../src/domain/grades';
@@ -152,6 +153,52 @@ describe('repo', () => {
     expect(await count(db, 'crag')).toBe(first.crags);
     expect(await count(db, 'route')).toBe(first.routes);
     expect(await count(db, 'pitch')).toBe(first.pitches);
+  });
+});
+
+describe('suggestions and history', () => {
+  it('searches ignoring case and Polish letters', async () => {
+    const db = await freshDb();
+    await addUserRoute(db, route({ cragName: 'Łysa Skała', sectorName: 'Żleb', name: 'Rysa Ślimaka' }));
+    for (const q of ['łysa', 'LYSA', 'zleb', 'slimak', 'rysa lysa']) {
+      expect((await searchRoutes(db, q)).map((r) => r.name)).toEqual(['Rysa Ślimaka']);
+    }
+    expect(await searchRoutes(db, 'sokolica')).toEqual([]);
+  });
+  it('reuses a crag, sector and partner typed with different case or letters', async () => {
+    const db = await freshDb();
+    const r1 = await addUserRoute(db, route({ cragName: 'Łysa Skała', sectorName: 'Żleb' }));
+    const r2 = await addUserRoute(db, route({ cragName: 'łysa skała', sectorName: 'zleb', name: 'Second' }));
+    expect((await getRoute(db, r2))!.sector_id).toBe((await getRoute(db, r1))!.sector_id);
+    await addAscent(db, ascent(r1, { partnerName: 'Anna' }));
+    await addAscent(db, ascent(r2, { partnerName: 'anna' }));
+    expect(await listPartners(db)).toEqual(['Anna']);
+  });
+  it('gives a new crag the region typed with the route', async () => {
+    const db = await freshDb();
+    await addUserRoute(db, route({ cragName: 'Okiennik', regionName: 'Jura' }));
+    await addUserRoute(db, route({ cragName: 'Okiennik', regionName: 'Tatry', name: 'Second' }));
+    expect(await listCragChoices(db)).toEqual([expect.objectContaining({ name: 'Okiennik', region_name: 'Jura' })]);
+  });
+  it('lists recently climbed routes and partners by how often you climb with them', async () => {
+    const db = await freshDb();
+    const a = await addUserRoute(db, route({ name: 'A' }));
+    const b = await addUserRoute(db, route({ name: 'B' }));
+    await addUserRoute(db, route({ name: 'Never climbed' }));
+    await addAscent(db, ascent(a, { date: '2026-09-01', partnerName: 'Zosia' }));
+    await addAscent(db, ascent(b, { date: '2026-10-01', partnerName: 'Bartek' }));
+    await addAscent(db, ascent(a, { date: '2026-08-01', partnerName: 'Bartek' }));
+    expect((await recentRoutes(db)).map((r) => r.name)).toEqual(['B', 'A']);
+    expect(await listPartners(db)).toEqual(['Bartek', 'Zosia']);
+  });
+  it('lists the ascents of one route, newest first', async () => {
+    const db = await freshDb();
+    const a = await addUserRoute(db, route({ name: 'A' }));
+    const b = await addUserRoute(db, route({ name: 'B' }));
+    await addAscent(db, ascent(a, { date: '2026-08-01', style: 'attempt' }));
+    await addAscent(db, ascent(a, { date: '2026-09-01', style: 'rp' }));
+    await addAscent(db, ascent(b));
+    expect((await listRouteAscents(db, a)).map((x) => [x.date, x.style])).toEqual([['2026-09-01', 'rp'], ['2026-08-01', 'attempt']]);
   });
 });
 

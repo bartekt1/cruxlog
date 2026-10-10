@@ -75,7 +75,7 @@ export default function CragScreen() {
         )}
         renderItem={({ item }) => (
           <Pressable
-            onPress={() => router.push({ pathname: '/ascent/new', params: { routeId: item.id } })}
+            onPress={() => router.push(`/route/${item.id}`)}
             accessibilityRole="button"
             accessibilityHint={t('crags.logHint')}
             style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: th.line, opacity: pressed ? 0.6 : 1 })}

@@ -7,12 +7,14 @@
   "styles": { "os": "OS", "flash": "Flash", "rp": "RP", "pp": "PP", "tr": "TR", "attempt": "Próba" },
   "types": { "sport": "Sport", "boulder": "Boulder", "multipitch": "Wielowyciąg" },
   "journal": {
-    "empty": "Brak przejść", "emptyHint": "Dotknij „Dodaj”, aby zapisać pierwsze.", "attempts": "podejścia: {{count}}", "add": "Dodaj przejście", "addShort": "Dodaj"
+    "empty": "Brak przejść", "emptyHint": "Dotknij „Dodaj”, aby zapisać pierwsze.", "attempts": "podejścia: {{count}}", "add": "Dodaj przejście", "addShort": "Dodaj",
+    "backupNever": "Nie masz jeszcze kopii zapasowej", "backupOld": "Ostatnia kopia: {{n}} dni temu", "backupHint": "Twoje przejścia są tylko w tym telefonie. Dotknij, aby zrobić kopię."
   },
   "ascent": {
     "title": "Nowe przejście", "editTitle": "Edycja przejścia", "detailTitle": "Przejście", "notFound": "To przejście już nie istnieje.",
     "deleteTitle": "Usunąć przejście?", "deleteQuestion": "Przejście drogi „{{name}}” zniknie z dziennika i statystyk.",
-    "pickDate": "Otwiera kalendarz", "route": "Droga", "searchRoute": "Szukaj po drodze, sektorze lub skale", "newRoute": "Utwórz nową drogę",
+    "pickDate": "Otwiera kalendarz", "recent": "Ostatnio wspinane", "cragInRegion": "Rejon: {{region}}", "newCragHint": "Nowa skała. Możesz dodać jej rejon:",
+    "duplicate": "Ta skała ma już drogę „{{name}}” ({{sector}}, {{grade}}).", "useExisting": "Użyj tej drogi", "route": "Droga", "searchRoute": "Szukaj po drodze, sektorze lub skale", "newRoute": "Utwórz nową drogę",
     "newRouteNamed": "Utwórz drogę „{{name}}”", "noResults": "Brak dróg pasujących do „{{query}}”.",
     "style": "Styl", "attempts": "Podejścia", "rating": "Ocena", "ratingStar": "{{n}} z 5", "partner": "Partner", "weather": "Warunki",
     "notes": "Notatka", "date": "Data", "datePlaceholder": "RRRR-MM-DD", "crag": "Skała", "sector": "Sektor (opcjonalnie)", "name": "Nazwa drogi",
@@ -32,7 +34,12 @@
   },
   "crags": {
     "title": "Skały", "detailTitle": "Skała", "sends": "przejścia: {{count}}", "tried": "próby: {{count}}", "approach": "Dojście",
-    "tapRoute": "Dotknij drogę, aby dodać przejście.", "logHint": "Otwiera nowe przejście tej drogi", "noRoutes": "Ta skała nie ma jeszcze dróg.", "noRegion": "Bez rejonu", "routes": "Drogi: {{count}}", "empty": "Brak skał", "emptyHint": "Zaimportuj CSV w ustawieniach lub utwórz drogę przy dodawaniu przejścia." },
+    "tapRoute": "Dotknij drogę, aby zobaczyć historię i dodać przejście.", "logHint": "Otwiera historię drogi", "noRoutes": "Ta skała nie ma jeszcze dróg.", "noRegion": "Bez rejonu", "routes": "Drogi: {{count}}", "empty": "Brak skał", "emptyHint": "Zaimportuj CSV w ustawieniach lub utwórz drogę przy dodawaniu przejścia." },
+  "route": {
+    "title": "Droga", "history": "Twoje przejścia", "logAnother": "Dodaj przejście", "openHint": "Otwiera historię drogi",
+    "sentOn": "Przejście {{date}} ({{style}}).", "daysToSend": "Zajęło to {{n}} dni.", "notSent": "Jeszcze bez przejścia. Dni prób: {{n}}.", "neverTried": "Brak podejść do tej drogi.",
+    "totals": "Podejścia: {{ascents}} · przejścia: {{sends}}"
+  },
   "edit": {
     "cragTitle": "Edycja skały", "newCragTitle": "Dodaj skałę", "routeTitle": "Edycja drogi", "routeTitleNamed": "Edytuj drogę {{name}}",
     "sectorTitle": "Edycja sektora", "regionTitle": "Edycja rejonu",
@@ -58,7 +65,7 @@
     "csvHelp": "Wybierz crags.csv, routes.csv oraz opcjonalnie sectors.csv i pitches.csv.",
     "importDone": "Zaimportowano rekordów: {{count}}.", "csvDone": "Zaimportowano: skały {{crags}}, sektory {{sectors}}, drogi {{routes}}, wyciągi {{pitches}}.",
     "csvErrors": "Znaleziono problemów: {{count}}. Nic nie zaimportowano.", "csvMissing": "Wymagane są crags.csv i routes.csv. Wybrano: {{files}}.",
-    "notBackup": "Ten plik nie jest kopią zapasową Cruxlog.",
+    "notBackup": "Ten plik nie jest kopią zapasową Cruxlog.", "lastBackupNever": "Nie masz jeszcze kopii.", "lastBackupToday": "Ostatnia kopia: dziś.", "lastBackupDays": "Ostatnia kopia: {{n}} dni temu.",
     "done": "Gotowe", "problem": "Problem"
   }
 }

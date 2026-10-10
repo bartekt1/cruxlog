@@ -1,9 +1,9 @@
 import { BOULDER_SYSTEMS, ROUTE_SYSTEMS, type GradeSystem } from './grades';
 
 export type Lang = 'pl' | 'en';
-export type Settings = { language: Lang | null; routeSystem: GradeSystem; boulderSystem: GradeSystem };
+export type Settings = { language: Lang | null; routeSystem: GradeSystem; boulderSystem: GradeSystem; lastBackupAt: number | null };
 
-export const DEFAULT_SETTINGS: Settings = { language: null, routeSystem: 'kr', boulderSystem: 'font' };
+export const DEFAULT_SETTINGS: Settings = { language: null, routeSystem: 'kr', boulderSystem: 'font', lastBackupAt: null };
 
 /** Turns stored JSON (possibly old, partial or corrupt) into valid settings. */
 export function parseSettings(raw: string | null): Settings {
@@ -19,6 +19,7 @@ export function parseSettings(raw: string | null): Settings {
     language: pick<Lang | null>(data.language, ['pl', 'en'], DEFAULT_SETTINGS.language),
     routeSystem: pick(data.routeSystem, ROUTE_SYSTEMS, DEFAULT_SETTINGS.routeSystem),
     boulderSystem: pick(data.boulderSystem, BOULDER_SYSTEMS, DEFAULT_SETTINGS.boulderSystem),
+    lastBackupAt: typeof data.lastBackupAt === 'number' && Number.isFinite(data.lastBackupAt) ? data.lastBackupAt : null,
   };
 }
 

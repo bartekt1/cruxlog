@@ -7,12 +7,14 @@
   "styles": { "os": "OS", "flash": "Flash", "rp": "RP", "pp": "PP", "tr": "TR", "attempt": "Attempt" },
   "types": { "sport": "Sport", "boulder": "Boulder", "multipitch": "Multipitch" },
   "journal": {
-    "empty": "No ascents yet", "emptyHint": "Tap Add to log your first climb.", "attempts": "{{count}} tries", "add": "Log an ascent", "addShort": "Add"
+    "empty": "No ascents yet", "emptyHint": "Tap Add to log your first climb.", "attempts": "{{count}} tries", "add": "Log an ascent", "addShort": "Add",
+    "backupNever": "You have never made a backup", "backupOld": "Last backup {{n}} days ago", "backupHint": "Your climbs live only on this phone. Tap to export a backup."
   },
   "ascent": {
     "title": "New ascent", "editTitle": "Edit ascent", "detailTitle": "Ascent", "notFound": "This ascent no longer exists.",
     "deleteTitle": "Delete ascent?", "deleteQuestion": "The ascent of \"{{name}}\" will be removed from your journal and stats.",
-    "pickDate": "Opens a calendar", "route": "Route", "searchRoute": "Search by route, sector or crag", "newRoute": "Create a new route",
+    "pickDate": "Opens a calendar", "recent": "Recently climbed", "cragInRegion": "Region: {{region}}", "newCragHint": "New crag. You can add its region:",
+    "duplicate": "This crag already has \"{{name}}\" ({{sector}}, {{grade}}).", "useExisting": "Use this route", "route": "Route", "searchRoute": "Search by route, sector or crag", "newRoute": "Create a new route",
     "newRouteNamed": "Create route \"{{name}}\"", "noResults": "No routes match \"{{query}}\".",
     "style": "Style", "attempts": "Attempts", "rating": "Rating", "ratingStar": "{{n}} of 5", "partner": "Partner", "weather": "Conditions",
     "notes": "Notes", "date": "Date", "datePlaceholder": "YYYY-MM-DD", "crag": "Crag", "sector": "Sector (optional)", "name": "Route name",
@@ -32,7 +34,12 @@
   },
   "crags": {
     "title": "Crags", "detailTitle": "Crag", "sends": "sends: {{count}}", "tried": "tried: {{count}}", "approach": "Approach",
-    "tapRoute": "Tap a route to log an ascent.", "logHint": "Opens a new ascent for this route", "noRoutes": "No routes in this crag yet.", "noRegion": "No region", "routes": "Routes: {{count}}", "empty": "No crags yet", "emptyHint": "Import a CSV in Settings or create a route when logging an ascent." },
+    "tapRoute": "Tap a route to see your history and log an ascent.", "logHint": "Opens the route history", "noRoutes": "No routes in this crag yet.", "noRegion": "No region", "routes": "Routes: {{count}}", "empty": "No crags yet", "emptyHint": "Import a CSV in Settings or create a route when logging an ascent." },
+  "route": {
+    "title": "Route", "history": "Your ascents", "logAnother": "Log an ascent", "openHint": "Opens the route history",
+    "sentOn": "Sent {{date}} ({{style}}).", "daysToSend": "It took {{n}} days.", "notSent": "Not sent yet. Days tried: {{n}}.", "neverTried": "No ascents of this route yet.",
+    "totals": "Ascents: {{ascents}} · sends: {{sends}}"
+  },
   "edit": {
     "cragTitle": "Edit crag", "newCragTitle": "Add a crag", "routeTitle": "Edit route", "routeTitleNamed": "Edit route {{name}}",
     "sectorTitle": "Edit sector", "regionTitle": "Edit region",
@@ -58,7 +65,7 @@
     "csvHelp": "Pick crags.csv, routes.csv and optionally sectors.csv and pitches.csv.",
     "importDone": "Imported {{count}} records.", "csvDone": "Imported {{crags}} crags, {{sectors}} sectors, {{routes}} routes, {{pitches}} pitches.",
     "csvErrors": "{{count}} problems found. Nothing was imported.", "csvMissing": "crags.csv and routes.csv are required. Selected: {{files}}.",
-    "notBackup": "This file is not a Cruxlog backup.",
+    "notBackup": "This file is not a Cruxlog backup.", "lastBackupNever": "No backup yet.", "lastBackupToday": "Last backup: today.", "lastBackupDays": "Last backup: {{n}} days ago.",
     "done": "Done", "problem": "Problem"
   }
 }

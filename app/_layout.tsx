@@ -19,6 +19,7 @@ export default function RootLayout() {
         <Stack.Screen name="crag/[id]" options={{ title: t('crags.detailTitle') }} />
         <Stack.Screen name="crag/edit" options={{ title: t('edit.cragTitle') }} />
         <Stack.Screen name="route/edit" options={{ title: t('edit.routeTitle') }} />
+        <Stack.Screen name="route/[id]" options={{ title: t('route.title') }} />
         <Stack.Screen name="sector/[id]" options={{ title: t('edit.sectorTitle') }} />
         <Stack.Screen name="region/[id]" options={{ title: t('edit.regionTitle') }} />
         <Stack.Screen name="settings" options={{ title: t('settings.title') }} />

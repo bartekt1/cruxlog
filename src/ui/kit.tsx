@@ -91,3 +91,33 @@ export function GradeBadge({ text }: { text: string }) {
   const t = useTheme();
   return <Text style={{ backgroundColor: t.soft, color: t.ink, borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2, fontVariant: ['tabular-nums'], overflow: 'hidden' }}>{text}</Text>;
 }
+
+export type SuggestionItem = { key: string; title: string; subtitle?: string; badge?: string };
+
+/** A short list under a text field; tap a row to pick it. Renders nothing when empty. */
+export function Suggestions({ items, onPick, title }: { items: SuggestionItem[]; onPick: (key: string) => void; title?: string }) {
+  const t = useTheme();
+  if (!items.length) return null;
+  return (
+    <View style={{ borderWidth: 1, borderColor: t.line, borderRadius: 6, backgroundColor: t.surface, marginTop: 4 }}>
+      {title ? <Text style={{ color: t.muted, fontSize: 12, paddingHorizontal: 12, paddingTop: 8 }}>{title}</Text> : null}
+      {items.map((it, i) => (
+        <Pressable
+          key={it.key}
+          onPress={() => onPick(it.key)}
+          accessibilityRole="button"
+          style={({ pressed }) => ({
+            flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingVertical: 10, minHeight: 44,
+            borderTopWidth: i === 0 && !title ? 0 : 1, borderTopColor: t.line, opacity: pressed ? 0.6 : 1,
+          })}
+        >
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: t.ink }}>{it.title}</Text>
+            {it.subtitle ? <Text style={{ color: t.muted, fontSize: 12 }}>{it.subtitle}</Text> : null}
+          </View>
+          {it.badge ? <GradeBadge text={it.badge} /> : null}
+        </Pressable>
+      ))}
+    </View>
+  );
+}

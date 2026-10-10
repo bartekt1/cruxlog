@@ -24,11 +24,30 @@ Write down the result of every step (OK / problem). Report problems with: step n
 6. Error checks: try to save with no route (message "Choose a route first"); new route without crag or name (message names the missing field, the field gets a red border); a grade that does not exist for the system, for example `9z`, or `VI.3` with Boulder type (message with an example grade); date `2026-02-30` or `10.10.2026` (date error); attempts `0` or `abc` (attempts error). Expected: nothing saved in each case.
 7. Tap "Yesterday", save. Then tap the date field, pick a day 3 weeks ago in the calendar, save; repeat with a day in the previous year. Days in the future cannot be picked. Expected: headers "Yesterday", a localized day such as "Sat, 19 September", and for the previous year the year is included; newest first.
 
+## 2a. Route search, suggestions, duplicates
+1. New ascent with an empty route field. Expected: "Recently climbed" lists up to 5 routes you logged last, newest first (none on a fresh install).
+2. Type "lysa", "ŁYSA" or "łysa" for a route or crag named "Łysa ...". Expected: it is found in every case; the list shrinks as you type and shows crag, sector and grade.
+3. Create a new route: in "Crag" start typing an existing crag. Expected: suggestions; pick one and its region is shown below. Type a new crag name. Expected: "New crag" and a Region field with suggestions of existing regions.
+4. Sector field: suggestions are the sectors of the chosen crag.
+5. Type the name of a route that already exists on that crag (any case). Expected: a box "This crag already has ..." with "Use this route"; tapping it selects the existing route.
+6. Type "okiennik" when "Okiennik" exists and save. Expected: no second crag is created.
+7. Partner field: suggestions of partners, the most frequent first; "anna" and "Anna" are the same partner.
+
 ## 2b. Ascent detail, edit, delete
 1. Tap an entry in the Journal. Expected: a screen with route, crag, sector, grade, date, style, rating, partner, conditions and notes (empty fields are not shown).
 2. Tap Edit, change the style to Flash and the date to another day, Save. Expected: back on the detail, then in the Journal the entry shows the new style under the new date; Progress numbers update.
 3. Tap Delete. Expected: a question "Delete ascent?"; Cancel keeps it; Delete removes it from the Journal and from Progress.
 4. Export a backup on phone A (or before deleting), delete an ascent, export again and import that backup on a phone that has the old data. Expected: the ascent disappears there too.
+
+## 2c. Route history
+1. Crags -> a crag -> tap a route. Expected: the route screen with crag/sector/type, a summary ("Sent <date> (RP). It took 3 days." or "Not sent yet. Days tried: 2."), totals, a green "Log an ascent" button and the list of your ascents (tap one to open it).
+2. On an ascent's detail, tap the route name. Expected: the same route screen.
+3. For your own routes the pencil at the top right opens route editing.
+
+## 2d. Backup reminder
+1. With at least one ascent and no backup made: the Journal shows a red-bordered box "You have never made a backup"; tapping it opens Settings, which shows "No backup yet."
+2. Export a backup. Expected: the box disappears; Settings shows "Last backup: today."
+3. Install the new APK over the old one (without uninstalling). Expected: the app updates and all data is still there.
 
 ## 3. Progress
 0. Before adding any ascent (fresh install): Progress shows "No sends in <year> yet" with a hint, and "No sends this year." under each pyramid.

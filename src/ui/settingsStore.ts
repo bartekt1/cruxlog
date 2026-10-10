@@ -9,6 +9,7 @@ type SettingsState = Settings & {
   setLanguage: (l: Lang) => void;
   setRouteSystem: (s: GradeSystem) => void;
   setBoulderSystem: (s: GradeSystem) => void;
+  setLastBackupAt: (t: number) => void;
 };
 
 function load(): Settings {
@@ -23,9 +24,9 @@ function load(): Settings {
 export const useSettings = create<SettingsState>((set, get) => {
   const save = (patch: Partial<Settings>) => {
     set(patch);
-    const { language, routeSystem, boulderSystem } = get();
+    const { language, routeSystem, boulderSystem, lastBackupAt } = get();
     try {
-      Storage.setItemSync(KEY, JSON.stringify({ language, routeSystem, boulderSystem }));
+      Storage.setItemSync(KEY, JSON.stringify({ language, routeSystem, boulderSystem, lastBackupAt }));
     } catch {
       // Keep the in-memory value; it will be saved on the next change.
     }
@@ -35,5 +36,6 @@ export const useSettings = create<SettingsState>((set, get) => {
     setLanguage: (language) => save({ language }),
     setRouteSystem: (routeSystem) => save({ routeSystem }),
     setBoulderSystem: (boulderSystem) => save({ boulderSystem }),
+    setLastBackupAt: (lastBackupAt) => save({ lastBackupAt }),
   };
 });

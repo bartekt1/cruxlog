@@ -2,7 +2,7 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, ScrollView, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import { deleteAscent, getAscent, type AscentDetail } from '../../src/db/repo';
 import { formatDay, isoDate } from '../../src/domain/dates';
 import { formatGrade } from '../../src/domain/grades';
@@ -41,7 +41,9 @@ export default function AscentScreen() {
   return (
     <ScrollView style={{ backgroundColor: th.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 48 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <Text style={{ flex: 1, color: th.ink, fontSize: 22, fontWeight: '700' }}>{a.route_name}</Text>
+        <Pressable style={{ flex: 1 }} onPress={() => router.push(`/route/${a.route_id}`)} accessibilityRole="link" accessibilityHint={t('route.openHint')}>
+          <Text style={{ color: th.accent, fontSize: 22, fontWeight: '700' }}>{a.route_name}</Text>
+        </Pressable>
         <GradeBadge text={formatGrade(a.grade_index, a.type === 'boulder' ? boulderSystem : routeSystem, a.type)} />
       </View>
       <Text style={{ color: th.muted, marginTop: 4 }}>{a.crag_name} · {a.route.sector_name} · {t(`types.${a.type}`)}</Text>
