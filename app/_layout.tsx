@@ -15,6 +15,15 @@ export default function RootLayout() {
       <Stack screenOptions={{ headerStyle: { backgroundColor: th.surface }, headerTintColor: th.ink, contentStyle: { backgroundColor: th.bg } }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="ascent/new" options={{ title: t('ascent.title'), presentation: 'modal' }} />
+        <Stack.Screen name="ascent/[id]" options={{ title: t('ascent.detailTitle') }} />
+        <Stack.Screen name="crag/[id]" options={{ title: t('crags.detailTitle') }} />
+        <Stack.Screen name="crag/edit" options={{ title: t('edit.cragTitle') }} />
+        <Stack.Screen name="route/edit" options={{ title: t('edit.routeTitle') }} />
+        <Stack.Screen name="route/[id]" options={{ title: t('route.title') }} />
+        <Stack.Screen name="route/new" options={{ title: t('edit.addRoutesTitle') }} />
+        <Stack.Screen name="sector/new" options={{ title: t('edit.addSectorTitle') }} />
+        <Stack.Screen name="sector/[id]" options={{ title: t('edit.sectorTitle') }} />
+        <Stack.Screen name="region/[id]" options={{ title: t('edit.regionTitle') }} />
         <Stack.Screen name="settings" options={{ title: t('settings.title') }} />
       </Stack>
     </SQLiteProvider>

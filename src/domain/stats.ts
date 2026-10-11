@@ -53,3 +53,21 @@ export function activityByDay(ascents: StatAscent[]): Map<string, number> {
   for (const a of ascents) out.set(a.date, (out.get(a.date) ?? 0) + 1);
   return out;
 }
+
+/** Years with at least one ascent, plus the current year, newest first. */
+export function ascentYears(ascents: StatAscent[], currentYear: number): number[] {
+  const years = new Set<number>([currentYear]);
+  for (const a of ascents) {
+    const y = Number(a.date.slice(0, 4));
+    if (Number.isInteger(y) && y > 0) years.add(y);
+  }
+  return [...years].sort((a, b) => b - a);
+}
+
+export type GoalProgress = { value: number; target: number; ratio: number; reached: boolean };
+
+/** Progress of a yearly count goal: sends this year against the target. */
+export function countGoalProgress(target: number, sendsThisYear: number): GoalProgress {
+  const safe = Math.max(1, target);
+  return { value: sendsThisYear, target: safe, ratio: Math.min(1, sendsThisYear / safe), reached: sendsThisYear >= safe };
+}

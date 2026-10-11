@@ -1,4 +1,4 @@
-import { formatGrade, parseGrade } from '../src/domain/grades';
+import { formatGrade, gradeExample, parseGrade } from '../src/domain/grades';
 
 describe('grades', () => {
   it('parses and converts route grades', () => {
@@ -17,5 +17,13 @@ describe('grades', () => {
   it('rejects a wrong system or an unknown grade', () => {
     expect(parseGrade('6B', 'fr', 'boulder')).toBeNull();
     expect(parseGrade('9z', 'fr', 'sport')).toBeNull();
+  });
+});
+
+describe('gradeExample', () => {
+  it('gives a label that parses back in the same system', () => {
+    for (const [system, type] of [['kr', 'sport'], ['uiaa', 'multipitch'], ['fr', 'sport'], ['font', 'boulder'], ['v', 'boulder']] as const) {
+      expect(parseGrade(gradeExample(system, type), system, type)).not.toBeNull();
+    }
   });
 });
