@@ -113,6 +113,14 @@ Severity: **H** blocks a task or loses/corrupts data, **M** slows a task or conf
 | B4 | Empty sectors were invisible on the crag screen | M | Fixed: all sectors shown, empty ones with a hint |
 | B5 | "Add" button hard to see, especially in dark mode | H | Fixed: raised orange "+" in the middle of the tab bar, the only orange in the UI |
 
+## Round 6 (guidebook data)
+
+| # | Issue | Sev | Status |
+|---|---|---|---|
+| G1 | Guidebook grades VI+, VI-, V-, IV+, IV-, II, ranges (VI.4/4+), "?" and Font 4+, 8A+ were rejected by the importer | H | Fixed: mapped to the nearest lower ladder step, original label kept and shown |
+| G2 | Imported data was read-only, so routes could not be moved to sectors or corrected | M | Fixed: everything editable; the import asks first and warns that re-importing overwrites changes |
+| G3 | Guidebook export not in the app's CSV format | M | Converter `src/domain/guidebookCsv.ts` (region = group, Kamieniec groups merged; crag = rock; walls in the crag description) |
+
 ## Open items
 
 1. Edit a goal's title or target; link a project goal to a route.

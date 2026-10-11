@@ -31,7 +31,7 @@ export default function EditRoute() {
     getRoute(db, id).then((r) => {
       if (!r) return;
       setRoute(r); setName(r.name); setSector(r.sector_name); setType(r.type); setSystem(r.grade_system);
-      setGrade(formatGrade(r.grade_index, r.grade_system, r.type));
+      setGrade(r.grade_label || formatGrade(r.grade_index, r.grade_system, r.type));
       listSectorNames(db, r.crag_id).then(setSectors);
     });
   }, [db, id]);

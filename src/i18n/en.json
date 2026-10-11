@@ -52,7 +52,6 @@
     "deleteCrag": "Delete crag", "deleteRoute": "Delete route", "deleteSector": "Delete sector", "deleteRegion": "Delete region",
     "deleteTitle": "Delete \"{{name}}\"?", "deleteAlso": "This also deletes:", "deleteSimple": "This cannot be undone.",
     "countSectors": "sectors: {{count}}", "countRoutes": "routes: {{count}}", "countAscents": "your ascents: {{count}}",
-    "importedNote": "Imported from a CSV file. To change it, edit the file and import it again.",
     "regionDeleteHint": "Deleting a region keeps its crags; they just lose the region.",
     "errors": { "name": "Enter a name.", "region": "Choose or type a region." }
   },
@@ -71,6 +70,8 @@
     "importDone": "Imported {{count}} records.", "csvDone": "Imported {{crags}} crags, {{sectors}} sectors, {{routes}} routes, {{pitches}} pitches.",
     "csvErrors": "{{count}} problems found. Nothing was imported.", "csvMissing": "crags.csv and routes.csv are required. Selected: {{files}}.",
     "notBackup": "This file is not a Cruxlog backup.", "lastBackupNever": "No backup yet.", "lastBackupToday": "Last backup: today.", "lastBackupDays": "Last backup: {{n}} days ago.",
-    "done": "Done", "problem": "Problem"
+    "done": "Done", "problem": "Problem",
+    "csvConfirmTitle": "Import?", "csvConfirmYes": "Import",
+    "csvConfirm": "{{crags}} crags and {{routes}} routes will be imported. If this file was imported before, your changes to these crags and routes are overwritten and deleted ones come back. Your ascents are not changed."
   }
 }

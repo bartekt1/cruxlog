@@ -18,6 +18,14 @@ import { useTheme } from '../src/ui/theme';
 
 class UserError extends Error {}
 
+/** Yes/no question as a promise. */
+const ask = (title: string, message: string, yes: string, no: string) =>
+  new Promise<boolean>((resolve) =>
+    Alert.alert(title, message, [
+      { text: no, style: 'cancel', onPress: () => resolve(false) },
+      { text: yes, onPress: () => resolve(true) },
+    ], { cancelable: true, onDismiss: () => resolve(false) }));
+
 export default function Settings() {
   const db = useSQLiteContext();
   const { t } = useTranslation();
@@ -81,6 +89,12 @@ export default function Settings() {
       const first = plan.errors.slice(0, 8).map((e) => `${e.file}:${e.line} ${e.message}`).join('\n');
       throw new UserError(`${t('settings.csvErrors', { count: plan.errors.length })}\n\n${first}`);
     }
+    const ok = await ask(
+      t('settings.csvConfirmTitle'),
+      t('settings.csvConfirm', { crags: plan.crags.length, routes: plan.routes.length }),
+      t('settings.csvConfirmYes'), t('common.cancel'),
+    );
+    if (!ok) return;
     return t('settings.csvDone', await applyImport(db, plan));
   });
 

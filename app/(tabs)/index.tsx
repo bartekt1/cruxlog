@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, SectionList, Text, View } from 'react-native';
 import { listAscents, type AscentRow } from '../../src/db/repo';
 import { formatDay, isoDate, relativeDay } from '../../src/domain/dates';
-import { formatGrade, type AscentStyle } from '../../src/domain/grades';
+import { routeGrade, type AscentStyle } from '../../src/domain/grades';
 import { backupStatus } from '../../src/domain/history';
 import { EmptyState, GradeBadge, Screen } from '../../src/ui/kit';
 import { useSettings } from '../../src/ui/settingsStore';
@@ -74,7 +74,7 @@ export default function Journal() {
                 {item.crag_name}{item.attempts > 1 ? ` · ${t('journal.attempts', { count: item.attempts })}` : ''}{item.partner_name ? ` · ${item.partner_name}` : ''}
               </Text>
             </View>
-            <GradeBadge text={formatGrade(item.grade_index, item.type === 'boulder' ? boulderSystem : routeSystem, item.type)} />
+            <GradeBadge text={routeGrade(item, item.type === 'boulder' ? boulderSystem : routeSystem)} />
             <Text style={{ color: item.style === 'attempt' ? th.muted : th.accent, fontWeight: '700', minWidth: 52, textAlign: 'right' }}>{t(`styles.${item.style as AscentStyle}`)}</Text>
           </Pressable>
         )}

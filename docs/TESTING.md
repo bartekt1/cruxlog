@@ -94,6 +94,12 @@ Write down the result of every step (OK / problem). Report problems with: step n
 5a. Select only sectors.csv. Expected: "crags.csv and routes.csv are required. Selected: sectors.csv".
 6. File names must be exactly `crags.csv`, `sectors.csv`, `routes.csv`, `pitches.csv`. A different name is ignored (note what happens).
 
+## 5b. Guidebook import and editing imported data
+1. Import crags.csv, sectors.csv and routes.csv made from a guidebook export (`src/domain/guidebookCsv.ts`). Expected: a question "Import?" with the numbers of crags and routes and a warning that re-importing overwrites changes; Cancel imports nothing.
+2. After Import: the Crags tab shows the regions with their crags; a crag description contains the wall heights and aspects.
+3. Grades from the guidebook are shown as written (VI+, VI.4/4+, VI.5?, 4+, 8A+) when the display system matches (KR for routes, FONT for boulders); in FR they show the nearest grade. They count in Progress as the nearest lower step.
+4. Imported crags, sectors, routes and regions have pencils like your own: rename a crag, move a route to a new sector, delete a route. Import the same files again: the changes are undone and deleted routes come back; ascents stay.
+
 ## 6. Backup
 1. Settings -> Export backup. Expected: the system share sheet opens; save the JSON file (for example to Drive or send to yourself).
 2. Add one more ascent, then import the backup file. Expected: confirmation message; the data is still there with no duplicates.

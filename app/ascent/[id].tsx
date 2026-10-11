@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import { deleteAscent, getAscent, type AscentDetail } from '../../src/db/repo';
 import { formatDay, isoDate } from '../../src/domain/dates';
-import { formatGrade } from '../../src/domain/grades';
+import { routeGrade } from '../../src/domain/grades';
 import { Button, EmptyState, GradeBadge, Label } from '../../src/ui/kit';
 import { useSettings } from '../../src/ui/settingsStore';
 import { useTheme } from '../../src/ui/theme';
@@ -44,7 +44,7 @@ export default function AscentScreen() {
         <Pressable style={{ flex: 1 }} onPress={() => router.push(`/route/${a.route_id}`)} accessibilityRole="link" accessibilityHint={t('route.openHint')}>
           <Text style={{ color: th.accent, fontSize: 22, fontWeight: '700' }}>{a.route_name}</Text>
         </Pressable>
-        <GradeBadge text={formatGrade(a.grade_index, a.type === 'boulder' ? boulderSystem : routeSystem, a.type)} />
+        <GradeBadge text={routeGrade(a, a.type === 'boulder' ? boulderSystem : routeSystem)} />
       </View>
       <Text style={{ color: th.muted, marginTop: 4 }}>{a.crag_name} · {a.route.sector_name} · {t(`types.${a.type}`)}</Text>
 

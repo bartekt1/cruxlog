@@ -9,7 +9,7 @@ import {
 } from '../../src/db/repo';
 import { isoDate, shiftDay } from '../../src/domain/dates';
 import { isFirstTry, validateAscentDraft, validateRouteDraft } from '../../src/domain/forms';
-import { ASCENT_STYLES, formatGrade, gradeExample, systemsFor, type AscentStyle, type GradeSystem, type RouteType } from '../../src/domain/grades';
+import { ASCENT_STYLES, gradeExample, routeGrade, systemsFor, type AscentStyle, type GradeSystem, type RouteType } from '../../src/domain/grades';
 import { DateField } from '../../src/ui/DateField';
 import { sameName, suggest } from '../../src/domain/text';
 import { Button, Chip, ChipRow, ErrorText, Field, HIT, Label, LinkButton, Suggestions, type SuggestionItem } from '../../src/ui/kit';
@@ -97,7 +97,7 @@ export default function NewAscent() {
   const duplicate = name.trim() ? cragRoutes.find((r) => sameName(r.name, name)) ?? null : null;
 
   const routeItem = (r: RouteRow): SuggestionItem => ({
-    key: r.id, title: r.name, subtitle: `${r.crag_name} · ${r.sector_name}`, badge: formatGrade(r.grade_index, r.grade_system, r.type),
+    key: r.id, title: r.name, subtitle: `${r.crag_name} · ${r.sector_name}`, badge: routeGrade(r, r.grade_system),
   });
   const pickRoute = (rows: RouteRow[]) => (key: string) => {
     const r = rows.find((x) => x.id === key);
@@ -207,7 +207,7 @@ export default function NewAscent() {
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, padding: 12, borderRadius: 6, backgroundColor: th.soft }}>
           <View style={{ flex: 1 }}>
             <Text style={{ color: th.ink, fontWeight: '600' }}>{route.name}</Text>
-            <Text style={{ color: th.muted, fontSize: 12 }}>{route.crag_name} · {route.sector_name} · {formatGrade(route.grade_index, route.grade_system, route.type)}</Text>
+            <Text style={{ color: th.muted, fontSize: 12 }}>{route.crag_name} · {route.sector_name} · {routeGrade(route, route.grade_system)}</Text>
           </View>
           <LinkButton label={t('common.change')} onPress={() => setRoute(null)} />
         </View>
@@ -269,7 +269,7 @@ export default function NewAscent() {
           {duplicate ? (
             <View style={{ padding: 12, borderRadius: 6, backgroundColor: th.soft, gap: 4, marginTop: 8 }}>
               <Text style={{ color: th.ink }}>
-                {t('ascent.duplicate', { name: duplicate.name, sector: duplicate.sector_name, grade: formatGrade(duplicate.grade_index, duplicate.grade_system, duplicate.type) })}
+                {t('ascent.duplicate', { name: duplicate.name, sector: duplicate.sector_name, grade: routeGrade(duplicate, duplicate.grade_system) })}
               </Text>
               <LinkButton label={t('ascent.useExisting')} onPress={pickDuplicate} />
             </View>

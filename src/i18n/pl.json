@@ -52,7 +52,6 @@
     "deleteCrag": "Usuń skałę", "deleteRoute": "Usuń drogę", "deleteSector": "Usuń sektor", "deleteRegion": "Usuń rejon",
     "deleteTitle": "Usunąć „{{name}}”?", "deleteAlso": "Zostaną też usunięte:", "deleteSimple": "Tego nie można cofnąć.",
     "countSectors": "sektory: {{count}}", "countRoutes": "drogi: {{count}}", "countAscents": "Twoje przejścia: {{count}}",
-    "importedNote": "Zaimportowane z pliku CSV. Aby to zmienić, popraw plik i zaimportuj go ponownie.",
     "regionDeleteHint": "Usunięcie rejonu nie usuwa skał; zostaną po prostu bez rejonu.",
     "errors": { "name": "Podaj nazwę.", "region": "Wybierz albo wpisz rejon." }
   },
@@ -71,6 +70,8 @@
     "importDone": "Zaimportowano rekordów: {{count}}.", "csvDone": "Zaimportowano: skały {{crags}}, sektory {{sectors}}, drogi {{routes}}, wyciągi {{pitches}}.",
     "csvErrors": "Znaleziono problemów: {{count}}. Nic nie zaimportowano.", "csvMissing": "Wymagane są crags.csv i routes.csv. Wybrano: {{files}}.",
     "notBackup": "Ten plik nie jest kopią zapasową Cruxlog.", "lastBackupNever": "Nie masz jeszcze kopii.", "lastBackupToday": "Ostatnia kopia: dziś.", "lastBackupDays": "Ostatnia kopia: {{n}} dni temu.",
-    "done": "Gotowe", "problem": "Problem"
+    "done": "Gotowe", "problem": "Problem",
+    "csvConfirmTitle": "Zaimportować?", "csvConfirmYes": "Importuj",
+    "csvConfirm": "Zostanie zaimportowanych skał: {{crags}}, dróg: {{routes}}. Jeśli ten plik był już importowany, Twoje zmiany w tych skałach i drogach zostaną nadpisane, a usunięte wrócą. Twoje przejścia się nie zmienią."
   }
 }

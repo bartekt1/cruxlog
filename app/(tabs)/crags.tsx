@@ -24,7 +24,7 @@ export default function Crags() {
       byRegion.set(key, [...(byRegion.get(key) ?? []), r]);
     }
     return [...byRegion.entries()].map(([regionId, data]) => ({
-      regionId, title: data[0].region_name ?? t('crags.noRegion'), own: data[0].region_source === 'user', data,
+      regionId, title: data[0].region_name ?? t('crags.noRegion'), data,
     }));
   }, [rows, t]);
 
@@ -46,7 +46,7 @@ export default function Crags() {
                 <IconButton name="add-circle-outline" size={22} label={t('edit.addCragInRegion', { region: section.title })}
                   onPress={() => router.push({ pathname: '/crag/edit', params: { region: section.title } })} />
               ) : null}
-              {section.own ? <IconButton name="create-outline" size={20} label={t('edit.regionTitle')} onPress={() => router.push(`/region/${section.regionId}`)} /> : null}
+              {section.regionId ? <IconButton name="create-outline" size={20} label={t('edit.regionTitle')} onPress={() => router.push(`/region/${section.regionId}`)} /> : null}
             </View>
           ) : null
         }

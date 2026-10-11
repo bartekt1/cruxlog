@@ -16,13 +16,14 @@ const ROUTE_COLS = `r.id, r.name, r.type, r.grade_label, r.grade_system, r.grade
 
 export type AscentRow = {
   id: string; date: string; style: AscentStyle; attempts: number; rating: number | null; notes: string;
-  route_id: string; route_name: string; type: RouteType; grade_index: number; crag_name: string; partner_name: string | null;
+  route_id: string; route_name: string; type: RouteType; grade_index: number; grade_label: string; grade_system: GradeSystem;
+  crag_name: string; partner_name: string | null;
 };
 
 export async function listAscents(db: SQLiteDatabase): Promise<AscentRow[]> {
   return db.getAllAsync<AscentRow>(
     `SELECT a.id, a.date, a.style, a.attempts, a.rating, a.notes, r.id AS route_id, r.name AS route_name, r.type,
-            r.grade_index, c.name AS crag_name, p.name AS partner_name
+            r.grade_index, r.grade_label, r.grade_system, c.name AS crag_name, p.name AS partner_name
      FROM ascent a JOIN route r ON r.id = a.route_id JOIN sector s ON s.id = r.sector_id JOIN crag c ON c.id = s.crag_id
      LEFT JOIN partner p ON p.id = a.partner_id
      WHERE a.deleted_at IS NULL ORDER BY a.date DESC, a.created_at DESC`,
@@ -79,7 +80,7 @@ export async function listPartners(db: SQLiteDatabase): Promise<string[]> {
 export async function listRouteAscents(db: SQLiteDatabase, routeId: string): Promise<AscentRow[]> {
   return db.getAllAsync<AscentRow>(
     `SELECT a.id, a.date, a.style, a.attempts, a.rating, a.notes, r.id AS route_id, r.name AS route_name, r.type,
-            r.grade_index, c.name AS crag_name, p.name AS partner_name
+            r.grade_index, r.grade_label, r.grade_system, c.name AS crag_name, p.name AS partner_name
      FROM ascent a JOIN route r ON r.id = a.route_id JOIN sector s ON s.id = r.sector_id JOIN crag c ON c.id = s.crag_id
      LEFT JOIN partner p ON p.id = a.partner_id
      WHERE a.route_id = ? AND a.deleted_at IS NULL ORDER BY a.date DESC, a.created_at DESC`,
@@ -139,7 +140,7 @@ export type AscentDetail = AscentRow & { weather: string; route: RouteRow };
 export async function getAscent(db: SQLiteDatabase, id: string): Promise<AscentDetail | null> {
   const a = await db.getFirstAsync<AscentRow & { weather: string }>(
     `SELECT a.id, a.date, a.style, a.attempts, a.rating, a.notes, a.weather, r.id AS route_id, r.name AS route_name, r.type,
-            r.grade_index, c.name AS crag_name, p.name AS partner_name
+            r.grade_index, r.grade_label, r.grade_system, c.name AS crag_name, p.name AS partner_name
      FROM ascent a JOIN route r ON r.id = a.route_id JOIN sector s ON s.id = r.sector_id JOIN crag c ON c.id = s.crag_id
      LEFT JOIN partner p ON p.id = a.partner_id
      WHERE a.id = ? AND a.deleted_at IS NULL`,

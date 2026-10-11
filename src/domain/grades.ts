@@ -46,6 +46,8 @@ export const BOULDER_LADDER: BoulderLadderRow[] = [
   { font: '7C', v: 'V9' },
   { font: '7C+', v: 'V10' },
   { font: '8A', v: 'V11' },
+  // Append only: indices are stored in the database.
+  { font: '8A+', v: 'V12' },
 ];
 
 export const ROUTE_SYSTEMS: GradeSystem[] = ['kr', 'uiaa', 'fr'];
@@ -65,10 +67,7 @@ export function ladderLength(type: RouteType): number {
 
 const norm = (s: string) => s.trim().replace(/\s+/g, '').toUpperCase();
 
-/** Returns the ladder index for a label written in the given system, or null. */
-export function parseGrade(label: string, system: GradeSystem, type: RouteType): number | null {
-  const wanted = norm(label);
-  if (!wanted) return null;
+function exactIndex(wanted: string, system: GradeSystem, type: RouteType): number | null {
   if (isBoulder(type)) {
     if (system !== 'font' && system !== 'v') return null;
     const i = BOULDER_LADDER.findIndex((r) => norm(r[system]) === wanted);
@@ -77,6 +76,30 @@ export function parseGrade(label: string, system: GradeSystem, type: RouteType):
   if (system !== 'kr' && system !== 'uiaa' && system !== 'fr') return null;
   const i = ROUTE_LADDER.findIndex((r) => norm(r[system]) === wanted);
   return i < 0 ? null : i;
+}
+
+/**
+ * Returns the ladder index for a label written in the given system, or null.
+ * Guidebook forms the ladder lacks map to the nearest lower step, so stats stay conservative
+ * while the original label is kept on the route: "VI.4/4+" and "VI.5?" use the first grade,
+ * "VI+" or "4+" the grade without "+", "VI-" the step below VI, and "I"/"II" the lowest step.
+ */
+export function parseGrade(label: string, system: GradeSystem, type: RouteType): number | null {
+  const wanted = norm(label);
+  if (!wanted) return null;
+  const exact = exactIndex(wanted, system, type);
+  if (exact != null) return exact;
+  const first = wanted.replace(/\?+$/, '').split('/')[0];
+  if (!first) return null;
+  const again = exactIndex(first, system, type);
+  if (again != null) return again;
+  if (first.endsWith('+')) return exactIndex(first.slice(0, -1), system, type);
+  if (first.endsWith('-')) {
+    const base = exactIndex(first.slice(0, -1), system, type);
+    return base == null ? null : Math.max(0, base - 1);
+  }
+  if (!isBoulder(type) && (system === 'kr' || system === 'uiaa') && (first === 'I' || first === 'II')) return 0;
+  return null;
 }
 
 /** Label of a ladder index in the requested system. */
@@ -89,6 +112,13 @@ export function formatGrade(index: number, system: GradeSystem, type: RouteType)
   const row = ROUTE_LADDER[index];
   if (!row) return '?';
   return system === 'uiaa' ? row.uiaa : system === 'fr' ? row.fr : row.kr;
+}
+
+export type GradedRoute = { grade_index: number; grade_label?: string; grade_system?: GradeSystem; type: RouteType };
+
+/** The route's own label (e.g. "VI.4/4+" from a guidebook) when shown in its own system, else the ladder grade in `system`. */
+export function routeGrade(r: GradedRoute, system: GradeSystem): string {
+  return r.grade_system === system && r.grade_label?.trim() ? r.grade_label.trim() : formatGrade(r.grade_index, system, r.type);
 }
 
 /** Styles that count as a completed climb in stats. */

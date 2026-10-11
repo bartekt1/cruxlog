@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { FlatList, Pressable, Text, View } from 'react-native';
 import { getRoute, listRouteAscents, type AscentRow, type RouteRow } from '../../src/db/repo';
 import { formatDay, isoDate } from '../../src/domain/dates';
-import { formatGrade, type AscentStyle } from '../../src/domain/grades';
+import { routeGrade, type AscentStyle } from '../../src/domain/grades';
 import { routeSummary } from '../../src/domain/history';
 import { IconButton } from '../../src/ui/icons';
 import { EmptyState, GradeBadge, Screen } from '../../src/ui/kit';
@@ -37,7 +37,7 @@ export default function RouteScreen() {
   const day = (iso: string) => formatDay(iso, i18n.language, today);
 
   if (!route) return <View style={{ flex: 1, backgroundColor: th.bg }} />;
-  const grade = formatGrade(route.grade_index, route.type === 'boulder' ? boulderSystem : routeSystem, route.type);
+  const grade = routeGrade(route, route.type === 'boulder' ? boulderSystem : routeSystem);
 
   let status: string;
   if (summary.firstSend) {
@@ -52,9 +52,7 @@ export default function RouteScreen() {
       <Stack.Screen
         options={{
           title: route.name,
-          headerRight: route.source === 'user'
-            ? () => <IconButton name="create-outline" size={26} label={t('edit.routeTitle')} onPress={() => router.push({ pathname: '/route/edit', params: { id: route.id } })} />
-            : undefined,
+          headerRight: () => <IconButton name="create-outline" size={26} label={t('edit.routeTitle')} onPress={() => router.push({ pathname: '/route/edit', params: { id: route.id } })} />,
         }}
       />
       <FlatList

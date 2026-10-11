@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, SectionList, Text, View } from 'react-native';
 import { getCrag, listCragRoutes, listSectors, type CragDetail, type CragRouteRow, type SectorRow } from '../../src/db/repo';
-import { formatGrade } from '../../src/domain/grades';
+import { routeGrade } from '../../src/domain/grades';
 import { IconButton } from '../../src/ui/icons';
 import { Button, EmptyState, GradeBadge, Screen } from '../../src/ui/kit';
 import { useSettings } from '../../src/ui/settingsStore';
@@ -36,7 +36,7 @@ export default function CragScreen() {
     for (const r of routes) bySector.set(r.sector_id, [...(bySector.get(r.sector_id) ?? []), r]);
     return [...sectorRows]
       .sort((a, b) => a.name.localeCompare(b.name))
-      .map((sec) => ({ sectorId: sec.id, sector: sec.name, own: sec.source === 'user', data: bySector.get(sec.id) ?? [] }));
+      .map((sec) => ({ sectorId: sec.id, sector: sec.name, data: bySector.get(sec.id) ?? [] }));
   }, [routes, sectorRows]);
 
   const status = (r: CragRouteRow) =>
@@ -48,9 +48,7 @@ export default function CragScreen() {
         <Stack.Screen
           options={{
             title: crag.name,
-            headerRight: crag.source === 'user'
-              ? () => <IconButton name="create-outline" size={26} label={t('edit.cragTitle')} onPress={() => router.push({ pathname: '/crag/edit', params: { id: crag.id } })} />
-              : undefined,
+            headerRight: () => <IconButton name="create-outline" size={26} label={t('edit.cragTitle')} onPress={() => router.push({ pathname: '/crag/edit', params: { id: crag.id } })} />,
           }}
         />
       ) : null}
@@ -65,7 +63,6 @@ export default function CragScreen() {
               {crag.description ? <Text style={{ color: th.ink }}>{crag.description}</Text> : null}
               {crag.approach ? <Text style={{ color: th.muted }}>{t('crags.approach')}: {crag.approach}</Text> : null}
               <Text style={{ color: th.muted, fontSize: 12, marginTop: 4 }}>{t('crags.tapRoute')}</Text>
-              {crag.source === 'user' ? null : <Text style={{ color: th.muted, fontSize: 12 }}>{t('edit.importedNote')}</Text>}
               <View style={{ flexDirection: 'row', gap: 8 }}>
                 <View style={{ flex: 1 }}>
                   <Button label={t('edit.addRoutes')} onPress={() => router.push({ pathname: '/route/new', params: { cragId: crag.id } })} />
@@ -85,7 +82,7 @@ export default function CragScreen() {
             </Text>
             <IconButton name="add-circle-outline" size={22} label={t('edit.addRouteInSector', { sector: section.sector })}
               onPress={() => router.push({ pathname: '/route/new', params: { cragId: id, sector: section.sector } })} />
-            {section.own ? <IconButton name="create-outline" size={20} label={t('edit.sectorTitle')} onPress={() => router.push(`/sector/${section.sectorId}`)} /> : null}
+            <IconButton name="create-outline" size={20} label={t('edit.sectorTitle')} onPress={() => router.push(`/sector/${section.sectorId}`)} />
           </View>
         )}
         renderSectionFooter={({ section }) =>
@@ -104,10 +101,8 @@ export default function CragScreen() {
                 {t(`types.${item.type}`)}{status(item) ? ` · ${status(item)}` : ''}
               </Text>
             </View>
-            <GradeBadge text={formatGrade(item.grade_index, item.type === 'boulder' ? boulderSystem : routeSystem, item.type)} />
-            {item.source === 'user' ? (
-              <IconButton name="create-outline" size={20} label={t('edit.routeTitleNamed', { name: item.name })} onPress={() => router.push({ pathname: '/route/edit', params: { id: item.id } })} />
-            ) : null}
+            <GradeBadge text={routeGrade(item, item.type === 'boulder' ? boulderSystem : routeSystem)} />
+            <IconButton name="create-outline" size={20} label={t('edit.routeTitleNamed', { name: item.name })} onPress={() => router.push({ pathname: '/route/edit', params: { id: item.id } })} />
           </Pressable>
         )}
       />
