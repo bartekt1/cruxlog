@@ -46,6 +46,12 @@ export const MIGRATIONS: string[] = [
   UPDATE region SET source = 'import';
   CREATE INDEX idx_sector_crag ON sector(crag_id);
   `,
+  // 3: areas nest: region → area ("rejon") → group. Existing regions stay top-level regions.
+  `
+  ALTER TABLE region ADD COLUMN parent_id TEXT REFERENCES region(id);
+  ALTER TABLE region ADD COLUMN level TEXT NOT NULL DEFAULT 'region';
+  CREATE INDEX idx_region_parent ON region(parent_id);
+  `,
 ];
 
 export async function migrate(db: SQLiteDatabase): Promise<void> {

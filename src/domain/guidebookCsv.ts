@@ -1,15 +1,14 @@
-// Converts a guidebook-style export (semicolon CSV with Polish headers, one row per route or boulder)
-// into the app's import files (crags.csv, sectors.csv, routes.csv). Hierarchy:
-//   region = the "Rejon" group, except groups inside Kamieniec, which share the region "Kamieniec";
-//   crag   = "Skała"; one sector per crag named like the crag (the app's "no sector").
+// Reads a guidebook export (semicolon CSV with Polish headers, one row per route or boulder) as one-file import rows.
+// Layout (agreed with the user for the Czarnorzeki file):
+//   "Region" path "Pogórze Dynowskie > Czarnorzeki > Kamieniec" → region Czarnorzeki, area Kamieniec, group = "Rejon" column;
+//   path "Pogórze Dynowskie > Czarnorzeki"                     → region Czarnorzeki, area = "Rejon" column, no group;
+//   "Skała" "Krowia (ściana zachodnia)"                        → crag Krowia, sector "Ściana zachodnia".
+// Keys match the earlier converter, so re-importing moves already imported routes (and keeps their ascents).
 import Papa from 'papaparse';
-import { fold } from './text';
+import { slug, type FlatRow } from './flatImport';
 
 type GuideRow = Record<string, string>;
 
-export type ConvertedGuidebook = { crags: string; sectors: string; routes: string; counts: { regions: number; crags: number; routes: number; boulders: number } };
-
-const slug = (s: string) => fold(s).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 const coord = (s: string | undefined) => {
   const n = Number((s ?? '').replace(',', '.'));
   return Number.isFinite(n) && n !== 0 ? String(n) : '';
@@ -20,62 +19,57 @@ function faces(s: string): string[] {
   return s.split(';').map((f) => f.replace(/\s*>\s*/, ' ').trim()).filter(Boolean);
 }
 
-export function regionOf(r: GuideRow): string {
-  return /(^|>)\s*Kamieniec\s*$/.test(r.Region ?? '') ? 'Kamieniec' : (r.Rejon ?? '').trim();
+/** Splits "Krowia (ściana zachodnia)" into the crag and a wall sector. */
+export function splitWall(rock: string): { crag: string; sector: string } {
+  const m = /^(.*?)\s*\((ściana [^)]+)\)\s*$/i.exec(rock.trim());
+  if (!m) return { crag: rock.trim(), sector: '' };
+  return { crag: m[1].trim(), sector: m[2].charAt(0).toUpperCase() + m[2].slice(1) };
 }
 
-export function convertGuidebook(text: string): ConvertedGuidebook {
+export function areasOf(r: GuideRow): { region: string; area: string; group: string } {
+  const parts = (r.Region ?? '').split('>').map((p) => p.trim()).filter(Boolean);
+  const column = (r.Rejon ?? '').trim();
+  const region = parts[1] ?? parts[0] ?? column;
+  return parts.length >= 3 ? { region, area: parts[2], group: column } : { region, area: column, group: '' };
+}
+
+/** Name used in the keys of the first converter (Kamieniec, or the "Rejon" column elsewhere). */
+const legacyRegion = (r: GuideRow) => (/(^|>)\s*Kamieniec\s*$/.test(r.Region ?? '') ? 'Kamieniec' : (r.Rejon ?? '').trim());
+
+export function guidebookRows(text: string): FlatRow[] {
   const rows = Papa.parse<GuideRow>(text.replace(/^﻿/, ''), {
     header: true, delimiter: ';', skipEmptyLines: true, transformHeader: (h) => h.trim(),
   }).data.map((r) => Object.fromEntries(Object.entries(r).map(([k, v]) => [k, (v ?? '').trim()])) as GuideRow);
 
-  const crags = new Map<string, Record<string, string>>();
-  const routes: Record<string, string>[] = [];
-  const routeKeys = new Set<string>();
-  let boulders = 0;
-
+  const out: FlatRow[] = [];
+  const used = new Set<string>();
+  const cragDescriptions = new Map<string, string>();
   for (const r of rows) {
-    const region = regionOf(r);
-    const cragName = r['Skała'];
-    if (!region || !cragName || !r.Nazwa) continue;
-    const cragKey = `${slug(region)}-${slug(cragName)}`;
-    if (!crags.has(cragKey)) {
-      const wall = faces(r['Wysokość_i_ekspozycja_ściany'] ?? '');
-      const description = [
-        region === 'Kamieniec' && r.Rejon ? `Grupa: ${r.Rejon}.` : '',
-        wall.length ? `Ściany: ${wall.join(', ')}`.replace(/([^.])$/, '$1.') : '',
-      ].filter(Boolean).join(' ');
-      crags.set(cragKey, {
-        key: cragKey, region, name: cragName, country: 'PL',
-        lat: coord(r['GPS_szerokość']), lng: coord(r['GPS_długość']), description, approach: '',
-      });
-    }
+    const rock = r['Skała'] ?? '';
+    if (!rock || !r.Nazwa) continue;
+    const { crag, sector } = splitWall(rock);
+    const old = slug(legacyRegion(r));
+    const cragKey = `${old}-${slug(crag)}`;
+    const wall = faces(r['Wysokość_i_ekspozycja_ściany'] ?? '');
+    // Wall heights and aspects describe the crag (the guidebook gives them per rock, not per route).
+    if (!sector && wall.length && !cragDescriptions.has(cragKey)) cragDescriptions.set(cragKey, `Ściany: ${wall.join(', ')}`.replace(/([^.])$/, '$1.'));
+
+    const base = `${old}-${slug(rock)}-${slug(r.Nr_w_przewodniku || r.Nazwa)}`;
+    let routeKey = base;
+    for (let n = 2; used.has(routeKey); n++) routeKey = `${base}-${n}`;
+    used.add(routeKey);
 
     const boulder = (r.Rodzaj_wyceny ?? '').toLowerCase().startsWith('boulder');
-    if (boulder) boulders++;
-    // The guidebook number keeps routes with the same name (e.g. several "(bez nazwy)") apart.
-    let key = `${cragKey}-${slug(r.Nr_w_przewodniku || r.Nazwa)}`;
-    for (let n = 2; routeKeys.has(key); n++) key = `${cragKey}-${slug(r.Nr_w_przewodniku || r.Nazwa)}-${n}`;
-    routeKeys.add(key);
-
-    const wall = faces(r['Wysokość_i_ekspozycja_ściany'] ?? '');
-    const height = wall.length === 1 ? /^(\d+(?:[.,]\d+)?)\s*m/.exec(wall[0])?.[1]?.replace(',', '.') ?? '' : '';
-    routes.push({
-      key, sector_key: `${cragKey}-s`, name: r.Nazwa,
-      type: boulder ? 'boulder' : 'sport', grade: r.Wycena, grade_system: boulder ? 'font' : 'kr',
-      length_m: height, bolts: '', author: '', year: '', lat: '', lng: '',
+    const height = wall.length === 1 ? /^(\d+(?:[.,]\d+)?)\s*m/.exec(wall[0])?.[1] ?? '' : '';
+    out.push({
+      ...areasOf(r), crag, sector,
+      name: r.Nazwa, type: boulder ? 'boulder' : 'sport', grade: r.Wycena, gradeSystem: boulder ? 'font' : 'kr',
+      lengthM: height,
       description: [r.Nr_w_przewodniku ? `Nr ${r.Nr_w_przewodniku}` : '', r.Styl, r.Uwagi].filter(Boolean).join(' · '),
+      lat: coord(r['GPS_szerokość']), lng: coord(r['GPS_długość']),
+      cragKey, sectorKey: sector ? `${cragKey}-${slug(sector)}` : `${cragKey}-s`, routeKey,
     });
   }
-
-  const cragList = [...crags.values()];
-  return {
-    crags: Papa.unparse(cragList, { columns: ['key', 'region', 'name', 'country', 'lat', 'lng', 'description', 'approach'] }),
-    sectors: Papa.unparse(cragList.map((c) => ({ key: `${c.key}-s`, crag_key: c.key, name: c.name, lat: '', lng: '', aspect: '' })),
-      { columns: ['key', 'crag_key', 'name', 'lat', 'lng', 'aspect'] }),
-    routes: Papa.unparse(routes, {
-      columns: ['key', 'sector_key', 'name', 'type', 'grade', 'grade_system', 'length_m', 'bolts', 'author', 'year', 'lat', 'lng', 'description'],
-    }),
-    counts: { regions: new Set(cragList.map((c) => c.region)).size, crags: cragList.length, routes: routes.length - boulders, boulders },
-  };
+  for (const row of out) row.cragDescription = cragDescriptions.get(row.cragKey!) ?? '';
+  return out;
 }

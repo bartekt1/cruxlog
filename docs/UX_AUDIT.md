@@ -121,7 +121,14 @@ Severity: **H** blocks a task or loses/corrupts data, **M** slows a task or conf
 | G2 | Imported data was read-only, so routes could not be moved to sectors or corrected | M | Fixed: everything editable; the import asks first and warns that re-importing overwrites changes |
 | G3 | Guidebook export not in the app's CSV format | M | Converter `src/domain/guidebookCsv.ts` (region = group, Kamieniec groups merged; crag = rock; walls in the crag description) |
 
-## Open items
+## Round 7 (crag hierarchy)
+
+| # | Issue | Sev | Status |
+|---|---|---|---|
+| H1 | One flat "region" level could not express region › rejon › group, so 70 crags sat in one long list | H | Fixed: areas nest (region, rejon, optional group); Crags tab drills down with counts and search |
+| H2 | Guidebook needed converting to three CSV files on a computer | M | Fixed: the guidebook export or a simple one-row-per-route file imports directly; three-file import kept |
+| H3 | Rock names like "Krowia (ściana zachodnia)" became separate crags | M | Fixed: the bracketed wall becomes a sector of the crag |
+
 
 1. Edit a goal's title or target; link a project goal to a route.
 2. Activity calendar only for the current year.

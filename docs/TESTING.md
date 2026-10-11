@@ -27,9 +27,9 @@ Write down the result of every step (OK / problem). Report problems with: step n
 ## 2a. Route search, suggestions, duplicates
 1. New ascent with an empty route field. Expected: "Recently climbed" lists up to 5 routes you logged last, newest first (none on a fresh install).
 2. Type "lysa", "ŁYSA" or "łysa" for a route or crag named "Łysa ...". Expected: it is found in every case; the list shrinks as you type and shows crag, sector and grade.
-3. Create a new route. Expected: labelled fields in this order: Region, Crag, Sector, Route name; region chips below the Region field.
-4. Tap a region chip, then start typing in Crag. Expected: crag suggestions (crags of that region first) appear right under the field and the field scrolls up so the keyboard does not cover them.
-5. Pick an existing crag with a region. Expected: Region shows "<region> (region of this crag)". Pick an existing crag without a region, choose a region and save. Expected: the crag now has that region (Crags tab groups it there).
+3. Create a new route. Expected: labelled fields in this order: Region, Area, Group (optional), Crag, Sector, Route name; chips below each area field show what exists one level up.
+4. Tap a region chip and an area chip, then start typing in Crag. Expected: crag suggestions (crags of that area first) appear right under the field and the field scrolls up so the keyboard does not cover them.
+5. Pick an existing crag with an area. Expected: "Where is this crag?" shows its path, e.g. "Czarnorzeki › Kamieniec › Krowia Turnia", and no area fields. Pick an existing crag without an area, choose region and area and save. Expected: the crag is now found under them in the Crags tab.
 6. With an existing crag chosen, the Sector field shows chips of its sectors; tap one to fill it. For a new crag a hint says to type a sector or leave it empty.
 5. Type the name of a route that already exists on that crag (any case). Expected: a box "This crag already has ..." with "Use this route"; tapping it selects the existing route.
 6. Type "okiennik" when "Okiennik" exists and save. Expected: no second crag is created.
@@ -60,13 +60,13 @@ Write down the result of every step (OK / problem). Report problems with: step n
 4. Change the grade system in Settings (for example KR -> FR). Expected: Journal and Progress show the same routes in the new system (VI.3 -> 6c).
 
 ## 2e. Building a crag ("+" where the new thing goes)
-1. Crags tab -> "Add a crag". Expected order: Region (required, chips of existing regions), Crag name (required), Sectors (optional, "+ Another sector"), Description, Approach. Saving without a region shows "Choose or type a region."
-2. Fill region "Jura", name "Okiennik", sectors "Lewy" and "Prawy", save. Expected: the crag screen opens with sectors LEWY and PRAWY, each saying "No routes yet".
-3. On the Crags list, the "+" next to the JURA header opens "Add a crag" with Jura already filled in.
+1. Crags tab -> "Add a crag". Expected order: Region and Area (required), Group (optional), Crag name (required), Sectors (optional, "+ Another sector"), Description, Approach. Saving without a region or area shows an error under the field.
+2. Fill region "Jura", area "Rzędkowice", name "Okiennik", sectors "Lewy" and "Prawy", save. Expected: the crag screen opens with sectors LEWY and PRAWY, each saying "No routes yet".
+3. Crags tab -> Jura -> Rzędkowice -> "Add a crag" opens the form with Jura and Rzędkowice already filled in.
 4. Crag screen -> "+ Add routes": pick sector "Prawy", name "Rysa", grade, then "Save and add another". Expected: "Added: Rysa (...)" and an empty name field with sector and type kept. Add a second route, then "Save and close". Both routes are listed under PRAWY.
 5. The "+" next to a sector header opens "Add routes" with that sector selected. Typing a name that already exists on the crag shows a warning and does not save.
 6. "+ Add sector" adds an empty sector; adding "lewy" when "Lewy" exists does not create a second one.
-7. New ascent -> "Create a new route" with a new crag and no region: saving shows "Choose or type the region of the new crag."
+7. New ascent -> "Create a new route" with a new crag and no region or area: saving shows "A new crag needs a region and an area."
 8. Search "Okiennik" in a new ascent before it has routes. Expected: it appears under "Crags"; tapping it opens the new-route form with crag and region filled in.
 
 ## 3b. Icons
@@ -76,8 +76,9 @@ Write down the result of every step (OK / problem). Report problems with: step n
 ## 4. Crags and goals
 1. Crags tab. Expected: "Test Crag" with the number of routes. Tap it. Expected: the crag screen with routes grouped by sector; "Test Route 1" shows "✓ sends: 1" (green) or "tried: N". Tap the route. Expected: a new ascent form with this route already chosen.
 1a. Editing own data (only for crags, sectors, routes and regions you created; imported ones show a note and no pencils):
-   - Crags tab -> "Add a crag": name "Okiennik", region "Jura", save. Expected: the crag screen opens; the Crags list groups crags under "JURA", others under "No region".
-   - Pencil next to a region header: rename it; delete it. Expected: crags stay, now under "No region".
+   - Crags tab: a search field, then "Regions" (each with its number of crags) and "No region" for crags without one. Typing "krowia" lists matching crags with their path.
+   - Tap a region: its areas (rejony); tap an area: its groups and crags; tap a group: its crags. Each level has "+ Add area/group" and "Add a crag"; "+ Add region" is on the Crags tab.
+   - Pencil at the top right of a region, area or group: rename it; delete it. Expected: its crags and sub-areas move one level up (deleting group "Krowia Turnia" puts crag Krowia directly in Kamieniec).
    - On a crag screen: pencil at the top right edits name, region, description, approach; "Delete crag" asks first and lists how many sectors, routes and your ascents go with it.
    - Pencil next to a sector header: rename or delete (lists routes and ascents that go with it).
    - Pencil next to a route: change name, sector (moves the route), type, grade; "Delete route" lists your ascents of it. After deleting, those ascents are gone from the Journal and Progress.
@@ -94,9 +95,14 @@ Write down the result of every step (OK / problem). Report problems with: step n
 5a. Select only sectors.csv. Expected: "crags.csv and routes.csv are required. Selected: sectors.csv".
 6. File names must be exactly `crags.csv`, `sectors.csv`, `routes.csv`, `pitches.csv`. A different name is ignored (note what happens).
 
+## 5a. One-file import
+1. Settings -> Import crags from a CSV file. Pick one file with the headers `Region;Rejon;Grupa;Skała;Sektor;Nazwa;Typ;Wycena` (English headers and commas work too). Expected: the question "Import?", then the crags appear under region › area › group.
+2. A row without region or area, or with a wrong grade, shows "<file>, line N: …" and nothing is imported.
+3. A file with other headers shows "File … was not recognised".
+
 ## 5b. Guidebook import and editing imported data
-1. Import crags.csv, sectors.csv and routes.csv made from a guidebook export (`src/domain/guidebookCsv.ts`). Expected: a question "Import?" with the numbers of crags and routes and a warning that re-importing overwrites changes; Cancel imports nothing.
-2. After Import: the Crags tab shows the regions with their crags; a crag description contains the wall heights and aspects.
+1. Import the guidebook export itself (one file, e.g. `drogi_i_bouldery_Kamieniec.csv`). Expected: Czarnorzeki › Kamieniec with groups Grupa Słonecznej Turni, Kursowe Skałki, Krowia Turnia; Strzelnica, Sokoli Grzbiet, Przełom Marcinka and Smoczy Grzbiet as areas without groups; crag Krowia with sector "Ściana zachodnia". If the older three files were imported before, the ascents stay and no old crags are left over. Expected: a question "Import?" with the numbers of crags and routes and a warning that re-importing overwrites changes; Cancel imports nothing.
+2. After Import: the Crags tab shows the regions; drilling down reaches the crags; a crag description contains the wall heights and aspects.
 3. Grades from the guidebook are shown as written (VI+, VI.4/4+, VI.5?, 4+, 8A+) when the display system matches (KR for routes, FONT for boulders); in FR they show the nearest grade. They count in Progress as the nearest lower step.
 4. Imported crags, sectors, routes and regions have pencils like your own: rename a crag, move a route to a new sector, delete a route. Import the same files again: the changes are undone and deleted routes come back; ascents stay.
 

@@ -13,7 +13,7 @@
   "ascent": {
     "title": "New ascent", "editTitle": "Edit ascent", "detailTitle": "Ascent", "notFound": "This ascent no longer exists.",
     "deleteTitle": "Delete ascent?", "deleteQuestion": "The ascent of \"{{name}}\" will be removed from your journal and stats.",
-    "pickDate": "Opens a calendar", "recent": "Recently climbed", "routesHeader": "Routes", "cragsHeader": "Crags", "cragHitHint": "Tap a crag to add a new route on it.", "regionOfCrag": "{{region}} (region of this crag)", "newCragHint": "New crag: it will be created when you save.", "cragPlaceholder": "Start typing to see crags",
+    "pickDate": "Opens a calendar", "recent": "Recently climbed", "routesHeader": "Routes", "cragsHeader": "Crags", "cragHitHint": "Tap a crag to add a new route on it.", "newCragHint": "New crag: it will be created when you save.", "cragPlaceholder": "Start typing to see crags",
     "sectorPlaceholder": "e.g. Left wall", "noSectorsYet": "This crag has no sectors yet. Type a new one or leave empty.", "sectorNewCrag": "New crag: type a sector or leave empty.",
     "duplicate": "This crag already has \"{{name}}\" ({{sector}}, {{grade}}).", "useExisting": "Use this route", "route": "Route", "searchRoute": "Search by route, sector or crag", "newRoute": "Create a new route",
     "newRouteNamed": "Create route \"{{name}}\"", "noResults": "No routes match \"{{query}}\".",
@@ -24,7 +24,7 @@
     "errors": {
       "crag": "Enter the crag name.", "name": "Enter the route name.",
       "grade": "This grade does not exist in the chosen system. Example: {{example}}.",
-      "date": "Enter a real date as YYYY-MM-DD.", "region": "Choose or type the region of the new crag.", "attempts": "Attempts must be a whole number, 1 or more."
+      "date": "Enter a real date as YYYY-MM-DD.", "region": "A new crag needs a region and an area.", "attempts": "Attempts must be a whole number, 1 or more."
     }
   },
   "progress": {
@@ -43,17 +43,16 @@
   },
   "edit": {
     "cragTitle": "Edit crag", "newCragTitle": "Add a crag", "routeTitle": "Edit route", "routeTitleNamed": "Edit route {{name}}",
-    "sectorTitle": "Edit sector", "regionTitle": "Edit region",
-    "name": "Name", "region": "Region", "regionRequired": "Region", "cragName": "Crag name", "sectors": "Sectors (optional)",
+    "sectorTitle": "Edit sector",
+    "name": "Name", "cragName": "Crag name", "sectors": "Sectors (optional)",
     "addAnotherSector": "+ Another sector", "sectorsHint": "Small crags often have no sectors; you can add them later on the crag screen.", "sectorOptional": "Optional; empty = no sector",
     "addRoutes": "+ Add routes", "addSector": "+ Add sector", "addRoutesTitle": "Add routes", "addSectorTitle": "Add sector", "addRouteInSector": "Add a route in {{sector}}",
-    "addCragInRegion": "Add a crag in {{region}}", "emptySector": "No routes yet. Tap + to add one.", "addedRoutes": "Added: {{list}}",
-    "routeExists": "This crag already has \"{{name}}\" ({{sector}}).", "saveAndNext": "Save and add another", "saveAndClose": "Save and close", "regionPlaceholder": "e.g. Jura", "description": "Description", "sector": "Sector",
-    "deleteCrag": "Delete crag", "deleteRoute": "Delete route", "deleteSector": "Delete sector", "deleteRegion": "Delete region",
+    "emptySector": "No routes yet. Tap + to add one.", "addedRoutes": "Added: {{list}}",
+    "routeExists": "This crag already has \"{{name}}\" ({{sector}}).", "saveAndNext": "Save and add another", "saveAndClose": "Save and close", "description": "Description", "sector": "Sector",
+    "deleteCrag": "Delete crag", "deleteRoute": "Delete route", "deleteSector": "Delete sector",
     "deleteTitle": "Delete \"{{name}}\"?", "deleteAlso": "This also deletes:", "deleteSimple": "This cannot be undone.",
     "countSectors": "sectors: {{count}}", "countRoutes": "routes: {{count}}", "countAscents": "your ascents: {{count}}",
-    "regionDeleteHint": "Deleting a region keeps its crags; they just lose the region.",
-    "errors": { "name": "Enter a name.", "region": "Choose or type a region." }
+    "errors": { "name": "Enter a name.", "region": "Choose or type a region.", "area": "Choose or type an area." }
   },
   "goals": {
     "title": "Goals", "count": "Count", "project": "Project", "wishlist": "Wishlist", "newTitle": "Goal title", "target": "Target (number)",
@@ -62,11 +61,24 @@
     "deleteTitle": "Delete goal?", "deleteQuestion": "\"{{title}}\" will be removed.",
     "errors": { "title": "Enter a goal title.", "target": "The target must be a whole number, 1 or more." }
   },
+  "areas": {
+    "region": "Region", "area": "Area", "groupOptional": "Group of crags (optional)", "where": "Where is this crag?",
+    "regionPlaceholder": "e.g. Czarnorzeki", "areaPlaceholder": "e.g. Kamieniec", "search": "Search crags", "noHits": "No crag found",
+    "regions": "Regions", "areas": "Areas", "groups": "Groups of crags", "cragCount": "Crags: {{count}}", "inside": "In: {{name}}", "addRegion": "+ Add region",
+    "empty": "Nothing here yet. Add a crag or a lower level.",
+    "deleteHint": "Crags and everything inside are not deleted; they move one level up.",
+    "level": { "region": "Region", "area": "Area", "group": "Group of crags" },
+    "edit": { "region": "Edit region", "area": "Edit area", "group": "Edit group" },
+    "delete": { "region": "Delete region", "area": "Delete area", "group": "Delete group" },
+    "add": { "region": "+ Add region", "area": "+ Add area", "group": "+ Add group" },
+    "placeholder": { "region": "e.g. Czarnorzeki", "area": "e.g. Kamieniec", "group": "e.g. Krowia Turnia" }
+  },
   "settings": {
     "title": "Settings", "language": "Language", "routeGrades": "Route grades", "boulderGrades": "Boulder grades",
     "backup": "Backup", "backupHelp": "Export saves all your data to one file. Import merges a file into the app; newer entries win, nothing is deleted.",
-    "export": "Export backup", "import": "Import backup", "csv": "Import crags from CSV",
-    "csvHelp": "Pick crags.csv, routes.csv and optionally sectors.csv and pitches.csv.",
+    "export": "Export backup", "import": "Import backup", "csv": "Import crags from a CSV file",
+    "csvHelp": "Pick one file with a list of routes (e.g. a guidebook export). Each row is one route: region, area, group, crag, sector, name, grade. The older import with crags.csv and routes.csv still works.",
+    "csvLine": "line {{line}}", "csvUnknown": "File {{file}} was not recognised. The first row should hold headers, e.g. Region;Area;Crag;Name;Grade.",
     "importDone": "Imported {{count}} records.", "csvDone": "Imported {{crags}} crags, {{sectors}} sectors, {{routes}} routes, {{pitches}} pitches.",
     "csvErrors": "{{count}} problems found. Nothing was imported.", "csvMissing": "crags.csv and routes.csv are required. Selected: {{files}}.",
     "notBackup": "This file is not a Cruxlog backup.", "lastBackupNever": "No backup yet.", "lastBackupToday": "Last backup: today.", "lastBackupDays": "Last backup: {{n}} days ago.",

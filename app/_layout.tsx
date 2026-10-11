@@ -23,7 +23,9 @@ export default function RootLayout() {
         <Stack.Screen name="route/new" options={{ title: t('edit.addRoutesTitle') }} />
         <Stack.Screen name="sector/new" options={{ title: t('edit.addSectorTitle') }} />
         <Stack.Screen name="sector/[id]" options={{ title: t('edit.sectorTitle') }} />
-        <Stack.Screen name="region/[id]" options={{ title: t('edit.regionTitle') }} />
+        <Stack.Screen name="region/[id]" options={{ title: t('areas.edit.region') }} />
+        <Stack.Screen name="area/[id]" options={{ title: t('areas.level.region') }} />
+        <Stack.Screen name="area/new" options={{ title: t('areas.add.region') }} />
         <Stack.Screen name="settings" options={{ title: t('settings.title') }} />
       </Stack>
     </SQLiteProvider>

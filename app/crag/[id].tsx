@@ -3,7 +3,8 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, SectionList, Text, View } from 'react-native';
-import { getCrag, listCragRoutes, listSectors, type CragDetail, type CragRouteRow, type SectorRow } from '../../src/db/repo';
+import { getCrag, listAreas, listCragRoutes, listSectors, type AreaRow, type CragDetail, type CragRouteRow, type SectorRow } from '../../src/db/repo';
+import { pathLabel } from '../../src/domain/areas';
 import { routeGrade } from '../../src/domain/grades';
 import { IconButton } from '../../src/ui/icons';
 import { Button, EmptyState, GradeBadge, Screen } from '../../src/ui/kit';
@@ -20,6 +21,7 @@ export default function CragScreen() {
   const [crag, setCrag] = useState<CragDetail | null>(null);
   const [routes, setRoutes] = useState<CragRouteRow[]>([]);
   const [sectorRows, setSectorRows] = useState<SectorRow[]>([]);
+  const [areas, setAreas] = useState<AreaRow[]>([]);
 
   useFocusEffect(useCallback(() => {
     getCrag(db, id).then((c) => {
@@ -28,6 +30,7 @@ export default function CragScreen() {
     });
     listCragRoutes(db, id).then(setRoutes);
     listSectors(db, id).then(setSectorRows);
+    listAreas(db).then(setAreas);
   }, [db, id, router]));
 
   // Every sector, also empty ones, so a sector added without routes shows up.
@@ -59,7 +62,7 @@ export default function CragScreen() {
         ListHeaderComponent={
           crag ? (
             <View style={{ paddingTop: 12, gap: 4 }}>
-              {crag.region ? <Text style={{ color: th.muted }}>{crag.region}</Text> : null}
+              {crag.region_id ? <Text style={{ color: th.muted }}>{pathLabel(areas, crag.region_id) || crag.region}</Text> : null}
               {crag.description ? <Text style={{ color: th.ink }}>{crag.description}</Text> : null}
               {crag.approach ? <Text style={{ color: th.muted }}>{t('crags.approach')}: {crag.approach}</Text> : null}
               <Text style={{ color: th.muted, fontSize: 12, marginTop: 4 }}>{t('crags.tapRoute')}</Text>

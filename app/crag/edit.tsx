@@ -3,39 +3,42 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text } from 'react-native';
-import { cragUsage, deleteCrag, getCrag, listRegions, saveCrag, type RegionRow } from '../../src/db/repo';
+import { cragUsage, deleteCrag, getCrag, listAreas, saveCrag, type AreaNames, type AreaRow } from '../../src/db/repo';
+import { pathNames } from '../../src/domain/areas';
 import { validateCragDraft } from '../../src/domain/forms';
 import { confirmDelete } from '../../src/ui/confirm';
-import { sameName, suggest } from '../../src/domain/text';
-import { Button, Chip, ChipRow, ErrorText, Field, Label, LinkButton } from '../../src/ui/kit';
+import { AreaPicker } from '../../src/ui/AreaPicker';
+import { Button, ErrorText, Field, Label, LinkButton } from '../../src/ui/kit';
 import { useTheme } from '../../src/ui/theme';
 
-/** /crag/edit adds a crag (?region=<name> preselects the region), /crag/edit?id=<crag> edits one of the user's own. */
+/** /crag/edit adds a crag (?areaId=<area> preselects region, area and group), /crag/edit?id=<crag> edits one. */
 export default function EditCrag() {
-  const { id, region: regionParam } = useLocalSearchParams<{ id?: string; region?: string }>();
+  const { id, areaId } = useLocalSearchParams<{ id?: string; areaId?: string }>();
   const db = useSQLiteContext();
   const router = useRouter();
   const { t } = useTranslation();
   const th = useTheme();
   const [name, setName] = useState('');
-  const [region, setRegion] = useState(regionParam ?? '');
+  const [areas, setAreas] = useState<AreaNames>({ region: '', area: '', group: '' });
   const [sectors, setSectors] = useState<string[]>(['']);
   const [description, setDescription] = useState('');
   const [approach, setApproach] = useState('');
-  const [regions, setRegions] = useState<RegionRow[]>([]);
+  const [areaRows, setAreaRows] = useState<AreaRow[]>([]);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    listRegions(db).then(setRegions);
-    if (id) getCrag(db, id).then((c) => {
+    listAreas(db).then(async (rows) => {
+      setAreaRows(rows);
+      if (!id) { if (areaId) setAreas(pathNames(rows, areaId)); return; }
+      const c = await getCrag(db, id);
       if (!c) return;
-      setName(c.name); setRegion(c.region ?? ''); setDescription(c.description); setApproach(c.approach);
+      setName(c.name); setAreas(pathNames(rows, c.region_id)); setDescription(c.description); setApproach(c.approach);
     });
-  }, [db, id]);
+  }, [db, id, areaId]);
 
   async function save() {
-    const draft = validateCragDraft({ name, region, description, approach, sectors: id ? [] : sectors });
+    const draft = validateCragDraft({ name, areas, description, approach, sectors: id ? [] : sectors });
     if (!draft.ok) { setError(t(draft.error)); return; }
     setSaving(true);
     try {
@@ -59,17 +62,10 @@ export default function EditCrag() {
   return (
     <ScrollView style={{ backgroundColor: th.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 48 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
       <Stack.Screen options={{ title: id ? t('edit.cragTitle') : t('edit.newCragTitle') }} />
-      <Label>{t('edit.regionRequired')}</Label>
-      <Field value={region} onChangeText={setRegion} accessibilityLabel={t('edit.regionRequired')} placeholder={t('edit.regionPlaceholder')} invalid={!!error && !region.trim()} />
-      {regions.length ? (
-        <ChipRow>
-          {suggest(regions.map((g) => g.name), region, (x) => x, () => [], 8).map((g) => (
-            <Chip key={g} label={g} on={sameName(g, region)} onPress={() => setRegion(sameName(g, region) ? '' : g)} />
-          ))}
-        </ChipRow>
-      ) : null}
+      <Label>{t('areas.where')}</Label>
+      <AreaPicker areas={areaRows} value={areas} onChange={setAreas} invalid={{ region: !!error && !areas.region.trim(), area: !!error && !areas.area.trim() }} />
       <Label>{t('edit.cragName')}</Label>
-      <Field value={name} onChangeText={setName} accessibilityLabel={t('edit.cragName')} invalid={!!error && !!region.trim() && !name.trim()} />
+      <Field value={name} onChangeText={setName} accessibilityLabel={t('edit.cragName')} invalid={!!error && !!areas.area.trim() && !name.trim()} />
       {id ? null : (
         <>
           <Label>{t('edit.sectors')}</Label>

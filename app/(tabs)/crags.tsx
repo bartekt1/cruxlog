@@ -2,68 +2,63 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, SectionList, Text, View } from 'react-native';
-import { listCrags, type CragRow } from '../../src/db/repo';
-import { IconButton } from '../../src/ui/icons';
-import { Button, EmptyState, Screen } from '../../src/ui/kit';
+import { ScrollView, View } from 'react-native';
+import { listAreas, listCrags, type AreaRow, type CragRow } from '../../src/db/repo';
+import { childrenOf, cragCount, pathLabel } from '../../src/domain/areas';
+import { suggest } from '../../src/domain/text';
+import { Button, EmptyState, Field } from '../../src/ui/kit';
+import { NavRow, SectionTitle } from '../../src/ui/NavRow';
 import { useTheme } from '../../src/ui/theme';
 
+/** Crags tab: search, then regions to drill down (region › rejon › group › crag). */
 export default function Crags() {
   const db = useSQLiteContext();
   const router = useRouter();
   const { t } = useTranslation();
   const th = useTheme();
-  const [rows, setRows] = useState<CragRow[]>([]);
-  useFocusEffect(useCallback(() => { listCrags(db).then(setRows); }, [db]));
+  const [crags, setCrags] = useState<CragRow[]>([]);
+  const [areas, setAreas] = useState<AreaRow[]>([]);
+  const [query, setQuery] = useState('');
+  useFocusEffect(useCallback(() => {
+    listCrags(db).then(setCrags);
+    listAreas(db).then(setAreas);
+  }, [db]));
 
-  // Grouped by region; crags without a region come last.
-  const sections = useMemo(() => {
-    const byRegion = new Map<string, CragRow[]>();
-    for (const r of rows) {
-      const key = r.region_id ?? '';
-      byRegion.set(key, [...(byRegion.get(key) ?? []), r]);
-    }
-    return [...byRegion.entries()].map(([regionId, data]) => ({
-      regionId, title: data[0].region_name ?? t('crags.noRegion'), data,
-    }));
-  }, [rows, t]);
+  const cragAreaIds = useMemo(() => crags.map((c) => c.region_id), [crags]);
+  const path = (c: CragRow) => pathLabel(areas, c.region_id);
+  const hits = query.trim() ? suggest(crags, query, (c) => c.name, (c) => [path(c)], 30) : [];
+  const regions = childrenOf(areas, null);
+  const loose = crags.filter((c) => !c.region_id);
+  const openCrag = (c: CragRow) => router.push(`/crag/${c.id}`);
 
   return (
-    <Screen>
-      <SectionList
-        sections={sections}
-        keyExtractor={(r) => r.id}
-        contentContainerStyle={{ paddingBottom: 32 }}
-        ListHeaderComponent={<Button label={t('edit.newCragTitle')} onPress={() => router.push('/crag/edit')} variant="plain" />}
-        ListEmptyComponent={<EmptyState title={t('crags.empty')} hint={t('crags.emptyHint')} />}
-        renderSectionHeader={({ section }) =>
-          sections.length > 1 || section.regionId ? (
-            <View style={{ flexDirection: 'row', alignItems: 'center', paddingTop: 12, backgroundColor: th.bg }}>
-              <Text accessibilityRole="header" style={{ flex: 1, color: th.muted, fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.8 }}>
-                {section.title}
-              </Text>
-              {section.regionId ? (
-                <IconButton name="add-circle-outline" size={22} label={t('edit.addCragInRegion', { region: section.title })}
-                  onPress={() => router.push({ pathname: '/crag/edit', params: { region: section.title } })} />
-              ) : null}
-              {section.regionId ? <IconButton name="create-outline" size={20} label={t('edit.regionTitle')} onPress={() => router.push(`/region/${section.regionId}`)} /> : null}
-            </View>
-          ) : null
-        }
-        renderItem={({ item }) => (
-          <Pressable
-            onPress={() => router.push(`/crag/${item.id}`)}
-            accessibilityRole="button"
-            style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: th.line, opacity: pressed ? 0.6 : 1 })}
-          >
+    <ScrollView style={{ backgroundColor: th.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 32 }} keyboardShouldPersistTaps="handled">
+      <Field value={query} onChangeText={setQuery} placeholder={t('areas.search')} accessibilityLabel={t('areas.search')} returnKeyType="search" />
+      {query.trim() ? (
+        hits.length ? (
+          hits.map((c) => <NavRow key={c.id} title={c.name} subtitle={[path(c), t('crags.routes', { count: c.routes })].filter(Boolean).join(' · ')} onPress={() => openCrag(c)} />)
+        ) : (
+          <EmptyState title={t('areas.noHits')} />
+        )
+      ) : (
+        <>
+          {!crags.length && !regions.length ? <EmptyState title={t('crags.empty')} hint={t('crags.emptyHint')} /> : null}
+          {regions.length ? <SectionTitle>{t('areas.regions')}</SectionTitle> : null}
+          {regions.map((r) => (
+            <NavRow key={r.id} title={r.name} subtitle={t('areas.cragCount', { count: cragCount(areas, r.id, cragAreaIds) })} onPress={() => router.push(`/area/${r.id}`)} />
+          ))}
+          {loose.length ? <SectionTitle>{t('crags.noRegion')}</SectionTitle> : null}
+          {loose.map((c) => <NavRow key={c.id} title={c.name} subtitle={t('crags.routes', { count: c.routes })} onPress={() => openCrag(c)} />)}
+          <View style={{ flexDirection: 'row', gap: 8, marginTop: 16 }}>
             <View style={{ flex: 1 }}>
-              <Text style={{ color: th.ink, fontWeight: '600', fontSize: 16 }}>{item.name}</Text>
-              <Text style={{ color: th.muted, fontSize: 12 }}>{t('crags.routes', { count: item.routes })}</Text>
+              <Button label={t('areas.addRegion')} variant="plain" onPress={() => router.push('/area/new')} />
             </View>
-            <Text style={{ color: th.muted, fontSize: 20 }}>›</Text>
-          </Pressable>
-        )}
-      />
-    </Screen>
+            <View style={{ flex: 1 }}>
+              <Button label={t('edit.newCragTitle')} variant="plain" onPress={() => router.push('/crag/edit')} />
+            </View>
+          </View>
+        </>
+      )}
+    </ScrollView>
   );
 }

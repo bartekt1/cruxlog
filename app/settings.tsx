@@ -8,7 +8,9 @@ import { ActivityIndicator, Alert, ScrollView, Text } from 'react-native';
 import { exportBackup, importBackup } from '../src/db/backup';
 import { applyImport, listAscents } from '../src/db/repo';
 import { backupStatus } from '../src/domain/history';
-import { buildImportPlan } from '../src/domain/csvImport';
+import { buildImportPlan, type ImportPlan } from '../src/domain/csvImport';
+import { detectFormat, parseFlatCsv, planFromFlatRows, type FlatRow } from '../src/domain/flatImport';
+import { guidebookRows } from '../src/domain/guidebookCsv';
 import { BOULDER_SYSTEMS, ROUTE_SYSTEMS } from '../src/domain/grades';
 import type { Lang } from '../src/domain/settings';
 import i18n from '../src/i18n';
@@ -76,17 +78,40 @@ export default function Settings() {
     return t('settings.importDone', { count: n });
   });
 
+  // Older three-file format (crags.csv + routes.csv, optional sectors.csv and pitches.csv).
+  function legacyPlan(texts: Record<string, string>) {
+    if (!texts['crags.csv'] || !texts['routes.csv']) {
+      throw new UserError(t('settings.csvMissing', { files: Object.keys(texts).join(', ') }));
+    }
+    return buildImportPlan({ crags: texts['crags.csv'], sectors: texts['sectors.csv'], routes: texts['routes.csv'], pitches: texts['pitches.csv'] });
+  }
+
+  // One file per route list: the guidebook export or the simple table. Several files are merged.
+  function oneFilePlan(texts: Record<string, string>) {
+    const rows: FlatRow[] = [];
+    const errors: ImportPlan['errors'] = [];
+    for (const [name, text] of Object.entries(texts)) {
+      const format = detectFormat(text);
+      if (!format) throw new UserError(t('settings.csvUnknown', { file: name }));
+      const fileRows = format === 'guidebook' ? guidebookRows(text) : parseFlatCsv(text);
+      errors.push(...planFromFlatRows(fileRows).errors.map((e) => ({ ...e, file: name })));
+      rows.push(...fileRows);
+    }
+    return errors.length ? { ...planFromFlatRows([]), errors } : planFromFlatRows(rows);
+  }
+
   const doCsv = () => run(async () => {
-    const res = await DocumentPicker.getDocumentAsync({ type: ['text/csv', 'text/comma-separated-values', 'text/plain'], multiple: true, copyToCacheDirectory: true });
+    // Some Android file managers report CSV files as Excel or plain binary, so accept those too.
+    const res = await DocumentPicker.getDocumentAsync({
+      type: ['text/*', 'text/csv', 'text/comma-separated-values', 'application/csv', 'application/vnd.ms-excel', 'application/octet-stream'],
+      multiple: true, copyToCacheDirectory: true,
+    });
     if (res.canceled) return;
     const texts: Record<string, string> = {};
     for (const a of res.assets) texts[a.name.toLowerCase()] = await new File(a.uri).text();
-    if (!texts['crags.csv'] || !texts['routes.csv']) {
-      throw new UserError(t('settings.csvMissing', { files: res.assets.map((a) => a.name).join(', ') }));
-    }
-    const plan = buildImportPlan({ crags: texts['crags.csv'], sectors: texts['sectors.csv'], routes: texts['routes.csv'], pitches: texts['pitches.csv'] });
+    const plan = texts['crags.csv'] || texts['routes.csv'] ? legacyPlan(texts) : oneFilePlan(texts);
     if (plan.errors.length) {
-      const first = plan.errors.slice(0, 8).map((e) => `${e.file}:${e.line} ${e.message}`).join('\n');
+      const first = plan.errors.slice(0, 8).map((e) => `${e.file}, ${t('settings.csvLine', { line: e.line })}: ${e.message}`).join('\n');
       throw new UserError(`${t('settings.csvErrors', { count: plan.errors.length })}\n\n${first}`);
     }
     const ok = await ask(

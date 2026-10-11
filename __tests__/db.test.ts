@@ -5,9 +5,9 @@ import type { SQLiteDatabase } from 'expo-sqlite';
 import { BACKUP_VERSION, exportBackup, importBackup } from '../src/db/backup';
 import { MIGRATIONS, migrate } from '../src/db/migrate';
 import {
-  addAscent, addGoal, addUserRoute, applyImport, cragUsage, deleteAscent, deleteCrag, deleteGoal, deleteRegion, deleteRoute, deleteSector,
-  getAscent, getCrag, getRegion, getRoute, getSector, listAscents, listCragRoutes, listCrags, listGoals, listRegions, listSectorNames,
-  renameRegion, renameSector, routeUsage, saveCrag, searchRoutes, sectorUsage, setGoalDone, updateAscent, updateRoute, type NewRoute,
+  addAscent, addGoal, addUserRoute, applyImport, cragUsage, deleteAscent, deleteCrag, deleteGoal, deleteArea, deleteRoute, deleteSector,
+  getAscent, getCrag, getArea, getRoute, getSector, listAscents, listCragRoutes, listCrags, listGoals, listAreas, listSectorNames, addArea, areaIdFor,
+  renameArea, renameSector, routeUsage, saveCrag, searchRoutes, sectorUsage, setGoalDone, updateAscent, updateRoute, type NewRoute,
   listCragChoices, listPartners, listRouteAscents, recentRoutes, listSectors, addSector, createRoute,
 } from '../src/db/repo';
 import { buildImportPlan } from '../src/domain/csvImport';
@@ -19,6 +19,8 @@ async function freshDb(): Promise<SQLiteDatabase> {
   await migrate(db);
   return db;
 }
+
+const A = (region: string, area = '', group = '') => ({ region, area, group });
 
 const route = (over: Partial<NewRoute> = {}): NewRoute => ({
   cragName: 'Test Crag', sectorName: 'Main', name: 'Test Route 1', type: 'sport',
@@ -176,20 +178,20 @@ describe('suggestions and history', () => {
   });
   it('offers crags without routes too, with their route count', async () => {
     const db = await freshDb();
-    await saveCrag(db, null, { name: 'Pusta Skała', regionName: 'Jura', description: '', approach: '' });
+    await saveCrag(db, null, { name: 'Pusta Skała', areas: A('Jura'), description: '', approach: '' });
     await addUserRoute(db, route({ cragName: 'Okiennik' }));
     expect((await listCragChoices(db)).map((c) => [c.name, c.region_name, c.routes])).toEqual([['Okiennik', null, 1], ['Pusta Skała', 'Jura', 0]]);
   });
   it('gives an existing crag without a region the region typed with a route', async () => {
     const db = await freshDb();
     await addUserRoute(db, route({ cragName: 'Okiennik' }));
-    await addUserRoute(db, route({ cragName: 'okiennik', regionName: 'Jura', name: 'Second' }));
+    await addUserRoute(db, route({ cragName: 'okiennik', areas: A('Jura'), name: 'Second' }));
     expect(await listCragChoices(db)).toEqual([expect.objectContaining({ name: 'Okiennik', region_name: 'Jura' })]);
   });
   it('gives a new crag the region typed with the route', async () => {
     const db = await freshDb();
-    await addUserRoute(db, route({ cragName: 'Okiennik', regionName: 'Jura' }));
-    await addUserRoute(db, route({ cragName: 'Okiennik', regionName: 'Tatry', name: 'Second' }));
+    await addUserRoute(db, route({ cragName: 'Okiennik', areas: A('Jura') }));
+    await addUserRoute(db, route({ cragName: 'Okiennik', areas: A('Tatry'), name: 'Second' }));
     expect(await listCragChoices(db)).toEqual([expect.objectContaining({ name: 'Okiennik', region_name: 'Jura' })]);
   });
   it('lists recently climbed routes and partners by how often you climb with them', async () => {
@@ -220,14 +222,14 @@ describe('editing own crags, sectors, routes and regions', () => {
     await db.execAsync(MIGRATIONS[0] + 'PRAGMA user_version = 1;');
     await db.runAsync("INSERT INTO region (id, name, created_at, updated_at) VALUES ('g1', 'Jura', 1, 1)");
     await migrate(db);
-    expect(await getRegion(db, 'g1')).toMatchObject({ name: 'Jura', source: 'import' });
+    expect(await getArea(db, 'g1')).toMatchObject({ name: 'Jura', source: 'import', level: 'region', parent_id: null });
   });
   it('creates and edits a crag with a region found or created by name', async () => {
     const db = await freshDb();
-    const id = await saveCrag(db, null, { name: 'Okiennik', regionName: 'Jura', description: 'opis', approach: '10 min' });
-    await saveCrag(db, null, { name: 'Sokolica', regionName: 'Jura', description: '', approach: '' });
-    expect(await listRegions(db)).toEqual([expect.objectContaining({ name: 'Jura', source: 'user', crags: 2 })]);
-    await saveCrag(db, id, { name: 'Okiennik Wielki', regionName: '', description: '', approach: '' });
+    const id = await saveCrag(db, null, { name: 'Okiennik', areas: A('Jura'), description: 'opis', approach: '10 min' });
+    await saveCrag(db, null, { name: 'Sokolica', areas: A('Jura'), description: '', approach: '' });
+    expect(await listAreas(db)).toEqual([expect.objectContaining({ name: 'Jura', source: 'user', level: 'region' })]);
+    await saveCrag(db, id, { name: 'Okiennik Wielki', areas: A(''), description: '', approach: '' });
     expect(await getCrag(db, id)).toMatchObject({ name: 'Okiennik Wielki', region: null, source: 'user' });
     expect((await listCrags(db)).map((c) => [c.name, c.region_name])).toEqual([['Sokolica', 'Jura'], ['Okiennik Wielki', null]]);
   });
@@ -277,28 +279,93 @@ describe('editing own crags, sectors, routes and regions', () => {
     expect((await listCrags(db)).map((c) => c.name)).toEqual(['Elsewhere']);
     expect((await listAscents(db)).map((a) => a.route_name)).toEqual(['Stay']);
   });
-  it('renames a region and deletes it while keeping its crags', async () => {
+  it('renames a top-level region and deletes it while keeping its crags', async () => {
     const db = await freshDb();
-    const crag = await saveCrag(db, null, { name: 'Okiennik', regionName: 'Jura', description: '', approach: '' });
-    const [region] = await listRegions(db);
-    await renameRegion(db, region.id, 'Jura Krakowska');
+    const crag = await saveCrag(db, null, { name: 'Okiennik', areas: A('Jura'), description: '', approach: '' });
+    const [region] = await listAreas(db);
+    await renameArea(db, region.id, 'Jura Krakowska');
     expect((await getCrag(db, crag))!.region).toBe('Jura Krakowska');
-    await deleteRegion(db, region.id);
-    expect(await listRegions(db)).toEqual([]);
+    await deleteArea(db, region.id);
+    expect(await listAreas(db)).toEqual([]);
     expect(await getCrag(db, crag)).toMatchObject({ name: 'Okiennik', region: null });
   });
   it('keeps imported data marked as imported', async () => {
     const db = await freshDb();
     await applyImport(db, samples());
     const [c] = await listCrags(db);
-    expect(c).toMatchObject({ source: 'import', region_name: 'Example region', region_source: 'import' });
+    expect(c).toMatchObject({ source: 'import', region_name: 'Example region' });
+    expect((await listAreas(db))[0]).toMatchObject({ name: 'Example region', source: 'import', level: 'region' });
+  });
+});
+
+describe('nested areas', () => {
+  it('upgrades version 2 regions to top-level regions', async () => {
+    const db = openTestDb();
+    await db.execAsync(MIGRATIONS[0] + MIGRATIONS[1] + 'PRAGMA user_version = 2;');
+    await db.runAsync("INSERT INTO region (id, name, created_at, updated_at) VALUES ('g1', 'Jura', 1, 1)");
+    await migrate(db);
+    expect(await getArea(db, 'g1')).toMatchObject({ level: 'region', parent_id: null });
+  });
+  it('finds or creates region → area → group, matching names loosely', async () => {
+    const db = await freshDb();
+    const g = await areaIdFor(db, A('Czarnorzeki', 'Kamieniec', 'Krowia Turnia'), 1);
+    expect(await areaIdFor(db, A('czarnorzeki', 'KAMIENIEC', 'krowia turnia'), 2)).toBe(g);
+    const k = await areaIdFor(db, A('Czarnorzeki', 'Kamieniec', ''), 3);
+    expect(await getArea(db, g!)).toMatchObject({ level: 'group', parent_id: k });
+    expect(await getArea(db, k!)).toMatchObject({ level: 'area' });
+    expect(await areaIdFor(db, A('', 'X', 'Y'), 4)).toBeNull();
+    expect((await listAreas(db)).map((x) => [x.name, x.level])).toEqual([['Czarnorzeki', 'region'], ['Kamieniec', 'area'], ['Krowia Turnia', 'group']]);
+  });
+  it('adds child areas with the right level and refuses areas below a group', async () => {
+    const db = await freshDb();
+    const r = await addArea(db, null, 'Czarnorzeki');
+    const a = await addArea(db, r, 'Strzelnica');
+    const g = await addArea(db, a, 'Dolna');
+    expect(await addArea(db, r, 'strzelnica')).toBe(a);
+    expect((await getArea(db, g))!.level).toBe('group');
+    await expect(addArea(db, g, 'Too deep')).rejects.toThrow();
+  });
+  it('deleting an area moves its crags and sub-areas up a level', async () => {
+    const db = await freshDb();
+    const crag = await saveCrag(db, null, { name: 'Krowia', areas: A('Czarnorzeki', 'Kamieniec', 'Krowia Turnia'), description: '', approach: '' });
+    const other = await saveCrag(db, null, { name: 'Bąbel', areas: A('Czarnorzeki', 'Kamieniec'), description: '', approach: '' });
+    const kamieniec = (await getCrag(db, other))!.region_id!;
+    await deleteArea(db, kamieniec);
+    const areas = await listAreas(db);
+    expect(areas.map((x) => [x.name, x.level])).toEqual([['Czarnorzeki', 'region'], ['Krowia Turnia', 'area']]);
+    expect((await getCrag(db, other))!.region).toBe('Czarnorzeki');
+    expect((await getCrag(db, crag))!.region).toBe('Krowia Turnia');
+    await deleteArea(db, areas[0].id);
+    expect((await listAreas(db)).map((x) => [x.name, x.level])).toEqual([['Krowia Turnia', 'region']]);
+  });
+  it('re-importing with a new structure moves routes, keeps ascents and removes emptied imports', async () => {
+    const db = await freshDb();
+    const crag = (key: string, name: string, region: string, area = '', group = '') =>
+      ({ key, name, region, area, group, country: 'PL', lat: null, lng: null, description: '', approach: '' });
+    const r = (key: string, sectorKey: string) => ({ key, sectorKey, name: key, type: 'sport' as const, gradeLabel: 'VI', gradeSystem: 'kr' as const,
+      gradeIndex: parseGrade('VI', 'kr', 'sport')!, lengthM: null, bolts: null, author: '', year: null, lat: null, lng: null, description: '' });
+    const sec = (key: string, cragKey: string, name: string) => ({ key, cragKey, name, lat: null, lng: null, aspect: '' });
+    // Old layout: wall as its own crag in a flat region.
+    await applyImport(db, { crags: [crag('k-krowia', 'Krowia', 'Kamieniec'), crag('k-krowia-w', 'Krowia (ściana zachodnia)', 'Kamieniec')],
+      sectors: [sec('k-krowia-s', 'k-krowia', 'Krowia'), sec('k-krowia-w-s', 'k-krowia-w', 'Krowia (ściana zachodnia)')],
+      routes: [r('a', 'k-krowia-s'), r('b', 'k-krowia-w-s')], pitches: [], errors: [] });
+    const [b] = await searchRoutes(db, 'b');
+    await addAscent(db, ascent(b.id));
+    // New layout: one crag with a wall sector, nested areas.
+    await applyImport(db, { crags: [crag('k-krowia', 'Krowia', 'Czarnorzeki', 'Kamieniec', 'Krowia Turnia')],
+      sectors: [sec('k-krowia-s', 'k-krowia', 'Krowia'), sec('k-krowia-west', 'k-krowia', 'Ściana zachodnia')],
+      routes: [r('a', 'k-krowia-s'), r('b', 'k-krowia-west')], pitches: [], errors: [] });
+    expect((await listCrags(db)).map((c) => c.name)).toEqual(['Krowia']);
+    expect((await getRoute(db, b.id))).toMatchObject({ crag_name: 'Krowia', sector_name: 'Ściana zachodnia' });
+    expect((await listAscents(db)).map((x) => x.route_name)).toEqual(['b']);
+    expect((await listAreas(db)).map((x) => [x.name, x.level])).toEqual([['Czarnorzeki', 'region'], ['Kamieniec', 'area'], ['Krowia Turnia', 'group']]);
   });
 });
 
 describe('building a crag from its screen', () => {
   it('creates a crag with sectors, adds sectors and routes without ascents', async () => {
     const db = await freshDb();
-    const crag = await saveCrag(db, null, { name: 'Okiennik', regionName: 'Jura', description: '', approach: '', sectorNames: ['Lewy', 'Prawy'] });
+    const crag = await saveCrag(db, null, { name: 'Okiennik', areas: A('Jura'), description: '', approach: '', sectorNames: ['Lewy', 'Prawy'] });
     expect((await listSectors(db, crag)).map((s) => s.name)).toEqual(['Lewy', 'Prawy']);
     const again = await addSector(db, crag, 'lewy');
     expect((await listSectors(db, crag)).find((s) => s.name === 'Lewy')!.id).toBe(again);
@@ -358,7 +425,7 @@ describe('backup', () => {
     backup.tables.region = backup.tables.region.map(({ source: _s, ...rest }: Record<string, unknown>) => rest);
     const target = await freshDb();
     await importBackup(target, backup);
-    expect((await listRegions(target)).every((g) => g.source === 'import')).toBe(true);
+    expect((await listAreas(target)).every((g) => g.source === 'import' && g.level === 'region')).toBe(true);
   });
   it('rejects files that are not a backup or come from a newer version', async () => {
     const db = await freshDb();
