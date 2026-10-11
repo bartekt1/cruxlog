@@ -17,7 +17,7 @@ export default function CragScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const th = useTheme();
-  const { routeSystem, boulderSystem } = useSettings();
+  const { routeSystem } = useSettings();
   const [crag, setCrag] = useState<CragDetail | null>(null);
   const [routes, setRoutes] = useState<CragRouteRow[]>([]);
   const [sectorRows, setSectorRows] = useState<SectorRow[]>([]);
@@ -104,7 +104,7 @@ export default function CragScreen() {
                 {t(`types.${item.type}`)}{status(item) ? ` · ${status(item)}` : ''}
               </Text>
             </View>
-            <GradeBadge text={routeGrade(item, item.type === 'boulder' ? boulderSystem : routeSystem)} />
+            <GradeBadge text={routeGrade(item, routeSystem)} />
             <IconButton name="create-outline" size={20} label={t('edit.routeTitleNamed', { name: item.name })} onPress={() => router.push({ pathname: '/route/edit', params: { id: item.id } })} />
           </Pressable>
         )}

@@ -16,7 +16,7 @@ export default function AscentScreen() {
   const router = useRouter();
   const { t, i18n } = useTranslation();
   const th = useTheme();
-  const { routeSystem, boulderSystem } = useSettings();
+  const { routeSystem } = useSettings();
   const [a, setA] = useState<AscentDetail | null | undefined>(undefined);
 
   useFocusEffect(useCallback(() => { getAscent(db, id).then(setA); }, [db, id]));
@@ -44,7 +44,7 @@ export default function AscentScreen() {
         <Pressable style={{ flex: 1 }} onPress={() => router.push(`/route/${a.route_id}`)} accessibilityRole="link" accessibilityHint={t('route.openHint')}>
           <Text style={{ color: th.accent, fontSize: 22, fontWeight: '700' }}>{a.route_name}</Text>
         </Pressable>
-        <GradeBadge text={routeGrade(a, a.type === 'boulder' ? boulderSystem : routeSystem)} />
+        <GradeBadge text={routeGrade(a, routeSystem)} />
       </View>
       <Text style={{ color: th.muted, marginTop: 4 }}>{a.crag_name} · {a.route.sector_name} · {t(`types.${a.type}`)}</Text>
 

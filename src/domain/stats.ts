@@ -29,19 +29,18 @@ export function yearStats(ascents: StatAscent[], year: number): YearStats {
     }
     sends++;
     if (a.gradeIndex != null && (a.style === 'os' || a.style === 'flash' || a.style === 'rp' || a.style === 'pp')) {
-      const key = a.type === 'multipitch' ? 'sport' : a.type;
-      if (hardest[key] == null || a.gradeIndex > hardest[key]!) hardest[key] = a.gradeIndex;
+      // Multipitch routes share the ladder with single-pitch ones, so both count as "hardest route".
+      if (hardest.sport == null || a.gradeIndex > hardest.sport) hardest.sport = a.gradeIndex;
     }
   }
   return { sends, attempts, climbingDays: days.size, hardest };
 }
 
 /** Number of completed climbs per ladder index, for the difficulty pyramid. */
-export function pyramid(ascents: StatAscent[], year: number, kind: 'boulder' | 'route'): Map<number, number> {
+export function pyramid(ascents: StatAscent[], year: number): Map<number, number> {
   const out = new Map<number, number>();
   for (const a of ascents) {
     if (!a.date.startsWith(`${year}-`) || !isSend(a.style) || a.gradeIndex == null) continue;
-    if ((a.type === 'boulder') !== (kind === 'boulder')) continue;
     out.set(a.gradeIndex, (out.get(a.gradeIndex) ?? 0) + 1);
   }
   return out;

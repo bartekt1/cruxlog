@@ -20,8 +20,8 @@ Write down the result of every step (OK / problem). Report problems with: step n
 4. Add a second ascent: search for "Test" in the route field, pick "Test Route 1", style Attempt. Expected: the chosen route shows as a card with a "Change" button; it is added; no duplicate route. Searching "crag" (the crag name) also finds the route.
 4a. Search for "Nonexistent". Expected: "No routes match..." and a button "Create route "Nonexistent"" that opens the new-route form with that name filled in.
 4b. Pick style OS or Flash. Expected: the Attempts field disappears (always 1).
-5. Add a boulder: new route, type Boulder, system FONT, grade `6B`. Expected: saved, shown as 6B.
-6. Error checks: try to save with no route (message "Choose a route first"); new route without crag or name (message names the missing field, the field gets a red border); a grade that does not exist for the system, for example `9z`, or `VI.3` with Boulder type (message with an example grade); date `2026-02-30` or `10.10.2026` (date error); attempts `0` or `abc` (attempts error). Expected: nothing saved in each case.
+5. New route: the type chips are only Sport and Multipitch (no Boulder); Settings has only route grades (KR, UIAA, FR).
+6. Error checks: try to save with no route (message "Choose a route first"); new route without crag or name (message names the missing field, the field gets a red border); a grade that does not exist for the system, for example `9z`, or `VI.3` with system FR (message with an example grade); date `2026-02-30` or `10.10.2026` (date error); attempts `0` or `abc` (attempts error). Expected: nothing saved in each case.
 7. Tap "Yesterday", save. Then tap the date field, pick a day 3 weeks ago in the calendar, save; repeat with a day in the previous year. Days in the future cannot be picked. Expected: headers "Yesterday", a localized day such as "Sat, 19 September", and for the previous year the year is included; newest first.
 
 ## 2a. Route search, suggestions, duplicates
@@ -54,8 +54,8 @@ Write down the result of every step (OK / problem). Report problems with: step n
 ## 3. Progress
 0. Before adding any ascent (fresh install): Progress shows "No sends in <year> yet" with a hint, and "No sends this year." under each pyramid.
 1. Open Progress. Expected: totals for the current year match what you entered (sends do not count attempts), "days out" counts distinct dates.
-2. Hardest route and hardest boulder show the grades you entered; the previous-year entry is not counted.
-3. Route and boulder pyramids show bars for the grades you logged; the calendar shows coloured cells for your dates and a legend below it.
+2. The hardest route tile shows the grade you entered; the previous-year entry is not counted.
+3. The route pyramid shows bars for the grades you logged; the calendar shows coloured cells for your dates and a legend below it.
 3a. Year switcher: with an entry in the previous year, tap ‹ next to the year. Expected: stats and pyramids for that year; the activity calendar is shown only for the current year; › goes back; the arrow is greyed out where there are no more years.
 4. Change the grade system in Settings (for example KR -> FR). Expected: Journal and Progress show the same routes in the new system (VI.3 -> 6c).
 
@@ -87,8 +87,8 @@ Write down the result of every step (OK / problem). Report problems with: step n
 4. Tap "Mark done" on the Project. Expected: crossed out with ✓, moved to the bottom; "Reopen" brings it back. Tap Delete: confirmation, then it disappears.
 
 ## 5. CSV import
-1. Settings -> Import crags from CSV. Select all four sample files at once. Expected: an alert with counts (1 crag, 1 sector, 3 routes, 3 pitches). Buttons are disabled with a spinner while it runs.
-2. Crags tab shows "Example crag". In a new ascent, searching "Example" finds the sport route, the boulder and the multipitch route.
+1. Settings -> Import crags from CSV. Select all four sample files at once. Expected: an alert with counts (1 crag, 1 sector, 2 routes, 3 pitches). Buttons are disabled with a spinner while it runs.
+2. Crags tab shows "Example crag". In a new ascent, searching "Example" finds the sport route and the multipitch route.
 3. Import the same files again. Expected: same message, and no duplicates in the Crags list or in the search.
 4. Error handling: edit a copy of routes.csv on the phone (or on a computer) so that one grade is wrong (for example `9z`) and one `sector_key` does not exist. Import. Expected: "problems found, nothing was imported" with file and line numbers, and no data changed.
 5. Select only routes.csv and crags.csv without sectors.csv. Expected: errors about unknown `sector_key`, nothing imported.
@@ -102,8 +102,9 @@ Write down the result of every step (OK / problem). Report problems with: step n
 
 ## 5b. Guidebook import and editing imported data
 1. Import the guidebook export itself (one file, e.g. `drogi_i_bouldery_Kamieniec.csv`). Expected: Czarnorzeki › Kamieniec with groups Grupa Słonecznej Turni, Kursowe Skałki, Krowia Turnia; Strzelnica, Sokoli Grzbiet, Przełom Marcinka and Smoczy Grzbiet as areas without groups; crag Krowia with sector "Ściana zachodnia". If the older three files were imported before, the ascents stay and no old crags are left over. Expected: a question "Import?" with the numbers of crags and routes and a warning that re-importing overwrites changes; Cancel imports nothing.
-2. After Import: the Crags tab shows the regions; drilling down reaches the crags; a crag description contains the wall heights and aspects.
-3. Grades from the guidebook are shown as written (VI+, VI.4/4+, VI.5?, 4+, 8A+) when the display system matches (KR for routes, FONT for boulders); in FR they show the nearest grade. They count in Progress as the nearest lower step.
+2. After Import: the Crags tab shows the regions; drilling down reaches the crags. Boulders, routes named "(bez nazwy)" and routes marked "zakaz wspinania" are not imported (Leśna Turnia is missing); routes and crags have no notes, styles, guidebook numbers or wall heights.
+2a. Re-import a file with one route removed: the route disappears unless you logged an ascent on it; routes you added yourself stay.
+3. Grades from the guidebook are shown as written (VI+, VI.4/4+, VI.5?) when the display system is KR; in FR they show the nearest grade. They count in Progress as the nearest lower step.
 4. Imported crags, sectors, routes and regions have pencils like your own: rename a crag, move a route to a new sector, delete a route. Import the same files again: the changes are undone and deleted routes come back; ascents stay.
 
 ## 6. Backup

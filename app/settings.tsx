@@ -11,7 +11,7 @@ import { backupStatus } from '../src/domain/history';
 import { buildImportPlan, type ImportPlan } from '../src/domain/csvImport';
 import { detectFormat, parseFlatCsv, planFromFlatRows, type FlatRow } from '../src/domain/flatImport';
 import { guidebookRows } from '../src/domain/guidebookCsv';
-import { BOULDER_SYSTEMS, ROUTE_SYSTEMS } from '../src/domain/grades';
+import { ROUTE_SYSTEMS } from '../src/domain/grades';
 import type { Lang } from '../src/domain/settings';
 import i18n from '../src/i18n';
 import { Button, Chip, ChipRow, Label } from '../src/ui/kit';
@@ -133,10 +133,6 @@ export default function Settings() {
       <Label>{t('settings.routeGrades')}</Label>
       <ChipRow>
         {ROUTE_SYSTEMS.map((x) => <Chip key={x} label={x.toUpperCase()} on={s.routeSystem === x} onPress={() => s.setRouteSystem(x)} />)}
-      </ChipRow>
-      <Label>{t('settings.boulderGrades')}</Label>
-      <ChipRow>
-        {BOULDER_SYSTEMS.map((x) => <Chip key={x} label={x.toUpperCase()} on={s.boulderSystem === x} onPress={() => s.setBoulderSystem(x)} />)}
       </ChipRow>
       <Label>{t('settings.csv')}</Label>
       <Text style={{ color: th.muted }}>{t('settings.csvHelp')}</Text>

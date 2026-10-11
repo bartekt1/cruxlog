@@ -18,7 +18,7 @@ describe('stats', () => {
     expect(s.hardest.sport).toBe(g('VI.4'));
   });
   it('builds a pyramid from sends only', () => {
-    const p = pyramid(data, 2026, 'route');
+    const p = pyramid(data, 2026);
     expect(p.get(g('VI.5')!)).toBeUndefined();
     expect(p.get(g('VI.4')!)).toBe(1);
   });

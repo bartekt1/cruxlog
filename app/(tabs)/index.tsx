@@ -17,7 +17,7 @@ export default function Journal() {
   const router = useRouter();
   const { t, i18n } = useTranslation();
   const th = useTheme();
-  const { routeSystem, boulderSystem, lastBackupAt } = useSettings();
+  const { routeSystem, lastBackupAt } = useSettings();
   const [rows, setRows] = useState<AscentRow[]>([]);
 
   useFocusEffect(useCallback(() => { listAscents(db).then(setRows); }, [db]));
@@ -74,7 +74,7 @@ export default function Journal() {
                 {item.crag_name}{item.attempts > 1 ? ` · ${t('journal.attempts', { count: item.attempts })}` : ''}{item.partner_name ? ` · ${item.partner_name}` : ''}
               </Text>
             </View>
-            <GradeBadge text={routeGrade(item, item.type === 'boulder' ? boulderSystem : routeSystem)} />
+            <GradeBadge text={routeGrade(item, routeSystem)} />
             <Text style={{ color: item.style === 'attempt' ? th.muted : th.accent, fontWeight: '700', minWidth: 52, textAlign: 'right' }}>{t(`styles.${item.style as AscentStyle}`)}</Text>
           </Pressable>
         )}

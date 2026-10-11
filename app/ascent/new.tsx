@@ -110,7 +110,7 @@ export default function NewAscent() {
 
   function pickType(next: RouteType) {
     setType(next);
-    setSystem(next === 'boulder' ? settings.boulderSystem : systemsFor(next).includes(system) ? system : settings.routeSystem);
+    setSystem(systemsFor(next).includes(system) ? system : settings.routeSystem);
   }
 
   function pickStyle(next: AscentStyle) {
@@ -276,7 +276,7 @@ export default function NewAscent() {
           ) : null}
           <Text style={sub}>{t('ascent.type')}</Text>
           <ChipRow>
-            {(['sport', 'boulder', 'multipitch'] as RouteType[]).map((x) => <Chip key={x} label={t(`types.${x}`)} on={type === x} onPress={() => pickType(x)} />)}
+            {(['sport', 'multipitch'] as RouteType[]).map((x) => <Chip key={x} label={t(`types.${x}`)} on={type === x} onPress={() => pickType(x)} />)}
           </ChipRow>
           <Text style={sub}>{t('ascent.gradeSystem')}</Text>
           <ChipRow>

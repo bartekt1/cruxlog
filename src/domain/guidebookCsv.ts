@@ -3,6 +3,8 @@
 //   "Region" path "Pogórze Dynowskie > Czarnorzeki > Kamieniec" → region Czarnorzeki, area Kamieniec, group = "Rejon" column;
 //   path "Pogórze Dynowskie > Czarnorzeki"                     → region Czarnorzeki, area = "Rejon" column, no group;
 //   "Skała" "Krowia (ściana zachodnia)"                        → crag Krowia, sector "Ściana zachodnia".
+// Only names, grades and places are kept (the user's choice): boulders, unnamed routes and routes closed to climbing
+// are left out, and so are notes, styles, guidebook numbers and wall heights or aspects.
 // Keys match the earlier converter, so re-importing moves already imported routes (and keeps their ascents).
 import Papa from 'papaparse';
 import { slug, type FlatRow } from './flatImport';
@@ -13,11 +15,6 @@ const coord = (s: string | undefined) => {
   const n = Number((s ?? '').replace(',', '.'));
   return Number.isFinite(n) && n !== 0 ? String(n) : '';
 };
-
-/** "14 m > Pn.; 12 m > Zach." → ["14 m Pn.", "12 m Zach."] */
-function faces(s: string): string[] {
-  return s.split(';').map((f) => f.replace(/\s*>\s*/, ' ').trim()).filter(Boolean);
-}
 
 /** Splits "Krowia (ściana zachodnia)" into the crag and a wall sector. */
 export function splitWall(rock: string): { crag: string; sector: string } {
@@ -33,6 +30,10 @@ export function areasOf(r: GuideRow): { region: string; area: string; group: str
   return parts.length >= 3 ? { region, area: parts[2], group: column } : { region, area: column, group: '' };
 }
 
+const isBoulder = (r: GuideRow) => (r.Rodzaj_wyceny ?? '').toLowerCase().startsWith('boulder');
+const UNNAMED = /^\(?bez nazwy\)?$/i;
+const CLOSED = /zakaz wspinania/i;
+
 /** Name used in the keys of the first converter (Kamieniec, or the "Rejon" column elsewhere). */
 const legacyRegion = (r: GuideRow) => (/(^|>)\s*Kamieniec\s*$/.test(r.Region ?? '') ? 'Kamieniec' : (r.Rejon ?? '').trim());
 
@@ -43,33 +44,26 @@ export function guidebookRows(text: string): FlatRow[] {
 
   const out: FlatRow[] = [];
   const used = new Set<string>();
-  const cragDescriptions = new Map<string, string>();
   for (const r of rows) {
     const rock = r['Skała'] ?? '';
     if (!rock || !r.Nazwa) continue;
+    // Keys count the left-out rows too, so they stay the same as in the first converter.
+    const skip = isBoulder(r) || UNNAMED.test(r.Nazwa) || CLOSED.test(r.Uwagi ?? '');
     const { crag, sector } = splitWall(rock);
     const old = slug(legacyRegion(r));
     const cragKey = `${old}-${slug(crag)}`;
-    const wall = faces(r['Wysokość_i_ekspozycja_ściany'] ?? '');
-    // Wall heights and aspects describe the crag (the guidebook gives them per rock, not per route).
-    if (!sector && wall.length && !cragDescriptions.has(cragKey)) cragDescriptions.set(cragKey, `Ściany: ${wall.join(', ')}`.replace(/([^.])$/, '$1.'));
-
     const base = `${old}-${slug(rock)}-${slug(r.Nr_w_przewodniku || r.Nazwa)}`;
     let routeKey = base;
     for (let n = 2; used.has(routeKey); n++) routeKey = `${base}-${n}`;
     used.add(routeKey);
+    if (skip) continue;
 
-    const boulder = (r.Rodzaj_wyceny ?? '').toLowerCase().startsWith('boulder');
-    const height = wall.length === 1 ? /^(\d+(?:[.,]\d+)?)\s*m/.exec(wall[0])?.[1] ?? '' : '';
     out.push({
       ...areasOf(r), crag, sector,
-      name: r.Nazwa, type: boulder ? 'boulder' : 'sport', grade: r.Wycena, gradeSystem: boulder ? 'font' : 'kr',
-      lengthM: height,
-      description: [r.Nr_w_przewodniku ? `Nr ${r.Nr_w_przewodniku}` : '', r.Styl, r.Uwagi].filter(Boolean).join(' · '),
+      name: r.Nazwa, type: 'sport', grade: r.Wycena, gradeSystem: 'kr',
       lat: coord(r['GPS_szerokość']), lng: coord(r['GPS_długość']),
       cragKey, sectorKey: sector ? `${cragKey}-${slug(sector)}` : `${cragKey}-s`, routeKey,
     });
   }
-  for (const row of out) row.cragDescription = cragDescriptions.get(row.cragKey!) ?? '';
   return out;
 }

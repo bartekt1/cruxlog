@@ -21,7 +21,7 @@ const num = (v: string | undefined) => {
 };
 
 const TYPE_ALIASES: Record<string, RouteType> = {
-  sport: 'sport', droga: 'sport', route: 'sport', boulder: 'boulder', multipitch: 'multipitch', 'wielowyciąg': 'multipitch', wielowyciag: 'multipitch',
+  sport: 'sport', droga: 'sport', route: 'sport', multipitch: 'multipitch', 'wielowyciąg': 'multipitch', wielowyciag: 'multipitch',
 };
 
 /** Builds an import plan; problems are reported per data line (header = line 1). */
@@ -34,13 +34,14 @@ export function planFromFlatRows(rows: FlatRow[]): ImportPlan {
   rows.forEach((r, i) => {
     const line = i + 2;
     const err = (message: string) => plan.errors.push({ file: 'routes', line, message });
+    if (fold(r.type) === 'boulder') return; // the app has no boulders; such rows are skipped
     if (!r.region.trim()) return err('region is required');
     if (!r.area.trim()) return err('area (rejon) is required');
     if (!r.crag.trim()) return err('crag is required');
     if (!r.name.trim()) return err('name is required');
     const type = TYPE_ALIASES[fold(r.type || 'sport')];
     if (!type) return err(`unknown type ${r.type}`);
-    const system = (r.gradeSystem || (type === 'boulder' ? 'font' : 'kr')).trim().toLowerCase() as GradeSystem;
+    const system = (r.gradeSystem || 'kr').trim().toLowerCase() as GradeSystem;
     if (!systemsFor(type).includes(system)) return err(`grade system ${r.gradeSystem} is invalid for ${type}`);
     const gradeIndex = parseGrade(r.grade, system, type);
     if (gradeIndex == null) return err(`unknown grade ${r.grade} in ${system}`);
@@ -81,6 +82,7 @@ const HEADERS: Record<string, keyof FlatRow> = {
   grade: 'grade', wycena: 'grade', grade_system: 'gradeSystem', system: 'gradeSystem', skala_wycen: 'gradeSystem',
   length_m: 'lengthM', dlugosc: 'lengthM', length: 'lengthM', description: 'description', opis: 'description',
   crag_description: 'cragDescription', opis_skaly: 'cragDescription', lat: 'lat', lng: 'lng', key: 'routeKey',
+  crag_key: 'cragKey', key_skaly: 'cragKey',
 };
 const headerKey = (h: string) => fold(h).replace(/[\s-]+/g, '_');
 
@@ -104,6 +106,6 @@ export function parseFlatCsv(text: string): FlatRow[] {
   return data.map((r) => ({
     region: r.region ?? '', area: r.area ?? '', group: r.group ?? '', crag: r.crag ?? '', sector: r.sector ?? '',
     name: r.name ?? '', type: r.type ?? '', grade: r.grade ?? '', gradeSystem: r.gradeSystem ?? '',
-    lengthM: r.lengthM, description: r.description, cragDescription: r.cragDescription, lat: r.lat, lng: r.lng, routeKey: r.routeKey,
+    lengthM: r.lengthM, description: r.description, cragDescription: r.cragDescription, lat: r.lat, lng: r.lng, cragKey: r.cragKey, routeKey: r.routeKey,
   }));
 }

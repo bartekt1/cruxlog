@@ -5,7 +5,7 @@
     "today": "Dziś", "yesterday": "Wczoraj", "failed": "Coś poszło nie tak: {{message}}"
   },
   "styles": { "os": "OS", "flash": "Flash", "rp": "RP", "pp": "PP", "tr": "TR", "attempt": "Próba" },
-  "types": { "sport": "Sport", "boulder": "Boulder", "multipitch": "Wielowyciąg" },
+  "types": { "sport": "Sport", "multipitch": "Wielowyciąg" },
   "journal": {
     "empty": "Brak przejść", "emptyHint": "Dotknij pomarańczowy „+” na dole, aby zapisać pierwsze.", "attempts": "podejścia: {{count}}", "add": "Dodaj przejście", "addShort": "Dodaj",
     "backupNever": "Nie masz jeszcze kopii zapasowej", "backupOld": "Ostatnia kopia: {{n}} dni temu", "backupHint": "Twoje przejścia są tylko w tym telefonie. Dotknij, aby zrobić kopię."
@@ -28,8 +28,8 @@
     }
   },
   "progress": {
-    "title": "Postępy", "sends": "Przejścia", "days": "Dni na skale", "hardestRoute": "Najtrudniejsza droga", "hardestBoulder": "Najtrudniejszy boulder",
-    "pyramidRoutes": "Piramida dróg", "pyramidBoulders": "Piramida boulderów", "activity": "Aktywność (ostatnie 18 tygodni)",
+    "title": "Postępy", "sends": "Przejścia", "days": "Dni na skale", "hardestRoute": "Najtrudniejsza droga",
+    "pyramidRoutes": "Piramida dróg", "activity": "Aktywność (ostatnie 18 tygodni)",
     "empty": "Brak przejść w {{year}}", "emptyHint": "Dodaj przejście w Dzienniku, aby zobaczyć statystyki.", "noSends": "Brak przejść.", "prevYear": "Poprzedni rok", "nextYear": "Następny rok",
     "legendNone": "Bez wspinania", "legendSome": "1–2 przejścia", "legendMany": "3 i więcej"
   },
@@ -74,7 +74,7 @@
     "placeholder": { "region": "np. Czarnorzeki", "area": "np. Kamieniec", "group": "np. Krowia Turnia" }
   },
   "settings": {
-    "title": "Ustawienia", "language": "Język", "routeGrades": "Wyceny dróg", "boulderGrades": "Wyceny boulderów",
+    "title": "Ustawienia", "language": "Język", "routeGrades": "Wyceny dróg",
     "backup": "Kopia zapasowa", "backupHelp": "Eksport zapisuje wszystkie dane w jednym pliku. Import scala plik z aplikacją; nowsze wpisy wygrywają, nic nie jest usuwane.",
     "export": "Eksportuj kopię", "import": "Importuj kopię", "csv": "Importuj skały z pliku CSV",
     "csvHelp": "Wybierz jeden plik z listą dróg (np. plik z przewodnika). Każdy wiersz to jedna droga: region, rejon, grupa, skała, sektor, nazwa, wycena. Działa też dawny import z plików crags.csv i routes.csv.",

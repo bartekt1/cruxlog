@@ -1,4 +1,5 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
+import { HIDE_BOULDERS } from './migrate';
 
 // 2: region.source added. Version 1 backups still import (their regions came from CSV).
 // 3: region.parent_id and region.level (nested areas). Older backups import as top-level regions.
@@ -34,6 +35,7 @@ export async function importBackup(db: SQLiteDatabase, data: unknown): Promise<n
         merged++;
       }
     }
+    await db.execAsync(HIDE_BOULDERS); // a backup from before boulders were removed may bring some back
   });
   return merged;
 }

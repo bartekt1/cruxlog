@@ -5,7 +5,7 @@
     "today": "Today", "yesterday": "Yesterday", "failed": "Something went wrong: {{message}}"
   },
   "styles": { "os": "OS", "flash": "Flash", "rp": "RP", "pp": "PP", "tr": "TR", "attempt": "Attempt" },
-  "types": { "sport": "Sport", "boulder": "Boulder", "multipitch": "Multipitch" },
+  "types": { "sport": "Sport", "multipitch": "Multipitch" },
   "journal": {
     "empty": "No ascents yet", "emptyHint": "Tap the orange + at the bottom to log your first climb.", "attempts": "{{count}} tries", "add": "Log an ascent", "addShort": "Add",
     "backupNever": "You have never made a backup", "backupOld": "Last backup {{n}} days ago", "backupHint": "Your climbs live only on this phone. Tap to export a backup."
@@ -28,8 +28,8 @@
     }
   },
   "progress": {
-    "title": "Progress", "sends": "Sends", "days": "Days out", "hardestRoute": "Hardest route", "hardestBoulder": "Hardest boulder",
-    "pyramidRoutes": "Route pyramid", "pyramidBoulders": "Boulder pyramid", "activity": "Activity (last 18 weeks)",
+    "title": "Progress", "sends": "Sends", "days": "Days out", "hardestRoute": "Hardest route",
+    "pyramidRoutes": "Route pyramid", "activity": "Activity (last 18 weeks)",
     "empty": "No sends in {{year}} yet", "emptyHint": "Log an ascent in the Journal to see your stats.", "noSends": "No sends.", "prevYear": "Previous year", "nextYear": "Next year",
     "legendNone": "No climbing", "legendSome": "1–2 ascents", "legendMany": "3 or more"
   },
@@ -74,7 +74,7 @@
     "placeholder": { "region": "e.g. Czarnorzeki", "area": "e.g. Kamieniec", "group": "e.g. Krowia Turnia" }
   },
   "settings": {
-    "title": "Settings", "language": "Language", "routeGrades": "Route grades", "boulderGrades": "Boulder grades",
+    "title": "Settings", "language": "Language", "routeGrades": "Route grades",
     "backup": "Backup", "backupHelp": "Export saves all your data to one file. Import merges a file into the app; newer entries win, nothing is deleted.",
     "export": "Export backup", "import": "Import backup", "csv": "Import crags from a CSV file",
     "csvHelp": "Pick one file with a list of routes (e.g. a guidebook export). Each row is one route: region, area, group, crag, sector, name, grade. The older import with crags.csv and routes.csv still works.",

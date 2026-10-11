@@ -20,7 +20,7 @@ export default function RouteScreen() {
   const router = useRouter();
   const { t, i18n } = useTranslation();
   const th = useTheme();
-  const { routeSystem, boulderSystem } = useSettings();
+  const { routeSystem } = useSettings();
   const [route, setRoute] = useState<RouteRow | null>(null);
   const [ascents, setAscents] = useState<AscentRow[]>([]);
 
@@ -37,7 +37,7 @@ export default function RouteScreen() {
   const day = (iso: string) => formatDay(iso, i18n.language, today);
 
   if (!route) return <View style={{ flex: 1, backgroundColor: th.bg }} />;
-  const grade = routeGrade(route, route.type === 'boulder' ? boulderSystem : routeSystem);
+  const grade = routeGrade(route, routeSystem);
 
   let status: string;
   if (summary.firstSend) {

@@ -129,6 +129,15 @@ Severity: **H** blocks a task or loses/corrupts data, **M** slows a task or conf
 | H2 | Guidebook needed converting to three CSV files on a computer | M | Fixed: the guidebook export or a simple one-row-per-route file imports directly; three-file import kept |
 | H3 | Rock names like "Krowia (ściana zachodnia)" became separate crags | M | Fixed: the bracketed wall becomes a sector of the crag |
 
+## Round 8 (scope: roped climbing only)
+
+| # | Issue | Sev | Status |
+|---|---|---|---|
+| S1 | Boulders not used by the owner; extra type, grade systems, setting, tile and pyramid added noise | M | Removed: types Sport and Multipitch only, grades KR/UIAA/FR; old boulder data hidden (migration 4) and skipped on import |
+| S2 | Re-import left routes that were deleted from the file | M | Fixed: the file decides the imported routes of its crags; routes with ascents and your own routes stay |
+| S3 | Renaming a crag in the file made a second crag | L | Fixed: optional crag key column (`key_skaly` / `crag_key`) |
+
+## Open items
 
 1. Edit a goal's title or target; link a project goal to a route.
 2. Activity calendar only for the current year.

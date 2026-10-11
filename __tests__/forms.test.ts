@@ -14,8 +14,8 @@ describe('validateRouteDraft', () => {
   });
   it('rejects grades that do not belong to the system or type', () => {
     expect(validateRouteDraft({ ...route, grade: '9z' })).toEqual({ ok: false, error: 'ascent.errors.grade' });
-    expect(validateRouteDraft({ ...route, type: 'boulder', system: 'font', grade: 'VI.3' })).toEqual({ ok: false, error: 'ascent.errors.grade' });
-    expect(validateRouteDraft({ ...route, type: 'boulder', system: 'font', grade: '6b' }).ok).toBe(true);
+    expect(validateRouteDraft({ ...route, system: 'fr', grade: 'VI.3' })).toEqual({ ok: false, error: 'ascent.errors.grade' });
+    expect(validateRouteDraft({ ...route, type: 'multipitch', system: 'fr', grade: '6b' }).ok).toBe(true);
   });
 });
 

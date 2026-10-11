@@ -476,6 +476,19 @@ export async function deleteGoal(db: SQLiteDatabase, id: string): Promise<void> 
  */
 async function removeEmptyImports(db: SQLiteDatabase, plan: ImportPlan, t: number): Promise<void> {
   const keep = (kind: string, keys: string[]) => new Set(keys.map((k) => `imp:${kind}:${k}`));
+  // The file is the list of routes for its crags: imported routes it no longer has are removed,
+  // unless you logged an ascent on them. Routes you added yourself are never touched.
+  const routes = keep('route', plan.routes.map((x) => x.key));
+  const planCrags = [...keep('crag', plan.crags.map((x) => x.key))];
+  for (let i = 0; i < planCrags.length; i += 500) {
+    const chunk = planCrags.slice(i, i + 500);
+    for (const r of await db.getAllAsync<{ id: string }>(
+      `SELECT r.id FROM route r JOIN sector s ON s.id = r.sector_id
+       WHERE r.deleted_at IS NULL AND r.id LIKE 'imp:route:%' AND s.crag_id IN (${chunk.map(() => '?').join(',')})
+       AND NOT EXISTS (SELECT 1 FROM ascent a WHERE a.route_id = r.id AND a.deleted_at IS NULL)`, chunk)) {
+      if (!routes.has(r.id)) await db.runAsync('UPDATE route SET deleted_at = ?, updated_at = ? WHERE id = ?', [t, t, r.id]);
+    }
+  }
   const sectors = keep('sector', plan.sectors.map((x) => x.key));
   const crags = keep('crag', plan.crags.map((x) => x.key));
   for (const s of await db.getAllAsync<{ id: string }>(

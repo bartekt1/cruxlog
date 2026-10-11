@@ -11,6 +11,7 @@ import {
   listCragChoices, listPartners, listRouteAscents, recentRoutes, listSectors, addSector, createRoute,
 } from '../src/db/repo';
 import { buildImportPlan } from '../src/domain/csvImport';
+import { parseFlatCsv, planFromFlatRows } from '../src/domain/flatImport';
 import { parseGrade } from '../src/domain/grades';
 import { openTestDb } from './helpers/sqlite';
 
@@ -236,8 +237,8 @@ describe('editing own crags, sectors, routes and regions', () => {
   it('edits a route and moves it to another sector of the same crag', async () => {
     const db = await freshDb();
     const r = await addUserRoute(db, route());
-    await updateRoute(db, r, { sectorName: 'Right', name: 'Renamed', type: 'boulder', gradeLabel: '6B', gradeSystem: 'font', gradeIndex: parseGrade('6B', 'font', 'boulder')! });
-    expect(await getRoute(db, r)).toMatchObject({ name: 'Renamed', type: 'boulder', sector_name: 'Right', crag_name: 'Test Crag', source: 'user' });
+    await updateRoute(db, r, { sectorName: 'Right', name: 'Renamed', type: 'multipitch', gradeLabel: '6b', gradeSystem: 'fr', gradeIndex: parseGrade('6b', 'fr')! });
+    expect(await getRoute(db, r)).toMatchObject({ name: 'Renamed', type: 'multipitch', sector_name: 'Right', crag_name: 'Test Crag', source: 'user' });
     expect(await listSectorNames(db, (await getRoute(db, r))!.crag_id)).toEqual(['Main', 'Right']);
   });
   it('deletes a route with its ascents', async () => {
@@ -359,6 +360,42 @@ describe('nested areas', () => {
     expect((await getRoute(db, b.id))).toMatchObject({ crag_name: 'Krowia', sector_name: 'Ściana zachodnia' });
     expect((await listAscents(db)).map((x) => x.route_name)).toEqual(['b']);
     expect((await listAreas(db)).map((x) => [x.name, x.level])).toEqual([['Czarnorzeki', 'region'], ['Kamieniec', 'area'], ['Krowia Turnia', 'group']]);
+  });
+});
+
+describe('no boulders, and the file decides which imported routes a crag has', () => {
+  it('hides boulder routes and their ascents when upgrading', async () => {
+    const db = openTestDb();
+    await db.execAsync(MIGRATIONS.slice(0, 3).join('\n') + 'PRAGMA user_version = 3;');
+    await db.execAsync(`
+      INSERT INTO crag (id, name, created_at, updated_at) VALUES ('c', 'C', 1, 1);
+      INSERT INTO sector (id, crag_id, name, created_at, updated_at) VALUES ('s', 'c', 'S', 1, 1);
+      INSERT INTO route (id, sector_id, name, type, grade_label, grade_system, grade_index, created_at, updated_at)
+        VALUES ('b', 's', 'Kamień', 'boulder', '6B', 'font', 5, 1, 1), ('r', 's', 'Rysa', 'sport', 'VI', 'kr', 4, 1, 1);
+      INSERT INTO ascent (id, route_id, date, style, created_at, updated_at) VALUES ('a1', 'b', '2026-01-01', 'rp', 1, 1), ('a2', 'r', '2026-01-01', 'rp', 1, 1);`);
+    await migrate(db);
+    expect(await getRoute(db, 'b')).toBeNull();
+    expect((await listAscents(db)).map((a) => a.route_name)).toEqual(['Rysa']);
+  });
+  it('removes imported routes the file no longer has, unless they have ascents or are your own', async () => {
+    const db = await freshDb();
+    const plan = (names: string[]) => planFromFlatRows(names.map((name) => ({
+      region: 'Czarnorzeki', area: 'Kamieniec', group: '', crag: 'Krowia', sector: '', name, type: 'sport', grade: 'VI', gradeSystem: 'kr',
+      cragKey: 'kamieniec-krowia', routeKey: `k-${name}`,
+    })));
+    await applyImport(db, plan(['Stara', 'Zrobiona', 'Zostaje']));
+    const [done] = await searchRoutes(db, 'Zrobiona');
+    await addAscent(db, ascent(done.id));
+    await addUserRoute(db, route({ cragName: 'Krowia', sectorName: 'Krowia', name: 'Moja' }));
+    await applyImport(db, plan(['Zostaje']));
+    expect((await listCragRoutes(db, 'imp:crag:kamieniec-krowia')).map((r) => r.name).sort()).toEqual(['Moja', 'Zostaje', 'Zrobiona']);
+  });
+  it('reads a crag key column, so renaming a crag in the file does not duplicate it', async () => {
+    const db = await freshDb();
+    const file = (crag: string) => `Region;Rejon;Skała;Nazwa;Wycena;key_skaly;key\nCzarnorzeki;Kamieniec;${crag};Rysa;VI;krowia;k1\n`;
+    await applyImport(db, planFromFlatRows(parseFlatCsv(file('Krowia'))));
+    await applyImport(db, planFromFlatRows(parseFlatCsv(file('Krowia Turnia'))));
+    expect((await listCrags(db)).map((c) => [c.id, c.name])).toEqual([['imp:crag:krowia', 'Krowia Turnia']]);
   });
 });
 

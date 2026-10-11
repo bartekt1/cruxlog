@@ -46,7 +46,7 @@ function num(v: string | undefined): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-const TYPES: RouteType[] = ['sport', 'boulder', 'multipitch'];
+const TYPES: RouteType[] = ['sport', 'multipitch'];
 
 /**
  * Validates the CSV files and builds an import plan. Nothing is written here;

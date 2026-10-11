@@ -42,7 +42,7 @@ export default function NewRoutes() {
 
   function pickType(next: RouteType) {
     setType(next);
-    setSystem(next === 'boulder' ? settings.boulderSystem : systemsFor(next).includes(system) ? system : settings.routeSystem);
+    setSystem(systemsFor(next).includes(system) ? system : settings.routeSystem);
   }
 
   const duplicate = name.trim() ? existing.find((r) => sameName(r.name, name)) ?? null : null;
@@ -90,7 +90,7 @@ export default function NewRoutes() {
 
       <Label>{t('ascent.type')}</Label>
       <ChipRow>
-        {(['sport', 'boulder', 'multipitch'] as RouteType[]).map((x) => <Chip key={x} label={t(`types.${x}`)} on={type === x} onPress={() => pickType(x)} />)}
+        {(['sport', 'multipitch'] as RouteType[]).map((x) => <Chip key={x} label={t(`types.${x}`)} on={type === x} onPress={() => pickType(x)} />)}
       </ChipRow>
       <Label>{t('ascent.gradeSystem')}</Label>
       <ChipRow>{systemsFor(type).map((s) => <Chip key={s} label={s.toUpperCase()} on={system === s} onPress={() => setSystem(s)} />)}</ChipRow>
