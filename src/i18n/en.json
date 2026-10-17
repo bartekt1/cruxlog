@@ -1,6 +1,7 @@
 {
   "tabs": { "journal": "Journal", "progress": "Progress", "crags": "Crags", "goals": "Goals" },
   "common": {
+    "optional": "Optional",
     "save": "Save", "saving": "Saving…", "edit": "Edit", "delete": "Delete", "cancel": "Cancel", "add": "Add", "change": "Change", "search": "Search", "none": "Nothing here yet",
     "today": "Today", "yesterday": "Yesterday", "failed": "Something went wrong: {{message}}"
   },
@@ -39,7 +40,8 @@
   "route": {
     "title": "Route", "history": "Your ascents", "logAnother": "Log an ascent", "openHint": "Opens the route history",
     "sentOn": "Sent {{date}} ({{style}}).", "daysToSend": "It took {{n}} days.", "notSent": "Not sent yet. Days tried: {{n}}.", "neverTried": "No ascents of this route yet.",
-    "totals": "Ascents: {{ascents}} · sends: {{sends}}"
+    "totals": "Ascents: {{ascents}} · sends: {{sends}}",
+    "length": "{{m}} m", "bolts": "bolts: {{count}}", "lengthLabel": "Length (m)", "boltsLabel": "Bolts"
   },
   "edit": {
     "cragTitle": "Edit crag", "newCragTitle": "Add a crag", "routeTitle": "Edit route", "routeTitleNamed": "Edit route {{name}}",
@@ -52,7 +54,7 @@
     "deleteCrag": "Delete crag", "deleteRoute": "Delete route", "deleteSector": "Delete sector",
     "deleteTitle": "Delete \"{{name}}\"?", "deleteAlso": "This also deletes:", "deleteSimple": "This cannot be undone.",
     "countSectors": "sectors: {{count}}", "countRoutes": "routes: {{count}}", "countAscents": "your ascents: {{count}}",
-    "errors": { "name": "Enter a name.", "region": "Choose or type a region.", "area": "Choose or type an area." }
+    "errors": { "name": "Enter a name.", "region": "Choose or type a region.", "area": "Choose or type an area.", "number": "Length and bolts must be numbers (or leave them empty)." }
   },
   "goals": {
     "title": "Goals", "count": "Count", "project": "Project", "wishlist": "Wishlist", "newTitle": "Goal title", "target": "Target (number)",
@@ -77,7 +79,11 @@
     "title": "Settings", "language": "Language", "routeGrades": "Route grades",
     "backup": "Backup", "backupHelp": "Export saves all your data to one file. Import merges a file into the app; newer entries win, nothing is deleted.",
     "export": "Export backup", "import": "Import backup", "csv": "Import crags from a CSV file",
-    "csvHelp": "Pick one file with a list of routes (e.g. a guidebook export). Each row is one route: region, area, group, crag, sector, name, grade. The older import with crags.csv and routes.csv still works.",
+    "csvHelp": "Pick one file with a list of routes (e.g. a guidebook export or a theCrag export). Each row is one route: region, area, group, crag, sector, name, grade. The older import with crags.csv and routes.csv still works.",
+    "csvSkipped": "Rows left out: {{count}} (boulders, ice, via ferratas, unnamed routes, projects, routes without a grade or with an unknown grade).",
+    "removeImported": "Remove imported crags and routes", "removeImportedHelp": "Before loading a file that should replace the previous one. Routes with your ascents and everything you added yourself stay.",
+    "removeImportedTitle": "Remove imported data?", "removeImportedConfirm": "This removes {{routes}} routes and {{crags}} crags. Routes with your ascents and everything you added yourself stay.",
+    "removeImportedDone": "Removed {{routes}} routes and {{crags}} crags.", "removeImportedNone": "There is no imported data to remove.",
     "csvLine": "line {{line}}", "csvUnknown": "File {{file}} was not recognised. The first row should hold headers, e.g. Region;Area;Crag;Name;Grade.",
     "importDone": "Imported {{count}} records.", "csvDone": "Imported {{crags}} crags, {{sectors}} sectors, {{routes}} routes, {{pitches}} pitches.",
     "csvErrors": "{{count}} problems found. Nothing was imported.", "csvMissing": "crags.csv and routes.csv are required. Selected: {{files}}.",

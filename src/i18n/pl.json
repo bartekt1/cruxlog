@@ -1,6 +1,7 @@
 {
   "tabs": { "journal": "Dziennik", "progress": "Postępy", "crags": "Skały", "goals": "Cele" },
   "common": {
+    "optional": "Opcjonalnie",
     "save": "Zapisz", "saving": "Zapisywanie…", "edit": "Edytuj", "delete": "Usuń", "cancel": "Anuluj", "add": "Dodaj", "change": "Zmień", "search": "Szukaj", "none": "Na razie pusto",
     "today": "Dziś", "yesterday": "Wczoraj", "failed": "Coś poszło nie tak: {{message}}"
   },
@@ -39,7 +40,8 @@
   "route": {
     "title": "Droga", "history": "Twoje przejścia", "logAnother": "Dodaj przejście", "openHint": "Otwiera historię drogi",
     "sentOn": "Przejście {{date}} ({{style}}).", "daysToSend": "Zajęło to {{n}} dni.", "notSent": "Jeszcze bez przejścia. Dni prób: {{n}}.", "neverTried": "Brak podejść do tej drogi.",
-    "totals": "Podejścia: {{ascents}} · przejścia: {{sends}}"
+    "totals": "Podejścia: {{ascents}} · przejścia: {{sends}}",
+    "length": "{{m}} m", "bolts": "przeloty: {{count}}", "lengthLabel": "Długość (m)", "boltsLabel": "Przeloty"
   },
   "edit": {
     "cragTitle": "Edycja skały", "newCragTitle": "Dodaj skałę", "routeTitle": "Edycja drogi", "routeTitleNamed": "Edytuj drogę {{name}}",
@@ -52,7 +54,7 @@
     "deleteCrag": "Usuń skałę", "deleteRoute": "Usuń drogę", "deleteSector": "Usuń sektor",
     "deleteTitle": "Usunąć „{{name}}”?", "deleteAlso": "Zostaną też usunięte:", "deleteSimple": "Tego nie można cofnąć.",
     "countSectors": "sektory: {{count}}", "countRoutes": "drogi: {{count}}", "countAscents": "Twoje przejścia: {{count}}",
-    "errors": { "name": "Podaj nazwę.", "region": "Wybierz albo wpisz region.", "area": "Wybierz albo wpisz rejon." }
+    "errors": { "name": "Podaj nazwę.", "region": "Wybierz albo wpisz region.", "area": "Wybierz albo wpisz rejon.", "number": "Długość i przeloty muszą być liczbami (albo zostaw puste)." }
   },
   "goals": {
     "title": "Cele", "count": "Liczba", "project": "Projekt", "wishlist": "Lista życzeń", "newTitle": "Nazwa celu", "target": "Cel (liczba)",
@@ -77,7 +79,11 @@
     "title": "Ustawienia", "language": "Język", "routeGrades": "Wyceny dróg",
     "backup": "Kopia zapasowa", "backupHelp": "Eksport zapisuje wszystkie dane w jednym pliku. Import scala plik z aplikacją; nowsze wpisy wygrywają, nic nie jest usuwane.",
     "export": "Eksportuj kopię", "import": "Importuj kopię", "csv": "Importuj skały z pliku CSV",
-    "csvHelp": "Wybierz jeden plik z listą dróg (np. plik z przewodnika). Każdy wiersz to jedna droga: region, rejon, grupa, skała, sektor, nazwa, wycena. Działa też dawny import z plików crags.csv i routes.csv.",
+    "csvHelp": "Wybierz jeden plik z listą dróg (np. plik z przewodnika albo eksport z theCrag). Każdy wiersz to jedna droga: region, rejon, grupa, skała, sektor, nazwa, wycena. Działa też dawny import z plików crags.csv i routes.csv.",
+    "csvSkipped": "Pominięte wiersze: {{count}} (bouldery, lód, via ferraty, drogi bez nazwy, projekty, drogi bez wyceny lub z nieznaną wyceną).",
+    "removeImported": "Usuń zaimportowane skały i drogi", "removeImportedHelp": "Przed wczytaniem pliku, który ma zastąpić poprzedni. Drogi z Twoimi przejściami i wszystko, co dodałeś sam, zostaje.",
+    "removeImportedTitle": "Usunąć zaimportowane dane?", "removeImportedConfirm": "Zostanie usuniętych dróg: {{routes}} i skał: {{crags}}. Drogi z Twoimi przejściami i wszystko, co dodałeś sam, zostaje.",
+    "removeImportedDone": "Usunięto dróg: {{routes}}, skał: {{crags}}.", "removeImportedNone": "Nie ma zaimportowanych danych do usunięcia.",
     "csvLine": "wiersz {{line}}", "csvUnknown": "Nie rozpoznano pliku {{file}}. Pierwszy wiersz powinien zawierać nagłówki, np. Region;Rejon;Skała;Nazwa;Wycena.",
     "importDone": "Zaimportowano rekordów: {{count}}.", "csvDone": "Zaimportowano: skały {{crags}}, sektory {{sectors}}, drogi {{routes}}, wyciągi {{pitches}}.",
     "csvErrors": "Znaleziono problemów: {{count}}. Nic nie zaimportowano.", "csvMissing": "Wymagane są crags.csv i routes.csv. Wybrano: {{files}}.",

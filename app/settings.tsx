@@ -6,11 +6,12 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, ScrollView, Text } from 'react-native';
 import { exportBackup, importBackup } from '../src/db/backup';
-import { applyImport, listAscents } from '../src/db/repo';
+import { applyImport, importedUsage, listAscents, removeImported } from '../src/db/repo';
 import { backupStatus } from '../src/domain/history';
 import { buildImportPlan, type ImportPlan } from '../src/domain/csvImport';
 import { detectFormat, parseFlatCsv, planFromFlatRows, type FlatRow } from '../src/domain/flatImport';
 import { guidebookRows } from '../src/domain/guidebookCsv';
+import { theCragRows } from '../src/domain/thecragCsv';
 import { ROUTE_SYSTEMS } from '../src/domain/grades';
 import type { Lang } from '../src/domain/settings';
 import i18n from '../src/i18n';
@@ -86,18 +87,29 @@ export default function Settings() {
     return buildImportPlan({ crags: texts['crags.csv'], sectors: texts['sectors.csv'], routes: texts['routes.csv'], pitches: texts['pitches.csv'] });
   }
 
-  // One file per route list: the guidebook export or the simple table. Several files are merged.
-  function oneFilePlan(texts: Record<string, string>) {
+  // One file per route list: the guidebook export, a theCrag export or the simple table. Several files are merged.
+  function oneFilePlan(texts: Record<string, string>): { plan: ImportPlan; skipped: number } {
     const rows: FlatRow[] = [];
     const errors: ImportPlan['errors'] = [];
-    for (const [name, text] of Object.entries(texts)) {
+    let skipped = 0;
+    let only: ImportPlan | null = null;
+    const files = Object.entries(texts);
+    for (const [name, text] of files) {
       const format = detectFormat(text);
       if (!format) throw new UserError(t('settings.csvUnknown', { file: name }));
-      const fileRows = format === 'guidebook' ? guidebookRows(text) : parseFlatCsv(text);
-      errors.push(...planFromFlatRows(fileRows).errors.map((e) => ({ ...e, file: name })));
+      let fileRows: FlatRow[];
+      if (format === 'thecrag') {
+        const res = theCragRows(text);
+        fileRows = res.rows;
+        skipped += Object.values(res.skipped).reduce((a, b) => a + b, 0);
+      } else fileRows = format === 'guidebook' ? guidebookRows(text) : parseFlatCsv(text);
+      const plan = planFromFlatRows(fileRows);
+      errors.push(...plan.errors.map((e) => ({ ...e, file: name })));
       rows.push(...fileRows);
+      if (files.length === 1) only = plan;
     }
-    return errors.length ? { ...planFromFlatRows([]), errors } : planFromFlatRows(rows);
+    if (errors.length) return { plan: { ...planFromFlatRows([]), errors }, skipped };
+    return { plan: only ?? planFromFlatRows(rows), skipped };
   }
 
   const doCsv = () => run(async () => {
@@ -109,18 +121,28 @@ export default function Settings() {
     if (res.canceled) return;
     const texts: Record<string, string> = {};
     for (const a of res.assets) texts[a.name.toLowerCase()] = await new File(a.uri).text();
-    const plan = texts['crags.csv'] || texts['routes.csv'] ? legacyPlan(texts) : oneFilePlan(texts);
+    const { plan, skipped } = texts['crags.csv'] || texts['routes.csv'] ? { plan: legacyPlan(texts), skipped: 0 } : oneFilePlan(texts);
     if (plan.errors.length) {
       const first = plan.errors.slice(0, 8).map((e) => `${e.file}, ${t('settings.csvLine', { line: e.line })}: ${e.message}`).join('\n');
       throw new UserError(`${t('settings.csvErrors', { count: plan.errors.length })}\n\n${first}`);
     }
     const ok = await ask(
       t('settings.csvConfirmTitle'),
-      t('settings.csvConfirm', { crags: plan.crags.length, routes: plan.routes.length }),
+      t('settings.csvConfirm', { crags: plan.crags.length, routes: plan.routes.length })
+        + (skipped ? `\n\n${t('settings.csvSkipped', { count: skipped })}` : ''),
       t('settings.csvConfirmYes'), t('common.cancel'),
     );
     if (!ok) return;
     return t('settings.csvDone', await applyImport(db, plan));
+  });
+
+  const doRemoveImported = () => run(async () => {
+    const n = await importedUsage(db);
+    if (!n.routes && !n.crags) return t('settings.removeImportedNone');
+    const ok = await ask(t('settings.removeImportedTitle'), t('settings.removeImportedConfirm', n), t('common.delete'), t('common.cancel'));
+    if (!ok) return;
+    await removeImported(db);
+    return t('settings.removeImportedDone', n);
   });
 
   return (
@@ -137,6 +159,8 @@ export default function Settings() {
       <Label>{t('settings.csv')}</Label>
       <Text style={{ color: th.muted }}>{t('settings.csvHelp')}</Text>
       <Button label={t('settings.csv')} onPress={doCsv} disabled={busy} />
+      <Text style={{ color: th.muted, marginTop: 8 }}>{t('settings.removeImportedHelp')}</Text>
+      <Button label={t('settings.removeImported')} onPress={doRemoveImported} disabled={busy} variant="plain" />
       <Label>{t('settings.backup')}</Label>
       <Text style={{ color: th.muted }}>{t('settings.backupHelp')}</Text>
       <Text style={{ color: backup.due ? th.warn : th.ink, marginTop: 8, fontWeight: '600' }}>

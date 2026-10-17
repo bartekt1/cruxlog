@@ -1,8 +1,8 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { type AscentStyle, type GradeSystem, type RouteType } from '../domain/grades';
 import type { ImportPlan } from '../domain/csvImport';
-import { childLevel, type Area, type AreaLevel } from '../domain/areas';
-import { sameName, suggest } from '../domain/text';
+import { childLevel, levelAt, splitPath, type Area, type AreaLevel } from '../domain/areas';
+import { fold, sameName, suggest } from '../domain/text';
 import { newId, now } from './ids';
 
 export type RouteRow = {
@@ -10,9 +10,10 @@ export type RouteRow = {
   sector_id: string; sector_name: string; sector_source: string; crag_id: string; crag_name: string;
   /** 'user' for routes the user created; imported ones are edited through the CSV file. */
   source: string;
+  length_m: number | null; bolts: number | null;
 };
 
-const ROUTE_COLS = `r.id, r.name, r.type, r.grade_label, r.grade_system, r.grade_index, r.source,
+const ROUTE_COLS = `r.id, r.name, r.type, r.grade_label, r.grade_system, r.grade_index, r.source, r.length_m, r.bolts,
   s.id AS sector_id, s.name AS sector_name, s.source AS sector_source, c.id AS crag_id, c.name AS crag_name`;
 
 export type AscentRow = {
@@ -38,13 +39,49 @@ async function findByName(db: SQLiteDatabase, sql: string, params: string[], nam
 }
 
 /** Type-ahead route search over route, sector and crag names, ignoring case and Polish letters. */
-export async function searchRoutes(db: SQLiteDatabase, query: string, limit = 8): Promise<RouteRow[]> {
-  const all = await db.getAllAsync<RouteRow>(
+type SearchIndex = { key: number; rows: RouteRow[]; names: string[]; hay: string[] };
+const searchIndexes = new WeakMap<SQLiteDatabase, SearchIndex>();
+
+/**
+ * All routes with their folded names, kept in memory between keystrokes (a big import has 15 000 routes).
+ * Rebuilt after any write: total_changes() counts every row this connection inserted, updated or deleted.
+ */
+async function searchIndex(db: SQLiteDatabase): Promise<SearchIndex> {
+  const k = await db.getFirstAsync<{ key: number }>('SELECT total_changes() AS key');
+  const cached = searchIndexes.get(db);
+  if (cached && cached.key === k?.key) return cached;
+  const rows = await db.getAllAsync<RouteRow>(
     `SELECT ${ROUTE_COLS}
      FROM route r JOIN sector s ON s.id = r.sector_id JOIN crag c ON c.id = s.crag_id
-     WHERE r.deleted_at IS NULL`,
+     WHERE r.deleted_at IS NULL AND s.deleted_at IS NULL AND c.deleted_at IS NULL`,
   );
-  return suggest(all, query, (r) => r.name, (r) => [r.sector_name, r.crag_name], limit);
+  const index = {
+    key: k?.key ?? -1, rows,
+    names: rows.map((r) => fold(r.name)),
+    hay: rows.map((r) => fold(`${r.name} ${r.sector_name} ${r.crag_name}`)),
+  };
+  searchIndexes.set(db, index);
+  return index;
+}
+
+/** Builds the search index ahead of the first keystroke (call when a screen with route search opens). */
+export async function warmSearch(db: SQLiteDatabase): Promise<void> {
+  await searchIndex(db);
+}
+
+/** Routes whose name, sector or crag contain every word of the query; names starting with it first. */
+export async function searchRoutes(db: SQLiteDatabase, query: string, limit = 8): Promise<RouteRow[]> {
+  const words = fold(query).split(' ').filter(Boolean);
+  if (!words.length) return [];
+  const q = words.join(' ');
+  const { rows, names, hay } = await searchIndex(db);
+  const hits: number[] = [];
+  for (let i = 0; i < rows.length; i++) if (words.every((w) => hay[i].includes(w))) hits.push(i);
+  const starts = (i: number) => (names[i].startsWith(q) ? 0 : 1);
+  return hits
+    .sort((a, b) => starts(a) - starts(b) || names[a].localeCompare(names[b]))
+    .slice(0, limit)
+    .map((i) => rows[i]);
 }
 
 /** Routes the user climbed most recently, newest first. */
@@ -282,17 +319,29 @@ async function childAreaId(db: SQLiteDatabase, parentId: string | null, level: A
   return id;
 }
 
+/** Region, area and the group levels ("Dolina Sanki › Zimny Dół" is two groups) as one list, top down. */
+export function areaChain(names: AreaNames): string[] {
+  const region = names.region.trim();
+  if (!region) return [];
+  const area = names.area.trim();
+  return area ? [region, area, ...splitPath(names.group)] : [region];
+}
+
 /**
- * Finds or creates the chain region → area → group and returns the deepest id (null without a region).
+ * Finds or creates the chain region → area → groups and returns the deepest id (null without a region).
  * Names match ignoring case and Polish letters; a missing area stops the chain at the region.
+ * `memo` remembers ids of chains already resolved, which keeps big imports fast.
  */
-export async function areaIdFor(db: SQLiteDatabase, names: AreaNames, t: number, source = 'user'): Promise<string | null> {
-  if (!names.region.trim()) return null;
-  let id = await childAreaId(db, null, 'region', names.region, t, source);
-  if (!names.area.trim()) return id;
-  id = await childAreaId(db, id, 'area', names.area, t, source);
-  if (!names.group.trim()) return id;
-  return childAreaId(db, id, 'group', names.group, t, source);
+export async function areaIdFor(db: SQLiteDatabase, names: AreaNames, t: number, source = 'user', memo?: Map<string, string>): Promise<string | null> {
+  let id: string | null = null;
+  const chain = areaChain(names);
+  for (let depth = 0; depth < chain.length; depth++) {
+    const key = JSON.stringify(chain.slice(0, depth + 1).map(fold));
+    const known = memo?.get(key);
+    id = known ?? await childAreaId(db, id, levelAt(depth), chain[depth], t, source);
+    memo?.set(key, id);
+  }
+  return id;
 }
 
 async function sectorIdFor(db: SQLiteDatabase, cragId: string, name: string, t: number): Promise<string> {
@@ -323,7 +372,11 @@ export async function saveCrag(db: SQLiteDatabase, id: string | null, c: CragInp
   return cragId;
 }
 
-export type RouteInput = { sectorName: string; name: string; type: RouteType; gradeLabel: string; gradeSystem: GradeSystem; gradeIndex: number };
+export type RouteInput = {
+  sectorName: string; name: string; type: RouteType; gradeLabel: string; gradeSystem: GradeSystem; gradeIndex: number;
+  /** Left unchanged when not given. */
+  lengthM?: number | null; bolts?: number | null;
+};
 
 export type SectorRow = { id: string; name: string; source: string };
 
@@ -364,6 +417,8 @@ export async function updateRoute(db: SQLiteDatabase, id: string, r: RouteInput)
     await db.runAsync(
       'UPDATE route SET sector_id = ?, name = ?, type = ?, grade_label = ?, grade_system = ?, grade_index = ?, updated_at = ? WHERE id = ?',
       [sectorId, r.name, r.type, r.gradeLabel, r.gradeSystem, r.gradeIndex, t, id]);
+    if (r.lengthM !== undefined) await db.runAsync('UPDATE route SET length_m = ? WHERE id = ?', [r.lengthM, id]);
+    if (r.bolts !== undefined) await db.runAsync('UPDATE route SET bolts = ? WHERE id = ?', [r.bolts, id]);
   });
 }
 
@@ -396,7 +451,6 @@ export async function getArea(db: SQLiteDatabase, id: string): Promise<(NamedRow
 export async function addArea(db: SQLiteDatabase, parentId: string | null, name: string): Promise<string> {
   const parent = parentId ? await getArea(db, parentId) : null;
   const level = childLevel(parent);
-  if (!level) throw new Error('A group cannot contain areas');
   return childAreaId(db, parentId, level, name, now(), 'user');
 }
 
@@ -427,9 +481,8 @@ async function relevelAreas(db: SQLiteDatabase, t: number): Promise<void> {
     seen.add(a.id);
     return 1 + depth(p, seen);
   };
-  const levels: AreaLevel[] = ['region', 'area', 'group'];
   for (const a of areas) {
-    const want = levels[Math.min(depth(a), 2)];
+    const want = levelAt(depth(a));
     if (a.level !== want) await db.runAsync('UPDATE region SET level = ?, updated_at = ? WHERE id = ?', [want, t, a.id]);
   }
 }
@@ -511,58 +564,85 @@ async function removeEmptyImports(db: SQLiteDatabase, plan: ImportPlan, t: numbe
   }
 }
 
+const IMPORTED_ROUTES_TO_REMOVE = `FROM route r WHERE r.deleted_at IS NULL AND r.id LIKE 'imp:route:%'
+  AND NOT EXISTS (SELECT 1 FROM ascent a WHERE a.route_id = r.id AND a.deleted_at IS NULL)`;
+
+/** What "remove imported data" would delete: imported routes without your ascents, and the crags left empty by that. */
+export async function importedUsage(db: SQLiteDatabase): Promise<{ crags: number; routes: number }> {
+  const routes = await db.getFirstAsync<{ n: number }>(`SELECT COUNT(*) AS n ${IMPORTED_ROUTES_TO_REMOVE}`);
+  const crags = await db.getFirstAsync<{ n: number }>(
+    `SELECT COUNT(*) AS n FROM crag c WHERE c.deleted_at IS NULL AND c.id LIKE 'imp:crag:%'
+     AND NOT EXISTS (SELECT 1 FROM route r JOIN sector s ON s.id = r.sector_id
+       WHERE s.crag_id = c.id AND r.deleted_at IS NULL AND s.deleted_at IS NULL
+       AND (r.id NOT LIKE 'imp:route:%' OR EXISTS (SELECT 1 FROM ascent a WHERE a.route_id = r.id AND a.deleted_at IS NULL)))`);
+  return { crags: crags?.n ?? 0, routes: routes?.n ?? 0 };
+}
+
+/**
+ * Removes everything that came from CSV imports, so another file can replace it. Kept: routes with your ascents
+ * (and their crags and areas) and everything you added yourself. Empty imported sectors, crags and areas go too.
+ */
+export async function removeImported(db: SQLiteDatabase): Promise<void> {
+  const t = now();
+  await db.withTransactionAsync(async () => {
+    await db.runAsync(`UPDATE route SET deleted_at = ?, updated_at = ? WHERE id IN (SELECT r.id ${IMPORTED_ROUTES_TO_REMOVE})`, [t, t]);
+    await removeEmptyImports(db, { crags: [], sectors: [], routes: [], pitches: [], errors: [] }, t);
+  });
+}
+
+/** Runs one statement for many rows, prepared once (thousands of rows in a big import). */
+async function runMany(db: SQLiteDatabase, sql: string, rows: (string | number | null)[][]): Promise<void> {
+  if (!rows.length) return;
+  const stmt = await db.prepareAsync(sql);
+  try {
+    for (const row of rows) await stmt.executeAsync(row);
+  } finally {
+    await stmt.finalizeAsync();
+  }
+}
+
 /** Writes a validated import plan. Re-importing the same keys updates existing rows. */
 export async function applyImport(db: SQLiteDatabase, plan: ImportPlan): Promise<{ crags: number; sectors: number; routes: number; pitches: number }> {
   if (plan.errors.length) throw new Error('Import plan has errors');
   const t = now();
-  const areaIds = new Map<string, string | null>();
+  const memo = new Map<string, string>();
   const idOf = (kind: string, key: string) => `imp:${kind}:${key}`;
   await db.withTransactionAsync(async () => {
+    const crags: (string | number | null)[][] = [];
     for (const c of plan.crags) {
-      const names = { region: c.region, area: c.area, group: c.group };
-      const pathKey = JSON.stringify(names);
-      if (!areaIds.has(pathKey)) areaIds.set(pathKey, await areaIdFor(db, names, t, 'import'));
-      const regionId = areaIds.get(pathKey) ?? null;
-      await db.runAsync(
-        `INSERT INTO crag (id, region_id, name, lat, lng, description, approach, source, status, created_at, updated_at)
-         VALUES (?,?,?,?,?,?,?,'import','private',?,?)
-         ON CONFLICT(id) DO UPDATE SET region_id=excluded.region_id, name=excluded.name, lat=excluded.lat, lng=excluded.lng,
-           description=excluded.description, approach=excluded.approach, updated_at=excluded.updated_at, deleted_at=NULL`,
-        [idOf('crag', c.key), regionId, c.name, c.lat, c.lng, c.description, c.approach, t, t],
-      );
+      const regionId = await areaIdFor(db, { region: c.region, area: c.area, group: c.group }, t, 'import', memo);
+      crags.push([idOf('crag', c.key), regionId, c.name, c.lat, c.lng, c.description, c.approach, t, t]);
     }
-    for (const s of plan.sectors) {
-      await db.runAsync(
-        `INSERT INTO sector (id, crag_id, name, lat, lng, aspect, source, status, created_at, updated_at)
-         VALUES (?,?,?,?,?,?,'import','private',?,?)
-         ON CONFLICT(id) DO UPDATE SET crag_id=excluded.crag_id, name=excluded.name, lat=excluded.lat, lng=excluded.lng,
-           aspect=excluded.aspect, updated_at=excluded.updated_at, deleted_at=NULL`,
-        [idOf('sector', s.key), idOf('crag', s.cragKey), s.name, s.lat, s.lng, s.aspect, t, t],
-      );
-    }
-    for (const r of plan.routes) {
-      await db.runAsync(
-        `INSERT INTO route (id, sector_id, name, type, grade_label, grade_system, grade_index, length_m, bolts, author, year, lat, lng,
-           description, source, status, created_at, updated_at)
-         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,'import','private',?,?)
-         ON CONFLICT(id) DO UPDATE SET sector_id=excluded.sector_id, name=excluded.name, type=excluded.type,
-           grade_label=excluded.grade_label, grade_system=excluded.grade_system, grade_index=excluded.grade_index,
-           length_m=excluded.length_m, bolts=excluded.bolts, author=excluded.author, year=excluded.year, lat=excluded.lat,
-           lng=excluded.lng, description=excluded.description, updated_at=excluded.updated_at, deleted_at=NULL`,
-        [idOf('route', r.key), idOf('sector', r.sectorKey), r.name, r.type, r.gradeLabel, r.gradeSystem, r.gradeIndex, r.lengthM, r.bolts,
-          r.author, r.year, r.lat, r.lng, r.description, t, t],
-      );
-    }
-    for (const p of plan.pitches) {
-      await db.runAsync(
-        `INSERT INTO pitch (id, route_id, number, grade_label, grade_system, grade_index, length_m, description, created_at, updated_at)
-         VALUES (?,?,?,?,?,?,?,?,?,?)
-         ON CONFLICT(id) DO UPDATE SET grade_label=excluded.grade_label, grade_system=excluded.grade_system,
-           grade_index=excluded.grade_index, length_m=excluded.length_m, description=excluded.description,
-           updated_at=excluded.updated_at, deleted_at=NULL`,
-        [idOf('pitch', `${p.routeKey}#${p.number}`), idOf('route', p.routeKey), p.number, p.gradeLabel, p.gradeSystem, p.gradeIndex, p.lengthM, p.description, t, t],
-      );
-    }
+    await runMany(db,
+      `INSERT INTO crag (id, region_id, name, lat, lng, description, approach, source, status, created_at, updated_at)
+       VALUES (?,?,?,?,?,?,?,'import','private',?,?)
+       ON CONFLICT(id) DO UPDATE SET region_id=excluded.region_id, name=excluded.name, lat=excluded.lat, lng=excluded.lng,
+         description=excluded.description, approach=excluded.approach, updated_at=excluded.updated_at, deleted_at=NULL`,
+      crags);
+    await runMany(db,
+      `INSERT INTO sector (id, crag_id, name, lat, lng, aspect, source, status, created_at, updated_at)
+       VALUES (?,?,?,?,?,?,'import','private',?,?)
+       ON CONFLICT(id) DO UPDATE SET crag_id=excluded.crag_id, name=excluded.name, lat=excluded.lat, lng=excluded.lng,
+         aspect=excluded.aspect, updated_at=excluded.updated_at, deleted_at=NULL`,
+      plan.sectors.map((x) => [idOf('sector', x.key), idOf('crag', x.cragKey), x.name, x.lat, x.lng, x.aspect, t, t]));
+    await runMany(db,
+      `INSERT INTO route (id, sector_id, name, type, grade_label, grade_system, grade_index, length_m, bolts, author, year, lat, lng,
+         description, source, status, created_at, updated_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,'import','private',?,?)
+       ON CONFLICT(id) DO UPDATE SET sector_id=excluded.sector_id, name=excluded.name, type=excluded.type,
+         grade_label=excluded.grade_label, grade_system=excluded.grade_system, grade_index=excluded.grade_index,
+         length_m=excluded.length_m, bolts=excluded.bolts, author=excluded.author, year=excluded.year, lat=excluded.lat,
+         lng=excluded.lng, description=excluded.description, updated_at=excluded.updated_at, deleted_at=NULL`,
+      plan.routes.map((r) => [idOf('route', r.key), idOf('sector', r.sectorKey), r.name, r.type, r.gradeLabel, r.gradeSystem, r.gradeIndex,
+        r.lengthM, r.bolts, r.author, r.year, r.lat, r.lng, r.description, t, t]));
+    await runMany(db,
+      `INSERT INTO pitch (id, route_id, number, grade_label, grade_system, grade_index, length_m, description, created_at, updated_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?)
+       ON CONFLICT(id) DO UPDATE SET grade_label=excluded.grade_label, grade_system=excluded.grade_system,
+         grade_index=excluded.grade_index, length_m=excluded.length_m, description=excluded.description,
+         updated_at=excluded.updated_at, deleted_at=NULL`,
+      plan.pitches.map((p) => [idOf('pitch', `${p.routeKey}#${p.number}`), idOf('route', p.routeKey), p.number, p.gradeLabel, p.gradeSystem,
+        p.gradeIndex, p.lengthM, p.description, t, t]));
     await removeEmptyImports(db, plan, t);
   });
   return { crags: plan.crags.length, sectors: plan.sectors.length, routes: plan.routes.length, pitches: plan.pitches.length };

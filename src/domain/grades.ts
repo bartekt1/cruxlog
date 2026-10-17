@@ -27,6 +27,10 @@ export const ROUTE_LADDER: RouteLadderRow[] = [
   { kr: 'VI.6', uiaa: 'IX+', fr: '7c' },
   { kr: 'VI.6+', uiaa: 'X-', fr: '7c+' },
   { kr: 'VI.7', uiaa: 'X', fr: '8a' },
+  // Append only: indices are stored in the database.
+  { kr: 'VI.7+', uiaa: 'X+', fr: '8a+' },
+  { kr: 'VI.8', uiaa: 'XI-', fr: '8b' },
+  { kr: 'VI.8+', uiaa: 'XI', fr: '8b+' },
 ];
 
 export const ROUTE_SYSTEMS: GradeSystem[] = ['kr', 'uiaa', 'fr'];
@@ -62,12 +66,14 @@ export function parseGrade(label: string, system: GradeSystem, _type?: RouteType
   if (!first) return null;
   const again = exactIndex(first, system);
   if (again != null) return again;
-  if (first.endsWith('+')) return exactIndex(first.slice(0, -1), system);
+  const bare = first.replace(/[+-]$/, '');
+  // I and II (with or without + or -) are below the ladder and count as its lowest step.
+  if ((system === 'kr' || system === 'uiaa') && (bare === 'I' || bare === 'II')) return 0;
+  if (first.endsWith('+')) return exactIndex(bare, system);
   if (first.endsWith('-')) {
-    const base = exactIndex(first.slice(0, -1), system);
+    const base = exactIndex(bare, system);
     return base == null ? null : Math.max(0, base - 1);
   }
-  if ((system === 'kr' || system === 'uiaa') && (first === 'I' || first === 'II')) return 0;
   return null;
 }
 

@@ -137,6 +137,15 @@ Severity: **H** blocks a task or loses/corrupts data, **M** slows a task or conf
 | S2 | Re-import left routes that were deleted from the file | M | Fixed: the file decides the imported routes of its crags; routes with ascents and your own routes stay |
 | S3 | Renaming a crag in the file made a second crag | L | Fixed: optional crag key column (`key_skaly` / `crag_key`) |
 
+## Round 9 (big theCrag import)
+
+| # | Issue | Sev | Status |
+|---|---|---|---|
+| T1 | Three area levels could not hold theCrag paths (up to 7 levels) | H | Fixed: groups nest at any depth; the group field takes several levels ("A › B") |
+| T2 | 15 000 routes: route search loaded and folded every route on each keystroke; path labels and crag counts recomputed per row | H | Fixed: search index kept in memory until the next write; labels and counts computed once per list |
+| T3 | Length and bolts imported but never shown | M | Fixed: shown on the route screen and editable |
+| T4 | Replacing one imported file with another left the old crags | M | Fixed: "Remove imported crags and routes" in Settings (keeps routes with ascents and own data) |
+
 ## Open items
 
 1. Edit a goal's title or target; link a project goal to a route.

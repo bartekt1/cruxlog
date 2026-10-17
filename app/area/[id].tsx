@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
 import { listAreas, listCrags, type AreaRow, type CragRow } from '../../src/db/repo';
-import { areaPath, childLevel, childrenOf, cragCount } from '../../src/domain/areas';
+import { areaPath, childLevel, childrenOf, cragCounts } from '../../src/domain/areas';
 import { IconButton } from '../../src/ui/icons';
 import { Button, EmptyState } from '../../src/ui/kit';
 import { NavRow, SectionTitle } from '../../src/ui/NavRow';
@@ -25,7 +25,7 @@ export default function AreaScreen() {
   }, [db]));
 
   const area = areas?.find((a) => a.id === id) ?? null;
-  const cragAreaIds = useMemo(() => crags.map((c) => c.region_id), [crags]);
+  const counts = useMemo(() => cragCounts(areas ?? [], crags.map((c) => c.region_id)), [areas, crags]);
   const gone = areas != null && !area;
   useEffect(() => { if (gone) router.back(); }, [gone, router]); // deleted from the edit screen
   if (!areas || !area) return null;
@@ -48,7 +48,7 @@ export default function AreaScreen() {
       </Text>
       {children.length ? <SectionTitle>{t(next === 'group' ? 'areas.groups' : 'areas.areas')}</SectionTitle> : null}
       {children.map((a) => (
-        <NavRow key={a.id} title={a.name} subtitle={t('areas.cragCount', { count: cragCount(areas, a.id, cragAreaIds) })} onPress={() => router.push(`/area/${a.id}`)} />
+        <NavRow key={a.id} title={a.name} subtitle={t('areas.cragCount', { count: counts.get(a.id) ?? 0 })} onPress={() => router.push(`/area/${a.id}`)} />
       ))}
       {here.length ? <SectionTitle>{t('crags.title')}</SectionTitle> : null}
       {here.map((c) => <NavRow key={c.id} title={c.name} subtitle={t('crags.routes', { count: c.routes })} onPress={() => router.push(`/crag/${c.id}`)} />)}

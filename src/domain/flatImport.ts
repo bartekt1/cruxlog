@@ -8,7 +8,7 @@ import { fold, sameName } from './text';
 export type FlatRow = {
   region: string; area: string; group: string; crag: string; sector: string;
   name: string; type: string; grade: string; gradeSystem: string;
-  lengthM?: string; description?: string; cragDescription?: string; lat?: string; lng?: string;
+  lengthM?: string; bolts?: string; description?: string; cragDescription?: string; lat?: string; lng?: string;
   /** Stable keys keep re-imports updating the same crags, sectors and routes (and their ascents). */
   cragKey?: string; sectorKey?: string; routeKey?: string;
 };
@@ -66,7 +66,7 @@ export function planFromFlatRows(rows: FlatRow[]): ImportPlan {
     routeKeys.add(key);
     plan.routes.push({
       key, sectorKey, name: r.name.trim(), type, gradeLabel: r.grade.trim(), gradeSystem: system, gradeIndex,
-      lengthM: num(r.lengthM), bolts: null, author: '', year: null, lat: null, lng: null, description: r.description?.trim() ?? '',
+      lengthM: num(r.lengthM), bolts: num(r.bolts), author: '', year: null, lat: null, lng: null, description: r.description?.trim() ?? '',
     });
   });
 
@@ -80,19 +80,20 @@ const HEADERS: Record<string, keyof FlatRow> = {
   region: 'region', area: 'area', rejon: 'area', group: 'group', grupa: 'group', crag: 'crag', skala: 'crag',
   sector: 'sector', sektor: 'sector', name: 'name', nazwa: 'name', route: 'name', droga: 'name', type: 'type', typ: 'type',
   grade: 'grade', wycena: 'grade', grade_system: 'gradeSystem', system: 'gradeSystem', skala_wycen: 'gradeSystem',
-  length_m: 'lengthM', dlugosc: 'lengthM', length: 'lengthM', description: 'description', opis: 'description',
+  length_m: 'lengthM', dlugosc: 'lengthM', length: 'lengthM', bolts: 'bolts', przeloty: 'bolts', description: 'description', opis: 'description',
   crag_description: 'cragDescription', opis_skaly: 'cragDescription', lat: 'lat', lng: 'lng', key: 'routeKey',
   crag_key: 'cragKey', key_skaly: 'cragKey',
 };
 const headerKey = (h: string) => fold(h).replace(/[\s-]+/g, '_');
 
-export type ImportFormat = 'guidebook' | 'flat';
+export type ImportFormat = 'guidebook' | 'thecrag' | 'flat';
 
 /** Recognises a file by its header line. */
 export function detectFormat(text: string): ImportFormat | null {
   const first = text.replace(/^﻿/, '').split(/\r?\n/, 1)[0] ?? '';
   const cols = first.split(/[;,\t]/).map(headerKey);
   if (cols.includes('rodzaj_wyceny') && cols.includes('wycena') && cols.includes('skala')) return 'guidebook';
+  if (cols.includes('sektor') && cols.includes('trudnosc') && cols.includes('nazwa')) return 'thecrag';
   const mapped = new Set(cols.map((c) => HEADERS[c]).filter(Boolean));
   if (mapped.has('crag') && mapped.has('name') && mapped.has('grade')) return 'flat';
   return null;
@@ -106,6 +107,6 @@ export function parseFlatCsv(text: string): FlatRow[] {
   return data.map((r) => ({
     region: r.region ?? '', area: r.area ?? '', group: r.group ?? '', crag: r.crag ?? '', sector: r.sector ?? '',
     name: r.name ?? '', type: r.type ?? '', grade: r.grade ?? '', gradeSystem: r.gradeSystem ?? '',
-    lengthM: r.lengthM, description: r.description, cragDescription: r.cragDescription, lat: r.lat, lng: r.lng, cragKey: r.cragKey, routeKey: r.routeKey,
+    lengthM: r.lengthM, bolts: r.bolts, description: r.description, cragDescription: r.cragDescription, lat: r.lat, lng: r.lng, cragKey: r.cragKey, routeKey: r.routeKey,
   }));
 }

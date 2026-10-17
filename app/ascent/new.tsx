@@ -1,17 +1,17 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import {
-  addAscent, addUserRoute, getAscent, getRoute, listCragChoices, listCragRoutes, listAreas, listPartners, listSectorNames, recentRoutes, searchRoutes,
+  addAscent, addUserRoute, getAscent, getRoute, listCragChoices, listCragRoutes, listAreas, listPartners, listSectorNames, recentRoutes, searchRoutes, warmSearch,
   updateAscent, type AreaNames, type AreaRow, type CragChoice, type CragRouteRow, type RouteRow,
 } from '../../src/db/repo';
 import { isoDate, shiftDay } from '../../src/domain/dates';
 import { isFirstTry, validateAscentDraft, validateRouteDraft } from '../../src/domain/forms';
 import { ASCENT_STYLES, gradeExample, routeGrade, systemsFor, type AscentStyle, type GradeSystem, type RouteType } from '../../src/domain/grades';
 import { DateField } from '../../src/ui/DateField';
-import { pathLabel, pathNames } from '../../src/domain/areas';
+import { pathLabel, pathLabels, pathNames } from '../../src/domain/areas';
 import { sameName, suggest } from '../../src/domain/text';
 import { AreaPicker } from '../../src/ui/AreaPicker';
 import { Button, Chip, ChipRow, ErrorText, Field, HIT, Label, LinkButton, Suggestions, type SuggestionItem } from '../../src/ui/kit';
@@ -47,6 +47,7 @@ export default function NewAscent() {
   const [recent, setRecent] = useState<RouteRow[]>([]);
   const [crags, setCrags] = useState<CragChoice[]>([]);
   const [areaRows, setAreaRows] = useState<AreaRow[]>([]);
+  const labels = useMemo(() => pathLabels(areaRows), [areaRows]);
   const [sectorNames, setSectorNames] = useState<string[]>([]);
   const [cragRoutes, setCragRoutes] = useState<CragRouteRow[]>([]);
   const [partners, setPartners] = useState<string[]>([]);
@@ -80,6 +81,7 @@ export default function NewAscent() {
     listCragChoices(db).then(setCrags);
     listAreas(db).then(setAreaRows);
     listPartners(db).then(setPartners);
+    warmSearch(db).catch(() => {}); // only a speed-up
   }, [db]);
 
   useEffect(() => {
@@ -130,7 +132,7 @@ export default function NewAscent() {
     setCrag(c.name); setSector(''); setAreas(pathNames(areaRows, c.region_id));
     setCreating(true);
   }
-  const cragPath = (c: CragChoice) => pathLabel(areaRows, c.region_id);
+  const cragPath = (c: CragChoice) => (c.region_id ? labels.get(c.region_id) ?? '' : '');
   const cragHits = query.trim() ? suggest(crags, query, (c) => c.name, (c) => [cragPath(c)], 3) : [];
 
   function pickDuplicate() {

@@ -18,6 +18,15 @@ export function validateRouteDraft(r: RouteDraft): Result<{ cragName: string; se
   return { ok: true, value: { cragName: crag, sectorName: r.sector.trim() || crag, name, gradeLabel: r.grade.trim(), gradeIndex } };
 }
 
+/** Optional length or bolt count from a text field: empty → null; anything but a number ≥ 0 is an error. */
+export function validateOptionalNumber(text: string, integer: boolean): Result<number | null> {
+  const s = text.trim().replace(',', '.');
+  if (!s) return { ok: true, value: null };
+  const n = Number(s);
+  if (!Number.isFinite(n) || n < 0 || n > 5000 || (integer && !Number.isInteger(n))) return { ok: false, error: 'edit.errors.number' };
+  return { ok: true, value: n };
+}
+
 export type AscentDraft = { date: string; attempts: string };
 
 export function validateAscentDraft(a: AscentDraft): Result<{ date: string; attempts: number }> {

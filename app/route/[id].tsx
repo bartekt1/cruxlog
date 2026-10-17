@@ -68,6 +68,12 @@ export default function RouteScreen() {
             <Pressable onPress={() => router.push(`/crag/${route.crag_id}`)} accessibilityRole="link">
               <Text style={{ color: th.accent }}>{route.crag_name} · {route.sector_name} · {t(`types.${route.type}`)}</Text>
             </Pressable>
+            {route.length_m != null || route.bolts != null ? (
+              <Text style={{ color: th.muted }}>
+                {[route.length_m != null ? t('route.length', { m: route.length_m }) : '', route.bolts != null ? t('route.bolts', { count: route.bolts }) : '']
+                  .filter(Boolean).join(' · ')}
+              </Text>
+            ) : null}
             <View style={{ padding: 12, borderRadius: 6, backgroundColor: th.soft, marginTop: 6 }}>
               <Text style={{ color: summary.firstSend ? th.accent : th.ink, fontWeight: '600' }}>{summary.firstSend ? '✓ ' : ''}{status}</Text>
               {summary.ascents ? <Text style={{ color: th.muted, fontSize: 12, marginTop: 2 }}>{t('route.totals', { ascents: summary.ascents, sends: summary.sends })}</Text> : null}
