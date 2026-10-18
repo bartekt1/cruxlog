@@ -2,12 +2,14 @@ import { useFocusEffect } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
+import { Text } from '../../src/ui/Text';
 import { listAscents } from '../../src/db/repo';
 import { isoDate } from '../../src/domain/dates';
 import { formatGrade } from '../../src/domain/grades';
 import { activityByDay, ascentYears, pyramid, yearStats, type StatAscent } from '../../src/domain/stats';
-import { EmptyState, HIT, Label, Screen } from '../../src/ui/kit';
+import { EmptyState, HIT, Label, Screen, StatTile } from '../../src/ui/kit';
+import { F } from '../../src/ui/fonts';
 import { useSettings } from '../../src/ui/settingsStore';
 import { useTheme } from '../../src/ui/theme';
 
@@ -22,11 +24,11 @@ function Pyramid({ data }: { data: Map<number, number> }) {
     <View style={{ gap: 3 }}>
       {indices.map((i) => (
         <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <Text style={{ width: 48, textAlign: 'right', color: th.muted, fontVariant: ['tabular-nums'] }}>
+          <Text style={{ width: 52, textAlign: 'right', color: th.ink, fontFamily: F.cond, fontSize: 16, fontVariant: ['tabular-nums'] }}>
             {formatGrade(i, routeSystem)}
           </Text>
-          <View style={{ height: 12, borderRadius: 2, backgroundColor: th.accent, width: `${(data.get(i)! / max) * 80}%` }} />
-          <Text style={{ color: th.muted }}>{data.get(i)}</Text>
+          <View style={{ height: 16, borderRadius: 4, backgroundColor: th.badge, width: `${(data.get(i)! / max) * 75}%` }} />
+          <Text style={{ color: th.muted, fontFamily: F.cond, fontSize: 16 }}>{data.get(i)}</Text>
         </View>
       ))}
     </View>
@@ -76,7 +78,7 @@ function YearArrow({ label, hint, target, onPress }: { label: string; hint: stri
       accessibilityState={{ disabled }}
       style={{ paddingHorizontal: 12, paddingVertical: 4 }}
     >
-      <Text style={{ fontSize: 28, color: disabled ? th.line : th.accent }}>{label}</Text>
+      <Text style={{ fontSize: 30, fontFamily: F.cond, color: disabled ? th.line : th.accent }}>{label}</Text>
     </Pressable>
   );
 }
@@ -101,26 +103,19 @@ export default function Progress() {
   // The chosen year may have lost all its ascents (deleted); fall back to the current year.
   useEffect(() => { if (!years.includes(year)) setYear(currentYear); }, [years, year, currentYear]);
 
-  const tile = (value: string, label: string) => (
-    <View accessible accessibilityLabel={`${label}: ${value}`} style={{ flex: 1, backgroundColor: th.soft, borderRadius: 6, padding: 10 }}>
-      <Text style={{ color: th.ink, fontSize: 22, fontWeight: '700' }}>{value}</Text>
-      <Text style={{ color: th.muted, fontSize: 12 }}>{label}</Text>
-    </View>
-  );
-
   return (
     <Screen>
       <ScrollView contentContainerStyle={{ paddingVertical: 16 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 24 }}>
           <YearArrow label="‹" hint={t('progress.prevYear')} target={years[years.indexOf(year) + 1]} onPress={setYear} />
-          <Text accessibilityRole="header" style={{ color: th.ink, fontSize: 20, fontWeight: '700', minWidth: 64, textAlign: 'center' }}>{year}</Text>
+          <Text accessibilityRole="header" style={{ color: th.ink, fontSize: 32, fontFamily: F.display, minWidth: 80, textAlign: 'center' }}>{year}</Text>
           <YearArrow label="›" hint={t('progress.nextYear')} target={years[years.indexOf(year) - 1]} onPress={setYear} />
         </View>
         {stats.sends === 0 ? <EmptyState title={t('progress.empty', { year })} hint={t('progress.emptyHint')} /> : null}
         <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
-          {tile(String(stats.sends), t('progress.sends'))}
-          {tile(String(stats.climbingDays), t('progress.days'))}
-          {tile(stats.hardest.sport != null ? formatGrade(stats.hardest.sport, routeSystem) : '-', t('progress.hardestRoute'))}
+          <StatTile strong value={String(stats.sends)} label={t('progress.sends')} />
+          <StatTile value={String(stats.climbingDays)} label={t('progress.days')} />
+          <StatTile value={stats.hardest.sport != null ? formatGrade(stats.hardest.sport, routeSystem) : '–'} label={t('progress.hardestRoute')} />
         </View>
         <Label>{t('progress.pyramidRoutes')}</Label>
         <Pyramid data={routes} />

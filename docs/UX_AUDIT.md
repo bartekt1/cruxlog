@@ -146,6 +146,14 @@ Severity: **H** blocks a task or loses/corrupts data, **M** slows a task or conf
 | T3 | Length and bolts imported but never shown | M | Fixed: shown on the route screen and editable |
 | T4 | Replacing one imported file with another left the old crags | M | Fixed: "Remove imported crags and routes" in Settings (keeps routes with ascents and own data) |
 
+## Round 10 (visual refresh: "przewodnik kredą")
+
+| # | Issue | Sev | Status |
+|---|---|---|---|
+| V1 | The look felt plain (system font, flat green lists) | M | New look chosen by the owner from 4 concepts: paper and ink with one rust accent, Barlow and Barlow Condensed bundled, grades in ink squares, day and sector cards, faint contour lines in headers |
+| V2 | Dark mode followed the phone only | L | Settings › Appearance: like the phone, light or dark; the dark theme is deep green, not black |
+| V3 | Journal had no summary | L | Three season tiles (sends, days out, hardest) on top of the journal |
+
 ## Open items
 
 1. Edit a goal's title or target; link a project goal to a route.

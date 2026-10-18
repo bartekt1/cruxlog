@@ -2,11 +2,14 @@ import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-rou
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, SectionList, Text, View } from 'react-native';
+import { Pressable, SectionList, View } from 'react-native';
+import { Text } from '../../src/ui/Text';
 import { getCrag, listAreas, listCragRoutes, listSectors, type AreaRow, type CragDetail, type CragRouteRow, type SectorRow } from '../../src/db/repo';
 import { pathLabel } from '../../src/domain/areas';
 import { routeGrade } from '../../src/domain/grades';
 import { IconButton } from '../../src/ui/icons';
+import { Contours } from '../../src/ui/Contours';
+import { F } from '../../src/ui/fonts';
 import { Button, EmptyState, GradeBadge, Screen } from '../../src/ui/kit';
 import { useSettings } from '../../src/ui/settingsStore';
 import { useTheme } from '../../src/ui/theme';
@@ -61,8 +64,9 @@ export default function CragScreen() {
         contentContainerStyle={{ paddingBottom: 32 }}
         ListHeaderComponent={
           crag ? (
-            <View style={{ paddingTop: 12, gap: 4 }}>
-              {crag.region_id ? <Text style={{ color: th.muted }}>{pathLabel(areas, crag.region_id) || crag.region}</Text> : null}
+            <View style={{ paddingTop: 8, gap: 4 }}>
+              <Contours height={140} />
+              {crag.region_id ? <Text style={{ color: th.muted, fontFamily: F.semi, fontSize: 13, letterSpacing: 1.2, textTransform: 'uppercase' }}>{pathLabel(areas, crag.region_id) || crag.region}</Text> : null}
               {crag.description ? <Text style={{ color: th.ink }}>{crag.description}</Text> : null}
               {crag.approach ? <Text style={{ color: th.muted }}>{t('crags.approach')}: {crag.approach}</Text> : null}
               <Text style={{ color: th.muted, fontSize: 12, marginTop: 4 }}>{t('crags.tapRoute')}</Text>
@@ -79,8 +83,8 @@ export default function CragScreen() {
         }
         ListEmptyComponent={<EmptyState title={t('crags.noRoutes')} />}
         renderSectionHeader={({ section }) => (
-          <View style={{ flexDirection: 'row', alignItems: 'center', paddingTop: 12, backgroundColor: th.bg }}>
-            <Text accessibilityRole="header" style={{ flex: 1, color: th.muted, fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.8 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', paddingTop: 16, paddingBottom: 2, paddingLeft: 4, backgroundColor: th.bg }}>
+            <Text accessibilityRole="header" style={{ flex: 1, color: th.muted, fontSize: 12, fontFamily: F.semi, textTransform: 'uppercase', letterSpacing: 1.5 }}>
               {section.sector}
             </Text>
             <IconButton name="add-circle-outline" size={22} label={t('edit.addRouteInSector', { sector: section.sector })}
@@ -91,20 +95,29 @@ export default function CragScreen() {
         renderSectionFooter={({ section }) =>
           section.data.length ? null : <Text style={{ color: th.muted, fontSize: 12, paddingVertical: 8 }}>{t('edit.emptySector')}</Text>
         }
-        renderItem={({ item }) => (
+        // Routes of a sector share one card, like the days in the journal.
+        renderItem={({ item, index, section }) => (
           <Pressable
             onPress={() => router.push(`/route/${item.id}`)}
             accessibilityRole="button"
             accessibilityHint={t('crags.logHint')}
-            style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: th.line, opacity: pressed ? 0.6 : 1 })}
+            style={({ pressed }) => ({
+              flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8, paddingLeft: 12, paddingRight: 4,
+              backgroundColor: th.surface, borderColor: th.line, borderLeftWidth: 1, borderRightWidth: 1,
+              borderTopWidth: index === 0 ? 1 : 0, borderBottomWidth: index === section.data.length - 1 ? 1 : 0,
+              borderTopLeftRadius: index === 0 ? 14 : 0, borderTopRightRadius: index === 0 ? 14 : 0,
+              borderBottomLeftRadius: index === section.data.length - 1 ? 14 : 0, borderBottomRightRadius: index === section.data.length - 1 ? 14 : 0,
+              opacity: pressed ? 0.6 : 1,
+            })}
           >
+            {index === 0 ? null : <View style={{ position: 'absolute', top: 0, left: 12, right: 12, height: 1, backgroundColor: th.line }} />}
+            <GradeBadge text={routeGrade(item, routeSystem)} />
             <View style={{ flex: 1 }}>
-              <Text style={{ color: th.ink, fontWeight: '600' }}>{item.name}</Text>
-              <Text style={{ color: item.sends > 0 ? th.accent : th.muted, fontSize: 12 }}>
+              <Text style={{ color: th.ink, fontFamily: F.semi, fontSize: 16 }}>{item.name}</Text>
+              <Text style={{ color: item.sends > 0 ? th.accent : th.muted, fontSize: 13 }}>
                 {t(`types.${item.type}`)}{status(item) ? ` · ${status(item)}` : ''}
               </Text>
             </View>
-            <GradeBadge text={routeGrade(item, routeSystem)} />
             <IconButton name="create-outline" size={20} label={t('edit.routeTitleNamed', { name: item.name })} onPress={() => router.push({ pathname: '/route/edit', params: { id: item.id } })} />
           </Pressable>
         )}

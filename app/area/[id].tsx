@@ -2,7 +2,8 @@ import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-rou
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, Text, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
+import { Text } from '../../src/ui/Text';
 import { listAreas, listCrags, type AreaRow, type CragRow } from '../../src/db/repo';
 import { areaPath, childLevel, childrenOf, cragCounts } from '../../src/domain/areas';
 import { IconButton } from '../../src/ui/icons';

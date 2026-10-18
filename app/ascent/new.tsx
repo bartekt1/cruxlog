@@ -2,7 +2,8 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
+import { Text } from '../../src/ui/Text';
 import {
   addAscent, addUserRoute, getAscent, getRoute, listCragChoices, listCragRoutes, listAreas, listPartners, listSectorNames, recentRoutes, searchRoutes, warmSearch,
   updateAscent, type AreaNames, type AreaRow, type CragChoice, type CragRouteRow, type RouteRow,
@@ -213,7 +214,7 @@ export default function NewAscent() {
       {id ? <Stack.Screen options={{ title: t('ascent.editTitle') }} /> : null}
       <Label>{t('ascent.route')}</Label>
       {route ? (
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, padding: 12, borderRadius: 6, backgroundColor: th.soft }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, padding: 12, borderRadius: 14, backgroundColor: th.surface, borderWidth: 1, borderColor: th.line }}>
           <View style={{ flex: 1 }}>
             <Text style={{ color: th.ink, fontWeight: '600' }}>{route.name}</Text>
             <Text style={{ color: th.muted, fontSize: 12 }}>{route.crag_name} · {route.sector_name} · {routeGrade(route, route.grade_system)}</Text>
@@ -269,7 +270,7 @@ export default function NewAscent() {
             <Field value={name} onChangeText={setName} accessibilityLabel={t('ascent.name')} invalid={bad('name')} onFocus={() => focusField('name')} />
           </View>
           {duplicate ? (
-            <View style={{ padding: 12, borderRadius: 6, backgroundColor: th.soft, gap: 4, marginTop: 8 }}>
+            <View style={{ padding: 12, borderRadius: 14, backgroundColor: th.soft, gap: 4, marginTop: 8 }}>
               <Text style={{ color: th.ink }}>
                 {t('ascent.duplicate', { name: duplicate.name, sector: duplicate.sector_name, grade: routeGrade(duplicate, duplicate.grade_system) })}
               </Text>

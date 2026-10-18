@@ -1,18 +1,27 @@
 import '../src/i18n';
 import { Stack } from 'expo-router';
 import { SQLiteProvider } from 'expo-sqlite';
+import { useFonts } from 'expo-font';
 import { StatusBar } from 'expo-status-bar';
 import { useTranslation } from 'react-i18next';
 import { migrate } from '../src/db/migrate';
-import { useTheme } from '../src/ui/theme';
+import { F, FONT_ASSETS } from '../src/ui/fonts';
+import { useIsDark, useTheme } from '../src/ui/theme';
 
 export default function RootLayout() {
   const { t } = useTranslation();
   const th = useTheme();
+  const dark = useIsDark();
+  // Fonts are bundled, so this takes a moment; if they fail to load the app still starts in the system font.
+  const [fontsLoaded, fontError] = useFonts(FONT_ASSETS);
+  if (!fontsLoaded && !fontError) return null;
   return (
     <SQLiteProvider databaseName="cruxlog.db" onInit={migrate}>
-      <StatusBar style="auto" />
-      <Stack screenOptions={{ headerStyle: { backgroundColor: th.surface }, headerTintColor: th.ink, contentStyle: { backgroundColor: th.bg } }}>
+      <StatusBar style={dark ? 'light' : 'dark'} />
+      <Stack screenOptions={{
+        headerStyle: { backgroundColor: th.bg }, headerShadowVisible: false, headerTintColor: th.ink,
+        headerTitleStyle: { fontFamily: F.display, fontSize: 24, color: th.ink }, contentStyle: { backgroundColor: th.bg },
+      }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="ascent/new" options={{ title: t('ascent.title'), presentation: 'modal' }} />
         <Stack.Screen name="ascent/[id]" options={{ title: t('ascent.detailTitle') }} />

@@ -1,20 +1,22 @@
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
+import { F } from './fonts';
+import { Text } from './Text';
 import { useTheme } from './theme';
 
-/** A tappable list row with a title, an optional subtitle and a chevron. */
+/** A tappable card with a title, an optional subtitle and a chevron. */
 export function NavRow({ title, subtitle, onPress }: { title: string; subtitle?: string; onPress: () => void }) {
   const th = useTheme();
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: th.line, opacity: pressed ? 0.6 : 1 })}
+      style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', minHeight: 56, paddingVertical: 10, paddingHorizontal: 14, marginTop: 8, backgroundColor: th.surface, borderWidth: 1, borderColor: th.line, borderRadius: 14, opacity: pressed ? 0.6 : 1 })}
     >
       <View style={{ flex: 1 }}>
-        <Text style={{ color: th.ink, fontWeight: '600', fontSize: 16 }}>{title}</Text>
-        {subtitle ? <Text style={{ color: th.muted, fontSize: 12 }}>{subtitle}</Text> : null}
+        <Text style={{ color: th.ink, fontFamily: F.semi, fontSize: 16 }}>{title}</Text>
+        {subtitle ? <Text style={{ color: th.muted, fontSize: 13 }}>{subtitle}</Text> : null}
       </View>
-      <Text style={{ color: th.muted, fontSize: 20 }}>›</Text>
+      <Text style={{ color: th.muted, fontFamily: F.cond, fontSize: 24 }}>›</Text>
     </Pressable>
   );
 }
@@ -22,7 +24,7 @@ export function NavRow({ title, subtitle, onPress }: { title: string; subtitle?:
 export function SectionTitle({ children }: { children: string }) {
   const th = useTheme();
   return (
-    <Text accessibilityRole="header" style={{ color: th.muted, fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.8, marginTop: 16 }}>
+    <Text accessibilityRole="header" style={{ color: th.muted, fontSize: 12, fontFamily: F.semi, textTransform: 'uppercase', letterSpacing: 1.5, marginTop: 20 }}>
       {children}
     </Text>
   );

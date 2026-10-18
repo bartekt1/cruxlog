@@ -8,7 +8,7 @@
   "styles": { "os": "OS", "flash": "Flash", "rp": "RP", "pp": "PP", "tr": "TR", "attempt": "Próba" },
   "types": { "sport": "Sport", "multipitch": "Wielowyciąg" },
   "journal": {
-    "empty": "Brak przejść", "emptyHint": "Dotknij pomarańczowy „+” na dole, aby zapisać pierwsze.", "attempts": "podejścia: {{count}}", "add": "Dodaj przejście", "addShort": "Dodaj",
+    "empty": "Brak przejść", "emptyHint": "Dotknij „+” na dole, aby zapisać pierwsze.", "attempts": "podejścia: {{count}}", "add": "Dodaj przejście", "addShort": "Dodaj", "statSends": "przejścia {{year}}", "statHardest": "najtrudniejsza", "dayCount": "przejścia: {{count}}",
     "backupNever": "Nie masz jeszcze kopii zapasowej", "backupOld": "Ostatnia kopia: {{n}} dni temu", "backupHint": "Twoje przejścia są tylko w tym telefonie. Dotknij, aby zrobić kopię."
   },
   "ascent": {
@@ -76,7 +76,7 @@
     "placeholder": { "region": "np. Czarnorzeki", "area": "np. Kamieniec", "group": "np. Krowia Turnia" }
   },
   "settings": {
-    "title": "Ustawienia", "language": "Język", "routeGrades": "Wyceny dróg",
+    "title": "Ustawienia", "language": "Język", "theme": "Wygląd", "themes": { "system": "Jak w telefonie", "light": "Jasny", "dark": "Ciemny" }, "routeGrades": "Wyceny dróg",
     "backup": "Kopia zapasowa", "backupHelp": "Eksport zapisuje wszystkie dane w jednym pliku. Import scala plik z aplikacją; nowsze wpisy wygrywają, nic nie jest usuwane.",
     "export": "Eksportuj kopię", "import": "Importuj kopię", "csv": "Importuj skały z pliku CSV",
     "csvHelp": "Wybierz jeden plik z listą dróg (np. plik z przewodnika albo eksport z theCrag). Każdy wiersz to jedna droga: region, rejon, grupa, skała, sektor, nazwa, wycena. Działa też dawny import z plików crags.csv i routes.csv.",

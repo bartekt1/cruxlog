@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
+import { Text } from './Text';
 import type { AreaNames } from '../db/repo';
 import { PATH_SEP, childrenOf, splitPath, type Area } from '../domain/areas';
 import { sameName, suggest } from '../domain/text';

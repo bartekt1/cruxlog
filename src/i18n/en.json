@@ -8,7 +8,7 @@
   "styles": { "os": "OS", "flash": "Flash", "rp": "RP", "pp": "PP", "tr": "TR", "attempt": "Attempt" },
   "types": { "sport": "Sport", "multipitch": "Multipitch" },
   "journal": {
-    "empty": "No ascents yet", "emptyHint": "Tap the orange + at the bottom to log your first climb.", "attempts": "{{count}} tries", "add": "Log an ascent", "addShort": "Add",
+    "empty": "No ascents yet", "emptyHint": "Tap + at the bottom to log your first climb.", "attempts": "{{count}} tries", "add": "Log an ascent", "addShort": "Add", "statSends": "sends {{year}}", "statHardest": "hardest", "dayCount": "ascents: {{count}}",
     "backupNever": "You have never made a backup", "backupOld": "Last backup {{n}} days ago", "backupHint": "Your climbs live only on this phone. Tap to export a backup."
   },
   "ascent": {
@@ -76,7 +76,7 @@
     "placeholder": { "region": "e.g. Czarnorzeki", "area": "e.g. Kamieniec", "group": "e.g. Krowia Turnia" }
   },
   "settings": {
-    "title": "Settings", "language": "Language", "routeGrades": "Route grades",
+    "title": "Settings", "language": "Language", "theme": "Appearance", "themes": { "system": "Like the phone", "light": "Light", "dark": "Dark" }, "routeGrades": "Route grades",
     "backup": "Backup", "backupHelp": "Export saves all your data to one file. Import merges a file into the app; newer entries win, nothing is deleted.",
     "export": "Export backup", "import": "Import backup", "csv": "Import crags from a CSV file",
     "csvHelp": "Pick one file with a list of routes (e.g. a guidebook export or a theCrag export). Each row is one route: region, area, group, crag, sector, name, grade. The older import with crags.csv and routes.csv still works.",

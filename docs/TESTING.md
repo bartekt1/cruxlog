@@ -69,6 +69,12 @@ Write down the result of every step (OK / problem). Report problems with: step n
 7. New ascent -> "Create a new route" with a new crag and no region or area: saving shows "A new crag needs a region and an area."
 8. Search "Okiennik" in a new ascent before it has routes. Expected: it appears under "Crags"; tapping it opens the new-route form with crag and region filled in.
 
+## 3a. Look and dark mode
+1. Settings -> Appearance: "Like the phone", "Light", "Dark". Each changes the whole app at once, also the top and bottom bars; the choice stays after closing the app.
+2. Light: paper background, dark text, grades in dark squares, rust "+" and main buttons. Dark: deep green background, grades in light squares, lighter rust. All text is easy to read in both, also in sunlight.
+3. Headings, grades and numbers use the narrow font; works without internet.
+4. Journal: three tiles on top (sends this year, days out, hardest); ascents of one day share a card, the header says how many. Route screen: big name and grade, history as a timeline (rust dots for sends, grey for attempts).
+
 ## 3b. Icons
 1. The bottom bar shows an icon above each tab name (book, chart, mountains, flag); the selected tab's icon is filled. No empty squares.
 2. Top right: a clear gear icon opens Settings. In the middle of the bottom bar a raised orange "+" opens a new ascent from any tab, in light and dark mode. The route screen's "Log an ascent" button is orange too.

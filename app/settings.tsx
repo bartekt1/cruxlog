@@ -4,7 +4,8 @@ import * as Sharing from 'expo-sharing';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Alert, ScrollView, Text } from 'react-native';
+import { ActivityIndicator, Alert, ScrollView } from 'react-native';
+import { Text } from '../src/ui/Text';
 import { exportBackup, importBackup } from '../src/db/backup';
 import { applyImport, importedUsage, listAscents, removeImported } from '../src/db/repo';
 import { backupStatus } from '../src/domain/history';
@@ -151,6 +152,10 @@ export default function Settings() {
       <ChipRow>
         <Chip label="Polski" on={i18n.language === 'pl'} onPress={() => setLanguage('pl')} />
         <Chip label="English" on={i18n.language === 'en'} onPress={() => setLanguage('en')} />
+      </ChipRow>
+      <Label>{t('settings.theme')}</Label>
+      <ChipRow>
+        {(['system', 'light', 'dark'] as const).map((m) => <Chip key={m} label={t(`settings.themes.${m}`)} on={s.themeMode === m} onPress={() => s.setThemeMode(m)} />)}
       </ChipRow>
       <Label>{t('settings.routeGrades')}</Label>
       <ChipRow>

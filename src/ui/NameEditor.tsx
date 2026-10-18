@@ -1,7 +1,8 @@
 import { Stack, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, Text } from 'react-native';
+import { ScrollView } from 'react-native';
+import { Text } from './Text';
 import type { NamedRow } from '../db/repo';
 import { validateName } from '../domain/forms';
 import { Button, ErrorText, Field, Label } from './kit';

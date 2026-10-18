@@ -3,6 +3,7 @@ import { Link, Tabs, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 import { HIT } from '../../src/ui/kit';
+import { F } from '../../src/ui/fonts';
 import { useTheme } from '../../src/ui/theme';
 
 export default function TabsLayout() {
@@ -12,12 +13,14 @@ export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: th.accent,
+        tabBarActiveTintColor: th.ink,
         tabBarInactiveTintColor: th.muted,
         tabBarStyle: { backgroundColor: th.surface, borderTopColor: th.line },
-        tabBarLabelStyle: { fontSize: 12, fontWeight: '600' },
-        headerStyle: { backgroundColor: th.surface },
+        tabBarLabelStyle: { fontSize: 11, fontFamily: F.semi, letterSpacing: 0.6, textTransform: 'uppercase' },
+        headerStyle: { backgroundColor: th.bg },
+        headerShadowVisible: false,
         headerTintColor: th.ink,
+        headerTitleStyle: { fontFamily: F.display, fontSize: 30, color: th.ink },
         headerRight: () => (
           <Link href="/settings" asChild>
             <Pressable hitSlop={HIT} accessibilityRole="button" accessibilityLabel={t('settings.title')} style={({ pressed }) => ({ marginRight: 8, padding: 8, opacity: pressed ? 0.6 : 1 })}>
@@ -47,7 +50,7 @@ export default function TabsLayout() {
                 accessibilityRole="button"
                 accessibilityLabel={t('journal.add')}
                 style={({ pressed }) => ({
-                  top: -18, width: 64, height: 64, borderRadius: 32, alignItems: 'center', justifyContent: 'center',
+                  top: -18, width: 62, height: 62, borderRadius: 18, alignItems: 'center', justifyContent: 'center',
                   backgroundColor: th.cta, borderWidth: 4, borderColor: th.surface,
                   elevation: 8, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 6, shadowOffset: { width: 0, height: 3 },
                   transform: [{ scale: pressed ? 0.94 : 1 }],
