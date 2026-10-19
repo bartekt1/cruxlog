@@ -64,6 +64,12 @@ export const MIGRATIONS: string[] = [
   `
   ${HIDE_BOULDERS}
   `,
+  // 5: where a crag's position came from: 'user' (set on the phone, never overwritten by a file), 'file' (an import)
+  // or 'approx' (estimated from nearby crags of the same group); '' when it has none. Earlier positions count as the user's.
+  `
+  ALTER TABLE crag ADD COLUMN pos_source TEXT NOT NULL DEFAULT '';
+  UPDATE crag SET pos_source = 'user' WHERE lat IS NOT NULL AND lng IS NOT NULL;
+  `,
 ];
 
 export async function migrate(db: SQLiteDatabase): Promise<void> {

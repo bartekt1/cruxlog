@@ -145,11 +145,11 @@ export async function recentRoutes(db: SQLiteDatabase, limit = 5): Promise<Route
   );
 }
 
-export type CragChoice = { id: string; name: string; region_id: string | null; region_name: string | null; routes: number; lat: number | null; lng: number | null };
+export type CragChoice = { id: string; name: string; region_id: string | null; region_name: string | null; routes: number; lat: number | null; lng: number | null; pos_source: PosSource };
 
 export async function listCragChoices(db: SQLiteDatabase): Promise<CragChoice[]> {
   return db.getAllAsync<CragChoice>(
-    `SELECT c.id, c.name, c.region_id, g.name AS region_name, c.lat, c.lng,
+    `SELECT c.id, c.name, c.region_id, g.name AS region_name, c.lat, c.lng, c.pos_source,
             (SELECT COUNT(*) FROM route r JOIN sector s ON s.id = r.sector_id WHERE s.crag_id = c.id AND r.deleted_at IS NULL) AS routes
      FROM crag c LEFT JOIN region g ON g.id = c.region_id AND g.deleted_at IS NULL
      WHERE c.deleted_at IS NULL ORDER BY c.name`);
@@ -285,14 +285,14 @@ export async function addUserRoute(db: SQLiteDatabase, r: NewRoute): Promise<str
 }
 
 export type CragRow = {
-  id: string; name: string; lat: number | null; lng: number | null; routes: number; source: string;
+  id: string; name: string; lat: number | null; lng: number | null; pos_source: PosSource; routes: number; source: string;
   /** The crag's own area (the deepest: group, area or region). */
   region_id: string | null; region_name: string | null;
 };
 
 export async function listCrags(db: SQLiteDatabase): Promise<CragRow[]> {
   return db.getAllAsync<CragRow>(
-    `SELECT c.id, c.name, c.lat, c.lng, c.source, g.id AS region_id, g.name AS region_name,
+    `SELECT c.id, c.name, c.lat, c.lng, c.pos_source, c.source, g.id AS region_id, g.name AS region_name,
             (SELECT COUNT(*) FROM route r JOIN sector s ON s.id = r.sector_id
              WHERE s.crag_id = c.id AND r.deleted_at IS NULL) AS routes
      FROM crag c LEFT JOIN region g ON g.id = c.region_id AND g.deleted_at IS NULL
@@ -302,20 +302,26 @@ export async function listCrags(db: SQLiteDatabase): Promise<CragRow[]> {
 
 /** Sets (or clears, with null) where a crag is, e.g. from the phone's GPS under the crag or a pin on the map. */
 export async function setCragLocation(db: SQLiteDatabase, id: string, at: { lat: number; lng: number } | null): Promise<void> {
-  await db.runAsync('UPDATE crag SET lat = ?, lng = ?, updated_at = ? WHERE id = ?', [at?.lat ?? null, at?.lng ?? null, now(), id]);
+  await db.runAsync('UPDATE crag SET lat = ?, lng = ?, pos_source = ?, updated_at = ? WHERE id = ?', [at?.lat ?? null, at?.lng ?? null, at ? 'user' : '', now(), id]);
 }
 
-export type CragPosition = { key: string; name: string; lat: number; lng: number };
+/** Where a crag's position came from; see migration 5. */
+export type PosSource = '' | 'user' | 'file' | 'approx';
+
+export type CragPosition = { key: string; name: string; lat: number; lng: number; approx?: boolean };
 
 /**
  * Sets crag positions from a file: by crag key (imported crags) or else by name when exactly one crag has it.
- * Returns how many crags got a position and the rows that matched none (or more than one) crag.
+ * A position the user set on the phone is kept. Returns how many crags got a position, how many were kept,
+ * and the rows that matched none (or more than one) crag.
  */
-export async function applyCragPositions(db: SQLiteDatabase, rows: CragPosition[]): Promise<{ updated: number; unmatched: CragPosition[] }> {
+export async function applyCragPositions(db: SQLiteDatabase, rows: CragPosition[]): Promise<{ updated: number; kept: number; unmatched: CragPosition[] }> {
   const t = now();
-  const crags = await db.getAllAsync<{ id: string; name: string }>('SELECT id, name FROM crag WHERE deleted_at IS NULL');
+  const crags = await db.getAllAsync<{ id: string; name: string; pos_source: PosSource }>('SELECT id, name, pos_source FROM crag WHERE deleted_at IS NULL');
   const byId = new Set(crags.map((c) => c.id));
+  const own = new Set(crags.filter((c) => c.pos_source === 'user').map((c) => c.id));
   let updated = 0;
+  let kept = 0;
   const unmatched: CragPosition[] = [];
   await db.withTransactionAsync(async () => {
     for (const r of rows) {
@@ -325,21 +331,22 @@ export async function applyCragPositions(db: SQLiteDatabase, rows: CragPosition[
         id = same.length === 1 ? same[0].id : null;
       }
       if (!id) { unmatched.push(r); continue; }
-      await db.runAsync('UPDATE crag SET lat = ?, lng = ?, updated_at = ? WHERE id = ?', [r.lat, r.lng, t, id]);
+      if (own.has(id)) { kept++; continue; }
+      await db.runAsync('UPDATE crag SET lat = ?, lng = ?, pos_source = ?, updated_at = ? WHERE id = ?', [r.lat, r.lng, r.approx ? 'approx' : 'file', t, id]);
       updated++;
     }
   });
-  return { updated, unmatched };
+  return { updated, kept, unmatched };
 }
 
 export type CragDetail = {
   id: string; name: string; description: string; approach: string; region: string | null; region_id: string | null; source: string;
-  lat: number | null; lng: number | null;
+  lat: number | null; lng: number | null; pos_source: PosSource;
 };
 
 export async function getCrag(db: SQLiteDatabase, id: string): Promise<CragDetail | null> {
   return db.getFirstAsync<CragDetail>(
-    `SELECT c.id, c.name, c.description, c.approach, c.source, c.lat, c.lng, g.name AS region, g.id AS region_id
+    `SELECT c.id, c.name, c.description, c.approach, c.source, c.lat, c.lng, c.pos_source, g.name AS region, g.id AS region_id
      FROM crag c LEFT JOIN region g ON g.id = c.region_id AND g.deleted_at IS NULL WHERE c.id = ? AND c.deleted_at IS NULL`,
     [id],
   );
@@ -742,13 +749,15 @@ export async function applyImport(db: SQLiteDatabase, plan: ImportPlan): Promise
     const crags: (string | number | null)[][] = [];
     for (const c of plan.crags) {
       const regionId = await areaIdFor(db, { region: c.region, area: c.area, group: c.group }, t, 'import', memo);
-      crags.push([idOf('crag', c.key), regionId, c.name, c.lat, c.lng, c.description, c.approach, t, t]);
+      crags.push([idOf('crag', c.key), regionId, c.name, c.lat, c.lng, c.description, c.approach, t, t, c.lat != null && c.lng != null ? 'file' : '']);
     }
     await runMany(db,
-      `INSERT INTO crag (id, region_id, name, lat, lng, description, approach, source, status, created_at, updated_at)
-       VALUES (?,?,?,?,?,?,?,'import','private',?,?)
+      `INSERT INTO crag (id, region_id, name, lat, lng, description, approach, source, status, created_at, updated_at, pos_source)
+       VALUES (?,?,?,?,?,?,?,'import','private',?,?,?)
        ON CONFLICT(id) DO UPDATE SET region_id=excluded.region_id, name=excluded.name,
-         lat=COALESCE(excluded.lat, crag.lat), lng=COALESCE(excluded.lng, crag.lng),
+         lat=CASE WHEN crag.pos_source = 'user' OR excluded.lat IS NULL THEN crag.lat ELSE excluded.lat END,
+         lng=CASE WHEN crag.pos_source = 'user' OR excluded.lat IS NULL THEN crag.lng ELSE excluded.lng END,
+         pos_source=CASE WHEN crag.pos_source = 'user' OR excluded.lat IS NULL THEN crag.pos_source ELSE 'file' END,
          description=excluded.description, approach=excluded.approach, updated_at=excluded.updated_at, deleted_at=NULL`,
       crags);
     await runMany(db,

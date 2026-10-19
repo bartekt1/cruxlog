@@ -39,6 +39,7 @@ export default function LocateCrag() {
   }, [crag, loc.position]);
   if (!crag) return null;
   const has = isLatLng(crag.lat, crag.lng);
+  const approx = has && crag.pos_source === 'approx';
 
   async function save(at: { lat: number; lng: number } | null) {
     setSaving(true);
@@ -66,7 +67,7 @@ export default function LocateCrag() {
       <Stack.Screen options={{ title: t('map.locateTitle', { name: crag.name }) }} />
       <View style={{ flex: 1 }}>
         <Map ref={map} style={{ flex: 1 }} mapStyle={mapStyle(mapBase)} attribution logo={false} touchPitch={false}>
-          <Camera ref={camera} initialViewState={has ? { center: [crag.lng!, crag.lat!], zoom: 16 } : { center: DEFAULT_VIEW.center, zoom: DEFAULT_VIEW.zoom }} />
+          <Camera ref={camera} initialViewState={has ? { center: [crag.lng!, crag.lat!], zoom: approx ? 14 : 16 } : { center: DEFAULT_VIEW.center, zoom: DEFAULT_VIEW.zoom }} />
           {loc.state === 'granted' ? <UserLocation accuracy /> : null}
         </Map>
         {/* The pin stays in the middle; the map moves under it. */}
@@ -75,7 +76,7 @@ export default function LocateCrag() {
         </View>
       </View>
       <View style={{ padding: 16, paddingBottom: 24, backgroundColor: th.surface, borderTopWidth: 1, borderTopColor: th.line }}>
-        <Text style={{ color: th.muted, fontSize: 13 }}>{t('map.locateHint')}</Text>
+        <Text style={{ color: th.muted, fontSize: 13 }}>{approx ? t('map.locateApproxHint') : t('map.locateHint')}</Text>
         <Button label={t('map.saveCenter')} onPress={center} disabled={saving} />
         <Button label={saving ? t('common.saving') : t('map.saveHere')} variant="plain" onPress={here} disabled={saving} />
         {has ? <Button label={t('map.clear')} variant="danger" onPress={() => save(null)} disabled={saving} /> : null}

@@ -97,7 +97,9 @@
     "saveCenter": "Zapisz położenie szpilki", "saveHere": "Zapisz położenie skały tutaj", "clear": "Usuń położenie",
     "noFix": "Nie udało się ustalić Twojego położenia. Wyjdź na otwarty teren i spróbuj jeszcze raz.",
     "privacy": "Położenie zostaje tylko na tym telefonie.",
-    "hasPosition": "Położenie zapisane", "away": "{{distance}} od Ciebie", "setPosition": "Ustaw położenie skały", "changeHint": "Zmień położenie skały"
+    "hasPosition": "Położenie zapisane", "away": "{{distance}} od Ciebie", "setPosition": "Ustaw położenie skały", "changeHint": "Zmień położenie skały",
+    "approx": "Położenie przybliżone (okolica grupy)", "about": "ok. {{distance}}", "aboutAway": "ok. {{distance}} od Ciebie", "improve": "Popraw",
+    "locateApproxHint": "To położenie jest przybliżone: wyliczone ze skał z tej samej grupy. Przesuń mapę tak, żeby szpilka wskazywała skałę, albo zapisz miejsce, w którym stoisz."
   },
   "settings": {
     "title": "Ustawienia", "language": "Język", "theme": "Wygląd", "themes": { "system": "Jak w telefonie", "light": "Jasny", "dark": "Ciemny" }, "routeGrades": "Wyceny dróg",
@@ -115,6 +117,7 @@
     "done": "Gotowe", "problem": "Problem",
     "positionsConfirm": "Plik zawiera położenia skał: {{count}}. Zostaną zapisane przy skałach o tej samej nazwie lub kluczu. Drogi i przejścia się nie zmienią.",
     "positionsDone": "Zapisano położenie skał: {{count}}.", "positionsNone": "W pliku nie ma żadnego poprawnego położenia.",
+    "positionsApprox": "W tym przybliżone (wyliczone ze skał obok): {{count}}. Na mapie mają pustą kropkę.", "positionsKept": "Bez zmian, bo ustawiłeś je sam w telefonie: {{count}}.",
     "positionsUnmatched": "Nie znaleziono w aplikacji skał: {{count}} ({{names}}).",
     "csvConfirmTitle": "Zaimportować?", "csvConfirmYes": "Importuj",
     "csvConfirm": "Zostanie zaimportowanych skał: {{crags}}, dróg: {{routes}}. Jeśli ten plik był już importowany, Twoje zmiany w tych skałach i drogach zostaną nadpisane, a usunięte wrócą. Twoje przejścia się nie zmienią."

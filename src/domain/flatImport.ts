@@ -11,6 +11,8 @@ export type FlatRow = {
   lengthM?: string; bolts?: string; description?: string; cragDescription?: string; lat?: string; lng?: string;
   /** Stable keys keep re-imports updating the same crags, sectors and routes (and their ascents). */
   cragKey?: string; sectorKey?: string; routeKey?: string;
+  /** Positions file only: the position is an estimate (yes/tak/1). */
+  approx?: string;
 };
 
 export const slug = (s: string) => fold(s).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -83,7 +85,7 @@ const HEADERS: Record<string, keyof FlatRow> = {
   length_m: 'lengthM', dlugosc: 'lengthM', length: 'lengthM', bolts: 'bolts', przeloty: 'bolts', description: 'description', opis: 'description',
   crag_description: 'cragDescription', opis_skaly: 'cragDescription', lat: 'lat', lng: 'lng', key: 'routeKey',
   latitude: 'lat', longitude: 'lng', lon: 'lng', szerokosc: 'lat', dlugosc_geograficzna: 'lng',
-  crag_key: 'cragKey', key_skaly: 'cragKey',
+  crag_key: 'cragKey', key_skaly: 'cragKey', approx: 'approx', approximate: 'approx', przyblizone: 'approx',
 };
 const headerKey = (h: string) => fold(h).replace(/[\s-]+/g, '_');
 
@@ -113,8 +115,8 @@ export function parseFlatCsv(text: string): FlatRow[] {
   }));
 }
 
-/** A file with only crag positions: crag key and/or crag name, lat, lng. Rows without a valid position are dropped. */
-export function parsePositionsCsv(text: string): { key: string; name: string; lat: number; lng: number }[] {
+/** A file with only crag positions: crag key and/or crag name, lat, lng, optionally approx. Rows without a valid position are dropped. */
+export function parsePositionsCsv(text: string): { key: string; name: string; lat: number; lng: number; approx: boolean }[] {
   const data = Papa.parse<Record<string, string>>(text.replace(/^\ufeff/, ''), {
     header: true, skipEmptyLines: true, transformHeader: (h) => HEADERS[headerKey(h)] ?? `_${h}`,
   }).data;
@@ -122,6 +124,6 @@ export function parsePositionsCsv(text: string): { key: string; name: string; la
     const lat = num(r.lat);
     const lng = num(r.lng);
     const ok = lat != null && lng != null && Math.abs(lat) <= 90 && Math.abs(lng) <= 180 && !(lat === 0 && lng === 0);
-    return ok && (r.cragKey?.trim() || r.crag?.trim()) ? [{ key: (r.cragKey ?? '').trim(), name: (r.crag ?? '').trim(), lat, lng }] : [];
+    return ok && (r.cragKey?.trim() || r.crag?.trim()) ? [{ key: (r.cragKey ?? '').trim(), name: (r.crag ?? '').trim(), lat, lng, approx: /^(1|yes|y|tak|t|true)$/i.test((r.approx ?? '').trim()) }] : [];
   });
 }

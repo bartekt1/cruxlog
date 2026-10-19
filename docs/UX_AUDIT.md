@@ -169,6 +169,7 @@ Severity: **H** blocks a task or loses/corrupts data, **M** slows a task or conf
 | M1 | No way to see crags on a map | M | Crags › List/Map: crag pins on OpenFreeMap, switch to the tourist map (OpenTopoMap), "Show me" |
 | M2 | Imported crags have no coordinates | M | Crag screen › "Set crag position": a pin under a moving map, or "here" from the phone's GPS; positions file import; re-imports keep positions |
 | M3 | Logging at the crag meant searching by name | L | Nearby crags (3 km) as chips in the ascent form; "Nearby" list with distances in Crags |
+| M5 | Many crags have no position in OSM | L | Approximate positions from the crag's group, marked as such (hollow dot, "approximate", "about" distances); a position set on the phone is never overwritten by a file |
 | M4 | Location privacy | L | Permission asked only on a tap; the position is never stored or sent, only shown on the map and used for distances |
 
 ## Open items

@@ -541,9 +541,12 @@ describe('crag positions for the map', () => {
     region: 'Jura', area: 'Jura Południowa', group: 'Dolina', crag, sector: '', name, type: 'sport', grade: 'VI.1', gradeSystem: 'kr',
   });
   it('reads a positions file', () => {
-    const text = 'Skała;lat;lng\nOkap;50,4;19,8\nZła;abc;19\nZero;0;0\n';
+    const text = 'Skała;lat;lng;przybliżone\nOkap;50,4;19,8;\nBaszta;50,5;19,9;tak\nZła;abc;19;\nZero;0;0;\n';
     expect(detectFormat(text)).toBe('positions');
-    expect(parsePositionsCsv(text)).toEqual([{ key: '', name: 'Okap', lat: 50.4, lng: 19.8 }]);
+    expect(parsePositionsCsv(text)).toEqual([
+      { key: '', name: 'Okap', lat: 50.4, lng: 19.8, approx: false },
+      { key: '', name: 'Baszta', lat: 50.5, lng: 19.9, approx: true },
+    ]);
   });
   it('matches by key or unique name, reports the rest, and a re-import keeps the positions', async () => {
     const db = await freshDb();
@@ -561,7 +564,32 @@ describe('crag positions for the map', () => {
     await applyImport(db, plan);
     expect(await getCrag(db, baszta.id)).toMatchObject({ lat: 50.2, lng: 19.2 });
     await setCragLocation(db, baszta.id, null);
-    expect(await getCrag(db, baszta.id)).toMatchObject({ lat: null, lng: null });
+    expect(await getCrag(db, baszta.id)).toMatchObject({ lat: null, lng: null, pos_source: '' });
+  });
+  it('marks approximate positions and never overwrites one the user set on the phone', async () => {
+    const db = await freshDb();
+    await applyImport(db, planFromFlatRows([row('Rysa', 'Okap'), row('Filar', 'Baszta')]));
+    const [baszta, okap] = await listCragChoices(db);
+    await setCragLocation(db, okap.id, { lat: 50.01, lng: 19.01 });
+    const res = await applyCragPositions(db, [
+      { key: '', name: 'Okap', lat: 51, lng: 20 },
+      { key: '', name: 'Baszta', lat: 50.2, lng: 19.2, approx: true },
+    ]);
+    expect(res).toMatchObject({ updated: 1, kept: 1 });
+    expect(await getCrag(db, okap.id)).toMatchObject({ lat: 50.01, pos_source: 'user' });
+    expect(await getCrag(db, baszta.id)).toMatchObject({ lat: 50.2, pos_source: 'approx' });
+    // A route list with positions updates the estimate but still keeps the user's own.
+    await applyImport(db, planFromFlatRows([{ ...row('Rysa', 'Okap'), lat: '52', lng: '21' }, { ...row('Filar', 'Baszta'), lat: '50.3', lng: '19.3' }]));
+    expect(await getCrag(db, okap.id)).toMatchObject({ lat: 50.01, pos_source: 'user' });
+    expect(await getCrag(db, baszta.id)).toMatchObject({ lat: 50.3, pos_source: 'file' });
+  });
+  it('counts positions saved before the upgrade as the user\'s own', async () => {
+    const db = openTestDb();
+    await db.execAsync(MIGRATIONS.slice(0, 4).join('\n') + 'PRAGMA user_version = 4;');
+    await db.execAsync(`INSERT INTO crag (id, name, lat, lng, created_at, updated_at) VALUES ('a', 'A', 50, 19, 1, 1), ('b', 'B', NULL, NULL, 1, 1);`);
+    await migrate(db);
+    expect(await getCrag(db, 'a')).toMatchObject({ name: 'A', lat: 50, pos_source: 'user' });
+    expect(await getCrag(db, 'b')).toMatchObject({ name: 'B', lat: null, pos_source: '' });
   });
 });
 

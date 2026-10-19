@@ -143,11 +143,15 @@ export default function Settings() {
   async function importPositions(text: string) {
     const rows = parsePositionsCsv(text);
     if (!rows.length) throw new UserError(t('settings.positionsNone'));
-    const ok = await ask(t('settings.csvConfirmTitle'), t('settings.positionsConfirm', { count: rows.length }), t('settings.csvConfirmYes'), t('common.cancel'));
+    const approx = rows.filter((r) => r.approx).length;
+    const ok = await ask(t('settings.csvConfirmTitle'),
+      t('settings.positionsConfirm', { count: rows.length }) + (approx ? `\n\n${t('settings.positionsApprox', { count: approx })}` : ''),
+      t('settings.csvConfirmYes'), t('common.cancel'));
     if (!ok) return;
-    const { updated, unmatched } = await applyCragPositions(db, rows);
+    const { updated, kept, unmatched } = await applyCragPositions(db, rows);
     const names = unmatched.slice(0, 8).map((r) => r.name || r.key).join(', ');
     return t('settings.positionsDone', { count: updated })
+      + (kept ? `\n\n${t('settings.positionsKept', { count: kept })}` : '')
       + (unmatched.length ? `\n\n${t('settings.positionsUnmatched', { count: unmatched.length, names })}` : '');
   }
 

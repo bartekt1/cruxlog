@@ -50,7 +50,7 @@ export default function Crags() {
     return (
       <View style={{ flex: 1, backgroundColor: th.bg }}>
         <View style={{ paddingHorizontal: 16, paddingTop: 12 }}>{modeSwitch}</View>
-        <CragMap crags={crags.map((c) => ({ id: c.id, name: c.name, lat: c.lat, lng: c.lng, routes: c.routes, path: path(c) }))} onOpen={(id) => router.push(`/crag/${id}`)} />
+        <CragMap crags={crags.map((c) => ({ id: c.id, name: c.name, lat: c.lat, lng: c.lng, approx: c.pos_source === 'approx', routes: c.routes, path: path(c) }))} onOpen={(id) => router.push(`/crag/${id}`)} />
       </View>
     );
   }
@@ -73,7 +73,7 @@ export default function Crags() {
             <>
               <SectionTitle>{t('map.nearby')}</SectionTitle>
               {near.map((c) => (
-                <NavRow key={c.id} title={c.name} subtitle={[formatDistance(c.distance, i18n.language), path(c), t('crags.routes', { count: c.routes })].filter(Boolean).join(' · ')} onPress={() => openCrag(c)} />
+                <NavRow key={c.id} title={c.name} subtitle={[c.pos_source === 'approx' ? t('map.about', { distance: formatDistance(c.distance, i18n.language) }) : formatDistance(c.distance, i18n.language), path(c), t('crags.routes', { count: c.routes })].filter(Boolean).join(' · ')} onPress={() => openCrag(c)} />
               ))}
             </>
           ) : placed && loc.state !== 'granted' && loc.state !== 'denied' ? (

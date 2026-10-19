@@ -97,7 +97,9 @@
     "saveCenter": "Save pin position", "saveHere": "Save crag position here", "clear": "Remove position",
     "noFix": "Could not get your position. Move to open ground and try again.",
     "privacy": "The position stays on this phone only.",
-    "hasPosition": "Position saved", "away": "{{distance}} from you", "setPosition": "Set crag position", "changeHint": "Change crag position"
+    "hasPosition": "Position saved", "away": "{{distance}} from you", "setPosition": "Set crag position", "changeHint": "Change crag position",
+    "approx": "Approximate position (area of the group)", "about": "about {{distance}}", "aboutAway": "about {{distance}} from you", "improve": "Improve",
+    "locateApproxHint": "This position is approximate: worked out from crags of the same group. Move the map so the pin points at the crag, or save the spot where you are standing."
   },
   "settings": {
     "title": "Settings", "language": "Language", "theme": "Appearance", "themes": { "system": "Like the phone", "light": "Light", "dark": "Dark" }, "routeGrades": "Route grades",
@@ -115,6 +117,7 @@
     "done": "Done", "problem": "Problem",
     "positionsConfirm": "The file has crag positions: {{count}}. They will be saved on crags with the same name or key. Routes and ascents will not change.",
     "positionsDone": "Crag positions saved: {{count}}.", "positionsNone": "The file has no valid position.",
+    "positionsApprox": "Of these approximate (worked out from nearby crags): {{count}}. They show as a hollow dot on the map.", "positionsKept": "Unchanged because you set them on the phone: {{count}}.",
     "positionsUnmatched": "Crags not found in the app: {{count}} ({{names}}).",
     "csvConfirmTitle": "Import?", "csvConfirmYes": "Import",
     "csvConfirm": "{{crags}} crags and {{routes}} routes will be imported. If this file was imported before, your changes to these crags and routes are overwritten and deleted ones come back. Your ascents are not changed."

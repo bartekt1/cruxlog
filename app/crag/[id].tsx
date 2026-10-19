@@ -29,6 +29,7 @@ export default function CragScreen() {
   const [sectorRows, setSectorRows] = useState<SectorRow[]>([]);
   const [areas, setAreas] = useState<AreaRow[]>([]);
   const loc = useLocation();
+  const approx = crag?.pos_source === 'approx';
 
   useFocusEffect(useCallback(() => {
     getCrag(db, id).then((c) => {
@@ -74,11 +75,12 @@ export default function CragScreen() {
               {isLatLng(crag.lat, crag.lng) ? (
                 <Pressable onPress={() => router.push({ pathname: '/crag/locate', params: { id: crag.id } })} accessibilityRole="button" accessibilityHint={t('map.changeHint')}
                   style={{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 36 }}>
-                  <Ionicons name="location" size={18} color={th.accent} />
-                  <Text style={{ color: th.ink, fontFamily: F.semi }}>
-                    {loc.position ? t('map.away', { distance: formatDistance(distanceM(loc.position, { lat: crag.lat!, lng: crag.lng! }), i18n.language) }) : t('map.hasPosition')}
+                  <Ionicons name={approx ? 'location-outline' : 'location'} size={18} color={th.accent} />
+                  <Text style={{ color: th.ink, fontFamily: F.semi, flexShrink: 1 }}>
+                    {[approx ? t('map.approx') : '', loc.position ? t(approx ? 'map.aboutAway' : 'map.away', { distance: formatDistance(distanceM(loc.position, { lat: crag.lat!, lng: crag.lng! }), i18n.language) }) : approx ? '' : t('map.hasPosition')]
+                      .filter(Boolean).join(' · ')}
                   </Text>
-                  <Text style={{ color: th.accent, fontFamily: F.semi }}>{t('common.change')}</Text>
+                  <Text style={{ color: th.accent, fontFamily: F.semi }}>{approx ? t('map.improve') : t('common.change')}</Text>
                 </Pressable>
               ) : (
                 <LinkButton label={t('map.setPosition')} onPress={() => router.push({ pathname: '/crag/locate', params: { id: crag.id } })} />

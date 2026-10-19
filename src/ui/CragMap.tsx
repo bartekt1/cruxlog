@@ -12,7 +12,8 @@ import { Text } from './Text';
 import { useTheme } from './theme';
 import { useLocation } from './useLocation';
 
-export type MapCrag = { id: string; name: string; lat: number | null; lng: number | null; routes: number; path: string };
+/** approx: the position is an estimate from nearby crags; drawn as a hollow dot. */
+export type MapCrag = { id: string; name: string; lat: number | null; lng: number | null; approx: boolean; routes: number; path: string };
 
 /** Crags with a position as pins, the user's position, a "show me" button and a switch to the hiking map. */
 export function CragMap({ crags, onOpen }: { crags: MapCrag[]; onOpen: (id: string) => void }) {
@@ -26,10 +27,11 @@ export function CragMap({ crags, onOpen }: { crags: MapCrag[]; onOpen: (id: stri
   const placed = useMemo(() => crags.filter((c) => isLatLng(c.lat, c.lng)), [crags]);
   const data = useMemo<GeoJSON.FeatureCollection>(() => ({
     type: 'FeatureCollection',
-    features: placed.map((c) => ({ type: 'Feature', id: c.id, properties: { id: c.id, name: c.name }, geometry: { type: 'Point', coordinates: [c.lng!, c.lat!] } })),
+    features: placed.map((c) => ({ type: 'Feature', id: c.id, properties: { id: c.id, name: c.name, approx: c.approx }, geometry: { type: 'Point', coordinates: [c.lng!, c.lat!] } })),
   }), [placed]);
   const bounds = useMemo(() => boundsOf(placed.map((c) => ({ lat: c.lat!, lng: c.lng! }))), [placed]);
   const crag = placed.find((c) => c.id === selected) ?? null;
+  const distanceText = (m: number, approx: boolean) => (approx ? t('map.about', { distance: formatDistance(m, i18n.language) }) : formatDistance(m, i18n.language));
 
   // "Show me" flies to the position; on the first tap the position arrives a moment after the permission.
   const flyPending = useRef(false);
@@ -50,7 +52,10 @@ export function CragMap({ crags, onOpen }: { crags: MapCrag[]; onOpen: (id: stri
           initialViewState={bounds ? { bounds, padding: { top: 60, bottom: 60, left: 40, right: 40 } } : { center: DEFAULT_VIEW.center, zoom: DEFAULT_VIEW.zoom }} />
         <GeoJSONSource id="crags" data={data}
           onPress={(e) => { const id = e.nativeEvent.features[0]?.properties?.id; if (typeof id === 'string') setSelected(id); }}>
-          <Layer type="circle" id="crag-dots" paint={{ 'circle-radius': 7, 'circle-color': th.accent, 'circle-stroke-width': 2, 'circle-stroke-color': th.surface }} />
+          <Layer type="circle" id="crag-dots" paint={{
+              'circle-radius': 7, 'circle-color': ['case', ['get', 'approx'], th.surface, th.accent],
+              'circle-stroke-width': ['case', ['get', 'approx'], 2.5, 2], 'circle-stroke-color': ['case', ['get', 'approx'], th.accent, th.surface],
+            }} />
           <Layer type="symbol" id="crag-names" minzoom={11}
             layout={{ 'text-field': ['get', 'name'], 'text-font': LABEL_FONT, 'text-size': 12, 'text-offset': [0, 1.1], 'text-anchor': 'top', 'text-optional': true }}
             paint={{ 'text-color': th.ink, 'text-halo-color': th.bg, 'text-halo-width': 1.5 }} />
@@ -86,9 +91,10 @@ export function CragMap({ crags, onOpen }: { crags: MapCrag[]; onOpen: (id: stri
         <View style={{ position: 'absolute', left: 12, right: 12, bottom: 12, backgroundColor: th.surface, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: th.line }}>
           <Text style={{ color: th.ink, fontFamily: F.display, fontSize: 24, textTransform: 'uppercase' }}>{crag.name}</Text>
           <Text style={{ color: th.muted, fontSize: 13 }} numberOfLines={1}>
-            {[crag.path, t('crags.routes', { count: crag.routes }), loc.position ? formatDistance(distanceM(loc.position, { lat: crag.lat!, lng: crag.lng! }), i18n.language) : '']
+            {[crag.path, t('crags.routes', { count: crag.routes }), loc.position ? distanceText(distanceM(loc.position, { lat: crag.lat!, lng: crag.lng! }), crag.approx) : '']
               .filter(Boolean).join(' · ')}
           </Text>
+          {crag.approx ? <Text style={{ color: th.muted, fontSize: 13 }}>{t('map.approx')}</Text> : null}
           <Button label={t('map.openCrag')} onPress={() => onOpen(crag.id)} />
         </View>
       ) : null}

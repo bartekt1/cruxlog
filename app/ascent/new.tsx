@@ -333,7 +333,7 @@ export default function NewAscent() {
                   <Text style={{ color: th.muted, fontSize: 12, marginTop: 6 }}>{t('map.nearby')}</Text>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled">
                     {near.map((c) => (
-                      <Chip key={c.id} label={`${c.name} · ${formatDistance(c.distance, i18n.language)}`} on={nearCrag === c.id} onPress={() => setNearCrag(nearCrag === c.id ? null : c.id)} />
+                      <Chip key={c.id} label={`${c.name} · ${c.pos_source === 'approx' ? t('map.about', { distance: formatDistance(c.distance, i18n.language) }) : formatDistance(c.distance, i18n.language)}`} on={nearCrag === c.id} onPress={() => setNearCrag(nearCrag === c.id ? null : c.id)} />
                     ))}
                   </ScrollView>
                 </>
