@@ -8,5 +8,6 @@ Cruxlog: climbing logbook and crag guide. Expo SDK 57, React Native, TypeScript,
 - All user-visible strings go through i18n in `src/i18n/pl.json` and `en.json`. Keep both files in sync.
 - Schema changes: append a new entry to `MIGRATIONS` in `src/db/migrate.ts`, never edit an old one. Bump `BACKUP_VERSION` if the backup format changes.
 - Keep domain logic in `src/domain/` pure and covered by tests in `__tests__/`.
+- Look ("przewodnik kredą"): colors only from `useTheme()` (`src/ui/theme.ts`, light and dark); import `Text` from `src/ui/Text`, not react-native, so the bundled Barlow fonts apply; headings, grades and numbers use `F.display`/`F.cond` from `src/ui/fonts.ts`.
 - No GPS tracks or routes. The map shows only a pin and the user's position, and location stays on the device.
 - Skills in `.claude/skills/`: `verify` (checks), `new-screen`, `db-migration`, `i18n-sync`, `ux-audit`. Use them for those tasks.

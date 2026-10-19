@@ -1,25 +1,32 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
-import { useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { deleteRegion, getRegion, renameRegion } from '../../src/db/repo';
+import { deleteArea, getArea, renameArea } from '../../src/db/repo';
+import type { AreaLevel } from '../../src/domain/areas';
 import { confirmDelete } from '../../src/ui/confirm';
 import { NameEditor } from '../../src/ui/NameEditor';
 
-export default function EditRegion() {
+/** Rename or delete a region, rejon or group. Deleting moves its crags and sub-areas one level up. */
+export default function EditArea() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const db = useSQLiteContext();
   const router = useRouter();
   const { t } = useTranslation();
-  const load = useCallback(() => getRegion(db, id), [db, id]);
+  const [level, setLevel] = useState<AreaLevel>('region');
+  useEffect(() => { getArea(db, id).then((a) => a && setLevel(a.level)); }, [db, id]);
+  const load = useCallback(() => getArea(db, id), [db, id]);
   return (
     <NameEditor
-      title={t('edit.regionTitle')}
-      hint={t('edit.regionDeleteHint')}
+      title={t(`areas.edit.${level}`)}
+      hint={t('areas.deleteHint')}
       load={load}
-      rename={(name) => renameRegion(db, id, name)}
-      deleteLabel={t('edit.deleteRegion')}
-      onDelete={(name) => confirmDelete(t, name, null, async () => { await deleteRegion(db, id); router.back(); })}
+      rename={(name) => renameArea(db, id, name)}
+      deleteLabel={t(`areas.delete.${level}`)}
+      onDelete={(name) => confirmDelete(t, name, null, async () => {
+        await deleteArea(db, id);
+        router.back();
+      })}
     />
   );
 }

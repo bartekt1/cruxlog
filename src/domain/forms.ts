@@ -18,6 +18,15 @@ export function validateRouteDraft(r: RouteDraft): Result<{ cragName: string; se
   return { ok: true, value: { cragName: crag, sectorName: r.sector.trim() || crag, name, gradeLabel: r.grade.trim(), gradeIndex } };
 }
 
+/** Optional length or bolt count from a text field: empty → null; anything but a number ≥ 0 is an error. */
+export function validateOptionalNumber(text: string, integer: boolean): Result<number | null> {
+  const s = text.trim().replace(',', '.');
+  if (!s) return { ok: true, value: null };
+  const n = Number(s);
+  if (!Number.isFinite(n) || n < 0 || n > 5000 || (integer && !Number.isInteger(n))) return { ok: false, error: 'edit.errors.number' };
+  return { ok: true, value: n };
+}
+
 export type AscentDraft = { date: string; attempts: string };
 
 export function validateAscentDraft(a: AscentDraft): Result<{ date: string; attempts: number }> {
@@ -52,12 +61,13 @@ export function validateName(name: string): Result<string> {
   return n ? { ok: true, value: n } : { ok: false, error: 'edit.errors.name' };
 }
 
-export type CragDraft = { name: string; region: string; description: string; approach: string; sectors?: string[] };
+export type AreaDraft = { region: string; area: string; group: string };
+export type CragDraft = { name: string; areas: AreaDraft; description: string; approach: string; sectors?: string[] };
 
-/** A crag needs a region and a name; sectors are optional, de-duplicated ignoring case and Polish letters. */
-export function validateCragDraft(c: CragDraft): Result<{ name: string; regionName: string; description: string; approach: string; sectorNames: string[] }> {
-  const regionName = c.region.trim();
-  if (!regionName) return { ok: false, error: 'edit.errors.region' };
+/** A crag needs a region, an area ("rejon") and a name; the group and sectors are optional, sectors de-duplicated loosely. */
+export function validateCragDraft(c: CragDraft): Result<{ name: string; areas: AreaDraft; description: string; approach: string; sectorNames: string[] }> {
+  const areas = validateAreas(c.areas);
+  if (!areas.ok) return areas;
   const name = c.name.trim();
   if (!name) return { ok: false, error: 'edit.errors.name' };
   const sectorNames: string[] = [];
@@ -65,5 +75,14 @@ export function validateCragDraft(c: CragDraft): Result<{ name: string; regionNa
     const n = s.trim();
     if (n && !sectorNames.some((x) => sameName(x, n))) sectorNames.push(n);
   }
-  return { ok: true, value: { name, regionName, description: c.description.trim(), approach: c.approach.trim(), sectorNames } };
+  return { ok: true, value: { name, areas: areas.value, description: c.description.trim(), approach: c.approach.trim(), sectorNames } };
+}
+
+/** Region and area are required, the group is optional. */
+export function validateAreas(a: AreaDraft): Result<AreaDraft> {
+  const region = a.region.trim();
+  const area = a.area.trim();
+  if (!region) return { ok: false, error: 'edit.errors.region' };
+  if (!area) return { ok: false, error: 'edit.errors.area' };
+  return { ok: true, value: { region, area, group: a.group.trim() } };
 }

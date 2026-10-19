@@ -1,12 +1,28 @@
 import { useColorScheme } from 'react-native';
+import { useSettings } from './settingsStore';
 
-// Contrast (WCAG): ink/muted/accent/warn ≥ 4.5:1 on bg and surface; outline ≥ 3:1 (input and control borders).
-// line is only for decorative dividers. cta (the main "add" button) is the only orange, so it stands out from the green UI;
-// onCta on cta ≥ 6.5:1.
-const light = { bg: '#eceeea', surface: '#f8f9f6', ink: '#16211e', muted: '#5b6965', line: '#d2d8d2', outline: '#7a8782', accent: '#1d6b57', onAccent: '#ffffff', soft: '#dde7e1', warn: '#b33a32', sun: '#e9b02f', cta: '#e8811a', onCta: '#1f1300' };
-const dark = { bg: '#0f1715', surface: '#17211e', ink: '#e6ece8', muted: '#92a39c', line: '#2a3833', outline: '#647770', accent: '#4fb596', onAccent: '#06201a', soft: '#203029', warn: '#ef7a72', sun: '#e9b02f', cta: '#f28c28', onCta: '#1f1300' };
+// "Przewodnik kredą": paper, ink and one rust accent; at night a deep green instead of black.
+// Contrast (WCAG): ink/muted/accent/warn ≥ 4.5:1 on bg and surface; outline ≥ 3:1 (input and control borders);
+// onAccent on accent and onBadge on badge ≥ 4.5:1. line and contour are decorative only.
+const light = {
+  bg: '#f3eee3', surface: '#fbf8f1', ink: '#1e1c18', muted: '#6a6152', line: '#d6ccb8', outline: '#8a7f6c',
+  accent: '#9a3f22', onAccent: '#ffffff', soft: '#e9e1d1', warn: '#b3261e', sun: '#b07a12',
+  cta: '#9a3f22', onCta: '#ffffff', badge: '#1e1c18', onBadge: '#f3eee3', contour: '#ddd3bf',
+};
+const dark: typeof light = {
+  bg: '#141a16', surface: '#1c241f', ink: '#efe9dc', muted: '#a9a08e', line: '#2e3a32', outline: '#6f7a70',
+  accent: '#e8865e', onAccent: '#1a0e08', soft: '#222c25', warn: '#f28b82', sun: '#e9b02f',
+  cta: '#e8865e', onCta: '#1a0e08', badge: '#efe9dc', onBadge: '#141a16', contour: '#222c25',
+};
 
 export type Theme = typeof light;
+
+export function useIsDark(): boolean {
+  const system = useColorScheme();
+  const mode = useSettings((s) => s.themeMode);
+  return mode === 'system' ? system === 'dark' : mode === 'dark';
+}
+
 export function useTheme(): Theme {
-  return useColorScheme() === 'dark' ? dark : light;
+  return useIsDark() ? dark : light;
 }

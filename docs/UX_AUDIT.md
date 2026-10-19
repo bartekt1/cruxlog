@@ -113,6 +113,47 @@ Severity: **H** blocks a task or loses/corrupts data, **M** slows a task or conf
 | B4 | Empty sectors were invisible on the crag screen | M | Fixed: all sectors shown, empty ones with a hint |
 | B5 | "Add" button hard to see, especially in dark mode | H | Fixed: raised orange "+" in the middle of the tab bar, the only orange in the UI |
 
+## Round 6 (guidebook data)
+
+| # | Issue | Sev | Status |
+|---|---|---|---|
+| G1 | Guidebook grades VI+, VI-, V-, IV+, IV-, II, ranges (VI.4/4+), "?" and Font 4+, 8A+ were rejected by the importer | H | Fixed: mapped to the nearest lower ladder step, original label kept and shown |
+| G2 | Imported data was read-only, so routes could not be moved to sectors or corrected | M | Fixed: everything editable; the import asks first and warns that re-importing overwrites changes |
+| G3 | Guidebook export not in the app's CSV format | M | Converter `src/domain/guidebookCsv.ts` (region = group, Kamieniec groups merged; crag = rock; walls in the crag description) |
+
+## Round 7 (crag hierarchy)
+
+| # | Issue | Sev | Status |
+|---|---|---|---|
+| H1 | One flat "region" level could not express region › rejon › group, so 70 crags sat in one long list | H | Fixed: areas nest (region, rejon, optional group); Crags tab drills down with counts and search |
+| H2 | Guidebook needed converting to three CSV files on a computer | M | Fixed: the guidebook export or a simple one-row-per-route file imports directly; three-file import kept |
+| H3 | Rock names like "Krowia (ściana zachodnia)" became separate crags | M | Fixed: the bracketed wall becomes a sector of the crag |
+
+## Round 8 (scope: roped climbing only)
+
+| # | Issue | Sev | Status |
+|---|---|---|---|
+| S1 | Boulders not used by the owner; extra type, grade systems, setting, tile and pyramid added noise | M | Removed: types Sport and Multipitch only, grades KR/UIAA/FR; old boulder data hidden (migration 4) and skipped on import |
+| S2 | Re-import left routes that were deleted from the file | M | Fixed: the file decides the imported routes of its crags; routes with ascents and your own routes stay |
+| S3 | Renaming a crag in the file made a second crag | L | Fixed: optional crag key column (`key_skaly` / `crag_key`) |
+
+## Round 9 (big theCrag import)
+
+| # | Issue | Sev | Status |
+|---|---|---|---|
+| T1 | Three area levels could not hold theCrag paths (up to 7 levels) | H | Fixed: groups nest at any depth; the group field takes several levels ("A › B") |
+| T2 | 15 000 routes: route search loaded and folded every route on each keystroke; path labels and crag counts recomputed per row | H | Fixed: search index kept in memory until the next write; labels and counts computed once per list |
+| T3 | Length and bolts imported but never shown | M | Fixed: shown on the route screen and editable |
+| T4 | Replacing one imported file with another left the old crags | M | Fixed: "Remove imported crags and routes" in Settings (keeps routes with ascents and own data) |
+
+## Round 10 (visual refresh: "przewodnik kredą")
+
+| # | Issue | Sev | Status |
+|---|---|---|---|
+| V1 | The look felt plain (system font, flat green lists) | M | New look chosen by the owner from 4 concepts: paper and ink with one rust accent, Barlow and Barlow Condensed bundled, grades in ink squares, day and sector cards, faint contour lines in headers |
+| V2 | Dark mode followed the phone only | L | Settings › Appearance: like the phone, light or dark; the dark theme is deep green, not black |
+| V3 | Journal had no summary | L | Three season tiles (sends, days out, hardest) on top of the journal |
+
 ## Open items
 
 1. Edit a goal's title or target; link a project goal to a route.

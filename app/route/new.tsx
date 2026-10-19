@@ -2,7 +2,8 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Keyboard, ScrollView, Text } from 'react-native';
+import { Keyboard, ScrollView } from 'react-native';
+import { Text } from '../../src/ui/Text';
 import { createRoute, getCrag, listCragRoutes, listSectors, type CragDetail, type CragRouteRow, type SectorRow } from '../../src/db/repo';
 import { validateRouteDraft } from '../../src/domain/forms';
 import { formatGrade, gradeExample, systemsFor, type GradeSystem, type RouteType } from '../../src/domain/grades';
@@ -42,7 +43,7 @@ export default function NewRoutes() {
 
   function pickType(next: RouteType) {
     setType(next);
-    setSystem(next === 'boulder' ? settings.boulderSystem : systemsFor(next).includes(system) ? system : settings.routeSystem);
+    setSystem(systemsFor(next).includes(system) ? system : settings.routeSystem);
   }
 
   const duplicate = name.trim() ? existing.find((r) => sameName(r.name, name)) ?? null : null;
@@ -90,7 +91,7 @@ export default function NewRoutes() {
 
       <Label>{t('ascent.type')}</Label>
       <ChipRow>
-        {(['sport', 'boulder', 'multipitch'] as RouteType[]).map((x) => <Chip key={x} label={t(`types.${x}`)} on={type === x} onPress={() => pickType(x)} />)}
+        {(['sport', 'multipitch'] as RouteType[]).map((x) => <Chip key={x} label={t(`types.${x}`)} on={type === x} onPress={() => pickType(x)} />)}
       </ChipRow>
       <Label>{t('ascent.gradeSystem')}</Label>
       <ChipRow>{systemsFor(type).map((s) => <Chip key={s} label={s.toUpperCase()} on={system === s} onPress={() => setSystem(s)} />)}</ChipRow>

@@ -2,9 +2,10 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, Text } from 'react-native';
+import { ScrollView } from 'react-native';
+import { Text } from '../../src/ui/Text';
 import { deleteRoute, getRoute, listSectorNames, routeUsage, updateRoute, type RouteRow } from '../../src/db/repo';
-import { validateRouteDraft } from '../../src/domain/forms';
+import { validateOptionalNumber, validateRouteDraft } from '../../src/domain/forms';
 import { formatGrade, gradeExample, systemsFor, type GradeSystem, type RouteType } from '../../src/domain/grades';
 import { confirmDelete } from '../../src/ui/confirm';
 import { Button, Chip, ChipRow, ErrorText, Field, Label } from '../../src/ui/kit';
@@ -24,6 +25,8 @@ export default function EditRoute() {
   const [type, setType] = useState<RouteType>('sport');
   const [system, setSystem] = useState<GradeSystem>('kr');
   const [grade, setGrade] = useState('');
+  const [length, setLength] = useState('');
+  const [bolts, setBolts] = useState('');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -31,7 +34,8 @@ export default function EditRoute() {
     getRoute(db, id).then((r) => {
       if (!r) return;
       setRoute(r); setName(r.name); setSector(r.sector_name); setType(r.type); setSystem(r.grade_system);
-      setGrade(formatGrade(r.grade_index, r.grade_system, r.type));
+      setGrade(r.grade_label || formatGrade(r.grade_index, r.grade_system, r.type));
+      setLength(r.length_m != null ? String(r.length_m) : ''); setBolts(r.bolts != null ? String(r.bolts) : '');
       listSectorNames(db, r.crag_id).then(setSectors);
     });
   }, [db, id]);
@@ -45,10 +49,14 @@ export default function EditRoute() {
     if (!route) return;
     const draft = validateRouteDraft({ crag: route.crag_name, sector, name, type, system, grade });
     if (!draft.ok) { setError(t(draft.error, { example: gradeExample(system, type) })); return; }
+    const lengthM = validateOptionalNumber(length, false);
+    const boltCount = validateOptionalNumber(bolts, true);
+    if (!lengthM.ok || !boltCount.ok) { setError(t('edit.errors.number')); return; }
     setSaving(true);
     try {
       const v = draft.value;
-      await updateRoute(db, id, { sectorName: v.sectorName, name: v.name, type, gradeLabel: v.gradeLabel, gradeSystem: system, gradeIndex: v.gradeIndex });
+      await updateRoute(db, id, { sectorName: v.sectorName, name: v.name, type, gradeLabel: v.gradeLabel, gradeSystem: system, gradeIndex: v.gradeIndex,
+        lengthM: lengthM.value, bolts: boltCount.value });
       router.back();
     } catch (e) {
       setError(t('common.failed', { message: (e as Error).message }));
@@ -76,13 +84,17 @@ export default function EditRoute() {
       ) : null}
       <Label>{t('ascent.type')}</Label>
       <ChipRow>
-        {(['sport', 'boulder', 'multipitch'] as RouteType[]).map((x) => <Chip key={x} label={t(`types.${x}`)} on={type === x} onPress={() => pickType(x)} />)}
+        {(['sport', 'multipitch'] as RouteType[]).map((x) => <Chip key={x} label={t(`types.${x}`)} on={type === x} onPress={() => pickType(x)} />)}
       </ChipRow>
       <Label>{t('ascent.gradeSystem')}</Label>
       <ChipRow>{systemsFor(type).map((s) => <Chip key={s} label={s.toUpperCase()} on={system === s} onPress={() => setSystem(s)} />)}</ChipRow>
       <Label>{t('ascent.grade')}</Label>
       <Field value={grade} onChangeText={setGrade} accessibilityLabel={t('ascent.grade')} autoCapitalize="characters" autoCorrect={false}
         placeholder={t('ascent.gradeExample', { example: gradeExample(system, type) })} />
+      <Label>{t('route.lengthLabel')}</Label>
+      <Field value={length} onChangeText={setLength} accessibilityLabel={t('route.lengthLabel')} keyboardType="decimal-pad" placeholder={t('common.optional')} />
+      <Label>{t('route.boltsLabel')}</Label>
+      <Field value={bolts} onChangeText={setBolts} accessibilityLabel={t('route.boltsLabel')} keyboardType="number-pad" placeholder={t('common.optional')} />
       {error ? <ErrorText>{error}</ErrorText> : null}
       <Button label={saving ? t('common.saving') : t('common.save')} onPress={save} disabled={saving || !route} />
       <Button label={t('edit.deleteRoute')} onPress={remove} variant="danger" disabled={saving || !route} />

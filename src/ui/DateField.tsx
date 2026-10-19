@@ -1,7 +1,8 @@
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, Pressable, Text, View } from 'react-native';
+import { Platform, Pressable, View } from 'react-native';
+import { Text } from './Text';
 import { formatDay, isoDate, isValidIsoDate, relativeDay } from '../domain/dates';
 import { useTheme } from './theme';
 
@@ -35,7 +36,7 @@ export function DateField({ value, onChange, label }: { value: string; onChange:
         accessibilityRole="button"
         accessibilityLabel={`${label}: ${text}`}
         accessibilityHint={t('ascent.pickDate')}
-        style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderColor: th.outline, borderRadius: 6, paddingHorizontal: 12, minHeight: 48, backgroundColor: th.surface, opacity: pressed ? 0.7 : 1 })}
+        style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderColor: th.outline, borderRadius: 12, paddingHorizontal: 12, minHeight: 48, backgroundColor: th.surface, opacity: pressed ? 0.7 : 1 })}
       >
         <Text style={{ color: th.ink, fontSize: 16 }}>{text}</Text>
         <Text style={{ color: th.accent, fontWeight: '600' }}>{t('common.change')}</Text>

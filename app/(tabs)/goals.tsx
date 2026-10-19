@@ -2,7 +2,8 @@ import { useFocusEffect } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, FlatList, Keyboard, Text, View } from 'react-native';
+import { Alert, FlatList, Keyboard, View } from 'react-native';
+import { Text } from '../../src/ui/Text';
 import { addGoal, deleteGoal, listAscents, listGoals, setGoalDone, type GoalRow } from '../../src/db/repo';
 import { validateGoalDraft, type GoalKind } from '../../src/domain/forms';
 import { countGoalProgress, yearStats } from '../../src/domain/stats';
@@ -78,13 +79,13 @@ export default function Goals() {
           const done = item.done_at != null;
           const progress = item.kind === 'count' && item.target ? countGoalProgress(item.target, sends) : null;
           return (
-            <View style={{ paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: th.line, opacity: done ? 0.6 : 1 }}>
-              <Text style={{ color: th.ink, fontWeight: '600', textDecorationLine: done ? 'line-through' : 'none' }}>{done ? '✓ ' : ''}{item.title}</Text>
+            <View style={{ marginTop: 8, paddingTop: 12, paddingBottom: 4, paddingHorizontal: 14, backgroundColor: th.surface, borderWidth: 1, borderColor: th.line, borderRadius: 14, opacity: done ? 0.6 : 1 }}>
+              <Text style={{ color: th.ink, fontWeight: '600', fontSize: 16, textDecorationLine: done ? 'line-through' : 'none' }}>{done ? '✓ ' : ''}{item.title}</Text>
               <Text style={{ color: th.muted, fontSize: 12 }}>{t(`goals.${item.kind as GoalKind}`)}</Text>
               {progress ? (
                 <View style={{ marginTop: 6, gap: 4 }} accessible accessibilityLabel={t('goals.progress', { value: progress.value, target: progress.target, year })}>
-                  <View style={{ height: 8, borderRadius: 4, backgroundColor: th.soft, overflow: 'hidden' }}>
-                    <View style={{ height: 8, width: `${progress.ratio * 100}%`, backgroundColor: th.accent }} />
+                  <View style={{ height: 10, borderRadius: 5, backgroundColor: th.soft, overflow: 'hidden' }}>
+                    <View style={{ height: 10, width: `${progress.ratio * 100}%`, backgroundColor: th.accent }} />
                   </View>
                   <Text style={{ color: progress.reached ? th.accent : th.muted, fontSize: 12 }}>
                     {t('goals.progress', { value: progress.value, target: progress.target, year })}

@@ -1,19 +1,20 @@
 {
   "tabs": { "journal": "Dziennik", "progress": "Postępy", "crags": "Skały", "goals": "Cele" },
   "common": {
+    "optional": "Opcjonalnie",
     "save": "Zapisz", "saving": "Zapisywanie…", "edit": "Edytuj", "delete": "Usuń", "cancel": "Anuluj", "add": "Dodaj", "change": "Zmień", "search": "Szukaj", "none": "Na razie pusto",
     "today": "Dziś", "yesterday": "Wczoraj", "failed": "Coś poszło nie tak: {{message}}"
   },
   "styles": { "os": "OS", "flash": "Flash", "rp": "RP", "pp": "PP", "tr": "TR", "attempt": "Próba" },
-  "types": { "sport": "Sport", "boulder": "Boulder", "multipitch": "Wielowyciąg" },
+  "types": { "sport": "Sport", "multipitch": "Wielowyciąg" },
   "journal": {
-    "empty": "Brak przejść", "emptyHint": "Dotknij pomarańczowy „+” na dole, aby zapisać pierwsze.", "attempts": "podejścia: {{count}}", "add": "Dodaj przejście", "addShort": "Dodaj",
+    "empty": "Brak przejść", "emptyHint": "Dotknij „+” na dole, aby zapisać pierwsze.", "attempts": "podejścia: {{count}}", "add": "Dodaj przejście", "addShort": "Dodaj", "statSends": "przejścia {{year}}", "statHardest": "najtrudniejsza", "dayCount": "przejścia: {{count}}",
     "backupNever": "Nie masz jeszcze kopii zapasowej", "backupOld": "Ostatnia kopia: {{n}} dni temu", "backupHint": "Twoje przejścia są tylko w tym telefonie. Dotknij, aby zrobić kopię."
   },
   "ascent": {
     "title": "Nowe przejście", "editTitle": "Edycja przejścia", "detailTitle": "Przejście", "notFound": "To przejście już nie istnieje.",
     "deleteTitle": "Usunąć przejście?", "deleteQuestion": "Przejście drogi „{{name}}” zniknie z dziennika i statystyk.",
-    "pickDate": "Otwiera kalendarz", "recent": "Ostatnio wspinane", "routesHeader": "Drogi", "cragsHeader": "Skały", "cragHitHint": "Dotknij skałę, aby dodać na niej nową drogę.", "regionOfCrag": "{{region}} (rejon tej skały)", "newCragHint": "Nowa skała: zostanie utworzona przy zapisie.", "cragPlaceholder": "Zacznij pisać, aby zobaczyć skały",
+    "pickDate": "Otwiera kalendarz", "recent": "Ostatnio wspinane", "routesHeader": "Drogi", "cragsHeader": "Skały", "cragHitHint": "Dotknij skałę, aby dodać na niej nową drogę.", "newCragHint": "Nowa skała: zostanie utworzona przy zapisie.", "cragPlaceholder": "Zacznij pisać, aby zobaczyć skały",
     "sectorPlaceholder": "np. Lewa ściana", "noSectorsYet": "Ta skała nie ma jeszcze sektorów. Wpisz nowy albo zostaw puste.", "sectorNewCrag": "Nowa skała: wpisz sektor albo zostaw puste.",
     "duplicate": "Ta skała ma już drogę „{{name}}” ({{sector}}, {{grade}}).", "useExisting": "Użyj tej drogi", "route": "Droga", "searchRoute": "Szukaj po drodze, sektorze lub skale", "newRoute": "Utwórz nową drogę",
     "newRouteNamed": "Utwórz drogę „{{name}}”", "noResults": "Brak dróg pasujących do „{{query}}”.",
@@ -24,12 +25,12 @@
     "errors": {
       "crag": "Podaj nazwę skały.", "name": "Podaj nazwę drogi.",
       "grade": "Takiej wyceny nie ma w wybranej skali. Przykład: {{example}}.",
-      "date": "Podaj prawdziwą datę w formacie RRRR-MM-DD.", "region": "Wybierz albo wpisz rejon nowej skały.", "attempts": "Liczba podejść musi być liczbą całkowitą, co najmniej 1."
+      "date": "Podaj prawdziwą datę w formacie RRRR-MM-DD.", "region": "Nowa skała potrzebuje regionu i rejonu.", "attempts": "Liczba podejść musi być liczbą całkowitą, co najmniej 1."
     }
   },
   "progress": {
-    "title": "Postępy", "sends": "Przejścia", "days": "Dni na skale", "hardestRoute": "Najtrudniejsza droga", "hardestBoulder": "Najtrudniejszy boulder",
-    "pyramidRoutes": "Piramida dróg", "pyramidBoulders": "Piramida boulderów", "activity": "Aktywność (ostatnie 18 tygodni)",
+    "title": "Postępy", "sends": "Przejścia", "days": "Dni na skale", "hardestRoute": "Najtrudniejsza droga",
+    "pyramidRoutes": "Piramida dróg", "activity": "Aktywność (ostatnie 18 tygodni)",
     "empty": "Brak przejść w {{year}}", "emptyHint": "Dodaj przejście w Dzienniku, aby zobaczyć statystyki.", "noSends": "Brak przejść.", "prevYear": "Poprzedni rok", "nextYear": "Następny rok",
     "legendNone": "Bez wspinania", "legendSome": "1–2 przejścia", "legendMany": "3 i więcej"
   },
@@ -39,22 +40,21 @@
   "route": {
     "title": "Droga", "history": "Twoje przejścia", "logAnother": "Dodaj przejście", "openHint": "Otwiera historię drogi",
     "sentOn": "Przejście {{date}} ({{style}}).", "daysToSend": "Zajęło to {{n}} dni.", "notSent": "Jeszcze bez przejścia. Dni prób: {{n}}.", "neverTried": "Brak podejść do tej drogi.",
-    "totals": "Podejścia: {{ascents}} · przejścia: {{sends}}"
+    "totals": "Podejścia: {{ascents}} · przejścia: {{sends}}",
+    "length": "{{m}} m", "bolts": "przeloty: {{count}}", "lengthLabel": "Długość (m)", "boltsLabel": "Przeloty"
   },
   "edit": {
     "cragTitle": "Edycja skały", "newCragTitle": "Dodaj skałę", "routeTitle": "Edycja drogi", "routeTitleNamed": "Edytuj drogę {{name}}",
-    "sectorTitle": "Edycja sektora", "regionTitle": "Edycja rejonu",
-    "name": "Nazwa", "region": "Rejon", "regionRequired": "Rejon", "cragName": "Nazwa skały", "sectors": "Sektory (opcjonalnie)",
+    "sectorTitle": "Edycja sektora",
+    "name": "Nazwa", "cragName": "Nazwa skały", "sectors": "Sektory (opcjonalnie)",
     "addAnotherSector": "+ Kolejny sektor", "sectorsHint": "Małe skały często nie mają sektorów; możesz je dodać później na ekranie skały.", "sectorOptional": "Opcjonalnie; puste = bez sektora",
     "addRoutes": "+ Dodaj drogi", "addSector": "+ Dodaj sektor", "addRoutesTitle": "Dodaj drogi", "addSectorTitle": "Dodaj sektor", "addRouteInSector": "Dodaj drogę w sektorze {{sector}}",
-    "addCragInRegion": "Dodaj skałę w rejonie {{region}}", "emptySector": "Brak dróg. Dotknij +, aby dodać.", "addedRoutes": "Dodano: {{list}}",
-    "routeExists": "Ta skała ma już drogę „{{name}}” ({{sector}}).", "saveAndNext": "Zapisz i dodaj kolejną", "saveAndClose": "Zapisz i zamknij", "regionPlaceholder": "np. Jura", "description": "Opis", "sector": "Sektor",
-    "deleteCrag": "Usuń skałę", "deleteRoute": "Usuń drogę", "deleteSector": "Usuń sektor", "deleteRegion": "Usuń rejon",
+    "emptySector": "Brak dróg. Dotknij +, aby dodać.", "addedRoutes": "Dodano: {{list}}",
+    "routeExists": "Ta skała ma już drogę „{{name}}” ({{sector}}).", "saveAndNext": "Zapisz i dodaj kolejną", "saveAndClose": "Zapisz i zamknij", "description": "Opis", "sector": "Sektor",
+    "deleteCrag": "Usuń skałę", "deleteRoute": "Usuń drogę", "deleteSector": "Usuń sektor",
     "deleteTitle": "Usunąć „{{name}}”?", "deleteAlso": "Zostaną też usunięte:", "deleteSimple": "Tego nie można cofnąć.",
     "countSectors": "sektory: {{count}}", "countRoutes": "drogi: {{count}}", "countAscents": "Twoje przejścia: {{count}}",
-    "importedNote": "Zaimportowane z pliku CSV. Aby to zmienić, popraw plik i zaimportuj go ponownie.",
-    "regionDeleteHint": "Usunięcie rejonu nie usuwa skał; zostaną po prostu bez rejonu.",
-    "errors": { "name": "Podaj nazwę.", "region": "Wybierz albo wpisz rejon." }
+    "errors": { "name": "Podaj nazwę.", "region": "Wybierz albo wpisz region.", "area": "Wybierz albo wpisz rejon.", "number": "Długość i przeloty muszą być liczbami (albo zostaw puste)." }
   },
   "goals": {
     "title": "Cele", "count": "Liczba", "project": "Projekt", "wishlist": "Lista życzeń", "newTitle": "Nazwa celu", "target": "Cel (liczba)",
@@ -63,14 +63,33 @@
     "deleteTitle": "Usunąć cel?", "deleteQuestion": "„{{title}}” zostanie usunięty.",
     "errors": { "title": "Podaj nazwę celu.", "target": "Cel musi być liczbą całkowitą, co najmniej 1." }
   },
+  "areas": {
+    "region": "Region", "area": "Rejon", "groupOptional": "Grupa skał (opcjonalnie)", "where": "Gdzie jest ta skała?",
+    "regionPlaceholder": "np. Czarnorzeki", "areaPlaceholder": "np. Kamieniec", "search": "Szukaj skały", "noHits": "Nie znaleziono skały",
+    "regions": "Regiony", "areas": "Rejony", "groups": "Grupy skał", "cragCount": "Skały: {{count}}", "inside": "W: {{name}}", "addRegion": "+ Dodaj region",
+    "empty": "Tu nie ma jeszcze nic. Dodaj skałę albo niższy poziom.",
+    "deleteHint": "Skały i to, co jest w środku, nie zostaną usunięte, tylko przeniesione poziom wyżej.",
+    "level": { "region": "Region", "area": "Rejon", "group": "Grupa skał" },
+    "edit": { "region": "Edycja regionu", "area": "Edycja rejonu", "group": "Edycja grupy" },
+    "delete": { "region": "Usuń region", "area": "Usuń rejon", "group": "Usuń grupę" },
+    "add": { "region": "+ Dodaj region", "area": "+ Dodaj rejon", "group": "+ Dodaj grupę" },
+    "placeholder": { "region": "np. Czarnorzeki", "area": "np. Kamieniec", "group": "np. Krowia Turnia" }
+  },
   "settings": {
-    "title": "Ustawienia", "language": "Język", "routeGrades": "Wyceny dróg", "boulderGrades": "Wyceny boulderów",
+    "title": "Ustawienia", "language": "Język", "theme": "Wygląd", "themes": { "system": "Jak w telefonie", "light": "Jasny", "dark": "Ciemny" }, "routeGrades": "Wyceny dróg",
     "backup": "Kopia zapasowa", "backupHelp": "Eksport zapisuje wszystkie dane w jednym pliku. Import scala plik z aplikacją; nowsze wpisy wygrywają, nic nie jest usuwane.",
-    "export": "Eksportuj kopię", "import": "Importuj kopię", "csv": "Importuj skały z CSV",
-    "csvHelp": "Wybierz crags.csv, routes.csv oraz opcjonalnie sectors.csv i pitches.csv.",
+    "export": "Eksportuj kopię", "import": "Importuj kopię", "csv": "Importuj skały z pliku CSV",
+    "csvHelp": "Wybierz jeden plik z listą dróg (np. plik z przewodnika albo eksport z theCrag). Każdy wiersz to jedna droga: region, rejon, grupa, skała, sektor, nazwa, wycena. Działa też dawny import z plików crags.csv i routes.csv.",
+    "csvSkipped": "Pominięte wiersze: {{count}} (bouldery, lód, via ferraty, drogi bez nazwy, projekty, drogi bez wyceny lub z nieznaną wyceną).",
+    "removeImported": "Usuń zaimportowane skały i drogi", "removeImportedHelp": "Przed wczytaniem pliku, który ma zastąpić poprzedni. Drogi z Twoimi przejściami i wszystko, co dodałeś sam, zostaje.",
+    "removeImportedTitle": "Usunąć zaimportowane dane?", "removeImportedConfirm": "Zostanie usuniętych dróg: {{routes}} i skał: {{crags}}. Drogi z Twoimi przejściami i wszystko, co dodałeś sam, zostaje.",
+    "removeImportedDone": "Usunięto dróg: {{routes}}, skał: {{crags}}.", "removeImportedNone": "Nie ma zaimportowanych danych do usunięcia.",
+    "csvLine": "wiersz {{line}}", "csvUnknown": "Nie rozpoznano pliku {{file}}. Pierwszy wiersz powinien zawierać nagłówki, np. Region;Rejon;Skała;Nazwa;Wycena.",
     "importDone": "Zaimportowano rekordów: {{count}}.", "csvDone": "Zaimportowano: skały {{crags}}, sektory {{sectors}}, drogi {{routes}}, wyciągi {{pitches}}.",
     "csvErrors": "Znaleziono problemów: {{count}}. Nic nie zaimportowano.", "csvMissing": "Wymagane są crags.csv i routes.csv. Wybrano: {{files}}.",
     "notBackup": "Ten plik nie jest kopią zapasową Cruxlog.", "lastBackupNever": "Nie masz jeszcze kopii.", "lastBackupToday": "Ostatnia kopia: dziś.", "lastBackupDays": "Ostatnia kopia: {{n}} dni temu.",
-    "done": "Gotowe", "problem": "Problem"
+    "done": "Gotowe", "problem": "Problem",
+    "csvConfirmTitle": "Zaimportować?", "csvConfirmYes": "Importuj",
+    "csvConfirm": "Zostanie zaimportowanych skał: {{crags}}, dróg: {{routes}}. Jeśli ten plik był już importowany, Twoje zmiany w tych skałach i drogach zostaną nadpisane, a usunięte wrócą. Twoje przejścia się nie zmienią."
   }
 }

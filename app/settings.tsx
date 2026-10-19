@@ -4,12 +4,16 @@ import * as Sharing from 'expo-sharing';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Alert, ScrollView, Text } from 'react-native';
+import { ActivityIndicator, Alert, ScrollView } from 'react-native';
+import { Text } from '../src/ui/Text';
 import { exportBackup, importBackup } from '../src/db/backup';
-import { applyImport, listAscents } from '../src/db/repo';
+import { applyImport, importedUsage, listAscents, removeImported } from '../src/db/repo';
 import { backupStatus } from '../src/domain/history';
-import { buildImportPlan } from '../src/domain/csvImport';
-import { BOULDER_SYSTEMS, ROUTE_SYSTEMS } from '../src/domain/grades';
+import { buildImportPlan, type ImportPlan } from '../src/domain/csvImport';
+import { detectFormat, parseFlatCsv, planFromFlatRows, type FlatRow } from '../src/domain/flatImport';
+import { guidebookRows } from '../src/domain/guidebookCsv';
+import { theCragRows } from '../src/domain/thecragCsv';
+import { ROUTE_SYSTEMS } from '../src/domain/grades';
 import type { Lang } from '../src/domain/settings';
 import i18n from '../src/i18n';
 import { Button, Chip, ChipRow, Label } from '../src/ui/kit';
@@ -17,6 +21,14 @@ import { useSettings } from '../src/ui/settingsStore';
 import { useTheme } from '../src/ui/theme';
 
 class UserError extends Error {}
+
+/** Yes/no question as a promise. */
+const ask = (title: string, message: string, yes: string, no: string) =>
+  new Promise<boolean>((resolve) =>
+    Alert.alert(title, message, [
+      { text: no, style: 'cancel', onPress: () => resolve(false) },
+      { text: yes, onPress: () => resolve(true) },
+    ], { cancelable: true, onDismiss: () => resolve(false) }));
 
 export default function Settings() {
   const db = useSQLiteContext();
@@ -68,20 +80,70 @@ export default function Settings() {
     return t('settings.importDone', { count: n });
   });
 
+  // Older three-file format (crags.csv + routes.csv, optional sectors.csv and pitches.csv).
+  function legacyPlan(texts: Record<string, string>) {
+    if (!texts['crags.csv'] || !texts['routes.csv']) {
+      throw new UserError(t('settings.csvMissing', { files: Object.keys(texts).join(', ') }));
+    }
+    return buildImportPlan({ crags: texts['crags.csv'], sectors: texts['sectors.csv'], routes: texts['routes.csv'], pitches: texts['pitches.csv'] });
+  }
+
+  // One file per route list: the guidebook export, a theCrag export or the simple table. Several files are merged.
+  function oneFilePlan(texts: Record<string, string>): { plan: ImportPlan; skipped: number } {
+    const rows: FlatRow[] = [];
+    const errors: ImportPlan['errors'] = [];
+    let skipped = 0;
+    let only: ImportPlan | null = null;
+    const files = Object.entries(texts);
+    for (const [name, text] of files) {
+      const format = detectFormat(text);
+      if (!format) throw new UserError(t('settings.csvUnknown', { file: name }));
+      let fileRows: FlatRow[];
+      if (format === 'thecrag') {
+        const res = theCragRows(text);
+        fileRows = res.rows;
+        skipped += Object.values(res.skipped).reduce((a, b) => a + b, 0);
+      } else fileRows = format === 'guidebook' ? guidebookRows(text) : parseFlatCsv(text);
+      const plan = planFromFlatRows(fileRows);
+      errors.push(...plan.errors.map((e) => ({ ...e, file: name })));
+      rows.push(...fileRows);
+      if (files.length === 1) only = plan;
+    }
+    if (errors.length) return { plan: { ...planFromFlatRows([]), errors }, skipped };
+    return { plan: only ?? planFromFlatRows(rows), skipped };
+  }
+
   const doCsv = () => run(async () => {
-    const res = await DocumentPicker.getDocumentAsync({ type: ['text/csv', 'text/comma-separated-values', 'text/plain'], multiple: true, copyToCacheDirectory: true });
+    // Some Android file managers report CSV files as Excel or plain binary, so accept those too.
+    const res = await DocumentPicker.getDocumentAsync({
+      type: ['text/*', 'text/csv', 'text/comma-separated-values', 'application/csv', 'application/vnd.ms-excel', 'application/octet-stream'],
+      multiple: true, copyToCacheDirectory: true,
+    });
     if (res.canceled) return;
     const texts: Record<string, string> = {};
     for (const a of res.assets) texts[a.name.toLowerCase()] = await new File(a.uri).text();
-    if (!texts['crags.csv'] || !texts['routes.csv']) {
-      throw new UserError(t('settings.csvMissing', { files: res.assets.map((a) => a.name).join(', ') }));
-    }
-    const plan = buildImportPlan({ crags: texts['crags.csv'], sectors: texts['sectors.csv'], routes: texts['routes.csv'], pitches: texts['pitches.csv'] });
+    const { plan, skipped } = texts['crags.csv'] || texts['routes.csv'] ? { plan: legacyPlan(texts), skipped: 0 } : oneFilePlan(texts);
     if (plan.errors.length) {
-      const first = plan.errors.slice(0, 8).map((e) => `${e.file}:${e.line} ${e.message}`).join('\n');
+      const first = plan.errors.slice(0, 8).map((e) => `${e.file}, ${t('settings.csvLine', { line: e.line })}: ${e.message}`).join('\n');
       throw new UserError(`${t('settings.csvErrors', { count: plan.errors.length })}\n\n${first}`);
     }
+    const ok = await ask(
+      t('settings.csvConfirmTitle'),
+      t('settings.csvConfirm', { crags: plan.crags.length, routes: plan.routes.length })
+        + (skipped ? `\n\n${t('settings.csvSkipped', { count: skipped })}` : ''),
+      t('settings.csvConfirmYes'), t('common.cancel'),
+    );
+    if (!ok) return;
     return t('settings.csvDone', await applyImport(db, plan));
+  });
+
+  const doRemoveImported = () => run(async () => {
+    const n = await importedUsage(db);
+    if (!n.routes && !n.crags) return t('settings.removeImportedNone');
+    const ok = await ask(t('settings.removeImportedTitle'), t('settings.removeImportedConfirm', n), t('common.delete'), t('common.cancel'));
+    if (!ok) return;
+    await removeImported(db);
+    return t('settings.removeImportedDone', n);
   });
 
   return (
@@ -91,17 +153,19 @@ export default function Settings() {
         <Chip label="Polski" on={i18n.language === 'pl'} onPress={() => setLanguage('pl')} />
         <Chip label="English" on={i18n.language === 'en'} onPress={() => setLanguage('en')} />
       </ChipRow>
+      <Label>{t('settings.theme')}</Label>
+      <ChipRow>
+        {(['system', 'light', 'dark'] as const).map((m) => <Chip key={m} label={t(`settings.themes.${m}`)} on={s.themeMode === m} onPress={() => s.setThemeMode(m)} />)}
+      </ChipRow>
       <Label>{t('settings.routeGrades')}</Label>
       <ChipRow>
         {ROUTE_SYSTEMS.map((x) => <Chip key={x} label={x.toUpperCase()} on={s.routeSystem === x} onPress={() => s.setRouteSystem(x)} />)}
       </ChipRow>
-      <Label>{t('settings.boulderGrades')}</Label>
-      <ChipRow>
-        {BOULDER_SYSTEMS.map((x) => <Chip key={x} label={x.toUpperCase()} on={s.boulderSystem === x} onPress={() => s.setBoulderSystem(x)} />)}
-      </ChipRow>
       <Label>{t('settings.csv')}</Label>
       <Text style={{ color: th.muted }}>{t('settings.csvHelp')}</Text>
       <Button label={t('settings.csv')} onPress={doCsv} disabled={busy} />
+      <Text style={{ color: th.muted, marginTop: 8 }}>{t('settings.removeImportedHelp')}</Text>
+      <Button label={t('settings.removeImported')} onPress={doRemoveImported} disabled={busy} variant="plain" />
       <Label>{t('settings.backup')}</Label>
       <Text style={{ color: th.muted }}>{t('settings.backupHelp')}</Text>
       <Text style={{ color: backup.due ? th.warn : th.ink, marginTop: 8, fontWeight: '600' }}>

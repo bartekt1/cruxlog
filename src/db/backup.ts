@@ -1,7 +1,9 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
+import { HIDE_BOULDERS } from './migrate';
 
 // 2: region.source added. Version 1 backups still import (their regions came from CSV).
-export const BACKUP_VERSION = 2;
+// 3: region.parent_id and region.level (nested areas). Older backups import as top-level regions.
+export const BACKUP_VERSION = 3;
 const TABLES = ['region', 'crag', 'sector', 'route', 'pitch', 'partner', 'ascent', 'ascent_pitch', 'goal'] as const;
 
 export type Backup = { app: 'cruxlog'; version: number; exportedAt: number; tables: Record<string, Record<string, unknown>[]> };
@@ -33,6 +35,7 @@ export async function importBackup(db: SQLiteDatabase, data: unknown): Promise<n
         merged++;
       }
     }
+    await db.execAsync(HIDE_BOULDERS); // a backup from before boulders were removed may bring some back
   });
   return merged;
 }

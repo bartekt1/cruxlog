@@ -27,6 +27,16 @@ export function openTestDb(): SQLiteDatabase {
         throw e;
       }
     },
+    prepareAsync: async (sql: string) => {
+      const stmt = db.prepare(sql);
+      return {
+        executeAsync: async (params?: Params) => {
+          const r = stmt.run(...args(params));
+          return { changes: Number(r.changes), lastInsertRowId: Number(r.lastInsertRowid) };
+        },
+        finalizeAsync: async () => {},
+      };
+    },
     closeAsync: async () => { db.close(); },
   };
   return fake as unknown as SQLiteDatabase;

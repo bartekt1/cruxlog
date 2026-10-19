@@ -14,8 +14,8 @@ describe('validateRouteDraft', () => {
   });
   it('rejects grades that do not belong to the system or type', () => {
     expect(validateRouteDraft({ ...route, grade: '9z' })).toEqual({ ok: false, error: 'ascent.errors.grade' });
-    expect(validateRouteDraft({ ...route, type: 'boulder', system: 'font', grade: 'VI.3' })).toEqual({ ok: false, error: 'ascent.errors.grade' });
-    expect(validateRouteDraft({ ...route, type: 'boulder', system: 'font', grade: '6b' }).ok).toBe(true);
+    expect(validateRouteDraft({ ...route, system: 'fr', grade: 'VI.3' })).toEqual({ ok: false, error: 'ascent.errors.grade' });
+    expect(validateRouteDraft({ ...route, type: 'multipitch', system: 'fr', grade: '6b' }).ok).toBe(true);
   });
 });
 
@@ -56,9 +56,11 @@ describe('crag and name drafts', () => {
   it('requires a name and trims everything', () => {
     expect(validateName('  ')).toEqual({ ok: false, error: 'edit.errors.name' });
     expect(validateName(' Lewy ')).toEqual({ ok: true, value: 'Lewy' });
-    expect(validateCragDraft({ name: '', region: 'Jura', description: '', approach: '' })).toEqual({ ok: false, error: 'edit.errors.name' });
-    expect(validateCragDraft({ name: 'Okiennik', region: ' ', description: '', approach: '' })).toEqual({ ok: false, error: 'edit.errors.region' });
-    expect(validateCragDraft({ name: ' Okiennik ', region: ' Jura ', description: ' opis ', approach: '', sectors: [' Lewy ', '', 'lewy', 'Prawy'] }))
-      .toEqual({ ok: true, value: { name: 'Okiennik', regionName: 'Jura', description: 'opis', approach: '', sectorNames: ['Lewy', 'Prawy'] } });
+    const at = (region: string, area: string, group = '') => ({ region, area, group });
+    expect(validateCragDraft({ name: '', areas: at('Jura', 'Rzędkowice'), description: '', approach: '' })).toEqual({ ok: false, error: 'edit.errors.name' });
+    expect(validateCragDraft({ name: 'Okiennik', areas: at(' ', 'Rzędkowice'), description: '', approach: '' })).toEqual({ ok: false, error: 'edit.errors.region' });
+    expect(validateCragDraft({ name: 'Okiennik', areas: at('Jura', ''), description: '', approach: '' })).toEqual({ ok: false, error: 'edit.errors.area' });
+    expect(validateCragDraft({ name: ' Okiennik ', areas: at(' Jura ', ' Rzędkowice ', ' '), description: ' opis ', approach: '', sectors: [' Lewy ', '', 'lewy', 'Prawy'] }))
+      .toEqual({ ok: true, value: { name: 'Okiennik', areas: at('Jura', 'Rzędkowice'), description: 'opis', approach: '', sectorNames: ['Lewy', 'Prawy'] } });
   });
 });

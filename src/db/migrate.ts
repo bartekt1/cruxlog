@@ -5,6 +5,14 @@ import type { SQLiteDatabase } from 'expo-sqlite';
 const COMMON = `created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, deleted_at INTEGER`;
 const CATALOG = `source TEXT NOT NULL DEFAULT 'user', status TEXT NOT NULL DEFAULT 'private', created_by TEXT`;
 
+/** Soft-deletes boulder routes and their ascents; also run after restoring an older backup. Used by migration 4, so do not change it. */
+export const HIDE_BOULDERS = `
+  UPDATE ascent SET deleted_at = CAST(strftime('%s','now') AS INTEGER) * 1000, updated_at = CAST(strftime('%s','now') AS INTEGER) * 1000
+    WHERE deleted_at IS NULL AND route_id IN (SELECT id FROM route WHERE type = 'boulder');
+  UPDATE route SET deleted_at = CAST(strftime('%s','now') AS INTEGER) * 1000, updated_at = CAST(strftime('%s','now') AS INTEGER) * 1000
+    WHERE deleted_at IS NULL AND type = 'boulder';
+`;
+
 // Append only. Never edit an entry that has shipped.
 export const MIGRATIONS: string[] = [
   `
@@ -45,6 +53,16 @@ export const MIGRATIONS: string[] = [
   ALTER TABLE region ADD COLUMN source TEXT NOT NULL DEFAULT 'user';
   UPDATE region SET source = 'import';
   CREATE INDEX idx_sector_crag ON sector(crag_id);
+  `,
+  // 3: areas nest: region → area ("rejon") → group. Existing regions stay top-level regions.
+  `
+  ALTER TABLE region ADD COLUMN parent_id TEXT REFERENCES region(id);
+  ALTER TABLE region ADD COLUMN level TEXT NOT NULL DEFAULT 'region';
+  CREATE INDEX idx_region_parent ON region(parent_id);
+  `,
+  // 4: the app has no boulders any more; old boulder routes and their ascents are hidden (soft-deleted, not erased).
+  `
+  ${HIDE_BOULDERS}
   `,
 ];
 

@@ -8,7 +8,10 @@ export type CsvInput = {
   pitches?: string;
 };
 
-export type ImportCrag = { key: string; region: string; name: string; country: string; lat: number | null; lng: number | null; description: string; approach: string };
+export type ImportCrag = {
+  key: string; region: string; area: string; group: string; name: string; country: string;
+  lat: number | null; lng: number | null; description: string; approach: string;
+};
 export type ImportSector = { key: string; cragKey: string; name: string; lat: number | null; lng: number | null; aspect: string };
 export type ImportRoute = {
   key: string; sectorKey: string; name: string; type: RouteType; gradeLabel: string; gradeSystem: GradeSystem;
@@ -17,7 +20,8 @@ export type ImportRoute = {
 };
 export type ImportPitch = { routeKey: string; number: number; gradeLabel: string; gradeSystem: GradeSystem; gradeIndex: number; lengthM: number | null; description: string };
 
-export type ImportError = { file: 'crags' | 'sectors' | 'routes' | 'pitches'; line: number; message: string };
+/** `file` is crags | sectors | routes | pitches for the three-file import, or the file name for the one-file import. */
+export type ImportError = { file: string; line: number; message: string };
 
 export type ImportPlan = {
   crags: ImportCrag[]; sectors: ImportSector[]; routes: ImportRoute[]; pitches: ImportPitch[];
@@ -42,7 +46,7 @@ function num(v: string | undefined): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-const TYPES: RouteType[] = ['sport', 'boulder', 'multipitch'];
+const TYPES: RouteType[] = ['sport', 'multipitch'];
 
 /**
  * Validates the CSV files and builds an import plan. Nothing is written here;
@@ -59,7 +63,7 @@ export function buildImportPlan(input: CsvInput): ImportPlan {
     if (cragKeys.has(r.key)) return err('crags', line, `duplicate key ${r.key}`);
     cragKeys.add(r.key);
     plan.crags.push({
-      key: r.key, region: r.region ?? '', name: r.name, country: r.country ?? '',
+      key: r.key, region: r.region ?? '', area: r.area ?? '', group: r.group ?? '', name: r.name, country: r.country ?? '',
       lat: num(r.lat), lng: num(r.lng), description: r.description ?? '', approach: r.approach ?? '',
     });
   });

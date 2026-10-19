@@ -2,11 +2,12 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, View } from 'react-native';
+import { Text } from '../../src/ui/Text';
 import { deleteAscent, getAscent, type AscentDetail } from '../../src/db/repo';
 import { formatDay, isoDate } from '../../src/domain/dates';
-import { formatGrade } from '../../src/domain/grades';
-import { Button, EmptyState, GradeBadge, Label } from '../../src/ui/kit';
+import { routeGrade } from '../../src/domain/grades';
+import { Button, EmptyState, GradeBadge, Label, Title } from '../../src/ui/kit';
 import { useSettings } from '../../src/ui/settingsStore';
 import { useTheme } from '../../src/ui/theme';
 
@@ -16,7 +17,7 @@ export default function AscentScreen() {
   const router = useRouter();
   const { t, i18n } = useTranslation();
   const th = useTheme();
-  const { routeSystem, boulderSystem } = useSettings();
+  const { routeSystem } = useSettings();
   const [a, setA] = useState<AscentDetail | null | undefined>(undefined);
 
   useFocusEffect(useCallback(() => { getAscent(db, id).then(setA); }, [db, id]));
@@ -42,9 +43,9 @@ export default function AscentScreen() {
     <ScrollView style={{ backgroundColor: th.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 48 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <Pressable style={{ flex: 1 }} onPress={() => router.push(`/route/${a.route_id}`)} accessibilityRole="link" accessibilityHint={t('route.openHint')}>
-          <Text style={{ color: th.accent, fontSize: 22, fontWeight: '700' }}>{a.route_name}</Text>
+          <Title size={32}>{a.route_name}</Title>
         </Pressable>
-        <GradeBadge text={formatGrade(a.grade_index, a.type === 'boulder' ? boulderSystem : routeSystem, a.type)} />
+        <GradeBadge text={routeGrade(a, routeSystem)} size="lg" />
       </View>
       <Text style={{ color: th.muted, marginTop: 4 }}>{a.crag_name} · {a.route.sector_name} · {t(`types.${a.type}`)}</Text>
 
