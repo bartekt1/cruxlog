@@ -42,17 +42,30 @@ export function isFirstTry(style: AscentStyle): boolean {
   return style === 'os' || style === 'flash';
 }
 
-export type GoalKind = 'count' | 'project' | 'wishlist';
+export type GoalKind = 'count' | 'grade' | 'project' | 'wishlist';
+export const GOAL_KINDS: GoalKind[] = ['count', 'grade', 'project', 'wishlist'];
 
-export function validateGoalDraft(g: { kind: GoalKind; title: string; target: string }): Result<{ title: string; target: number | null }> {
-  const title = g.title.trim();
+export type GoalDraft = {
+  kind: GoalKind; title: string; target: string; gradeIndex: number | null; routeId: string | null;
+  /** Used when the title is left empty, e.g. the route's name or "3 × VI.3+". */
+  fallbackTitle?: string;
+};
+export type GoalValue = { title: string; target: number | null; gradeIndex: number | null; routeId: string | null };
+
+/**
+ * count: optional yearly number of sends. grade: a grade (required) and how many routes at or above it (default 1).
+ * project / wishlist: optionally linked to a route. Only the fields of the kind are kept.
+ */
+export function validateGoalDraft(g: GoalDraft): Result<GoalValue> {
+  if (g.kind === 'grade' && g.gradeIndex == null) return { ok: false, error: 'goals.errors.grade' };
+  const title = g.title.trim() || (g.fallbackTitle ?? '').trim();
   if (!title) return { ok: false, error: 'goals.errors.title' };
-  if (g.kind !== 'count') return { ok: true, value: { title, target: null } };
+  const routeId = g.kind === 'project' || g.kind === 'wishlist' ? g.routeId : null;
+  if (g.kind !== 'count' && g.kind !== 'grade') return { ok: true, value: { title, target: null, gradeIndex: null, routeId } };
   const text = g.target.trim();
-  if (text === '') return { ok: true, value: { title, target: null } };
-  const target = Number(text);
-  if (!Number.isInteger(target) || target < 1) return { ok: false, error: 'goals.errors.target' };
-  return { ok: true, value: { title, target } };
+  const target = text === '' ? (g.kind === 'grade' ? 1 : null) : Number(text);
+  if (target != null && (!Number.isInteger(target) || target < 1)) return { ok: false, error: 'goals.errors.target' };
+  return { ok: true, value: { title, target, gradeIndex: g.kind === 'grade' ? g.gradeIndex : null, routeId: null } };
 }
 
 /** A required name, e.g. of a sector or region. */

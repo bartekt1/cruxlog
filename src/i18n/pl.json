@@ -29,6 +29,7 @@
     }
   },
   "progress": {
+    "months": ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paź", "lis", "gru"], "byMonth": "Najtrudniejsze przejście w miesiącu", "byYear": "Najtrudniejsze przejście w roku", "styles": "Style przejść", "activityYear": "Aktywność w {{year}}", "topCrags": "Najczęściej odwiedzane skały", "topPartners": "Partnerzy", "noData": "Brak danych.", "noPartners": "Dodaj partnera przy przejściu, aby zobaczyć listę.", "daysCount": "dni: {{count}}",
     "title": "Postępy", "sends": "Przejścia", "days": "Dni na skale", "hardestRoute": "Najtrudniejsza droga",
     "pyramidRoutes": "Piramida dróg", "activity": "Aktywność (ostatnie 18 tygodni)",
     "empty": "Brak przejść w {{year}}", "emptyHint": "Dodaj przejście w Dzienniku, aby zobaczyć statystyki.", "noSends": "Brak przejść.", "prevYear": "Poprzedni rok", "nextYear": "Następny rok",
@@ -58,10 +59,14 @@
   },
   "goals": {
     "title": "Cele", "count": "Liczba", "project": "Projekt", "wishlist": "Lista życzeń", "newTitle": "Nazwa celu", "target": "Cel (liczba)",
-    "kind": "Rodzaj", "empty": "Brak celów", "emptyHint": "Dodaj roczny cel, projekt albo drogę marzeń.",
+    "grade": "Wycena", "gradeTitle": "{{count}} × {{grade}} lub trudniej w {{year}}", "gradeProgress": "{{value}} / {{target}} dróg {{grade}} lub trudniej w {{year}}", "routesCount": "Ile dróg (domyślnie 1)",
+    "help": { "count": "Ile przejść chcesz zrobić w tym roku.", "grade": "Wybierz wycenę: liczą się drogi tej wyceny lub trudniejsze, przejście z prowadzeniem (bez wędki), w tym roku.", "project": "Droga, nad którą pracujesz. Odhaczy się sama, gdy ją przejdziesz z prowadzeniem.", "wishlist": "Droga marzeń. Odhaczy się sama, gdy ją przejdziesz z prowadzeniem." },
+    "route": "Droga", "routeSearch": "Zacznij pisać nazwę drogi lub skały", "sentOn": "przejście {{date}}", "tries": "próby: {{tries}} · dni prób: {{days}}", "notTried": "jeszcze bez prób",
+    "add": "+ Dodaj cel", "yours": "Twoje cele", "editHint": "Otwiera edycję celu", "editTitle": "Edycja celu", "yourProject": "Twój projekt", "yourWish": "Na Twojej liście życzeń",
+    "kind": "Rodzaj", "empty": "Brak celów", "emptyHint": "Dodaj roczny cel, cel wyceny, projekt albo drogę marzeń.",
     "progress": "{{value}} / {{target}} przejść w {{year}}", "markDone": "Oznacz jako zrobione", "reopen": "Przywróć",
     "deleteTitle": "Usunąć cel?", "deleteQuestion": "„{{title}}” zostanie usunięty.",
-    "errors": { "title": "Podaj nazwę celu.", "target": "Cel musi być liczbą całkowitą, co najmniej 1." }
+    "errors": { "title": "Podaj nazwę celu.", "target": "Cel musi być liczbą całkowitą, co najmniej 1.", "grade": "Wybierz wycenę." }
   },
   "routeSearch": {
     "open": "Szukaj dróg", "title": "Szukaj dróg", "name": "Nazwa drogi lub skały", "any": "Dowolna", "from": "Wycena od", "to": "Wycena do",

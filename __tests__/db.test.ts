@@ -8,7 +8,7 @@ import {
   addAscent, addGoal, addUserRoute, applyImport, cragUsage, deleteAscent, deleteCrag, deleteGoal, deleteArea, deleteRoute, deleteSector,
   getAscent, getCrag, getArea, getRoute, getSector, listAscents, listCragRoutes, listCrags, listGoals, listAreas, listSectorNames, addArea, areaIdFor,
   renameArea, renameSector, routeUsage, saveCrag, searchRoutes, sectorUsage, setGoalDone, updateAscent, updateRoute, type NewRoute, type RouteFilter,
-  listCragChoices, listPartners, listRouteAscents, recentRoutes, listSectors, addSector, createRoute, importedUsage, removeImported, findRoutes,
+  listCragChoices, listPartners, listRouteAscents, recentRoutes, listSectors, addSector, createRoute, importedUsage, removeImported, findRoutes, getGoal, updateGoal, routeGoals,
 } from '../src/db/repo';
 import { descendantIds } from '../src/domain/areas';
 import { buildImportPlan } from '../src/domain/csvImport';
@@ -50,7 +50,7 @@ describe('migrate', () => {
   });
   it('is a no-op when run again and keeps data', async () => {
     const db = await freshDb();
-    await addGoal(db, 'project', 'Keep me', null);
+    await addGoal(db, { kind: 'project', title: 'Keep me', target: null, gradeIndex: null, routeId: null });
     await migrate(db);
     expect(await count(db, 'goal')).toBe(1);
   });
@@ -101,7 +101,7 @@ describe('repo', () => {
   });
   it('stores goals', async () => {
     const db = await freshDb();
-    await addGoal(db, 'count', '200 sends', 200);
+    await addGoal(db, { kind: 'count', title: '200 sends', target: 200, gradeIndex: null, routeId: null });
     expect(await listGoals(db)).toEqual([expect.objectContaining({ kind: 'count', title: '200 sends', target: 200 })]);
   });
   it('reads, edits and soft-deletes an ascent', async () => {
@@ -138,8 +138,8 @@ describe('repo', () => {
   });
   it('completes, reopens and deletes goals; done goals go last', async () => {
     const db = await freshDb();
-    await addGoal(db, 'project', 'First', null);
-    await addGoal(db, 'wishlist', 'Second', null);
+    await addGoal(db, { kind: 'project', title: 'First', target: null, gradeIndex: null, routeId: null });
+    await addGoal(db, { kind: 'wishlist', title: 'Second', target: null, gradeIndex: null, routeId: null });
     const first = (await listGoals(db)).find((g) => g.title === 'First')!;
     await setGoalDone(db, first.id, true);
     expect((await listGoals(db)).map((g) => [g.title, g.done_at != null])).toEqual([['Second', false], ['First', true]]);
@@ -485,6 +485,40 @@ describe('own grade and route finder', () => {
   });
 });
 
+describe('goals linked to routes and grades', () => {
+  const today = new Date().toLocaleDateString('sv-SE');
+  it('stores a grade goal and a project, and edits them', async () => {
+    const db = await freshDb();
+    const r = await addUserRoute(db, route());
+    const id = await addGoal(db, { kind: 'grade', title: '3 × VI.3+', target: 3, gradeIndex: parseGrade('VI.3', 'kr')!, routeId: null });
+    expect(await getGoal(db, id)).toMatchObject({ kind: 'grade', target: 3, grade_index: parseGrade('VI.3', 'kr'), route_id: null });
+    await updateGoal(db, id, { kind: 'project', title: 'Test Route 1', target: null, gradeIndex: null, routeId: r });
+    expect(await getGoal(db, id)).toMatchObject({ kind: 'project', title: 'Test Route 1', route_id: r, route_name: 'Test Route 1', crag_name: 'Test Crag' });
+    expect((await routeGoals(db, r)).map((x) => x.id)).toEqual([id]);
+  });
+  it('ticks a project off on a led send, not on top-rope; a reopened one stays open until a send is saved again', async () => {
+    const db = await freshDb();
+    const r = await addUserRoute(db, route());
+    const id = await addGoal(db, { kind: 'project', title: 'P', target: null, gradeIndex: null, routeId: r });
+    await addAscent(db, ascent(r, { date: today, style: 'tr' }));
+    expect((await getGoal(db, id))!.done_at).toBeNull();
+    const a = await addAscent(db, ascent(r, { date: today, style: 'rp' }));
+    expect((await getGoal(db, id))!.done_at).not.toBeNull();
+    expect(await routeGoals(db, r)).toEqual([]);
+    await setGoalDone(db, id, false);
+    await updateAscent(db, a, ascent(r, { date: today, style: 'rp', notes: 'edited' }));
+    expect((await getGoal(db, id))!.done_at).not.toBeNull(); // saving a send closes it again
+  });
+  it('does not tick off a project for a send from before the goal was set', async () => {
+    const db = await freshDb();
+    const r = await addUserRoute(db, route());
+    const old = await addAscent(db, ascent(r, { date: '2020-01-01', style: 'rp' }));
+    const id = await addGoal(db, { kind: 'wishlist', title: 'W', target: null, gradeIndex: null, routeId: r });
+    await updateAscent(db, old, ascent(r, { date: '2020-01-01', style: 'rp', notes: 'x' }));
+    expect((await getGoal(db, id))!.done_at).toBeNull();
+  });
+});
+
 describe('building a crag from its screen', () => {
   it('creates a crag with sectors, adds sectors and routes without ascents', async () => {
     const db = await freshDb();
@@ -508,7 +542,7 @@ describe('backup', () => {
     await applyImport(db, samples());
     const r = await addUserRoute(db, route());
     await addAscent(db, ascent(r));
-    await addGoal(db, 'project', 'Project', null);
+    await addGoal(db, { kind: 'project', title: 'Project', target: null, gradeIndex: null, routeId: null });
     return db;
   }
 

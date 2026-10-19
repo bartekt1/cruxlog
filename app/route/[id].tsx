@@ -5,7 +5,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, Pressable, View } from 'react-native';
 import { Text } from '../../src/ui/Text';
-import { getRoute, listRouteAscents, type AscentRow, type RouteRow } from '../../src/db/repo';
+import { getRoute, listRouteAscents, routeGoals, type AscentRow, type GoalRow, type RouteRow } from '../../src/db/repo';
 import { formatDay, isoDate } from '../../src/domain/dates';
 import { type AscentStyle, feltGrade, formatGrade, routeGrade } from '../../src/domain/grades';
 import { routeSummary } from '../../src/domain/history';
@@ -26,6 +26,7 @@ export default function RouteScreen() {
   const { routeSystem } = useSettings();
   const [route, setRoute] = useState<RouteRow | null>(null);
   const [ascents, setAscents] = useState<AscentRow[]>([]);
+  const [goals, setGoals] = useState<GoalRow[]>([]);
 
   useFocusEffect(useCallback(() => {
     getRoute(db, id).then((r) => {
@@ -33,6 +34,7 @@ export default function RouteScreen() {
       setRoute(r);
     });
     listRouteAscents(db, id).then(setAscents);
+    routeGoals(db, id).then(setGoals);
   }, [db, id, router]));
 
   const summary = useMemo(() => routeSummary(ascents), [ascents]);
@@ -80,6 +82,13 @@ export default function RouteScreen() {
                   .filter(Boolean).join(' · ')}
               </Text>
             ) : null}
+            {goals.map((g) => (
+              <Pressable key={g.id} onPress={() => router.push(`/goal/${g.id}`)} accessibilityRole="link"
+                style={{ alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4, paddingHorizontal: 12, minHeight: 32, borderRadius: 16, backgroundColor: th.badge }}>
+                <Ionicons name="flag" size={14} color={th.onBadge} />
+                <Text style={{ color: th.onBadge, fontFamily: F.semi, fontSize: 13 }}>{t(g.kind === 'project' ? 'goals.yourProject' : 'goals.yourWish')}</Text>
+              </Pressable>
+            ))}
             <Card style={{ padding: 14, marginTop: 8 }}>
               <Text style={{ color: th.ink, fontFamily: F.semi, fontSize: 16 }}>{summary.firstSend ? '✓ ' : ''}{status}</Text>
               {summary.ascents ? <Text style={{ color: th.muted, fontSize: 13, marginTop: 2 }}>{t('route.totals', { ascents: summary.ascents, sends: summary.sends })}</Text> : null}

@@ -154,8 +154,14 @@ Severity: **H** blocks a task or loses/corrupts data, **M** slows a task or conf
 | V2 | Dark mode followed the phone only | L | Settings › Appearance: like the phone, light or dark; the dark theme is deep green, not black |
 | V3 | Journal had no summary | L | Three season tiles (sends, days out, hardest) on top of the journal |
 
+## Round 11 (goals and progress)
+
+| # | Issue | Sev | Status |
+|---|---|---|---|
+| P1 | Goals could not be edited | M | Fixed: tap a goal to edit it, mark it done or reopen it, delete it |
+| P2 | No goal for a grade; projects were plain text | M | Grade goal (distinct led routes at or above a grade this year); project and wishlist linked to a route, with tries and days, ticked off by a led send |
+| P3 | Activity only for the current year, few stats | L | Whole-year calendar for any year; hardest per month and per year, styles, top crags, partners |
+
 ## Open items
 
-1. Edit a goal's title or target; link a project goal to a route.
-2. Activity calendar only for the current year.
-3. Device checks: localized dates on Hermes, calendar picker, keyboard behavior, large font sizes, TalkBack labels.
+1. Device checks: localized dates on Hermes, calendar picker, keyboard behavior, large font sizes, TalkBack labels.

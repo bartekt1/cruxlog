@@ -1,57 +1,75 @@
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, FlatList, Keyboard, View } from 'react-native';
+import { FlatList, Keyboard, Pressable, View } from 'react-native';
+import { addGoal, listAreas, listAscents, listGoals, type GoalRow } from '../../src/db/repo';
+import { pathLabels } from '../../src/domain/areas';
+import { formatDay, isoDate } from '../../src/domain/dates';
+import type { GoalKind } from '../../src/domain/forms';
+import { formatGrade, routeGrade } from '../../src/domain/grades';
+import { countGoalProgress, gradeGoalProgress, projectProgress, yearStats, type StatAscent } from '../../src/domain/stats';
+import { F } from '../../src/ui/fonts';
+import { EMPTY_GOAL, GoalForm } from '../../src/ui/GoalForm';
+import { ProgressBar, toStat } from '../../src/ui/progress';
+import { EmptyState, GradeBadge, Label, Screen } from '../../src/ui/kit';
+import { useSettings } from '../../src/ui/settingsStore';
 import { Text } from '../../src/ui/Text';
-import { addGoal, deleteGoal, listAscents, listGoals, setGoalDone, type GoalRow } from '../../src/db/repo';
-import { validateGoalDraft, type GoalKind } from '../../src/domain/forms';
-import { countGoalProgress, yearStats } from '../../src/domain/stats';
-import { Button, Chip, ChipRow, EmptyState, ErrorText, Field, Label, LinkButton, Screen } from '../../src/ui/kit';
 import { useTheme } from '../../src/ui/theme';
 
 export default function Goals() {
   const db = useSQLiteContext();
-  const { t } = useTranslation();
+  const router = useRouter();
+  const { t, i18n } = useTranslation();
   const th = useTheme();
+  const { routeSystem } = useSettings();
   const [rows, setRows] = useState<GoalRow[]>([]);
-  const [kind, setKind] = useState<GoalKind>('count');
-  const [title, setTitle] = useState('');
-  const [target, setTarget] = useState('');
-  const [error, setError] = useState('');
-  const [saving, setSaving] = useState(false);
-
-  const [sends, setSends] = useState(0);
+  const [ascents, setAscents] = useState<StatAscent[]>([]);
+  const [labels, setLabels] = useState<Map<string, string>>(new Map());
+  const [adding, setAdding] = useState(false);
   const year = new Date().getFullYear();
 
   const load = useCallback(() => {
     listGoals(db).then(setRows);
-    listAscents(db).then((a) => setSends(yearStats(a.map((r) => ({ date: r.date, type: r.type, gradeIndex: r.grade_index, style: r.style })), year).sends));
-  }, [db, year]);
+    listAscents(db).then((a) => setAscents(a.map(toStat)));
+    listAreas(db).then((a) => setLabels(pathLabels(a)));
+  }, [db]);
   useFocusEffect(load);
 
-  async function add() {
-    const draft = validateGoalDraft({ kind, title, target });
-    if (!draft.ok) { setError(t(draft.error)); return; }
-    setError('');
-    setSaving(true);
-    try {
-      await addGoal(db, kind, draft.value.title, draft.value.target);
-      setTitle(''); setTarget('');
-      Keyboard.dismiss();
-      load();
-    } catch (e) {
-      setError(t('common.failed', { message: (e as Error).message }));
-    } finally {
-      setSaving(false);
-    }
-  }
+  const sends = useMemo(() => yearStats(ascents, year).sends, [ascents, year]);
+  const today = isoDate(new Date());
 
-  const confirmDelete = (g: GoalRow) =>
-    Alert.alert(t('goals.deleteTitle'), t('goals.deleteQuestion', { title: g.title }), [
-      { text: t('common.cancel'), style: 'cancel' },
-      { text: t('common.delete'), style: 'destructive', onPress: () => deleteGoal(db, g.id).then(load) },
-    ]);
+  const details = (g: GoalRow) => {
+    if (g.kind === 'count' && g.target) {
+      const p = countGoalProgress(g.target, sends);
+      return <ProgressBar ratio={p.ratio} reached={p.reached} label={t('goals.progress', { value: p.value, target: p.target, year })} />;
+    }
+    if (g.kind === 'grade' && g.grade_index != null) {
+      const p = gradeGoalProgress(ascents, g.grade_index, g.target ?? 1, year);
+      return (
+        <>
+          <ProgressBar ratio={p.ratio} reached={p.reached} label={t('goals.gradeProgress', { value: p.value, target: p.target, grade: formatGrade(g.grade_index, routeSystem), year })} />
+          {p.routes.length ? <Text style={{ color: th.muted, fontSize: 13 }} numberOfLines={2}>{p.routes.join(', ')}</Text> : null}
+        </>
+      );
+    }
+    if (g.route_id) {
+      const p = projectProgress(ascents, g.route_id);
+      return (
+        <Pressable onPress={() => router.push(`/route/${g.route_id}`)} accessibilityRole="link"
+          style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 8, opacity: pressed ? 0.6 : 1 })}>
+          <GradeBadge size="sm" text={routeGrade({ grade_index: g.route_grade_index!, grade_label: g.route_grade_label ?? '', grade_system: g.route_grade_system ?? undefined, type: g.route_type ?? 'sport' }, routeSystem)} />
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: th.muted, fontSize: 13 }} numberOfLines={1}>{[g.region_id ? labels.get(g.region_id) : '', g.crag_name].filter(Boolean).join(' › ')}</Text>
+            <Text style={{ color: p.sentOn ? th.accent : th.muted, fontSize: 13 }}>
+              {p.sentOn ? `✓ ${t('goals.sentOn', { date: formatDay(p.sentOn, i18n.language, today) })}` : p.tries ? t('goals.tries', { tries: p.tries, days: p.days }) : t('goals.notTried')}
+            </Text>
+          </View>
+        </Pressable>
+      );
+    }
+    return null;
+  };
 
   return (
     <Screen>
@@ -62,41 +80,38 @@ export default function Goals() {
         contentContainerStyle={{ paddingBottom: 32 }}
         ListHeaderComponent={
           <View style={{ paddingBottom: 8 }}>
-            <Label>{t('goals.kind')}</Label>
-            <ChipRow>
-              {(['count', 'project', 'wishlist'] as GoalKind[]).map((k) => <Chip key={k} label={t(`goals.${k}`)} on={kind === k} onPress={() => setKind(k)} />)}
-            </ChipRow>
-            <Field value={title} onChangeText={setTitle} placeholder={t('goals.newTitle')} accessibilityLabel={t('goals.newTitle')} returnKeyType="done" onSubmitEditing={add} />
-            {kind === 'count' ? (
-              <Field style={{ marginTop: 8, width: 160 }} value={target} onChangeText={setTarget} placeholder={t('goals.target')} accessibilityLabel={t('goals.target')} keyboardType="number-pad" />
-            ) : null}
-            {error ? <ErrorText>{error}</ErrorText> : null}
-            <Button label={t('common.add')} onPress={add} disabled={saving || !title.trim()} />
+            {adding ? (
+              <GoalForm
+                initial={EMPTY_GOAL}
+                submitLabel={t('common.add')}
+                onSubmit={async (kind: GoalKind, v) => { await addGoal(db, { kind, ...v }); }}
+                onSaved={(reset) => { reset(); Keyboard.dismiss(); setAdding(false); load(); }}
+              />
+            ) : (
+              <Pressable onPress={() => setAdding(true)} accessibilityRole="button"
+                style={({ pressed }) => ({ marginTop: 12, minHeight: 50, borderRadius: 14, backgroundColor: th.accent, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.8 : 1 })}>
+                <Text style={{ color: th.onAccent, fontFamily: F.display, fontSize: 19, letterSpacing: 0.8, textTransform: 'uppercase' }}>{t('goals.add')}</Text>
+              </Pressable>
+            )}
+            {rows.length ? <Label>{t('goals.yours')}</Label> : null}
           </View>
         }
-        ListEmptyComponent={<EmptyState title={t('goals.empty')} hint={t('goals.emptyHint')} />}
+        ListEmptyComponent={adding ? null : <EmptyState title={t('goals.empty')} hint={t('goals.emptyHint')} />}
         renderItem={({ item }) => {
           const done = item.done_at != null;
-          const progress = item.kind === 'count' && item.target ? countGoalProgress(item.target, sends) : null;
           return (
-            <View style={{ marginTop: 8, paddingTop: 12, paddingBottom: 4, paddingHorizontal: 14, backgroundColor: th.surface, borderWidth: 1, borderColor: th.line, borderRadius: 14, opacity: done ? 0.6 : 1 }}>
-              <Text style={{ color: th.ink, fontWeight: '600', fontSize: 16, textDecorationLine: done ? 'line-through' : 'none' }}>{done ? '✓ ' : ''}{item.title}</Text>
-              <Text style={{ color: th.muted, fontSize: 12 }}>{t(`goals.${item.kind as GoalKind}`)}</Text>
-              {progress ? (
-                <View style={{ marginTop: 6, gap: 4 }} accessible accessibilityLabel={t('goals.progress', { value: progress.value, target: progress.target, year })}>
-                  <View style={{ height: 10, borderRadius: 5, backgroundColor: th.soft, overflow: 'hidden' }}>
-                    <View style={{ height: 10, width: `${progress.ratio * 100}%`, backgroundColor: th.accent }} />
-                  </View>
-                  <Text style={{ color: progress.reached ? th.accent : th.muted, fontSize: 12 }}>
-                    {t('goals.progress', { value: progress.value, target: progress.target, year })}
-                  </Text>
-                </View>
-              ) : null}
-              <View style={{ flexDirection: 'row', gap: 20 }}>
-                <LinkButton label={done ? t('goals.reopen') : t('goals.markDone')} onPress={() => setGoalDone(db, item.id, !done).then(load)} />
-                <LinkButton label={t('common.delete')} onPress={() => confirmDelete(item)} />
+            <Pressable
+              onPress={() => router.push(`/goal/${item.id}`)}
+              accessibilityRole="button"
+              accessibilityHint={t('goals.editHint')}
+              style={({ pressed }) => ({ marginTop: 8, padding: 14, backgroundColor: th.surface, borderWidth: 1, borderColor: th.line, borderRadius: 14, opacity: pressed ? 0.7 : done ? 0.6 : 1 })}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Text style={{ flex: 1, color: th.ink, fontFamily: F.semi, fontSize: 16, textDecorationLine: done ? 'line-through' : 'none' }}>{done ? '✓ ' : ''}{item.title}</Text>
+                <Text style={{ color: th.muted, fontFamily: F.semi, fontSize: 11, letterSpacing: 1, textTransform: 'uppercase' }}>{t(`goals.${item.kind as GoalKind}`)}</Text>
               </View>
-            </View>
+              {details(item)}
+            </Pressable>
           );
         }}
       />

@@ -81,6 +81,14 @@ Write down the result of every step (OK / problem). Report problems with: step n
 3. Crags tab -> "Find routes". Filters: name, grade from and to (any), where (tap region, then area or group chips; "One level up", "Everywhere"), your ascents (all, not climbed yet, tried but not sent, sent) and type. Expected: the count updates at once, results easiest first with the grade square, path and your status; tapping one opens the route.
 4. Example: from VI to VI.2, Skałki Czarnorzeckie, "Not climbed yet". Log an ascent on one result, go back: it disappears from that list.
 
+## 3d. Goals and progress
+1. Goals tab -> "+ Add a goal". Kinds: Count, Grade, Project, Wishlist, each with a one-line explanation.
+2. Grade: pick "VI.3+" and 3. Leave the name empty: it becomes "3 × VI.3 or harder in <year>". The bar counts different routes of VI.3 or harder led this year (OS, flash, RP, PP; top-rope does not count) and lists them.
+3. Project: type a route name, pick it from the list; the name fills in. The card shows grade, path and "tries: N · days: M". The route screen shows a "Your project" badge.
+4. Log a top-rope ascent of the project: it stays open. Log an RP: it is ticked off and moves down the list.
+5. Tap a goal: edit name, number, grade or route; "Mark done"/"Reopen"; "Delete" asks first.
+6. Progress: pick a past year with the arrows. Expected: the calendar shows the whole year by month; hardest send per month and per year, styles, most visited crags and partners for that year.
+
 ## 3b. Icons
 1. The bottom bar shows an icon above each tab name (book, chart, mountains, flag); the selected tab's icon is filled. No empty squares.
 2. Top right: a clear gear icon opens Settings. In the middle of the bottom bar a raised orange "+" opens a new ascent from any tab, in light and dark mode. The route screen's "Log an ascent" button is orange too.

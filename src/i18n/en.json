@@ -29,6 +29,7 @@
     }
   },
   "progress": {
+    "months": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"], "byMonth": "Hardest send per month", "byYear": "Hardest send per year", "styles": "Ascent styles", "activityYear": "Activity in {{year}}", "topCrags": "Most visited crags", "topPartners": "Partners", "noData": "No data yet.", "noPartners": "Add a partner when logging an ascent to see this list.", "daysCount": "days: {{count}}",
     "title": "Progress", "sends": "Sends", "days": "Days out", "hardestRoute": "Hardest route",
     "pyramidRoutes": "Route pyramid", "activity": "Activity (last 18 weeks)",
     "empty": "No sends in {{year}} yet", "emptyHint": "Log an ascent in the Journal to see your stats.", "noSends": "No sends.", "prevYear": "Previous year", "nextYear": "Next year",
@@ -58,10 +59,14 @@
   },
   "goals": {
     "title": "Goals", "count": "Count", "project": "Project", "wishlist": "Wishlist", "newTitle": "Goal title", "target": "Target (number)",
-    "kind": "Kind", "empty": "No goals yet", "emptyHint": "Add a yearly target, a project or a route you dream about.",
+    "grade": "Grade", "gradeTitle": "{{count}} × {{grade}} or harder in {{year}}", "gradeProgress": "{{value}} / {{target}} routes {{grade}} or harder in {{year}}", "routesCount": "How many routes (default 1)",
+    "help": { "count": "How many sends you want this year.", "grade": "Pick a grade: routes of that grade or harder count, led (not top-rope), this year.", "project": "A route you are working on. It is ticked off by itself when you lead it.", "wishlist": "A dream route. It is ticked off by itself when you lead it." },
+    "route": "Route", "routeSearch": "Start typing a route or crag name", "sentOn": "sent {{date}}", "tries": "tries: {{tries}} · days: {{days}}", "notTried": "not tried yet",
+    "add": "+ Add a goal", "yours": "Your goals", "editHint": "Opens the goal for editing", "editTitle": "Edit goal", "yourProject": "Your project", "yourWish": "On your wishlist",
+    "kind": "Kind", "empty": "No goals yet", "emptyHint": "Add a yearly target, a grade goal, a project or a route you dream about.",
     "progress": "{{value}} / {{target}} sends in {{year}}", "markDone": "Mark done", "reopen": "Reopen",
     "deleteTitle": "Delete goal?", "deleteQuestion": "\"{{title}}\" will be removed.",
-    "errors": { "title": "Enter a goal title.", "target": "The target must be a whole number, 1 or more." }
+    "errors": { "title": "Enter a goal title.", "target": "The target must be a whole number, 1 or more.", "grade": "Pick a grade." }
   },
   "routeSearch": {
     "open": "Find routes", "title": "Find routes", "name": "Route or crag name", "any": "Any", "from": "Grade from", "to": "Grade to",

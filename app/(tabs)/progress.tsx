@@ -5,9 +5,11 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, View } from 'react-native';
 import { Text } from '../../src/ui/Text';
 import { listAscents } from '../../src/db/repo';
-import { isoDate } from '../../src/domain/dates';
-import { formatGrade } from '../../src/domain/grades';
-import { activityByDay, ascentYears, pyramid, yearStats, type StatAscent } from '../../src/domain/stats';
+import { ASCENT_STYLES, formatGrade } from '../../src/domain/grades';
+import { toStat } from '../../src/ui/progress';
+import {
+  activityByDay, ascentYears, hardestByMonth, hardestByYear, pyramid, styleCounts, topByDays, yearCalendar, yearStats, type StatAscent,
+} from '../../src/domain/stats';
 import { EmptyState, HIT, Label, Screen, StatTile } from '../../src/ui/kit';
 import { F } from '../../src/ui/fonts';
 import { useSettings } from '../../src/ui/settingsStore';
@@ -35,32 +37,67 @@ function Pyramid({ data }: { data: Map<number, number> }) {
   );
 }
 
-function Calendar({ days }: { days: Map<string, number> }) {
+/** The whole year, one row of day squares per month, colored by the number of ascents that day. */
+function Calendar({ days, year }: { days: Map<string, number>; year: number }) {
   const th = useTheme();
   const { t } = useTranslation();
-  const cells: { key: string; n: number }[] = [];
-  const today = new Date();
-  for (let i = 125; i >= 0; i--) {
-    const key = isoDate(new Date(today.getFullYear(), today.getMonth(), today.getDate() - i));
-    cells.push({ key, n: days.get(key) ?? 0 });
-  }
-  const color = (n: number) => (n === 0 ? th.line : n < 3 ? th.soft : th.accent);
+  const month = (m: number) => t(`progress.months.${m}`);
+  const color = (n: number) => (n === 0 ? th.soft : n < 3 ? th.outline : th.accent);
   const legend = [[0, t('progress.legendNone')], [1, t('progress.legendSome')], [3, t('progress.legendMany')]] as const;
   return (
     <View>
-      <View accessible={false} importantForAccessibility="no-hide-descendants" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 3 }}>
-        {cells.map((c) => (
-          <View key={c.key} style={{ width: 14, height: 14, borderRadius: 2, backgroundColor: color(c.n), borderWidth: c.n > 0 && c.n < 3 ? 1 : 0, borderColor: th.accent }} />
+      <View accessible={false} importantForAccessibility="no-hide-descendants" style={{ gap: 3 }}>
+        {yearCalendar(days, year).map((cells, m) => (
+          <View key={m} style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+            <Text style={{ width: 30, color: th.muted, fontFamily: F.semi, fontSize: 11, textTransform: 'uppercase' }}>{month(m)}</Text>
+            {cells.map((c) => <View key={c.key} style={{ flex: 1, aspectRatio: 1, maxWidth: 12, borderRadius: 2, backgroundColor: color(c.n) }} />)}
+          </View>
         ))}
       </View>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 8 }}>
         {legend.map(([n, label]) => (
           <View key={label} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <View style={{ width: 12, height: 12, borderRadius: 2, backgroundColor: color(n), borderWidth: n > 0 && n < 3 ? 1 : 0, borderColor: th.accent }} />
+            <View style={{ width: 12, height: 12, borderRadius: 2, backgroundColor: color(n) }} />
             <Text style={{ color: th.muted, fontSize: 12 }}>{label}</Text>
           </View>
         ))}
       </View>
+    </View>
+  );
+}
+
+/** Horizontal bars with a label on the left and the value on the right. */
+function Bars({ rows }: { rows: { key: string; label: string; ratio: number; value: string }[] }) {
+  const th = useTheme();
+  return (
+    <View style={{ gap: 4 }}>
+      {rows.map((r) => (
+        <View key={r.key} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <Text style={{ width: 52, color: th.muted, fontFamily: F.semi, fontSize: 12, textTransform: 'uppercase' }} numberOfLines={1}>{r.label}</Text>
+          <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <View style={{ height: 16, borderRadius: 4, backgroundColor: th.badge, width: `${Math.max(4, r.ratio * 70)}%` }} />
+            <Text style={{ color: th.ink, fontFamily: F.cond, fontSize: 16 }}>{r.value}</Text>
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+/** A short ranked list: name and number of days. */
+function TopList({ items, empty }: { items: { name: string; days: number }[]; empty: string }) {
+  const th = useTheme();
+  const { t } = useTranslation();
+  if (!items.length) return <Text style={{ color: th.muted }}>{empty}</Text>;
+  return (
+    <View style={{ backgroundColor: th.surface, borderWidth: 1, borderColor: th.line, borderRadius: 14 }}>
+      {items.map((it, i) => (
+        <View key={it.name} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, paddingHorizontal: 12, borderTopWidth: i ? 1 : 0, borderTopColor: th.line }}>
+          <Text style={{ width: 18, color: th.muted, fontFamily: F.cond, fontSize: 16 }}>{i + 1}</Text>
+          <Text style={{ flex: 1, color: th.ink, fontFamily: F.semi }} numberOfLines={1}>{it.name}</Text>
+          <Text style={{ color: th.muted, fontSize: 13 }}>{t('progress.daysCount', { count: it.days })}</Text>
+        </View>
+      ))}
     </View>
   );
 }
@@ -93,13 +130,22 @@ export default function Progress() {
   const [year, setYear] = useState(currentYear);
 
   useFocusEffect(useCallback(() => {
-    listAscents(db).then((rows) => setAscents(rows.map((r) => ({ date: r.date, type: r.type, gradeIndex: r.grade_index, style: r.style }))));
+    listAscents(db).then((rows) => setAscents(rows.map(toStat)));
   }, [db]));
 
   const stats = useMemo(() => yearStats(ascents, year), [ascents, year]);
   const routes = useMemo(() => pyramid(ascents, year), [ascents, year]);
   const days = useMemo(() => activityByDay(ascents), [ascents]);
   const years = useMemo(() => ascentYears(ascents, currentYear), [ascents, currentYear]);
+  const byMonth = useMemo(() => hardestByMonth(ascents, year), [ascents, year]);
+  const byYear = useMemo(() => hardestByYear(ascents), [ascents]);
+  const styles = useMemo(() => styleCounts(ascents, year), [ascents, year]);
+  const crags = useMemo(() => topByDays(ascents, year, (a) => a.cragName), [ascents, year]);
+  const partners = useMemo(() => topByDays(ascents, year, (a) => a.partner), [ascents, year]);
+  const month = (m: number) => t(`progress.months.${m}`);
+  const maxMonth = Math.max(0, ...byMonth.map((g) => g ?? 0));
+  const maxStyle = Math.max(1, ...styles.values());
+  const maxYear = Math.max(0, ...byYear.map((y) => y.gradeIndex));
   // The chosen year may have lost all its ascents (deleted); fall back to the current year.
   useEffect(() => { if (!years.includes(year)) setYear(currentYear); }, [years, year, currentYear]);
 
@@ -119,12 +165,30 @@ export default function Progress() {
         </View>
         <Label>{t('progress.pyramidRoutes')}</Label>
         <Pyramid data={routes} />
-        {year === currentYear ? (
+        {byMonth.some((g) => g != null) ? (
           <>
-            <Label>{t('progress.activity')}</Label>
-            <Calendar days={days} />
+            <Label>{t('progress.byMonth')}</Label>
+            <Bars rows={byMonth.flatMap((g, m) => (g == null ? [] : [{ key: String(m), label: month(m), ratio: (g + 1) / (maxMonth + 1), value: formatGrade(g, routeSystem) }]))} />
           </>
         ) : null}
+        {byYear.length > 1 ? (
+          <>
+            <Label>{t('progress.byYear')}</Label>
+            <Bars rows={byYear.map((y) => ({ key: String(y.year), label: String(y.year), ratio: (y.gradeIndex + 1) / (maxYear + 1), value: formatGrade(y.gradeIndex, routeSystem) }))} />
+          </>
+        ) : null}
+        {styles.size ? (
+          <>
+            <Label>{t('progress.styles')}</Label>
+            <Bars rows={ASCENT_STYLES.filter((st) => styles.get(st)).map((st) => ({ key: st, label: t(`styles.${st}`), ratio: styles.get(st)! / maxStyle, value: String(styles.get(st)) }))} />
+          </>
+        ) : null}
+        <Label>{t('progress.activityYear', { year })}</Label>
+        <Calendar days={days} year={year} />
+        <Label>{t('progress.topCrags')}</Label>
+        <TopList items={crags} empty={t('progress.noData')} />
+        <Label>{t('progress.topPartners')}</Label>
+        <TopList items={partners} empty={t('progress.noPartners')} />
       </ScrollView>
     </Screen>
   );
