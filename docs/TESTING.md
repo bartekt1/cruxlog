@@ -89,6 +89,16 @@ Write down the result of every step (OK / problem). Report problems with: step n
 5. Tap a goal: edit name, number, grade or route; "Mark done"/"Reopen"; "Delete" asks first.
 6. Progress: pick a past year with the arrows. Expected: the calendar shows the whole year by month; hardest send per month and per year, styles, most visited crags and partners for that year.
 
+## 3e. Map and nearby crags
+1. Crags › Map. With no saved positions: a card says so and how to set one. The map shows Poland. Expected: no crash without internet beyond empty tiles.
+2. Open a crag › "Set crag position". Move the map under the pin › "Save pin position". Back on the crag: "Position saved". Expected: the crag is a dot on Crags › Map, its name shows when zoomed in, and tapping it opens a card with "Open crag".
+3. On site: "Save crag position here". The first time the phone asks for location permission. Expected: the position is saved; "Remove position" clears it.
+4. Map: tap the top-right button to switch Map / Topo. Expected: the tourist map (OpenTopoMap) with trails; the choice is kept after a restart.
+5. Map: "Show me". Expected: a blue dot at your position and the map flies to it. Deny permission: a short note how to allow it.
+6. With permission and a crag within 50 km: Crags list shows "Nearby" with distances. Within 3 km: the ascent form shows the crag as a chip, tapping it lists its routes.
+7. Settings › CSV import with a file `Skała;lat;lng`. Expected: a question with the count, then "Crag positions saved" and the names not found.
+8. Re-import the route list. Expected: saved positions stay.
+
 ## 3b. Icons
 1. The bottom bar shows an icon above each tab name (book, chart, mountains, flag); the selected tab's icon is filled. No empty squares.
 2. Top right: a clear gear icon opens Settings. In the middle of the bottom bar a raised orange "+" opens a new ascent from any tab, in light and dark mode. The route screen's "Log an ascent" button is orange too.
@@ -151,8 +161,8 @@ Write down the result of every step (OK / problem). Report problems with: step n
 ## Known gaps (do not report as bugs)
 - Language and grade system settings reset after restart.
 - No crag/route detail screens, no edit/delete.
-- No multipitch pitch form (data model only), no map, no nearby crags.
-- Goals do not track progress yet.
+- No multipitch pitch form (data model only).
+- Imported crags have no positions until you set them (no GPS tracks are ever recorded).
 - Grade conversions between systems are approximate.
 
 ## Report template

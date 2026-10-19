@@ -87,11 +87,23 @@
     "add": { "region": "+ Dodaj region", "area": "+ Dodaj rejon", "group": "+ Dodaj grupę" },
     "placeholder": { "region": "np. Czarnorzeki", "area": "np. Kamieniec", "group": "np. Krowia Turnia" }
   },
+  "map": {
+    "title": "Mapa", "list": "Lista", "standard": "Mapa", "topo": "Turystyczna", "switchBase": "Zmień podkład mapy",
+    "showMe": "Pokaż mnie", "denied": "Brak zgody na położenie. Możesz ją dać w ustawieniach telefonu.",
+    "noPositions": "Żadna skała nie ma jeszcze zapisanego położenia.", "noPositionsHint": "Otwórz skałę i wybierz „Ustaw położenie skały”.",
+    "openCrag": "Otwórz skałę", "nearby": "W pobliżu", "showNearby": "Pokaż skały w pobliżu",
+    "locateShort": "Położenie skały", "locateTitle": "Położenie: {{name}}",
+    "locateHint": "Przesuń mapę tak, żeby szpilka wskazywała skałę, albo zapisz miejsce, w którym stoisz.",
+    "saveCenter": "Zapisz położenie szpilki", "saveHere": "Zapisz położenie skały tutaj", "clear": "Usuń położenie",
+    "noFix": "Nie udało się ustalić Twojego położenia. Wyjdź na otwarty teren i spróbuj jeszcze raz.",
+    "privacy": "Położenie zostaje tylko na tym telefonie.",
+    "hasPosition": "Położenie zapisane", "away": "{{distance}} od Ciebie", "setPosition": "Ustaw położenie skały", "changeHint": "Zmień położenie skały"
+  },
   "settings": {
     "title": "Ustawienia", "language": "Język", "theme": "Wygląd", "themes": { "system": "Jak w telefonie", "light": "Jasny", "dark": "Ciemny" }, "routeGrades": "Wyceny dróg",
     "backup": "Kopia zapasowa", "backupHelp": "Eksport zapisuje wszystkie dane w jednym pliku. Import scala plik z aplikacją; nowsze wpisy wygrywają, nic nie jest usuwane.",
     "export": "Eksportuj kopię", "import": "Importuj kopię", "csv": "Importuj skały z pliku CSV",
-    "csvHelp": "Wybierz jeden plik z listą dróg (np. plik z przewodnika albo eksport z theCrag). Każdy wiersz to jedna droga: region, rejon, grupa, skała, sektor, nazwa, wycena. Działa też dawny import z plików crags.csv i routes.csv.",
+    "csvHelp": "Wybierz jeden plik z listą dróg (np. plik z przewodnika albo eksport z theCrag). Każdy wiersz to jedna droga: region, rejon, grupa, skała, sektor, nazwa, wycena. Działa też dawny import z plików crags.csv i routes.csv. Plik z kolumnami Skała, lat, lng zapisuje tylko położenia skał na mapie.",
     "csvSkipped": "Pominięte wiersze: {{count}} (bouldery, lód, via ferraty, drogi bez nazwy, projekty, drogi bez wyceny lub z nieznaną wyceną).",
     "removeImported": "Usuń zaimportowane skały i drogi", "removeImportedHelp": "Przed wczytaniem pliku, który ma zastąpić poprzedni. Drogi z Twoimi przejściami i wszystko, co dodałeś sam, zostaje.",
     "removeImportedTitle": "Usunąć zaimportowane dane?", "removeImportedConfirm": "Zostanie usuniętych dróg: {{routes}} i skał: {{crags}}. Drogi z Twoimi przejściami i wszystko, co dodałeś sam, zostaje.",
@@ -101,6 +113,9 @@
     "csvErrors": "Znaleziono problemów: {{count}}. Nic nie zaimportowano.", "csvMissing": "Wymagane są crags.csv i routes.csv. Wybrano: {{files}}.",
     "notBackup": "Ten plik nie jest kopią zapasową Cruxlog.", "lastBackupNever": "Nie masz jeszcze kopii.", "lastBackupToday": "Ostatnia kopia: dziś.", "lastBackupDays": "Ostatnia kopia: {{n}} dni temu.",
     "done": "Gotowe", "problem": "Problem",
+    "positionsConfirm": "Plik zawiera położenia skał: {{count}}. Zostaną zapisane przy skałach o tej samej nazwie lub kluczu. Drogi i przejścia się nie zmienią.",
+    "positionsDone": "Zapisano położenie skał: {{count}}.", "positionsNone": "W pliku nie ma żadnego poprawnego położenia.",
+    "positionsUnmatched": "Nie znaleziono w aplikacji skał: {{count}} ({{names}}).",
     "csvConfirmTitle": "Zaimportować?", "csvConfirmYes": "Importuj",
     "csvConfirm": "Zostanie zaimportowanych skał: {{crags}}, dróg: {{routes}}. Jeśli ten plik był już importowany, Twoje zmiany w tych skałach i drogach zostaną nadpisane, a usunięte wrócą. Twoje przejścia się nie zmienią."
   }

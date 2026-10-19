@@ -87,11 +87,23 @@
     "add": { "region": "+ Add region", "area": "+ Add area", "group": "+ Add group" },
     "placeholder": { "region": "e.g. Czarnorzeki", "area": "e.g. Kamieniec", "group": "e.g. Krowia Turnia" }
   },
+  "map": {
+    "title": "Map", "list": "List", "standard": "Map", "topo": "Topo", "switchBase": "Change map base",
+    "showMe": "Show me", "denied": "No location permission. You can allow it in the phone settings.",
+    "noPositions": "No crag has a saved position yet.", "noPositionsHint": "Open a crag and choose “Set crag position”.",
+    "openCrag": "Open crag", "nearby": "Nearby", "showNearby": "Show nearby crags",
+    "locateShort": "Crag position", "locateTitle": "Position: {{name}}",
+    "locateHint": "Move the map so the pin points at the crag, or save the spot where you are standing.",
+    "saveCenter": "Save pin position", "saveHere": "Save crag position here", "clear": "Remove position",
+    "noFix": "Could not get your position. Move to open ground and try again.",
+    "privacy": "The position stays on this phone only.",
+    "hasPosition": "Position saved", "away": "{{distance}} from you", "setPosition": "Set crag position", "changeHint": "Change crag position"
+  },
   "settings": {
     "title": "Settings", "language": "Language", "theme": "Appearance", "themes": { "system": "Like the phone", "light": "Light", "dark": "Dark" }, "routeGrades": "Route grades",
     "backup": "Backup", "backupHelp": "Export saves all your data to one file. Import merges a file into the app; newer entries win, nothing is deleted.",
     "export": "Export backup", "import": "Import backup", "csv": "Import crags from a CSV file",
-    "csvHelp": "Pick one file with a list of routes (e.g. a guidebook export or a theCrag export). Each row is one route: region, area, group, crag, sector, name, grade. The older import with crags.csv and routes.csv still works.",
+    "csvHelp": "Pick one file with a list of routes (e.g. a guidebook export or a theCrag export). Each row is one route: region, area, group, crag, sector, name, grade. The older import with crags.csv and routes.csv still works. A file with columns Crag, lat, lng only saves crag positions for the map.",
     "csvSkipped": "Rows left out: {{count}} (boulders, ice, via ferratas, unnamed routes, projects, routes without a grade or with an unknown grade).",
     "removeImported": "Remove imported crags and routes", "removeImportedHelp": "Before loading a file that should replace the previous one. Routes with your ascents and everything you added yourself stay.",
     "removeImportedTitle": "Remove imported data?", "removeImportedConfirm": "This removes {{routes}} routes and {{crags}} crags. Routes with your ascents and everything you added yourself stay.",
@@ -101,6 +113,9 @@
     "csvErrors": "{{count}} problems found. Nothing was imported.", "csvMissing": "crags.csv and routes.csv are required. Selected: {{files}}.",
     "notBackup": "This file is not a Cruxlog backup.", "lastBackupNever": "No backup yet.", "lastBackupToday": "Last backup: today.", "lastBackupDays": "Last backup: {{n}} days ago.",
     "done": "Done", "problem": "Problem",
+    "positionsConfirm": "The file has crag positions: {{count}}. They will be saved on crags with the same name or key. Routes and ascents will not change.",
+    "positionsDone": "Crag positions saved: {{count}}.", "positionsNone": "The file has no valid position.",
+    "positionsUnmatched": "Crags not found in the app: {{count}} ({{names}}).",
     "csvConfirmTitle": "Import?", "csvConfirmYes": "Import",
     "csvConfirm": "{{crags}} crags and {{routes}} routes will be imported. If this file was imported before, your changes to these crags and routes are overwritten and deleted ones come back. Your ascents are not changed."
   }

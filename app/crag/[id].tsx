@@ -10,7 +10,10 @@ import { routeGrade } from '../../src/domain/grades';
 import { IconButton } from '../../src/ui/icons';
 import { Contours } from '../../src/ui/Contours';
 import { F } from '../../src/ui/fonts';
-import { Button, EmptyState, GradeBadge, Screen } from '../../src/ui/kit';
+import { Button, EmptyState, GradeBadge, LinkButton, Screen } from '../../src/ui/kit';
+import { useLocation } from '../../src/ui/useLocation';
+import { distanceM, formatDistance, isLatLng } from '../../src/domain/geo';
+import { Ionicons } from '@expo/vector-icons';
 import { useSettings } from '../../src/ui/settingsStore';
 import { useTheme } from '../../src/ui/theme';
 
@@ -18,13 +21,14 @@ export default function CragScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const db = useSQLiteContext();
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const th = useTheme();
   const { routeSystem } = useSettings();
   const [crag, setCrag] = useState<CragDetail | null>(null);
   const [routes, setRoutes] = useState<CragRouteRow[]>([]);
   const [sectorRows, setSectorRows] = useState<SectorRow[]>([]);
   const [areas, setAreas] = useState<AreaRow[]>([]);
+  const loc = useLocation();
 
   useFocusEffect(useCallback(() => {
     getCrag(db, id).then((c) => {
@@ -67,6 +71,18 @@ export default function CragScreen() {
             <View style={{ paddingTop: 8, gap: 4 }}>
               <Contours height={140} />
               {crag.region_id ? <Text style={{ color: th.muted, fontFamily: F.semi, fontSize: 13, letterSpacing: 1.2, textTransform: 'uppercase' }}>{pathLabel(areas, crag.region_id) || crag.region}</Text> : null}
+              {isLatLng(crag.lat, crag.lng) ? (
+                <Pressable onPress={() => router.push({ pathname: '/crag/locate', params: { id: crag.id } })} accessibilityRole="button" accessibilityHint={t('map.changeHint')}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 36 }}>
+                  <Ionicons name="location" size={18} color={th.accent} />
+                  <Text style={{ color: th.ink, fontFamily: F.semi }}>
+                    {loc.position ? t('map.away', { distance: formatDistance(distanceM(loc.position, { lat: crag.lat!, lng: crag.lng! }), i18n.language) }) : t('map.hasPosition')}
+                  </Text>
+                  <Text style={{ color: th.accent, fontFamily: F.semi }}>{t('common.change')}</Text>
+                </Pressable>
+              ) : (
+                <LinkButton label={t('map.setPosition')} onPress={() => router.push({ pathname: '/crag/locate', params: { id: crag.id } })} />
+              )}
               {crag.description ? <Text style={{ color: th.ink }}>{crag.description}</Text> : null}
               {crag.approach ? <Text style={{ color: th.muted }}>{t('crags.approach')}: {crag.approach}</Text> : null}
               <Text style={{ color: th.muted, fontSize: 12, marginTop: 4 }}>{t('crags.tapRoute')}</Text>

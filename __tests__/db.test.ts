@@ -8,11 +8,11 @@ import {
   addAscent, addGoal, addUserRoute, applyImport, cragUsage, deleteAscent, deleteCrag, deleteGoal, deleteArea, deleteRoute, deleteSector,
   getAscent, getCrag, getArea, getRoute, getSector, listAscents, listCragRoutes, listCrags, listGoals, listAreas, listSectorNames, addArea, areaIdFor,
   renameArea, renameSector, routeUsage, saveCrag, searchRoutes, sectorUsage, setGoalDone, updateAscent, updateRoute, type NewRoute, type RouteFilter,
-  listCragChoices, listPartners, listRouteAscents, recentRoutes, listSectors, addSector, createRoute, importedUsage, removeImported, findRoutes, getGoal, updateGoal, routeGoals,
+  listCragChoices, listPartners, applyCragPositions, setCragLocation, listRouteAscents, recentRoutes, listSectors, addSector, createRoute, importedUsage, removeImported, findRoutes, getGoal, updateGoal, routeGoals,
 } from '../src/db/repo';
 import { descendantIds } from '../src/domain/areas';
 import { buildImportPlan } from '../src/domain/csvImport';
-import { parseFlatCsv, planFromFlatRows, type FlatRow } from '../src/domain/flatImport';
+import { detectFormat, parseFlatCsv, parsePositionsCsv, planFromFlatRows, type FlatRow } from '../src/domain/flatImport';
 import { parseGrade } from '../src/domain/grades';
 import { openTestDb } from './helpers/sqlite';
 
@@ -533,6 +533,35 @@ describe('building a crag from its screen', () => {
     expect((await getRoute(db, noSector))!.sector_name).toBe('Okiennik');
     expect((await listSectors(db, crag)).map((s) => s.name)).toEqual(['Lewy', 'Okiennik', 'Prawy', 'Środek']);
     expect(await listAscents(db)).toEqual([]);
+  });
+});
+
+describe('crag positions for the map', () => {
+  const row = (name: string, crag: string): FlatRow => ({
+    region: 'Jura', area: 'Jura Południowa', group: 'Dolina', crag, sector: '', name, type: 'sport', grade: 'VI.1', gradeSystem: 'kr',
+  });
+  it('reads a positions file', () => {
+    const text = 'Skała;lat;lng\nOkap;50,4;19,8\nZła;abc;19\nZero;0;0\n';
+    expect(detectFormat(text)).toBe('positions');
+    expect(parsePositionsCsv(text)).toEqual([{ key: '', name: 'Okap', lat: 50.4, lng: 19.8 }]);
+  });
+  it('matches by key or unique name, reports the rest, and a re-import keeps the positions', async () => {
+    const db = await freshDb();
+    const plan = planFromFlatRows([row('Rysa', 'Okap'), row('Filar', 'Baszta')]);
+    await applyImport(db, plan);
+    const crags = await listCragChoices(db);
+    const baszta = crags.find((c) => c.name === 'Baszta')!;
+    const res = await applyCragPositions(db, [
+      { key: '', name: 'okap', lat: 50.1, lng: 19.1 },
+      { key: baszta.id.replace('imp:crag:', ''), name: 'inna nazwa', lat: 50.2, lng: 19.2 },
+      { key: '', name: 'Nieznana', lat: 50.3, lng: 19.3 },
+    ]);
+    expect(res.updated).toBe(2);
+    expect(res.unmatched.map((r) => r.name)).toEqual(['Nieznana']);
+    await applyImport(db, plan);
+    expect(await getCrag(db, baszta.id)).toMatchObject({ lat: 50.2, lng: 19.2 });
+    await setCragLocation(db, baszta.id, null);
+    expect(await getCrag(db, baszta.id)).toMatchObject({ lat: null, lng: null });
   });
 });
 

@@ -16,6 +16,8 @@ import { pathLabel, pathLabels, pathNames } from '../../src/domain/areas';
 import { sameName, suggest } from '../../src/domain/text';
 import { AreaPicker } from '../../src/ui/AreaPicker';
 import { Button, Chip, ChipRow, ErrorText, Field, HIT, Label, LinkButton, Suggestions, type SuggestionItem } from '../../src/ui/kit';
+import { useLocation } from '../../src/ui/useLocation';
+import { formatDistance, nearest } from '../../src/domain/geo';
 import { useSettings } from '../../src/ui/settingsStore';
 import { useTheme } from '../../src/ui/theme';
 
@@ -30,7 +32,7 @@ export default function NewAscent() {
   const { id, routeId } = useLocalSearchParams<{ id?: string; routeId?: string }>();
   const db = useSQLiteContext();
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const th = useTheme();
   const settings = useSettings();
 
@@ -51,6 +53,9 @@ export default function NewAscent() {
   const labels = useMemo(() => pathLabels(areaRows), [areaRows]);
   const [sectorNames, setSectorNames] = useState<string[]>([]);
   const [cragRoutes, setCragRoutes] = useState<CragRouteRow[]>([]);
+  const loc = useLocation();
+  const [nearCrag, setNearCrag] = useState<string | null>(null);
+  const [nearRoutes, setNearRoutes] = useState<CragRouteRow[]>([]);
   const [partners, setPartners] = useState<string[]>([]);
   const [focus, setFocus] = useState<'crag' | 'sector' | 'region' | 'partner' | null>(null);
 
@@ -135,6 +140,12 @@ export default function NewAscent() {
     setCreating(true);
   }
   const cragPath = (c: CragChoice) => (c.region_id ? labels.get(c.region_id) ?? '' : '');
+  // Crags within 3 km, only when the phone already allowed the position; one tap lists that crag's routes.
+  const near = useMemo(() => (loc.position ? nearest(crags, loc.position, 4, 3_000) : []), [crags, loc.position]);
+  useEffect(() => {
+    if (!nearCrag) { setNearRoutes([]); return; }
+    listCragRoutes(db, nearCrag).then(setNearRoutes);
+  }, [db, nearCrag]);
   const cragHits = query.trim() ? suggest(crags, query, (c) => c.name, (c) => [cragPath(c)], 3) : [];
 
   function pickDuplicate() {
@@ -316,7 +327,23 @@ export default function NewAscent() {
               {cragHits.length ? <Text style={{ color: th.muted, fontSize: 12, marginTop: 2 }}>{t('ascent.cragHitHint')}</Text> : null}
             </>
           ) : (
-            <Suggestions title={t('ascent.recent')} items={recent.map(routeItem)} onPick={pickRoute(recent)} />
+            <>
+              {near.length ? (
+                <>
+                  <Text style={{ color: th.muted, fontSize: 12, marginTop: 6 }}>{t('map.nearby')}</Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                    {near.map((c) => (
+                      <Chip key={c.id} label={`${c.name} · ${formatDistance(c.distance, i18n.language)}`} on={nearCrag === c.id} onPress={() => setNearCrag(nearCrag === c.id ? null : c.id)} />
+                    ))}
+                  </ScrollView>
+                </>
+              ) : null}
+              {nearCrag ? (
+                <Suggestions title={near.find((c) => c.id === nearCrag)?.name} items={nearRoutes.map(routeItem)} onPick={pickRoute(nearRoutes)} />
+              ) : (
+                <Suggestions title={t('ascent.recent')} items={recent.map(routeItem)} onPick={pickRoute(recent)} />
+              )}
+            </>
           )}
           {query.trim() && results.length === 0 && cragHits.length === 0 ? <Text style={{ color: th.muted, paddingVertical: 6 }}>{t('ascent.noResults', { query: query.trim() })}</Text> : null}
           <LinkButton label={query.trim() ? t('ascent.newRouteNamed', { name: query.trim() }) : t('ascent.newRoute')} onPress={startCreating} />

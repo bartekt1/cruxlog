@@ -10,4 +10,5 @@ Cruxlog: climbing logbook and crag guide. Expo SDK 57, React Native, TypeScript,
 - Keep domain logic in `src/domain/` pure and covered by tests in `__tests__/`.
 - Look ("przewodnik kredą"): colors only from `useTheme()` (`src/ui/theme.ts`, light and dark); import `Text` from `src/ui/Text`, not react-native, so the bundled Barlow fonts apply; headings, grades and numbers use `F.display`/`F.cond` from `src/ui/fonts.ts`.
 - No GPS tracks or routes. The map shows only a pin and the user's position, and location stays on the device.
+- Map: MapLibre (`@maplibre/maplibre-react-native`, native, needs a new APK). Base styles (OpenFreeMap, OpenTopoMap) are in `src/ui/mapStyles.ts`, location in `src/ui/useLocation.ts`, distance helpers in `src/domain/geo.ts`.
 - Skills in `.claude/skills/`: `verify` (checks), `new-screen`, `db-migration`, `i18n-sync`, `ux-audit`. Use them for those tasks.

@@ -162,6 +162,15 @@ Severity: **H** blocks a task or loses/corrupts data, **M** slows a task or conf
 | P2 | No goal for a grade; projects were plain text | M | Grade goal (distinct led routes at or above a grade this year); project and wishlist linked to a route, with tries and days, ticked off by a led send |
 | P3 | Activity only for the current year, few stats | L | Whole-year calendar for any year; hardest per month and per year, styles, top crags, partners |
 
+## Round 12 (map and nearby crags)
+
+| # | Issue | Sev | Status |
+|---|---|---|---|
+| M1 | No way to see crags on a map | M | Crags › List/Map: crag pins on OpenFreeMap, switch to the tourist map (OpenTopoMap), "Show me" |
+| M2 | Imported crags have no coordinates | M | Crag screen › "Set crag position": a pin under a moving map, or "here" from the phone's GPS; positions file import; re-imports keep positions |
+| M3 | Logging at the crag meant searching by name | L | Nearby crags (3 km) as chips in the ascent form; "Nearby" list with distances in Crags |
+| M4 | Location privacy | L | Permission asked only on a tap; the position is never stored or sent, only shown on the map and used for distances |
+
 ## Open items
 
 1. Device checks: localized dates on Hermes, calendar picker, keyboard behavior, large font sizes, TalkBack labels.

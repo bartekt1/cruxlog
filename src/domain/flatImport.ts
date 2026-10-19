@@ -82,11 +82,12 @@ const HEADERS: Record<string, keyof FlatRow> = {
   grade: 'grade', wycena: 'grade', grade_system: 'gradeSystem', system: 'gradeSystem', skala_wycen: 'gradeSystem',
   length_m: 'lengthM', dlugosc: 'lengthM', length: 'lengthM', bolts: 'bolts', przeloty: 'bolts', description: 'description', opis: 'description',
   crag_description: 'cragDescription', opis_skaly: 'cragDescription', lat: 'lat', lng: 'lng', key: 'routeKey',
+  latitude: 'lat', longitude: 'lng', lon: 'lng', szerokosc: 'lat', dlugosc_geograficzna: 'lng',
   crag_key: 'cragKey', key_skaly: 'cragKey',
 };
 const headerKey = (h: string) => fold(h).replace(/[\s-]+/g, '_');
 
-export type ImportFormat = 'guidebook' | 'thecrag' | 'flat';
+export type ImportFormat = 'guidebook' | 'thecrag' | 'flat' | 'positions';
 
 /** Recognises a file by its header line. */
 export function detectFormat(text: string): ImportFormat | null {
@@ -96,6 +97,7 @@ export function detectFormat(text: string): ImportFormat | null {
   if (cols.includes('sektor') && cols.includes('trudnosc') && cols.includes('nazwa')) return 'thecrag';
   const mapped = new Set(cols.map((c) => HEADERS[c]).filter(Boolean));
   if (mapped.has('crag') && mapped.has('name') && mapped.has('grade')) return 'flat';
+  if ((mapped.has('crag') || mapped.has('cragKey')) && mapped.has('lat') && mapped.has('lng') && !mapped.has('name')) return 'positions';
   return null;
 }
 
@@ -109,4 +111,17 @@ export function parseFlatCsv(text: string): FlatRow[] {
     name: r.name ?? '', type: r.type ?? '', grade: r.grade ?? '', gradeSystem: r.gradeSystem ?? '',
     lengthM: r.lengthM, bolts: r.bolts, description: r.description, cragDescription: r.cragDescription, lat: r.lat, lng: r.lng, cragKey: r.cragKey, routeKey: r.routeKey,
   }));
+}
+
+/** A file with only crag positions: crag key and/or crag name, lat, lng. Rows without a valid position are dropped. */
+export function parsePositionsCsv(text: string): { key: string; name: string; lat: number; lng: number }[] {
+  const data = Papa.parse<Record<string, string>>(text.replace(/^\ufeff/, ''), {
+    header: true, skipEmptyLines: true, transformHeader: (h) => HEADERS[headerKey(h)] ?? `_${h}`,
+  }).data;
+  return data.flatMap((r) => {
+    const lat = num(r.lat);
+    const lng = num(r.lng);
+    const ok = lat != null && lng != null && Math.abs(lat) <= 90 && Math.abs(lng) <= 180 && !(lat === 0 && lng === 0);
+    return ok && (r.cragKey?.trim() || r.crag?.trim()) ? [{ key: (r.cragKey ?? '').trim(), name: (r.crag ?? '').trim(), lat, lng }] : [];
+  });
 }

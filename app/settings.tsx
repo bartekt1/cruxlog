@@ -7,10 +7,10 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, ScrollView } from 'react-native';
 import { Text } from '../src/ui/Text';
 import { exportBackup, importBackup } from '../src/db/backup';
-import { applyImport, importedUsage, listAscents, removeImported } from '../src/db/repo';
+import { applyCragPositions, applyImport, importedUsage, listAscents, removeImported } from '../src/db/repo';
 import { backupStatus } from '../src/domain/history';
 import { buildImportPlan, type ImportPlan } from '../src/domain/csvImport';
-import { detectFormat, parseFlatCsv, planFromFlatRows, type FlatRow } from '../src/domain/flatImport';
+import { detectFormat, parseFlatCsv, parsePositionsCsv, planFromFlatRows, type FlatRow } from '../src/domain/flatImport';
 import { guidebookRows } from '../src/domain/guidebookCsv';
 import { theCragRows } from '../src/domain/thecragCsv';
 import { ROUTE_SYSTEMS } from '../src/domain/grades';
@@ -122,6 +122,8 @@ export default function Settings() {
     if (res.canceled) return;
     const texts: Record<string, string> = {};
     for (const a of res.assets) texts[a.name.toLowerCase()] = await new File(a.uri).text();
+    const only = Object.values(texts);
+    if (only.length === 1 && detectFormat(only[0]) === 'positions') return importPositions(only[0]);
     const { plan, skipped } = texts['crags.csv'] || texts['routes.csv'] ? { plan: legacyPlan(texts), skipped: 0 } : oneFilePlan(texts);
     if (plan.errors.length) {
       const first = plan.errors.slice(0, 8).map((e) => `${e.file}, ${t('settings.csvLine', { line: e.line })}: ${e.message}`).join('\n');
@@ -136,6 +138,18 @@ export default function Settings() {
     if (!ok) return;
     return t('settings.csvDone', await applyImport(db, plan));
   });
+
+  // A file with crag positions only (crag or key, lat, lng): fills in the map pins of crags already in the app.
+  async function importPositions(text: string) {
+    const rows = parsePositionsCsv(text);
+    if (!rows.length) throw new UserError(t('settings.positionsNone'));
+    const ok = await ask(t('settings.csvConfirmTitle'), t('settings.positionsConfirm', { count: rows.length }), t('settings.csvConfirmYes'), t('common.cancel'));
+    if (!ok) return;
+    const { updated, unmatched } = await applyCragPositions(db, rows);
+    const names = unmatched.slice(0, 8).map((r) => r.name || r.key).join(', ');
+    return t('settings.positionsDone', { count: updated })
+      + (unmatched.length ? `\n\n${t('settings.positionsUnmatched', { count: unmatched.length, names })}` : '');
+  }
 
   const doRemoveImported = () => run(async () => {
     const n = await importedUsage(db);
