@@ -35,6 +35,7 @@ export default function Crags() {
   return (
     <ScrollView style={{ backgroundColor: th.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 32 }} keyboardShouldPersistTaps="handled">
       <Field value={query} onChangeText={setQuery} placeholder={t('areas.search')} accessibilityLabel={t('areas.search')} returnKeyType="search" />
+      <Button label={t('routeSearch.open')} variant="plain" onPress={() => router.push('/route/search')} />
       {query.trim() ? (
         hits.length ? (
           hits.map((c) => <NavRow key={c.id} title={c.name} subtitle={[path(c), t('crags.routes', { count: c.routes })].filter(Boolean).join(' · ')} onPress={() => openCrag(c)} />)

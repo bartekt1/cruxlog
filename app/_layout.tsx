@@ -30,6 +30,7 @@ export default function RootLayout() {
         <Stack.Screen name="route/edit" options={{ title: t('edit.routeTitle') }} />
         <Stack.Screen name="route/[id]" options={{ title: t('route.title') }} />
         <Stack.Screen name="route/new" options={{ title: t('edit.addRoutesTitle') }} />
+        <Stack.Screen name="route/search" options={{ title: t('routeSearch.title') }} />
         <Stack.Screen name="sector/new" options={{ title: t('edit.addSectorTitle') }} />
         <Stack.Screen name="sector/[id]" options={{ title: t('edit.sectorTitle') }} />
         <Stack.Screen name="region/[id]" options={{ title: t('areas.edit.region') }} />

@@ -98,6 +98,18 @@ export function isSend(style: AscentStyle): boolean {
   return style !== 'attempt';
 }
 
+/** Ladder indices around `index` (inclusive), clipped to the ladder: the choices for "your own grade". */
+export function nearbyGrades(index: number, below = 3, above = 3): number[] {
+  const out: number[] = [];
+  for (let i = Math.max(0, index - below); i <= Math.min(ROUTE_LADDER.length - 1, index + above); i++) out.push(i);
+  return out;
+}
+
+/** The own grade worth showing: null when none was given or it equals the route's grade. */
+export function feltGrade(felt: number | null | undefined, routeIndex: number): number | null {
+  return felt == null || felt === routeIndex ? null : felt;
+}
+
 /** A typical mid-range grade in the given system, used as a hint in forms. */
 export function gradeExample(system: GradeSystem, type: RouteType): string {
   return formatGrade(9, system, type);

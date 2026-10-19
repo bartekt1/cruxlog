@@ -10,7 +10,7 @@ import {
 } from '../../src/db/repo';
 import { isoDate, shiftDay } from '../../src/domain/dates';
 import { isFirstTry, validateAscentDraft, validateRouteDraft } from '../../src/domain/forms';
-import { ASCENT_STYLES, gradeExample, routeGrade, systemsFor, type AscentStyle, type GradeSystem, type RouteType } from '../../src/domain/grades';
+import { ASCENT_STYLES, feltGrade, formatGrade, gradeExample, nearbyGrades, parseGrade, routeGrade, systemsFor, type AscentStyle, type GradeSystem, type RouteType } from '../../src/domain/grades';
 import { DateField } from '../../src/ui/DateField';
 import { pathLabel, pathLabels, pathNames } from '../../src/domain/areas';
 import { sameName, suggest } from '../../src/domain/text';
@@ -59,6 +59,7 @@ export default function NewAscent() {
   const [style, setStyle] = useState<AscentStyle>('rp');
   const [attempts, setAttempts] = useState('1');
   const [rating, setRating] = useState<number | null>(null);
+  const [felt, setFelt] = useState<number | null>(null);
   const [partner, setPartner] = useState('');
   const [weather, setWeather] = useState('');
   const [notes, setNotes] = useState('');
@@ -69,7 +70,7 @@ export default function NewAscent() {
     if (id) {
       getAscent(db, id).then((a) => {
         if (!a) return;
-        setRoute(a.route); setDate(a.date); setStyle(a.style); setAttempts(String(a.attempts)); setRating(a.rating);
+        setRoute(a.route); setDate(a.date); setStyle(a.style); setAttempts(String(a.attempts)); setRating(a.rating); setFelt(a.felt_grade_index);
         setPartner(a.partner_name ?? ''); setWeather(a.weather); setNotes(a.notes);
       });
     } else if (routeId) {
@@ -190,7 +191,10 @@ export default function NewAscent() {
     setSaving(true);
     try {
       const rid = route?.id ?? await addUserRoute(db, { ...newRoute!, cragName: existingCrag?.name ?? newRoute!.cragName, type, gradeSystem: system, areas });
-      const values = { routeId: rid, date: draft.value.date, style, attempts: draft.value.attempts, rating, notes: notes.trim(), partnerName: partner, weather: weather.trim() };
+      const values = {
+        routeId: rid, date: draft.value.date, style, attempts: draft.value.attempts, rating, notes: notes.trim(), partnerName: partner, weather: weather.trim(),
+        feltGradeIndex: baseGrade == null ? null : feltGrade(felt, baseGrade),
+      };
       if (id) await updateAscent(db, id, values);
       else await addAscent(db, values);
       router.back();
@@ -199,6 +203,12 @@ export default function NewAscent() {
       setSaving(false);
     }
   }
+
+  // Another route chosen in a new ascent: the own grade picked for the previous one no longer applies.
+  useEffect(() => { if (!id) setFelt(null); }, [id, route?.id]);
+
+  // The route's grade the own grade is compared with: the chosen route, or the grade typed for a new one.
+  const baseGrade = route ? route.grade_index : creating ? parseGrade(grade, system) : null;
 
   const errorText = error ? t(error.key, { example: gradeExample(system, type), message: error.message ?? '' }) : '';
   const bad = (f: FieldName) => error?.field === f;
@@ -331,6 +341,18 @@ export default function NewAscent() {
           <Field value={attempts} onChangeText={setAttempts} keyboardType="number-pad" accessibilityLabel={t('ascent.attempts')} invalid={bad('attempts')} style={{ width: 96 }} />
         </>
       )}
+
+      {baseGrade != null ? (
+        <>
+          <Label>{t('ascent.felt')}</Label>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingRight: 8 }}>
+            {nearbyGrades(baseGrade, 4, 4).map((i) => (
+              <Chip key={i} label={i === baseGrade ? t('ascent.feltSame', { grade: formatGrade(i, settings.routeSystem) }) : formatGrade(i, settings.routeSystem)}
+                on={(feltGrade(felt, baseGrade) ?? baseGrade) === i} onPress={() => setFelt(i === baseGrade ? null : i)} />
+            ))}
+          </ScrollView>
+        </>
+      ) : null}
 
       <Label>{t('ascent.rating')}</Label>
       <View style={{ flexDirection: 'row', gap: 4 }}>

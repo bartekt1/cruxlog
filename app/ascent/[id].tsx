@@ -6,7 +6,7 @@ import { Alert, Pressable, ScrollView, View } from 'react-native';
 import { Text } from '../../src/ui/Text';
 import { deleteAscent, getAscent, type AscentDetail } from '../../src/db/repo';
 import { formatDay, isoDate } from '../../src/domain/dates';
-import { routeGrade } from '../../src/domain/grades';
+import { feltGrade, formatGrade, routeGrade } from '../../src/domain/grades';
 import { Button, EmptyState, GradeBadge, Label, Title } from '../../src/ui/kit';
 import { useSettings } from '../../src/ui/settingsStore';
 import { useTheme } from '../../src/ui/theme';
@@ -51,6 +51,7 @@ export default function AscentScreen() {
 
       {row(t('ascent.date'), formatDay(a.date, i18n.language, isoDate(new Date())))}
       {row(t('ascent.style'), t(`styles.${a.style}`))}
+      {feltGrade(a.felt_grade_index, a.grade_index) != null ? row(t('ascent.felt'), formatGrade(a.felt_grade_index!, routeSystem)) : null}
       {a.attempts > 1 ? row(t('ascent.attempts'), String(a.attempts)) : null}
       {a.rating ? row(t('ascent.rating'), '★'.repeat(a.rating)) : null}
       {row(t('ascent.partner'), a.partner_name)}

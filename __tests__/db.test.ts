@@ -7,9 +7,10 @@ import { MIGRATIONS, migrate } from '../src/db/migrate';
 import {
   addAscent, addGoal, addUserRoute, applyImport, cragUsage, deleteAscent, deleteCrag, deleteGoal, deleteArea, deleteRoute, deleteSector,
   getAscent, getCrag, getArea, getRoute, getSector, listAscents, listCragRoutes, listCrags, listGoals, listAreas, listSectorNames, addArea, areaIdFor,
-  renameArea, renameSector, routeUsage, saveCrag, searchRoutes, sectorUsage, setGoalDone, updateAscent, updateRoute, type NewRoute,
-  listCragChoices, listPartners, listRouteAscents, recentRoutes, listSectors, addSector, createRoute, importedUsage, removeImported,
+  renameArea, renameSector, routeUsage, saveCrag, searchRoutes, sectorUsage, setGoalDone, updateAscent, updateRoute, type NewRoute, type RouteFilter,
+  listCragChoices, listPartners, listRouteAscents, recentRoutes, listSectors, addSector, createRoute, importedUsage, removeImported, findRoutes,
 } from '../src/db/repo';
+import { descendantIds } from '../src/domain/areas';
 import { buildImportPlan } from '../src/domain/csvImport';
 import { parseFlatCsv, planFromFlatRows, type FlatRow } from '../src/domain/flatImport';
 import { parseGrade } from '../src/domain/grades';
@@ -441,6 +442,46 @@ describe('big imports', () => {
     expect((await listCrags(db)).map((c) => [c.name, c.routes])).toEqual([['Baszta', 1], ['Okap', 1]]);
     expect(await searchRoutes(db, 'rysa')).toEqual([]);
     expect(await importedUsage(db)).toEqual({ routes: 0, crags: 0 });
+  });
+});
+
+describe('own grade and route finder', () => {
+  it('stores the own grade of an ascent and clears it on edit', async () => {
+    const db = await freshDb();
+    const r = await addUserRoute(db, route());
+    const id = await addAscent(db, { ...ascent(r), feltGradeIndex: parseGrade('VI.2', 'kr')! });
+    expect((await listAscents(db))[0].felt_grade_index).toBe(parseGrade('VI.2', 'kr'));
+    expect((await getAscent(db, id))!.felt_grade_index).toBe(parseGrade('VI.2', 'kr'));
+    await updateAscent(db, id, ascent(r));
+    expect((await listRouteAscents(db, r))[0].felt_grade_index).toBeNull();
+  });
+  it('finds routes by grade range, area, status, type and name', async () => {
+    const db = await freshDb();
+    const plan = planFromFlatRows([
+      ['Czarnorzeki', 'Kamieniec', 'Krowia', 'Łatwa', 'IV', 'sport'],
+      ['Czarnorzeki', 'Kamieniec', 'Krowia', 'Średnia', 'VI.1', 'sport'],
+      ['Czarnorzeki', 'Strzelnica', 'Okap', 'Trudna', 'VI.2', 'sport'],
+      ['Czarnorzeki', 'Strzelnica', 'Okap', 'Długa', 'VI.1', 'multipitch'],
+      ['Jura', 'Rzędkowice', 'Okiennik', 'Jurajska', 'VI.1', 'sport'],
+    ].map(([region, area, crag, name, grade, type]) => ({ region, area, group: '', crag, sector: '', name, grade, type, gradeSystem: 'kr' })));
+    await applyImport(db, plan);
+    const all: RouteFilter = { query: '', minGrade: null, maxGrade: null, areaIds: null, status: 'all', type: null };
+    const names = async (f: Partial<RouteFilter>) => (await findRoutes(db, { ...all, ...f })).rows.map((r) => r.name);
+    expect(await names({})).toEqual(['Łatwa', 'Długa', 'Jurajska', 'Średnia', 'Trudna']);
+    expect(await names({ minGrade: parseGrade('VI', 'kr'), maxGrade: parseGrade('VI.1', 'kr') })).toEqual(['Długa', 'Jurajska', 'Średnia']);
+    const areas = await listAreas(db);
+    const czarnorzeki = areas.find((a) => a.name === 'Czarnorzeki')!;
+    expect(await names({ areaIds: [...descendantIds(areas, czarnorzeki.id)], type: 'sport' })).toEqual(['Łatwa', 'Średnia', 'Trudna']);
+    const [trudna] = await searchRoutes(db, 'trudna');
+    const [srednia] = await searchRoutes(db, 'srednia');
+    await addAscent(db, ascent(trudna.id, { style: 'attempt' }));
+    await addAscent(db, ascent(srednia.id));
+    expect(await names({ status: 'tried' })).toEqual(['Trudna']);
+    expect(await names({ status: 'sent' })).toEqual(['Średnia']);
+    expect(await names({ status: 'todo', areaIds: [...descendantIds(areas, czarnorzeki.id)] })).toEqual(['Łatwa', 'Długa']);
+    expect(await names({ query: 'OKAP' })).toEqual(['Długa', 'Trudna']);
+    const limited = await findRoutes(db, all, 2);
+    expect([limited.total, limited.rows.length]).toEqual([5, 2]);
   });
 });
 

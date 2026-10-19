@@ -7,7 +7,7 @@ import { FlatList, Pressable, View } from 'react-native';
 import { Text } from '../../src/ui/Text';
 import { getRoute, listRouteAscents, type AscentRow, type RouteRow } from '../../src/db/repo';
 import { formatDay, isoDate } from '../../src/domain/dates';
-import { routeGrade, type AscentStyle } from '../../src/domain/grades';
+import { type AscentStyle, feltGrade, formatGrade, routeGrade } from '../../src/domain/grades';
 import { routeSummary } from '../../src/domain/history';
 import { IconButton } from '../../src/ui/icons';
 import { Contours } from '../../src/ui/Contours';
@@ -110,7 +110,11 @@ export default function RouteScreen() {
             <View style={{ flex: 1, paddingVertical: 8 }}>
               <Text style={{ color: th.ink, fontFamily: F.semi }}>{day(item.date)}</Text>
               <Text style={{ color: th.muted, fontSize: 12 }}>
-                {item.attempts > 1 ? t('journal.attempts', { count: item.attempts }) : ''}{item.attempts > 1 && item.partner_name ? ' · ' : ''}{item.partner_name ?? ''}
+                {[
+                  feltGrade(item.felt_grade_index, item.grade_index) != null ? t('ascent.feltFor', { grade: formatGrade(item.felt_grade_index!, routeSystem) }) : '',
+                  item.attempts > 1 ? t('journal.attempts', { count: item.attempts }) : '',
+                  item.partner_name ?? '',
+                ].filter(Boolean).join(' · ')}
               </Text>
             </View>
             <Text style={{ color: item.style === 'attempt' ? th.muted : th.accent, fontFamily: F.cond, fontSize: 17 }}>{t(`styles.${item.style as AscentStyle}`)}</Text>

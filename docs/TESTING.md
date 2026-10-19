@@ -75,6 +75,12 @@ Write down the result of every step (OK / problem). Report problems with: step n
 3. Headings, grades and numbers use the narrow font; works without internet.
 4. Journal: three tiles on top (sends this year, days out, hardest); ascents of one day share a card, the header says how many. Route screen: big name and grade, history as a timeline (rust dots for sends, grey for attempts).
 
+## 3c. Own grade and route finder
+1. New ascent on a VI.1 route: under Style a "Your grade" row of grades around VI.1, the route's own marked "(as the route)" and chosen by default. Pick VI.2 and save. Expected: Journal shows "… · felt VI.2" ("dla mnie VI.2"), the ascent screen has a "Your grade" line, the route's timeline shows it. Progress still counts the route as VI.1.
+2. Edit the ascent and tap the route's own grade again: the "felt" text disappears.
+3. Crags tab -> "Find routes". Filters: name, grade from and to (any), where (tap region, then area or group chips; "One level up", "Everywhere"), your ascents (all, not climbed yet, tried but not sent, sent) and type. Expected: the count updates at once, results easiest first with the grade square, path and your status; tapping one opens the route.
+4. Example: from VI to VI.2, Skałki Czarnorzeckie, "Not climbed yet". Log an ascent on one result, go back: it disappears from that list.
+
 ## 3b. Icons
 1. The bottom bar shows an icon above each tab name (book, chart, mountains, flag); the selected tab's icon is filled. No empty squares.
 2. Top right: a clear gear icon opens Settings. In the middle of the bottom bar a raised orange "+" opens a new ascent from any tab, in light and dark mode. The route screen's "Log an ascent" button is orange too.

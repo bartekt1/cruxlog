@@ -18,13 +18,15 @@ const ROUTE_COLS = `r.id, r.name, r.type, r.grade_label, r.grade_system, r.grade
 
 export type AscentRow = {
   id: string; date: string; style: AscentStyle; attempts: number; rating: number | null; notes: string;
+  /** The grade the climber felt (ladder index), or null when it matches the route's. */
+  felt_grade_index: number | null;
   route_id: string; route_name: string; type: RouteType; grade_index: number; grade_label: string; grade_system: GradeSystem;
   crag_name: string; partner_name: string | null;
 };
 
 export async function listAscents(db: SQLiteDatabase): Promise<AscentRow[]> {
   return db.getAllAsync<AscentRow>(
-    `SELECT a.id, a.date, a.style, a.attempts, a.rating, a.notes, r.id AS route_id, r.name AS route_name, r.type,
+    `SELECT a.id, a.date, a.style, a.attempts, a.rating, a.notes, a.felt_grade_index, r.id AS route_id, r.name AS route_name, r.type,
             r.grade_index, r.grade_label, r.grade_system, c.name AS crag_name, p.name AS partner_name
      FROM ascent a JOIN route r ON r.id = a.route_id JOIN sector s ON s.id = r.sector_id JOIN crag c ON c.id = s.crag_id
      LEFT JOIN partner p ON p.id = a.partner_id
@@ -62,6 +64,53 @@ async function searchIndex(db: SQLiteDatabase): Promise<SearchIndex> {
   };
   searchIndexes.set(db, index);
   return index;
+}
+
+export type RouteStatus = 'all' | 'todo' | 'tried' | 'sent';
+export type RouteFilter = {
+  query: string;
+  /** Inclusive ladder indices; null = no limit. */
+  minGrade: number | null; maxGrade: number | null;
+  /** The area and everything below it; null = everywhere. */
+  areaIds: string[] | null;
+  status: RouteStatus;
+  type: RouteType | null;
+};
+export type FoundRoute = RouteRow & { region_id: string | null; ascents: number; sends: number };
+
+/**
+ * Routes matching the filters, easiest first. `total` counts all matches; at most `limit` are returned.
+ * todo = never climbed, tried = only attempts, sent = at least one send.
+ */
+export async function findRoutes(db: SQLiteDatabase, f: RouteFilter, limit = 200): Promise<{ total: number; rows: FoundRoute[] }> {
+  const where = ['r.deleted_at IS NULL', 's.deleted_at IS NULL', 'c.deleted_at IS NULL'];
+  const params: (string | number)[] = [];
+  if (f.minGrade != null) { where.push('r.grade_index >= ?'); params.push(f.minGrade); }
+  if (f.maxGrade != null) { where.push('r.grade_index <= ?'); params.push(f.maxGrade); }
+  if (f.type) { where.push('r.type = ?'); params.push(f.type); }
+  if (f.areaIds) {
+    if (!f.areaIds.length) return { total: 0, rows: [] };
+    where.push(`c.region_id IN (${f.areaIds.map(() => '?').join(',')})`);
+    params.push(...f.areaIds);
+  }
+  const status = f.status === 'todo' ? 'WHERE ascents = 0' : f.status === 'tried' ? 'WHERE ascents > 0 AND sends = 0' : f.status === 'sent' ? 'WHERE sends > 0' : '';
+  const words = fold(f.query).split(' ').filter(Boolean);
+  const sql = (select: string, tail: string) => `SELECT ${select} FROM (
+       SELECT ${ROUTE_COLS}, c.region_id, COALESCE(x.ascents, 0) AS ascents, COALESCE(x.sends, 0) AS sends
+       FROM route r JOIN sector s ON s.id = r.sector_id JOIN crag c ON c.id = s.crag_id
+       LEFT JOIN (SELECT route_id, COUNT(*) AS ascents, SUM(style <> 'attempt') AS sends FROM ascent WHERE deleted_at IS NULL GROUP BY route_id) x
+         ON x.route_id = r.id
+       WHERE ${where.join(' AND ')}
+     ) ${status} ${tail}`;
+  // Without a name the database does the limiting; a name is matched in JS (ignoring case and Polish letters).
+  if (!words.length) {
+    const total = await db.getFirstAsync<{ n: number }>(sql('COUNT(*) AS n', ''), params);
+    const rows = await db.getAllAsync<FoundRoute>(sql('*', 'ORDER BY grade_index, name LIMIT ?'), [...params, limit]);
+    return { total: total?.n ?? 0, rows };
+  }
+  const all = await db.getAllAsync<FoundRoute>(sql('*', 'ORDER BY grade_index, name'), params);
+  const hits = all.filter((r) => { const hay = fold(`${r.name} ${r.sector_name} ${r.crag_name}`); return words.every((w) => hay.includes(w)); });
+  return { total: hits.length, rows: hits.slice(0, limit) };
 }
 
 /** Builds the search index ahead of the first keystroke (call when a screen with route search opens). */
@@ -117,7 +166,7 @@ export async function listPartners(db: SQLiteDatabase): Promise<string[]> {
 /** All of the user's ascents of one route, newest first. */
 export async function listRouteAscents(db: SQLiteDatabase, routeId: string): Promise<AscentRow[]> {
   return db.getAllAsync<AscentRow>(
-    `SELECT a.id, a.date, a.style, a.attempts, a.rating, a.notes, r.id AS route_id, r.name AS route_name, r.type,
+    `SELECT a.id, a.date, a.style, a.attempts, a.rating, a.notes, a.felt_grade_index, r.id AS route_id, r.name AS route_name, r.type,
             r.grade_index, r.grade_label, r.grade_system, c.name AS crag_name, p.name AS partner_name
      FROM ascent a JOIN route r ON r.id = a.route_id JOIN sector s ON s.id = r.sector_id JOIN crag c ON c.id = s.crag_id
      LEFT JOIN partner p ON p.id = a.partner_id
@@ -129,6 +178,8 @@ export async function listRouteAscents(db: SQLiteDatabase, routeId: string): Pro
 export type NewAscent = {
   routeId: string; date: string; style: AscentStyle; attempts: number; rating: number | null;
   notes: string; partnerName: string; weather: string;
+  /** Own grade (ladder index); null or left out = same as the route. */
+  feltGradeIndex?: number | null;
 };
 
 async function partnerId(db: SQLiteDatabase, partnerName: string, t: number): Promise<string | null> {
@@ -147,9 +198,9 @@ export async function addAscent(db: SQLiteDatabase, a: NewAscent): Promise<strin
   await db.withTransactionAsync(async () => {
     const pid = await partnerId(db, a.partnerName, t);
     await db.runAsync(
-      `INSERT INTO ascent (id, route_id, date, style, attempts, rating, notes, partner_id, weather, created_at, updated_at)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
-      [id, a.routeId, a.date, a.style, a.attempts, a.rating, a.notes, pid, a.weather, t, t],
+      `INSERT INTO ascent (id, route_id, date, style, attempts, rating, felt_grade_index, notes, partner_id, weather, created_at, updated_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
+      [id, a.routeId, a.date, a.style, a.attempts, a.rating, a.feltGradeIndex ?? null, a.notes, pid, a.weather, t, t],
     );
   });
   return id;
@@ -160,9 +211,9 @@ export async function updateAscent(db: SQLiteDatabase, id: string, a: NewAscent)
   await db.withTransactionAsync(async () => {
     const pid = await partnerId(db, a.partnerName, t);
     await db.runAsync(
-      `UPDATE ascent SET route_id = ?, date = ?, style = ?, attempts = ?, rating = ?, notes = ?, partner_id = ?, weather = ?, updated_at = ?
-       WHERE id = ?`,
-      [a.routeId, a.date, a.style, a.attempts, a.rating, a.notes, pid, a.weather, t, id],
+      `UPDATE ascent SET route_id = ?, date = ?, style = ?, attempts = ?, rating = ?, felt_grade_index = ?, notes = ?, partner_id = ?, weather = ?,
+         updated_at = ? WHERE id = ?`,
+      [a.routeId, a.date, a.style, a.attempts, a.rating, a.feltGradeIndex ?? null, a.notes, pid, a.weather, t, id],
     );
   });
 }
@@ -177,7 +228,7 @@ export type AscentDetail = AscentRow & { weather: string; route: RouteRow };
 
 export async function getAscent(db: SQLiteDatabase, id: string): Promise<AscentDetail | null> {
   const a = await db.getFirstAsync<AscentRow & { weather: string }>(
-    `SELECT a.id, a.date, a.style, a.attempts, a.rating, a.notes, a.weather, r.id AS route_id, r.name AS route_name, r.type,
+    `SELECT a.id, a.date, a.style, a.attempts, a.rating, a.notes, a.felt_grade_index, a.weather, r.id AS route_id, r.name AS route_name, r.type,
             r.grade_index, r.grade_label, r.grade_system, c.name AS crag_name, p.name AS partner_name
      FROM ascent a JOIN route r ON r.id = a.route_id JOIN sector s ON s.id = r.sector_id JOIN crag c ON c.id = s.crag_id
      LEFT JOIN partner p ON p.id = a.partner_id

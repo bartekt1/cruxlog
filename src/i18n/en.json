@@ -12,7 +12,7 @@
     "backupNever": "You have never made a backup", "backupOld": "Last backup {{n}} days ago", "backupHint": "Your climbs live only on this phone. Tap to export a backup."
   },
   "ascent": {
-    "title": "New ascent", "editTitle": "Edit ascent", "detailTitle": "Ascent", "notFound": "This ascent no longer exists.",
+    "title": "New ascent", "felt": "Your grade", "feltSame": "{{grade}} (as the route)", "feltFor": "felt {{grade}}", "editTitle": "Edit ascent", "detailTitle": "Ascent", "notFound": "This ascent no longer exists.",
     "deleteTitle": "Delete ascent?", "deleteQuestion": "The ascent of \"{{name}}\" will be removed from your journal and stats.",
     "pickDate": "Opens a calendar", "recent": "Recently climbed", "routesHeader": "Routes", "cragsHeader": "Crags", "cragHitHint": "Tap a crag to add a new route on it.", "newCragHint": "New crag: it will be created when you save.", "cragPlaceholder": "Start typing to see crags",
     "sectorPlaceholder": "e.g. Left wall", "noSectorsYet": "This crag has no sectors yet. Type a new one or leave empty.", "sectorNewCrag": "New crag: type a sector or leave empty.",
@@ -62,6 +62,13 @@
     "progress": "{{value}} / {{target}} sends in {{year}}", "markDone": "Mark done", "reopen": "Reopen",
     "deleteTitle": "Delete goal?", "deleteQuestion": "\"{{title}}\" will be removed.",
     "errors": { "title": "Enter a goal title.", "target": "The target must be a whole number, 1 or more." }
+  },
+  "routeSearch": {
+    "open": "Find routes", "title": "Find routes", "name": "Route or crag name", "any": "Any", "from": "Grade from", "to": "Grade to",
+    "where": "Where", "up": "One level up", "everywhere": "Everywhere", "status": "Your ascents",
+    "statuses": { "all": "All", "todo": "Not climbed yet", "tried": "Tried, not sent", "sent": "Sent" },
+    "found": "Found: {{total}}", "foundSome": "Found: {{total}} (showing {{shown}}, narrow the filters)",
+    "none": "No routes", "noneHint": "Change the filters, e.g. widen the grade range."
   },
   "areas": {
     "region": "Region", "area": "Area", "groupOptional": "Group of crags (optional)", "where": "Where is this crag?",
