@@ -64,7 +64,7 @@ Severity: **H** blocks a task or loses/corrupts data, **M** slows a task or conf
 | G1 | Non-numeric target (`abc`) was stored as NaN | H | Fixed: `validateGoalDraft` |
 | G2 | Empty title: Add did nothing, no feedback | M | Fixed: button disabled, message |
 | G3 | Keyboard stayed open after Add; no "done" key | L | Fixed |
-| G4 | Goals cannot be completed, edited or deleted; no progress | H | Fixed: progress bar for count goals (sends this year), mark done / reopen, delete. Editing a goal is still open |
+| G4 | Goals cannot be completed, edited or deleted; no progress | H | Fixed: progress bar for count goals (sends this year), mark done / reopen, delete; editing came in round 11 |
 
 ## Settings
 
@@ -180,6 +180,14 @@ Severity: **H** blocks a task or loses/corrupts data, **M** slows a task or conf
 | S1 | The search disappeared below the top level of the Crags tab | M | "Search in: <place>" on every region, area and group (crags and routes inside it), a route search on the crag screen, and the Crags tab search also finds routes; the filtered finder opens limited to the place |
 | S2 | Tapping a crag dot on the map did nothing | H | The dot press also reached the map, which closed the card at once; fixed |
 
+## Round 14 (sharing)
+
+| # | Issue | Sev | Status |
+|---|---|---|---|
+| H1 | No way to show an ascent or invite a friend | M | Share screen: a card in the guidebook look and a text with a map link, from the ascent, route and crag screens. The crag's position is on by default (a switch turns it off); an approximate one is labelled; the user's own position is never sent |
+
 ## Open items
 
 1. Device checks: localized dates on Hermes, calendar picker, keyboard behavior, large font sizes, TalkBack labels.
+2. The map needs internet; offline download of an area is planned (`docs/NEXT.md`).
+3. Multipitch ascents cannot record pitches yet.

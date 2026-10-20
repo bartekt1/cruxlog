@@ -71,6 +71,7 @@ export default function AscentScreen() {
           <Button label={t('goals.addAsProject')} variant="plain" onPress={async () => { await addRouteGoal(db, a.route_id, 'project'); setIsProject(true); }} />
         )
       ) : null}
+      <Button label={t('share.brag')} variant="plain" onPress={() => router.push({ pathname: '/share', params: { kind: 'ascent', id: a.id } })} />
       <Button label={t('common.edit')} onPress={() => router.push({ pathname: '/ascent/new', params: { id: a.id } })} />
       <Button label={t('common.delete')} onPress={confirmDelete} variant="danger" />
     </ScrollView>
