@@ -3,7 +3,9 @@ import { DEFAULT_SETTINGS, parseSettings, resolveLanguage } from '../src/domain/
 describe('settings', () => {
   it('reads saved values', () => {
     expect(parseSettings('{"language":"pl","routeSystem":"fr","boulderSystem":"v","themeMode":"dark","lastBackupAt":1700000000000}'))
-      .toEqual({ language: 'pl', routeSystem: 'fr', themeMode: 'dark', mapBase: 'standard', lastBackupAt: 1700000000000 });
+      .toEqual({ language: 'pl', routeSystem: 'fr', themeMode: 'dark', mapBase: 'standard', lastBackupAt: 1700000000000, backupDir: null, backupDirName: '' });
+    expect(parseSettings('{"backupDir":"content://x/tree/y","backupDirName":"Cruxlog"}')).toMatchObject({ backupDir: 'content://x/tree/y', backupDirName: 'Cruxlog' });
+    expect(parseSettings('{"backupDir":"","backupDirName":5}')).toMatchObject({ backupDir: null, backupDirName: '' });
     expect(parseSettings('{"lastBackupAt":"yesterday"}').lastBackupAt).toBeNull();
   });
   it('falls back to defaults for missing, corrupt or invalid values', () => {

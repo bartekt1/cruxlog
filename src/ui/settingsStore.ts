@@ -11,6 +11,7 @@ type SettingsState = Settings & {
   setThemeMode: (m: ThemeMode) => void;
   setMapBase: (m: MapBase) => void;
   setLastBackupAt: (t: number) => void;
+  setBackupDir: (uri: string | null, name?: string) => void;
 };
 
 function load(): Settings {
@@ -25,9 +26,9 @@ function load(): Settings {
 export const useSettings = create<SettingsState>((set, get) => {
   const save = (patch: Partial<Settings>) => {
     set(patch);
-    const { language, routeSystem, themeMode, mapBase, lastBackupAt } = get();
+    const { language, routeSystem, themeMode, mapBase, lastBackupAt, backupDir, backupDirName } = get();
     try {
-      Storage.setItemSync(KEY, JSON.stringify({ language, routeSystem, themeMode, mapBase, lastBackupAt }));
+      Storage.setItemSync(KEY, JSON.stringify({ language, routeSystem, themeMode, mapBase, lastBackupAt, backupDir, backupDirName }));
     } catch {
       // Keep the in-memory value; it will be saved on the next change.
     }
@@ -39,5 +40,6 @@ export const useSettings = create<SettingsState>((set, get) => {
     setThemeMode: (themeMode) => save({ themeMode }),
     setMapBase: (mapBase) => save({ mapBase }),
     setLastBackupAt: (lastBackupAt) => save({ lastBackupAt }),
+    setBackupDir: (backupDir, backupDirName = '') => save({ backupDir, backupDirName: backupDir ? backupDirName : '' }),
   };
 });

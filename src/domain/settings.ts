@@ -3,9 +3,13 @@ import { ROUTE_SYSTEMS, type GradeSystem } from './grades';
 export type Lang = 'pl' | 'en';
 export type ThemeMode = 'system' | 'light' | 'dark';
 export type MapBase = 'standard' | 'topo';
-export type Settings = { language: Lang | null; routeSystem: GradeSystem; themeMode: ThemeMode; mapBase: MapBase; lastBackupAt: number | null };
+export type Settings = {
+  language: Lang | null; routeSystem: GradeSystem; themeMode: ThemeMode; mapBase: MapBase; lastBackupAt: number | null;
+  /** The folder (Android tree URI) automatic backups go to, and its name for display; null = not chosen. */
+  backupDir: string | null; backupDirName: string;
+};
 
-export const DEFAULT_SETTINGS: Settings = { language: null, routeSystem: 'kr', themeMode: 'system', mapBase: 'standard', lastBackupAt: null };
+export const DEFAULT_SETTINGS: Settings = { language: null, routeSystem: 'kr', themeMode: 'system', mapBase: 'standard', lastBackupAt: null, backupDir: null, backupDirName: '' };
 
 /** Turns stored JSON (possibly old, partial or corrupt) into valid settings. */
 export function parseSettings(raw: string | null): Settings {
@@ -23,6 +27,8 @@ export function parseSettings(raw: string | null): Settings {
     themeMode: pick<ThemeMode>(data.themeMode, ['system', 'light', 'dark'], DEFAULT_SETTINGS.themeMode),
     mapBase: pick<MapBase>(data.mapBase, ['standard', 'topo'], DEFAULT_SETTINGS.mapBase),
     lastBackupAt: typeof data.lastBackupAt === 'number' && Number.isFinite(data.lastBackupAt) ? data.lastBackupAt : null,
+    backupDir: typeof data.backupDir === 'string' && data.backupDir ? data.backupDir : null,
+    backupDirName: typeof data.backupDirName === 'string' ? data.backupDirName : '',
   };
 }
 

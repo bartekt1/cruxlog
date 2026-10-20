@@ -115,7 +115,10 @@
   },
   "settings": {
     "title": "Settings", "language": "Language", "theme": "Appearance", "themes": { "system": "Like the phone", "light": "Light", "dark": "Dark" }, "routeGrades": "Route grades",
-    "backup": "Backup", "backupHelp": "Export saves all your data to one file. Import merges a file into the app; newer entries win, nothing is deleted.",
+    "backup": "Backup", "autoBackup": "Automatic backup", "autoBackupHelp": "Choose a folder for the backups, e.g. on Google Drive. First I check that it can be written to.",
+    "folderNone": "No folder chosen.", "folderIs": "Folder: {{name}}", "pickFolder": "Choose folder", "changeFolder": "Change folder",
+    "folderOk": "Writing to the folder “{{name}}” works.", "folderFailed": "Could not write to this folder: {{message}}",
+    "backupHelp": "Export saves all your data to one file. Import merges a file into the app; newer entries win, nothing is deleted.",
     "export": "Export backup", "import": "Import backup", "csv": "Import crags from a CSV file",
     "csvHelp": "Pick one file with a list of routes (e.g. a guidebook export or a theCrag export). Each row is one route: region, area, group, crag, sector, name, grade. The older import with crags.csv and routes.csv still works. A file with columns Crag, lat, lng only saves crag positions for the map.",
     "csvSkipped": "Rows left out: {{count}} (boulders, ice, via ferratas, unnamed routes, projects, routes without a grade or with an unknown grade).",

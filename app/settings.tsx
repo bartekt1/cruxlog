@@ -7,6 +7,8 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, ScrollView } from 'react-native';
 import { Text } from '../src/ui/Text';
 import { exportBackup, importBackup } from '../src/db/backup';
+import { Directory } from 'expo-file-system';
+import { pickBackupFolder, testBackupFolder } from '../src/ui/backupFolder';
 import { applyCragPositions, applyImport, importedUsage, listAscents, removeImported } from '../src/db/repo';
 import { backupStatus } from '../src/domain/history';
 import { buildImportPlan, type ImportPlan } from '../src/domain/csvImport';
@@ -64,6 +66,19 @@ export default function Settings() {
     file.write(JSON.stringify(await exportBackup(db)));
     await Sharing.shareAsync(file.uri, { mimeType: 'application/json' });
     s.setLastBackupAt(Date.now());
+  });
+
+  // Picks the folder for automatic backups and proves it can be written to before remembering it.
+  const doPickFolder = () => run(async () => {
+    const dir = await pickBackupFolder();
+    if (!dir) return;
+    try {
+      testBackupFolder(dir);
+    } catch (e) {
+      throw new UserError(t('settings.folderFailed', { message: (e as Error).message }));
+    }
+    s.setBackupDir(dir.uri, dir.name);
+    return t('settings.folderOk', { name: dir.name });
   });
 
   const doImport = () => run(async () => {
@@ -189,6 +204,10 @@ export default function Settings() {
       <Text style={{ color: backup.due ? th.warn : th.ink, marginTop: 8, fontWeight: '600' }}>
         {backup.days == null ? t('settings.lastBackupNever') : backup.days === 0 ? t('settings.lastBackupToday') : t('settings.lastBackupDays', { n: backup.days })}
       </Text>
+      <Label>{t('settings.autoBackup')}</Label>
+      <Text style={{ color: th.muted }}>{t('settings.autoBackupHelp')}</Text>
+      <Text style={{ color: th.ink, marginTop: 8, fontWeight: '600' }}>{s.backupDir ? t('settings.folderIs', { name: s.backupDirName || s.backupDir }) : t('settings.folderNone')}</Text>
+      <Button label={s.backupDir ? t('settings.changeFolder') : t('settings.pickFolder')} onPress={doPickFolder} variant="plain" disabled={busy} />
       <Button label={t('settings.export')} onPress={doExport} variant="plain" disabled={busy} />
       <Button label={t('settings.import')} onPress={doImport} variant="plain" disabled={busy} />
       {busy ? <ActivityIndicator color={th.accent} style={{ marginTop: 16 }} /> : null}

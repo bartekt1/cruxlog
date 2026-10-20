@@ -115,7 +115,10 @@
   },
   "settings": {
     "title": "Ustawienia", "language": "Język", "theme": "Wygląd", "themes": { "system": "Jak w telefonie", "light": "Jasny", "dark": "Ciemny" }, "routeGrades": "Wyceny dróg",
-    "backup": "Kopia zapasowa", "backupHelp": "Eksport zapisuje wszystkie dane w jednym pliku. Import scala plik z aplikacją; nowsze wpisy wygrywają, nic nie jest usuwane.",
+    "backup": "Kopia zapasowa", "autoBackup": "Kopia automatyczna", "autoBackupHelp": "Wybierz folder na kopie, np. na Dysku Google. Najpierw sprawdzę, czy da się do niego zapisać.",
+    "folderNone": "Folder nie jest wybrany.", "folderIs": "Folder: {{name}}", "pickFolder": "Wybierz folder", "changeFolder": "Zmień folder",
+    "folderOk": "Zapis do folderu „{{name}}” działa.", "folderFailed": "Nie udało się zapisać w tym folderze: {{message}}",
+    "backupHelp": "Eksport zapisuje wszystkie dane w jednym pliku. Import scala plik z aplikacją; nowsze wpisy wygrywają, nic nie jest usuwane.",
     "export": "Eksportuj kopię", "import": "Importuj kopię", "csv": "Importuj skały z pliku CSV",
     "csvHelp": "Wybierz jeden plik z listą dróg (np. plik z przewodnika albo eksport z theCrag). Każdy wiersz to jedna droga: region, rejon, grupa, skała, sektor, nazwa, wycena. Działa też dawny import z plików crags.csv i routes.csv. Plik z kolumnami Skała, lat, lng zapisuje tylko położenia skał na mapie.",
     "csvSkipped": "Pominięte wiersze: {{count}} (bouldery, lód, via ferraty, drogi bez nazwy, projekty, drogi bez wyceny lub z nieznaną wyceną).",
