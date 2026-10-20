@@ -42,7 +42,7 @@ Write down the result of every step (OK / problem). Report problems with: step n
 4. Export a backup on phone A (or before deleting), delete an ascent, export again and import that backup on a phone that has the old data. Expected: the ascent disappears there too.
 
 ## 2c. Route history
-1. Crags -> a crag -> tap a route. Expected: the route screen with crag/sector/type, a summary ("Sent <date> (RP). It took 3 days." or "Not sent yet. Days tried: 2."), totals, a green "Log an ascent" button and the list of your ascents (tap one to open it).
+1. Crags -> a crag -> tap a route. Expected: the route screen with crag/sector/type, a summary ("Sent <date> (RP). It took 3 days." or "Not sent yet. Days tried: 2."), totals, an orange "Log an ascent" button and the list of your ascents (tap one to open it).
 2. On an ascent's detail, tap the route name. Expected: the same route screen.
 3. For your own routes the pencil at the top right opens route editing.
 
@@ -50,14 +50,6 @@ Write down the result of every step (OK / problem). Report problems with: step n
 1. With at least one ascent and no backup made: the Journal shows a red-bordered box "You have never made a backup"; tapping it opens Settings, which shows "No backup yet."
 2. Export a backup. Expected: the box disappears; Settings shows "Last backup: today."
 3. Install the new APK over the old one (without uninstalling). Expected: the app updates and all data is still there.
-
-## 3. Progress
-0. Before adding any ascent (fresh install): Progress shows "No sends in <year> yet" with a hint, and "No sends this year." under each pyramid.
-1. Open Progress. Expected: totals for the current year match what you entered (sends do not count attempts), "days out" counts distinct dates.
-2. The hardest route tile shows the grade you entered; the previous-year entry is not counted.
-3. The route pyramid shows bars for the grades you logged; the calendar shows coloured cells for your dates and a legend below it.
-3a. Year switcher: with an entry in the previous year, tap ‹ next to the year. Expected: stats and pyramids for that year; the activity calendar is shown only for the current year; › goes back; the arrow is greyed out where there are no more years.
-4. Change the grade system in Settings (for example KR -> FR). Expected: Journal and Progress show the same routes in the new system (VI.3 -> 6c).
 
 ## 2e. Building a crag ("+" where the new thing goes)
 1. Crags tab -> "Add a crag". Expected order: Region and Area (required), Group (optional), Crag name (required), Sectors (optional, "+ Another sector"), Description, Approach. Saving without a region or area shows an error under the field.
@@ -69,11 +61,23 @@ Write down the result of every step (OK / problem). Report problems with: step n
 7. New ascent -> "Create a new route" with a new crag and no region or area: saving shows "A new crag needs a region and an area."
 8. Search "Okiennik" in a new ascent before it has routes. Expected: it appears under "Crags"; tapping it opens the new-route form with crag and region filled in.
 
+## 3. Progress
+0. Before adding any ascent (fresh install): Progress shows "No sends in <year> yet" with a hint, and "No sends this year." under each pyramid.
+1. Open Progress. Expected: totals for the current year match what you entered (sends do not count attempts), "days out" counts distinct dates.
+2. The hardest route tile shows the grade you entered; the previous-year entry is not counted.
+3. The route pyramid shows bars for the grades you logged; the calendar shows coloured cells for your dates and a legend below it.
+3a. Year switcher: with an entry in the previous year, tap ‹ next to the year. Expected: stats, pyramids and the whole-year calendar for that year; › goes back; the arrow is greyed out where there are no more years.
+4. Change the grade system in Settings (for example KR -> FR). Expected: Journal and Progress show the same routes in the new system (VI.3 -> 6c).
+
 ## 3a. Look and dark mode
 1. Settings -> Appearance: "Like the phone", "Light", "Dark". Each changes the whole app at once, also the top and bottom bars; the choice stays after closing the app.
 2. Light: paper background, dark text, grades in dark squares, rust "+" and main buttons. Dark: deep green background, grades in light squares, lighter rust. All text is easy to read in both, also in sunlight.
 3. Headings, grades and numbers use the narrow font; works without internet.
 4. Journal: three tiles on top (sends this year, days out, hardest); ascents of one day share a card, the header says how many. Route screen: big name and grade, history as a timeline (rust dots for sends, grey for attempts).
+
+## 3b. Icons
+1. The bottom bar shows an icon above each tab name (book, chart, mountains, flag); the selected tab's icon is filled. No empty squares.
+2. Top right: a clear gear icon opens Settings. In the middle of the bottom bar a raised orange "+" opens a new ascent from any tab, in light and dark mode. The route screen's "Log an ascent" button is orange too.
 
 ## 3c. Own grade and route finder
 1. New ascent on a VI.1 route: under Style a "Your grade" row of grades around VI.1, the route's own marked "(as the route)" and chosen by default. Pick VI.2 and save. Expected: Journal shows "… · felt VI.2" ("dla mnie VI.2"), the ascent screen has a "Your grade" line, the route's timeline shows it. Progress still counts the route as VI.1.
@@ -110,22 +114,16 @@ Write down the result of every step (OK / problem). Report problems with: step n
 6. Open a region, then an area and a group: each has "Search in: <name>". Expected: only crags and routes inside that place; "Find routes with filters" opens the finder already limited to it.
 7. Crag screen: "Search routes on this crag". Expected: the list narrows while typing, empty sectors hide, Polish letters optional ("lysa" finds "Łysa").
 
-## 3b. Icons
-1. The bottom bar shows an icon above each tab name (book, chart, mountains, flag); the selected tab's icon is filled. No empty squares.
-2. Top right: a clear gear icon opens Settings. In the middle of the bottom bar a raised orange "+" opens a new ascent from any tab, in light and dark mode. The route screen's "Log an ascent" button is orange too.
-
 ## 4. Crags and goals
-1. Crags tab. Expected: "Test Crag" with the number of routes. Tap it. Expected: the crag screen with routes grouped by sector; "Test Route 1" shows "✓ sends: 1" (green) or "tried: N". Tap the route. Expected: a new ascent form with this route already chosen.
-1a. Editing own data (only for crags, sectors, routes and regions you created; imported ones show a note and no pencils):
-   - Crags tab: a search field, then "Regions" (each with its number of crags) and "No region" for crags without one. Typing "krowia" lists matching crags with their path.
+1. Crags tab. Expected: "Test Crag" with the number of routes. Tap it. Expected: the crag screen with routes grouped by sector; "Test Route 1" shows "✓ sends: 1" (rust) or "tried: N". Tap the route. Expected: the route screen (§2c).
+1a. Editing (your own and imported crags, sectors, routes and regions; re-importing a file undoes changes to imported ones, see §5b):
+   - Crags tab: a search field, then "Regions" (each with its number of crags) and "No region" for crags without one. Typing "krowia" lists matching crags with their path and matching routes (§3f).
    - Tap a region: its areas (rejony); tap an area: its groups and crags; tap a group: its crags. Each level has "+ Add area/group" and "Add a crag"; "+ Add region" is on the Crags tab.
    - Pencil at the top right of a region, area or group: rename it; delete it. Expected: its crags and sub-areas move one level up (deleting group "Krowia Turnia" puts crag Krowia directly in Kamieniec).
    - On a crag screen: pencil at the top right edits name, region, description, approach; "Delete crag" asks first and lists how many sectors, routes and your ascents go with it.
    - Pencil next to a sector header: rename or delete (lists routes and ascents that go with it).
    - Pencil next to a route: change name, sector (moves the route), type, grade; "Delete route" lists your ascents of it. After deleting, those ascents are gone from the Journal and Progress.
-2. Goals tab: with an empty title the Add button is disabled. Add a Count goal ("200 sends", target 200), a Project and a Wishlist item. Expected: they appear in the list after Add, the title field clears and the keyboard closes. Count goal with target `abc`: error message, nothing added.
-3. The count goal shows a bar and "N / 200 sends in <year>" matching the Sends tile on Progress.
-4. Tap "Mark done" on the Project. Expected: crossed out with ✓, moved to the bottom; "Reopen" brings it back. Tap Delete: confirmation, then it disappears.
+2. Goals: see §3d and §3f.
 
 ## 5. CSV import
 1. Settings -> Import crags from CSV. Select all four sample files at once. Expected: an alert with counts (1 crag, 1 sector, 2 routes, 3 pitches). Buttons are disabled with a spinner while it runs.
@@ -141,6 +139,13 @@ Write down the result of every step (OK / problem). Report problems with: step n
 2. A row without region or area, or with a wrong grade, shows "<file>, line N: …" and nothing is imported.
 3. A file with other headers shows "File … was not recognised".
 
+## 5b. Guidebook import and editing imported data
+1. Import the guidebook export itself (one file, e.g. `drogi_i_bouldery_Kamieniec.csv`). Expected: Czarnorzeki › Kamieniec with groups Grupa Słonecznej Turni, Kursowe Skałki, Krowia Turnia; Strzelnica, Sokoli Grzbiet, Przełom Marcinka and Smoczy Grzbiet as areas without groups; crag Krowia with sector "Ściana zachodnia". If the older three files were imported before, the ascents stay and no old crags are left over. Expected: a question "Import?" with the numbers of crags and routes and a warning that re-importing overwrites changes; Cancel imports nothing.
+2. After Import: the Crags tab shows the regions; drilling down reaches the crags. Boulders, routes named "(bez nazwy)" and routes marked "zakaz wspinania" are not imported (Leśna Turnia is missing); routes and crags have no notes, styles, guidebook numbers or wall heights.
+2a. Re-import a file with one route removed: the route disappears unless you logged an ascent on it; routes you added yourself stay.
+3. Grades from the guidebook are shown as written (VI+, VI.4/4+, VI.5?) when the display system is KR; in FR they show the nearest grade. They count in Progress as the nearest lower step.
+4. Imported crags, sectors, routes and regions have pencils like your own: rename a crag, move a route to a new sector, delete a route. Import the same files again: the changes are undone and deleted routes come back; ascents stay.
+
 ## 5c. theCrag export (big file)
 1. Settings -> Import crags from a CSV file -> pick a theCrag export (headers `Region;Sektor;Nazwa;Trudność;…;Długość (m);Przeloty;…;Link`). Expected: the question shows the numbers of crags and routes and "Rows left out: N (boulders, ice, …)". The import may take some seconds.
 2. Crags tab: regions from the file (e.g. Jura, Pogórze Dynowskie, Slovenský raj). Tap down through every level, e.g. Jura -> Jura Południowa -> Garb Tenczyński -> Dolina Sanki -> Zimny Dół -> Grupa Labiryntu -> a crag. Each level shows how many crags are below it.
@@ -149,13 +154,6 @@ Write down the result of every step (OK / problem). Report problems with: step n
 5. Slovak routes show their grade converted (e.g. "7-" as VII- in UIAA, VI.2 in KR). Grades above VI.7 (VI.7+, VI.8, VI.8+) are accepted.
 6. Settings -> "Remove imported crags and routes": the question names the numbers; after it, imported crags are gone except those with your ascents; routes you added yourself stay.
 7. Add a crag from a deep group ("Add a crag" on its screen): the form shows Region, Area and the Group field with all lower levels, e.g. "Garb Tenczyński › Dolina Sanki › Zimny Dół". Group chips go one level deeper after each pick.
-
-## 5b. Guidebook import and editing imported data
-1. Import the guidebook export itself (one file, e.g. `drogi_i_bouldery_Kamieniec.csv`). Expected: Czarnorzeki › Kamieniec with groups Grupa Słonecznej Turni, Kursowe Skałki, Krowia Turnia; Strzelnica, Sokoli Grzbiet, Przełom Marcinka and Smoczy Grzbiet as areas without groups; crag Krowia with sector "Ściana zachodnia". If the older three files were imported before, the ascents stay and no old crags are left over. Expected: a question "Import?" with the numbers of crags and routes and a warning that re-importing overwrites changes; Cancel imports nothing.
-2. After Import: the Crags tab shows the regions; drilling down reaches the crags. Boulders, routes named "(bez nazwy)" and routes marked "zakaz wspinania" are not imported (Leśna Turnia is missing); routes and crags have no notes, styles, guidebook numbers or wall heights.
-2a. Re-import a file with one route removed: the route disappears unless you logged an ascent on it; routes you added yourself stay.
-3. Grades from the guidebook are shown as written (VI+, VI.4/4+, VI.5?) when the display system is KR; in FR they show the nearest grade. They count in Progress as the nearest lower step.
-4. Imported crags, sectors, routes and regions have pencils like your own: rename a crag, move a route to a new sector, delete a route. Import the same files again: the changes are undone and deleted routes come back; ascents stay.
 
 ## 6. Backup
 1. Settings -> Export backup. Expected: the system share sheet opens; save the JSON file (for example to Drive or send to yourself).
@@ -167,13 +165,18 @@ Write down the result of every step (OK / problem). Report problems with: step n
 1. Change the language and the route grade system, close the app completely (swipe away) and reopen it. Expected: all data is still there, and the language and grade system are the ones you chose.
 2. Rotate the phone, switch to dark mode and back. Expected: readable text and no layout breaks.
 3. Enter a very long route name and note. Expected: the list does not break the layout.
-4. Airplane mode on: repeat steps 2 and 3. Expected: everything works offline.
+4. Airplane mode on: repeat steps 2 and 3. Expected: everything works offline, except the map tiles (the map stays empty or shows what it already loaded; your position still shows).
+
+## 8. Accessibility and layout
+1. Turn on TalkBack. The gear icon reads "Settings", the `+` button reads "Log an ascent", rating stars read "1 of 5" ... "5 of 5", selected chips are announced as selected.
+2. Set the largest system font size. Go through all screens: no text is cut off, buttons stay usable.
+3. Switch the phone to dark mode: all text, field borders and empty stars are clearly visible.
 
 ## Known gaps (do not report as bugs)
-- Language and grade system settings reset after restart.
-- No crag/route detail screens, no edit/delete.
+- The map needs internet for its tiles; no offline download yet.
 - No multipitch pitch form (data model only).
-- Imported crags have no positions until you set them (no GPS tracks are ever recorded).
+- Some crags have no position or only an approximate one until you set it (no GPS tracks are ever recorded).
+- Backup is manual (Settings › Export backup), with a reminder.
 - Grade conversions between systems are approximate.
 
 ## Report template
@@ -185,8 +188,3 @@ Got: ...
 Phone / Android version: ...
 Screenshot: yes/no
 ```
-
-## 8. Accessibility and layout
-1. Turn on TalkBack. The gear icon reads "Settings", the `+` button reads "Log an ascent", rating stars read "1 of 5" ... "5 of 5", selected chips are announced as selected.
-2. Set the largest system font size. Go through all screens: no text is cut off, buttons stay usable.
-3. Switch the phone to dark mode: all text, field borders and empty stars are clearly visible.

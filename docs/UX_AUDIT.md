@@ -64,7 +64,7 @@ Severity: **H** blocks a task or loses/corrupts data, **M** slows a task or conf
 | G1 | Non-numeric target (`abc`) was stored as NaN | H | Fixed: `validateGoalDraft` |
 | G2 | Empty title: Add did nothing, no feedback | M | Fixed: button disabled, message |
 | G3 | Keyboard stayed open after Add; no "done" key | L | Fixed |
-| G4 | Goals cannot be completed, edited or deleted; no progress | H | Fixed: progress bar for count goals (sends this year), mark done / reopen, delete. Editing a goal is still open |
+| G4 | Goals cannot be completed, edited or deleted; no progress | H | Fixed: progress bar for count goals (sends this year), mark done / reopen, delete; editing came in round 11 |
 
 ## Settings
 
@@ -183,3 +183,5 @@ Severity: **H** blocks a task or loses/corrupts data, **M** slows a task or conf
 ## Open items
 
 1. Device checks: localized dates on Hermes, calendar picker, keyboard behavior, large font sizes, TalkBack labels.
+2. The map needs internet; offline download of an area is planned (`docs/NEXT.md`).
+3. Multipitch ascents cannot record pitches yet.
