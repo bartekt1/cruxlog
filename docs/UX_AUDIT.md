@@ -172,6 +172,14 @@ Severity: **H** blocks a task or loses/corrupts data, **M** slows a task or conf
 | M5 | Many crags have no position in OSM | L | Approximate positions from the crag's group, marked as such (hollow dot, "approximate", "about" distances); a position set on the phone is never overwritten by a file |
 | M4 | Location privacy | L | Permission asked only on a tap; the position is never stored or sent, only shown on the map and used for distances |
 
+## Round 13 (goals where you are, search everywhere)
+
+| # | Issue | Sev | Status |
+|---|---|---|---|
+| G1 | A route could only become a goal from the Goals tab | M | "Add to goals" on the route screen (project or wishlist), a project switch for attempts in the ascent form, "Add as a project" on a saved attempt; labels in the crag's route list |
+| S1 | The search disappeared below the top level of the Crags tab | M | "Search in: <place>" on every region, area and group (crags and routes inside it), a route search on the crag screen, and the Crags tab search also finds routes; the filtered finder opens limited to the place |
+| S2 | Tapping a crag dot on the map did nothing | H | The dot press also reached the map, which closed the card at once; fixed |
+
 ## Open items
 
 1. Device checks: localized dates on Hermes, calendar picker, keyboard behavior, large font sizes, TalkBack labels.

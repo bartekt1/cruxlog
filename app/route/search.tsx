@@ -1,4 +1,4 @@
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -15,10 +15,11 @@ import { useTheme } from '../../src/ui/theme';
 const STATUSES: RouteStatus[] = ['all', 'todo', 'tried', 'sent'];
 const TYPES: (RouteType | null)[] = [null, 'sport', 'multipitch'];
 
-/** Route finder: name, grade range, area, own status and type; results easiest first. */
+/** Route finder: name, grade range, area, own status and type; results easiest first. `?areaId=` starts inside one area. */
 export default function RouteSearch() {
   const db = useSQLiteContext();
   const router = useRouter();
+  const params = useLocalSearchParams<{ areaId?: string }>();
   const { t } = useTranslation();
   const th = useTheme();
   const { routeSystem } = useSettings();
@@ -26,7 +27,7 @@ export default function RouteSearch() {
   const [query, setQuery] = useState('');
   const [minGrade, setMinGrade] = useState<number | null>(null);
   const [maxGrade, setMaxGrade] = useState<number | null>(null);
-  const [areaId, setAreaId] = useState<string | null>(null);
+  const [areaId, setAreaId] = useState<string | null>(params.areaId ?? null);
   const [status, setStatus] = useState<RouteStatus>('all');
   const [type, setType] = useState<RouteType | null>(null);
   const [result, setResult] = useState<{ total: number; rows: FoundRoute[] }>({ total: 0, rows: [] });

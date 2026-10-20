@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, ScrollView, View } from 'react-native';
 import { Text } from '../../src/ui/Text';
-import { deleteAscent, getAscent, type AscentDetail } from '../../src/db/repo';
+import { addRouteGoal, deleteAscent, getAscent, routeGoals, type AscentDetail } from '../../src/db/repo';
 import { formatDay, isoDate } from '../../src/domain/dates';
 import { feltGrade, formatGrade, routeGrade } from '../../src/domain/grades';
 import { Button, EmptyState, GradeBadge, Label, Title } from '../../src/ui/kit';
@@ -19,8 +19,14 @@ export default function AscentScreen() {
   const th = useTheme();
   const { routeSystem } = useSettings();
   const [a, setA] = useState<AscentDetail | null | undefined>(undefined);
+  const [isProject, setIsProject] = useState(false);
 
-  useFocusEffect(useCallback(() => { getAscent(db, id).then(setA); }, [db, id]));
+  useFocusEffect(useCallback(() => {
+    getAscent(db, id).then(async (x) => {
+      setA(x);
+      if (x) setIsProject((await routeGoals(db, x.route_id)).some((g) => g.kind === 'project'));
+    });
+  }, [db, id]));
 
   if (a === undefined) return <View style={{ flex: 1, backgroundColor: th.bg }} />;
   if (a === null) return <View style={{ flex: 1, backgroundColor: th.bg, padding: 16 }}><EmptyState title={t('ascent.notFound')} /></View>;
@@ -58,6 +64,13 @@ export default function AscentScreen() {
       {row(t('ascent.weather'), a.weather)}
       {row(t('ascent.notes'), a.notes)}
 
+      {a.style === 'attempt' ? (
+        isProject ? (
+          <Text style={{ color: th.muted, marginTop: 16 }}>{t('goals.isProject')}</Text>
+        ) : (
+          <Button label={t('goals.addAsProject')} variant="plain" onPress={async () => { await addRouteGoal(db, a.route_id, 'project'); setIsProject(true); }} />
+        )
+      ) : null}
       <Button label={t('common.edit')} onPress={() => router.push({ pathname: '/ascent/new', params: { id: a.id } })} />
       <Button label={t('common.delete')} onPress={confirmDelete} variant="danger" />
     </ScrollView>

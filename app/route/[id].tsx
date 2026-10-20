@@ -3,9 +3,9 @@ import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-rou
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList, Pressable, View } from 'react-native';
+import { Alert, FlatList, Pressable, View } from 'react-native';
 import { Text } from '../../src/ui/Text';
-import { getRoute, listRouteAscents, routeGoals, type AscentRow, type GoalRow, type RouteRow } from '../../src/db/repo';
+import { addRouteGoal, getRoute, listRouteAscents, routeGoals, type AscentRow, type GoalRow, type RouteRow } from '../../src/db/repo';
 import { formatDay, isoDate } from '../../src/domain/dates';
 import { type AscentStyle, feltGrade, formatGrade, routeGrade } from '../../src/domain/grades';
 import { routeSummary } from '../../src/domain/history';
@@ -36,6 +36,16 @@ export default function RouteScreen() {
     listRouteAscents(db, id).then(setAscents);
     routeGoals(db, id).then(setGoals);
   }, [db, id, router]));
+
+  // Project or wish, picked in a small dialog; the badge then replaces the button.
+  const addToGoals = () =>
+    Alert.alert(t('goals.addRouteTitle'), t('goals.addRouteQuestion', { name: route?.name ?? '' }), [
+      { text: t('common.cancel'), style: 'cancel' },
+      ...(['wishlist', 'project'] as const).map((kind) => ({
+        text: t(`goals.${kind}`),
+        onPress: async () => { await addRouteGoal(db, id, kind); setGoals(await routeGoals(db, id)); },
+      })),
+    ]);
 
   const summary = useMemo(() => routeSummary(ascents), [ascents]);
   const today = isoDate(new Date());
@@ -89,6 +99,13 @@ export default function RouteScreen() {
                 <Text style={{ color: th.onBadge, fontFamily: F.semi, fontSize: 13 }}>{t(g.kind === 'project' ? 'goals.yourProject' : 'goals.yourWish')}</Text>
               </Pressable>
             ))}
+            {goals.length ? null : (
+              <Pressable onPress={addToGoals} accessibilityRole="button"
+                style={({ pressed }) => ({ alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4, paddingHorizontal: 12, minHeight: 36, borderRadius: 18, borderWidth: 1, borderColor: th.accent, opacity: pressed ? 0.6 : 1 })}>
+                <Ionicons name="flag-outline" size={15} color={th.accent} />
+                <Text style={{ color: th.accent, fontFamily: F.semi, fontSize: 14 }}>{t('goals.addRoute')}</Text>
+              </Pressable>
+            )}
             <Card style={{ padding: 14, marginTop: 8 }}>
               <Text style={{ color: th.ink, fontFamily: F.semi, fontSize: 16 }}>{summary.firstSend ? '✓ ' : ''}{status}</Text>
               {summary.ascents ? <Text style={{ color: th.muted, fontSize: 13, marginTop: 2 }}>{t('route.totals', { ascents: summary.ascents, sends: summary.sends })}</Text> : null}

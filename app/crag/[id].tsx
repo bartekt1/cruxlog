@@ -4,13 +4,14 @@ import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, SectionList, View } from 'react-native';
 import { Text } from '../../src/ui/Text';
-import { getCrag, listAreas, listCragRoutes, listSectors, type AreaRow, type CragDetail, type CragRouteRow, type SectorRow } from '../../src/db/repo';
+import { getCrag, listAreas, listCragRoutes, listSectors, routeGoalKinds, type AreaRow, type CragDetail, type CragRouteRow, type SectorRow } from '../../src/db/repo';
 import { pathLabel } from '../../src/domain/areas';
 import { routeGrade } from '../../src/domain/grades';
 import { IconButton } from '../../src/ui/icons';
 import { Contours } from '../../src/ui/Contours';
 import { F } from '../../src/ui/fonts';
-import { Button, EmptyState, GradeBadge, LinkButton, Screen } from '../../src/ui/kit';
+import { Button, EmptyState, Field, GradeBadge, LinkButton, Screen } from '../../src/ui/kit';
+import { matches } from '../../src/domain/text';
 import { useLocation } from '../../src/ui/useLocation';
 import { distanceM, formatDistance, isLatLng } from '../../src/domain/geo';
 import { Ionicons } from '@expo/vector-icons';
@@ -30,6 +31,8 @@ export default function CragScreen() {
   const [areas, setAreas] = useState<AreaRow[]>([]);
   const loc = useLocation();
   const approx = crag?.pos_source === 'approx';
+  const [query, setQuery] = useState('');
+  const [goalKinds, setGoalKinds] = useState<Map<string, 'project' | 'wishlist'>>(new Map());
 
   useFocusEffect(useCallback(() => {
     getCrag(db, id).then((c) => {
@@ -39,16 +42,18 @@ export default function CragScreen() {
     listCragRoutes(db, id).then(setRoutes);
     listSectors(db, id).then(setSectorRows);
     listAreas(db).then(setAreas);
+    routeGoalKinds(db).then(setGoalKinds);
   }, [db, id, router]));
 
-  // Every sector, also empty ones, so a sector added without routes shows up.
+  // Every sector, also empty ones, so a sector added without routes shows up; while searching, only sectors with hits.
   const sections = useMemo(() => {
     const bySector = new Map<string, CragRouteRow[]>();
-    for (const r of routes) bySector.set(r.sector_id, [...(bySector.get(r.sector_id) ?? []), r]);
+    for (const r of routes) if (matches(query, r.name)) bySector.set(r.sector_id, [...(bySector.get(r.sector_id) ?? []), r]);
     return [...sectorRows]
       .sort((a, b) => a.name.localeCompare(b.name))
-      .map((sec) => ({ sectorId: sec.id, sector: sec.name, data: bySector.get(sec.id) ?? [] }));
-  }, [routes, sectorRows]);
+      .map((sec) => ({ sectorId: sec.id, sector: sec.name, data: bySector.get(sec.id) ?? [] }))
+      .filter((sec) => !query.trim() || sec.data.length);
+  }, [routes, sectorRows, query]);
 
   const status = (r: CragRouteRow) =>
     r.sends > 0 ? `✓ ${t('crags.sends', { count: r.sends })}` : r.ascents > 0 ? t('crags.tried', { count: r.ascents }) : '';
@@ -96,10 +101,13 @@ export default function CragScreen() {
                   <Button label={t('edit.addSector')} variant="plain" onPress={() => router.push({ pathname: '/sector/new', params: { cragId: crag.id } })} />
                 </View>
               </View>
+              {routes.length ? (
+                <Field value={query} onChangeText={setQuery} placeholder={t('crags.searchRoutes')} accessibilityLabel={t('crags.searchRoutes')} returnKeyType="search" style={{ marginTop: 8 }} />
+              ) : null}
             </View>
           ) : null
         }
-        ListEmptyComponent={<EmptyState title={t('crags.noRoutes')} />}
+        ListEmptyComponent={<EmptyState title={query.trim() ? t('crags.noRouteHits', { query: query.trim() }) : t('crags.noRoutes')} />}
         renderSectionHeader={({ section }) => (
           <View style={{ flexDirection: 'row', alignItems: 'center', paddingTop: 16, paddingBottom: 2, paddingLeft: 4, backgroundColor: th.bg }}>
             <Text accessibilityRole="header" style={{ flex: 1, color: th.muted, fontSize: 12, fontFamily: F.semi, textTransform: 'uppercase', letterSpacing: 1.5 }}>
@@ -135,6 +143,12 @@ export default function CragScreen() {
               <Text style={{ color: item.sends > 0 ? th.accent : th.muted, fontSize: 13 }}>
                 {t(`types.${item.type}`)}{status(item) ? ` · ${status(item)}` : ''}
               </Text>
+              {goalKinds.has(item.id) ? (
+                <View style={{ alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2, paddingHorizontal: 8, borderRadius: 10, backgroundColor: th.badge }}>
+                  <Ionicons name="flag" size={11} color={th.onBadge} />
+                  <Text style={{ color: th.onBadge, fontFamily: F.semi, fontSize: 12 }}>{t(goalKinds.get(item.id) === 'project' ? 'goals.badgeProject' : 'goals.badgeWish')}</Text>
+                </View>
+              ) : null}
             </View>
             <IconButton name="create-outline" size={20} label={t('edit.routeTitleNamed', { name: item.name })} onPress={() => router.push({ pathname: '/route/edit', params: { id: item.id } })} />
           </Pressable>

@@ -37,7 +37,7 @@
   },
   "crags": {
     "title": "Skały", "detailTitle": "Skała", "sends": "przejścia: {{count}}", "tried": "próby: {{count}}", "approach": "Dojście",
-    "tapRoute": "Dotknij drogę, aby zobaczyć historię i dodać przejście.", "logHint": "Otwiera historię drogi", "noRoutes": "Ta skała nie ma jeszcze dróg.", "noRegion": "Bez rejonu", "routes": "Drogi: {{count}}", "empty": "Brak skał", "emptyHint": "Zaimportuj CSV w ustawieniach lub utwórz drogę przy dodawaniu przejścia." },
+    "tapRoute": "Dotknij drogę, aby zobaczyć historię i dodać przejście.", "logHint": "Otwiera historię drogi", "noRoutes": "Ta skała nie ma jeszcze dróg.", "searchRoutes": "Szukaj drogi na tej skale", "noRouteHits": "Brak dróg „{{query}}” na tej skale.", "noRegion": "Bez rejonu", "routes": "Drogi: {{count}}", "empty": "Brak skał", "emptyHint": "Zaimportuj CSV w ustawieniach lub utwórz drogę przy dodawaniu przejścia." },
   "route": {
     "title": "Droga", "history": "Twoje przejścia", "logAnother": "Dodaj przejście", "openHint": "Otwiera historię drogi",
     "sentOn": "Przejście {{date}} ({{style}}).", "daysToSend": "Zajęło to {{n}} dni.", "notSent": "Jeszcze bez przejścia. Dni prób: {{n}}.", "neverTried": "Brak podejść do tej drogi.",
@@ -63,13 +63,15 @@
     "help": { "count": "Ile przejść chcesz zrobić w tym roku.", "grade": "Wybierz wycenę: liczą się drogi tej wyceny lub trudniejsze, przejście z prowadzeniem (bez wędki), w tym roku.", "project": "Droga, nad którą pracujesz. Odhaczy się sama, gdy ją przejdziesz z prowadzeniem.", "wishlist": "Droga marzeń. Odhaczy się sama, gdy ją przejdziesz z prowadzeniem." },
     "route": "Droga", "routeSearch": "Zacznij pisać nazwę drogi lub skały", "sentOn": "przejście {{date}}", "tries": "próby: {{tries}} · dni prób: {{days}}", "notTried": "jeszcze bez prób",
     "add": "+ Dodaj cel", "yours": "Twoje cele", "editHint": "Otwiera edycję celu", "editTitle": "Edycja celu", "yourProject": "Twój projekt", "yourWish": "Na Twojej liście życzeń",
+    "addRoute": "Dodaj do celów", "addRouteTitle": "Dodaj do celów", "addRouteQuestion": "Dodać „{{name}}” jako projekt czy na listę życzeń?",
+    "asProject": "Dodaj tę drogę jako projekt", "isProject": "Ta droga jest Twoim projektem.", "addAsProject": "Dodaj jako projekt", "badgeProject": "projekt", "badgeWish": "lista życzeń",
     "kind": "Rodzaj", "empty": "Brak celów", "emptyHint": "Dodaj roczny cel, cel wyceny, projekt albo drogę marzeń.",
     "progress": "{{value}} / {{target}} przejść w {{year}}", "markDone": "Oznacz jako zrobione", "reopen": "Przywróć",
     "deleteTitle": "Usunąć cel?", "deleteQuestion": "„{{title}}” zostanie usunięty.",
     "errors": { "title": "Podaj nazwę celu.", "target": "Cel musi być liczbą całkowitą, co najmniej 1.", "grade": "Wybierz wycenę." }
   },
   "routeSearch": {
-    "open": "Szukaj dróg", "title": "Szukaj dróg", "name": "Nazwa drogi lub skały", "any": "Dowolna", "from": "Wycena od", "to": "Wycena do",
+    "open": "Szukaj dróg", "openHere": "Szukaj dróg z filtrami", "title": "Szukaj dróg", "name": "Nazwa drogi lub skały", "any": "Dowolna", "from": "Wycena od", "to": "Wycena do",
     "where": "Gdzie", "up": "Poziom wyżej", "everywhere": "Wszędzie", "status": "Twoje przejścia",
     "statuses": { "all": "Wszystkie", "todo": "Jeszcze niezrobione", "tried": "Próbowane, bez przejścia", "sent": "Zrobione" },
     "found": "Znaleziono: {{total}}", "foundSome": "Znaleziono: {{total}} (pokazano {{shown}}, zawęź filtry)",
@@ -77,7 +79,7 @@
   },
   "areas": {
     "region": "Region", "area": "Rejon", "groupOptional": "Grupa skał (opcjonalnie)", "where": "Gdzie jest ta skała?",
-    "regionPlaceholder": "np. Czarnorzeki", "areaPlaceholder": "np. Kamieniec", "search": "Szukaj skały", "noHits": "Nie znaleziono skały",
+    "regionPlaceholder": "np. Czarnorzeki", "areaPlaceholder": "np. Kamieniec", "search": "Szukaj skały lub drogi", "noHits": "Nic nie znaleziono", "searchIn": "Szukaj w: {{name}}", "cragsHeader": "Skały", "routesHeader": "Drogi", "moreRoutes": "Pokazano {{shown}} z {{total}} dróg. Wpisz więcej liter albo użyj wyszukiwarki z filtrami.",
     "regions": "Regiony", "areas": "Rejony", "groups": "Grupy skał", "cragCount": "Skały: {{count}}", "inside": "W: {{name}}", "addRegion": "+ Dodaj region",
     "empty": "Tu nie ma jeszcze nic. Dodaj skałę albo niższy poziom.",
     "deleteHint": "Skały i to, co jest w środku, nie zostaną usunięte, tylko przeniesione poziom wyżej.",

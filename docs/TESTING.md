@@ -101,6 +101,15 @@ Write down the result of every step (OK / problem). Report problems with: step n
 9. Import a positions file with a column `przybliżone` (`tak` on some rows). Expected: the message counts the approximate ones; on the map they are hollow dots; the crag screen says "Approximate position (area of the group)", distances read "about 2 km", and "Improve" opens the position screen zoomed out a little.
 10. Set one crag's position on the phone, then import the positions file again. Expected: "Unchanged because you set them on the phone: 1", and that crag keeps your position.
 
+## 3f. Goals from a route, search on every level
+1. Open a route that is not a goal › "Add to goals" › Wishlist. Expected: the badge "On your wishlist" replaces the button; the crag's route list shows a small "wishlist" label on that route; Goals lists it.
+2. Log an ascent with style "Attempt" on a route that is not a project: switch "Add this route as a project" on, save. Expected: the route is a project (badge on the route, "project" label in the crag list). With the switch off nothing is added.
+3. Open a saved attempt › "Add as a project". Expected: the button changes to "This route is your project."
+4. Send the project with a lead (RP). Expected: the goal ticks off and the labels disappear.
+5. Crags tab: type part of a route name. Expected: "Crags" and "Routes" sections; tapping a route opens it.
+6. Open a region, then an area and a group: each has "Search in: <name>". Expected: only crags and routes inside that place; "Find routes with filters" opens the finder already limited to it.
+7. Crag screen: "Search routes on this crag". Expected: the list narrows while typing, empty sectors hide, Polish letters optional ("lysa" finds "Łysa").
+
 ## 3b. Icons
 1. The bottom bar shows an icon above each tab name (book, chart, mountains, flag); the selected tab's icon is filled. No empty squares.
 2. Top right: a clear gear icon opens Settings. In the middle of the bottom bar a raised orange "+" opens a new ascent from any tab, in light and dark mode. The route screen's "Log an ascent" button is orange too.

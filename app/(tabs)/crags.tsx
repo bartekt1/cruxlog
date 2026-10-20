@@ -5,12 +5,12 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, View } from 'react-native';
 import { listAreas, listCrags, type AreaRow, type CragRow } from '../../src/db/repo';
 import { childrenOf, cragCounts, pathLabels } from '../../src/domain/areas';
-import { suggest } from '../../src/domain/text';
 import { Button, Chip, EmptyState, Field, LinkButton } from '../../src/ui/kit';
 import { CragMap } from '../../src/ui/CragMap';
 import { useLocation } from '../../src/ui/useLocation';
 import { formatDistance, isLatLng, nearest } from '../../src/domain/geo';
 import { NavRow, SectionTitle } from '../../src/ui/NavRow';
+import { PlaceSearch } from '../../src/ui/PlaceSearch';
 import { useTheme } from '../../src/ui/theme';
 
 /** Crags tab: search, then regions to drill down (region › rejon › group › crag). */
@@ -32,7 +32,6 @@ export default function Crags() {
   const counts = useMemo(() => cragCounts(areas, crags.map((c) => c.region_id)), [areas, crags]);
   const labels = useMemo(() => pathLabels(areas), [areas]);
   const path = (c: CragRow) => (c.region_id ? labels.get(c.region_id) ?? '' : '');
-  const hits = query.trim() ? suggest(crags, query, (c) => c.name, (c) => [path(c)], 30) : [];
   const regions = childrenOf(areas, null);
   const loose = crags.filter((c) => !c.region_id);
   const openCrag = (c: CragRow) => router.push(`/crag/${c.id}`);
@@ -61,11 +60,7 @@ export default function Crags() {
       <Field value={query} onChangeText={setQuery} placeholder={t('areas.search')} accessibilityLabel={t('areas.search')} returnKeyType="search" />
       <Button label={t('routeSearch.open')} variant="plain" onPress={() => router.push('/route/search')} />
       {query.trim() ? (
-        hits.length ? (
-          hits.map((c) => <NavRow key={c.id} title={c.name} subtitle={[path(c), t('crags.routes', { count: c.routes })].filter(Boolean).join(' · ')} onPress={() => openCrag(c)} />)
-        ) : (
-          <EmptyState title={t('areas.noHits')} />
-        )
+        <PlaceSearch query={query} crags={crags} areaIds={null} path={path} onOpenCrag={openCrag} />
       ) : (
         <>
           {!crags.length && !regions.length ? <EmptyState title={t('crags.empty')} hint={t('crags.emptyHint')} /> : null}

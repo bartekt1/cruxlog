@@ -2,10 +2,10 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, Switch, View } from 'react-native';
 import { Text } from '../../src/ui/Text';
 import {
-  addAscent, addUserRoute, getAscent, getRoute, listCragChoices, listCragRoutes, listAreas, listPartners, listSectorNames, recentRoutes, searchRoutes, warmSearch,
+  addAscent, addRouteGoal, addUserRoute, getAscent, getRoute, listCragChoices, listCragRoutes, listAreas, listPartners, listSectorNames, recentRoutes, routeGoals, searchRoutes, warmSearch,
   updateAscent, type AreaNames, type AreaRow, type CragChoice, type CragRouteRow, type RouteRow,
 } from '../../src/db/repo';
 import { isoDate, shiftDay } from '../../src/domain/dates';
@@ -70,6 +70,9 @@ export default function NewAscent() {
   const [notes, setNotes] = useState('');
   const [error, setError] = useState<{ key: string; field?: FieldName; message?: string } | null>(null);
   const [saving, setSaving] = useState(false);
+  // An attempt can make the route a project in one go (new ascents only).
+  const [asProject, setAsProject] = useState(false);
+  const [isProject, setIsProject] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -97,6 +100,11 @@ export default function NewAscent() {
     searchRoutes(db, query).then((r) => { if (live) setResults(r); });
     return () => { live = false; };
   }, [db, query]);
+
+  useEffect(() => {
+    if (!route) { setIsProject(false); return; }
+    routeGoals(db, route.id).then((g) => setIsProject(g.some((x) => x.kind === 'project')));
+  }, [db, route?.id]);
 
   // The crag typed in the new-route form, if it already exists (ignoring case and Polish letters).
   const existingCrag = crags.find((c) => sameName(c.name, crag)) ?? null;
@@ -208,6 +216,7 @@ export default function NewAscent() {
       };
       if (id) await updateAscent(db, id, values);
       else await addAscent(db, values);
+      if (!id && style === 'attempt' && asProject && !isProject) await addRouteGoal(db, rid, 'project');
       router.back();
     } catch (e) {
       setError({ key: 'common.failed', message: (e as Error).message });
@@ -368,6 +377,18 @@ export default function NewAscent() {
           <Field value={attempts} onChangeText={setAttempts} keyboardType="number-pad" accessibilityLabel={t('ascent.attempts')} invalid={bad('attempts')} style={{ width: 96 }} />
         </>
       )}
+
+      {!id && style === 'attempt' ? (
+        isProject ? (
+          <Text style={{ color: th.muted, marginTop: 10 }}>{t('goals.isProject')}</Text>
+        ) : (
+          <Pressable onPress={() => setAsProject(!asProject)} accessibilityRole="switch" accessibilityState={{ checked: asProject }}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10, minHeight: 44 }}>
+            <Switch value={asProject} onValueChange={setAsProject} trackColor={{ false: th.line, true: th.accent }} thumbColor={th.surface} importantForAccessibility="no" />
+            <Text style={{ color: th.ink, flex: 1 }}>{t('goals.asProject')}</Text>
+          </Pressable>
+        )
+      ) : null}
 
       {baseGrade != null ? (
         <>

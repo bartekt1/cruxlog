@@ -37,7 +37,7 @@
   },
   "crags": {
     "title": "Crags", "detailTitle": "Crag", "sends": "sends: {{count}}", "tried": "tried: {{count}}", "approach": "Approach",
-    "tapRoute": "Tap a route to see your history and log an ascent.", "logHint": "Opens the route history", "noRoutes": "No routes in this crag yet.", "noRegion": "No region", "routes": "Routes: {{count}}", "empty": "No crags yet", "emptyHint": "Import a CSV in Settings or create a route when logging an ascent." },
+    "tapRoute": "Tap a route to see your history and log an ascent.", "logHint": "Opens the route history", "noRoutes": "No routes in this crag yet.", "searchRoutes": "Search routes on this crag", "noRouteHits": "No route “{{query}}” on this crag.", "noRegion": "No region", "routes": "Routes: {{count}}", "empty": "No crags yet", "emptyHint": "Import a CSV in Settings or create a route when logging an ascent." },
   "route": {
     "title": "Route", "history": "Your ascents", "logAnother": "Log an ascent", "openHint": "Opens the route history",
     "sentOn": "Sent {{date}} ({{style}}).", "daysToSend": "It took {{n}} days.", "notSent": "Not sent yet. Days tried: {{n}}.", "neverTried": "No ascents of this route yet.",
@@ -63,13 +63,15 @@
     "help": { "count": "How many sends you want this year.", "grade": "Pick a grade: routes of that grade or harder count, led (not top-rope), this year.", "project": "A route you are working on. It is ticked off by itself when you lead it.", "wishlist": "A dream route. It is ticked off by itself when you lead it." },
     "route": "Route", "routeSearch": "Start typing a route or crag name", "sentOn": "sent {{date}}", "tries": "tries: {{tries}} · days: {{days}}", "notTried": "not tried yet",
     "add": "+ Add a goal", "yours": "Your goals", "editHint": "Opens the goal for editing", "editTitle": "Edit goal", "yourProject": "Your project", "yourWish": "On your wishlist",
+    "addRoute": "Add to goals", "addRouteTitle": "Add to goals", "addRouteQuestion": "Add “{{name}}” as a project or to your wishlist?",
+    "asProject": "Add this route as a project", "isProject": "This route is your project.", "addAsProject": "Add as a project", "badgeProject": "project", "badgeWish": "wishlist",
     "kind": "Kind", "empty": "No goals yet", "emptyHint": "Add a yearly target, a grade goal, a project or a route you dream about.",
     "progress": "{{value}} / {{target}} sends in {{year}}", "markDone": "Mark done", "reopen": "Reopen",
     "deleteTitle": "Delete goal?", "deleteQuestion": "\"{{title}}\" will be removed.",
     "errors": { "title": "Enter a goal title.", "target": "The target must be a whole number, 1 or more.", "grade": "Pick a grade." }
   },
   "routeSearch": {
-    "open": "Find routes", "title": "Find routes", "name": "Route or crag name", "any": "Any", "from": "Grade from", "to": "Grade to",
+    "open": "Find routes", "openHere": "Find routes with filters", "title": "Find routes", "name": "Route or crag name", "any": "Any", "from": "Grade from", "to": "Grade to",
     "where": "Where", "up": "One level up", "everywhere": "Everywhere", "status": "Your ascents",
     "statuses": { "all": "All", "todo": "Not climbed yet", "tried": "Tried, not sent", "sent": "Sent" },
     "found": "Found: {{total}}", "foundSome": "Found: {{total}} (showing {{shown}}, narrow the filters)",
@@ -77,7 +79,7 @@
   },
   "areas": {
     "region": "Region", "area": "Area", "groupOptional": "Group of crags (optional)", "where": "Where is this crag?",
-    "regionPlaceholder": "e.g. Czarnorzeki", "areaPlaceholder": "e.g. Kamieniec", "search": "Search crags", "noHits": "No crag found",
+    "regionPlaceholder": "e.g. Czarnorzeki", "areaPlaceholder": "e.g. Kamieniec", "search": "Search crags or routes", "noHits": "Nothing found", "searchIn": "Search in: {{name}}", "cragsHeader": "Crags", "routesHeader": "Routes", "moreRoutes": "Showing {{shown}} of {{total}} routes. Type more letters or use the route finder with filters.",
     "regions": "Regions", "areas": "Areas", "groups": "Groups of crags", "cragCount": "Crags: {{count}}", "inside": "In: {{name}}", "addRegion": "+ Add region",
     "empty": "Nothing here yet. Add a crag or a lower level.",
     "deleteHint": "Crags and everything inside are not deleted; they move one level up.",

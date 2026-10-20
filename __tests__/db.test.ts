@@ -8,7 +8,7 @@ import {
   addAscent, addGoal, addUserRoute, applyImport, cragUsage, deleteAscent, deleteCrag, deleteGoal, deleteArea, deleteRoute, deleteSector,
   getAscent, getCrag, getArea, getRoute, getSector, listAscents, listCragRoutes, listCrags, listGoals, listAreas, listSectorNames, addArea, areaIdFor,
   renameArea, renameSector, routeUsage, saveCrag, searchRoutes, sectorUsage, setGoalDone, updateAscent, updateRoute, type NewRoute, type RouteFilter,
-  listCragChoices, listPartners, applyCragPositions, setCragLocation, listRouteAscents, recentRoutes, listSectors, addSector, createRoute, importedUsage, removeImported, findRoutes, getGoal, updateGoal, routeGoals,
+  listCragChoices, listPartners, applyCragPositions, addRouteGoal, routeGoalKinds, setCragLocation, listRouteAscents, recentRoutes, listSectors, addSector, createRoute, importedUsage, removeImported, findRoutes, getGoal, updateGoal, routeGoals,
 } from '../src/db/repo';
 import { descendantIds } from '../src/domain/areas';
 import { buildImportPlan } from '../src/domain/csvImport';
@@ -495,6 +495,20 @@ describe('goals linked to routes and grades', () => {
     await updateGoal(db, id, { kind: 'project', title: 'Test Route 1', target: null, gradeIndex: null, routeId: r });
     expect(await getGoal(db, id)).toMatchObject({ kind: 'project', title: 'Test Route 1', route_id: r, route_name: 'Test Route 1', crag_name: 'Test Crag' });
     expect((await routeGoals(db, r)).map((x) => x.id)).toEqual([id]);
+  });
+  it('adds a route as a project or wish from its screen, once, and lists the badges', async () => {
+    const db = await freshDb();
+    const r = await addUserRoute(db, route());
+    const r2 = await addUserRoute(db, route({ name: 'Test Route 2' }));
+    const wish = await addRouteGoal(db, r, 'wishlist');
+    expect(await addRouteGoal(db, r, 'wishlist')).toBe(wish);
+    expect(await getGoal(db, wish)).toMatchObject({ kind: 'wishlist', title: 'Test Route 1', route_id: r });
+    await addRouteGoal(db, r2, 'project');
+    expect([...(await routeGoalKinds(db))]).toEqual(expect.arrayContaining([[r, 'wishlist'], [r2, 'project']]));
+    await addRouteGoal(db, r, 'project');
+    expect((await routeGoalKinds(db)).get(r)).toBe('project'); // a project wins over a wish
+    await addAscent(db, ascent(r2, { date: today, style: 'rp' }));
+    expect((await routeGoalKinds(db)).has(r2)).toBe(false); // done goals have no badge
   });
   it('ticks a project off on a led send, not on top-rope; a reopened one stays open until a send is saved again', async () => {
     const db = await freshDb();

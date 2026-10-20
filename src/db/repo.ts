@@ -623,6 +623,24 @@ export async function routeGoals(db: SQLiteDatabase, routeId: string): Promise<G
   return db.getAllAsync<GoalRow>(`${GOAL_SELECT} WHERE g.route_id = ? AND g.deleted_at IS NULL AND g.done_at IS NULL`, [routeId]);
 }
 
+/** Open project or wishlist goal per route, for the badges in route lists. */
+export async function routeGoalKinds(db: SQLiteDatabase): Promise<Map<string, 'project' | 'wishlist'>> {
+  const rows = await db.getAllAsync<{ route_id: string; kind: 'project' | 'wishlist' }>(
+    `SELECT route_id, kind FROM goal WHERE route_id IS NOT NULL AND kind IN ('project', 'wishlist') AND deleted_at IS NULL AND done_at IS NULL
+     ORDER BY kind = 'project'`);
+  return new Map(rows.map((r) => [r.route_id, r.kind])); // a project wins over a wish for the same route
+}
+
+/** Makes a route a project or a wish, named after it. A route that already is an open goal of that kind keeps it. */
+export async function addRouteGoal(db: SQLiteDatabase, routeId: string, kind: 'project' | 'wishlist'): Promise<string> {
+  const open = await db.getFirstAsync<{ id: string }>(
+    'SELECT id FROM goal WHERE route_id = ? AND kind = ? AND deleted_at IS NULL AND done_at IS NULL', [routeId, kind]);
+  if (open) return open.id;
+  const r = await db.getFirstAsync<{ name: string }>('SELECT name FROM route WHERE id = ?', [routeId]);
+  if (!r) throw new Error('Route not found');
+  return addGoal(db, { kind, title: r.name, target: null, gradeIndex: null, routeId });
+}
+
 export type GoalInput = { kind: 'count' | 'grade' | 'project' | 'wishlist'; title: string; target: number | null; gradeIndex: number | null; routeId: string | null };
 
 export async function addGoal(db: SQLiteDatabase, g: GoalInput): Promise<string> {

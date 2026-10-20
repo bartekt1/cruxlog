@@ -5,13 +5,14 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, View } from 'react-native';
 import { Text } from '../../src/ui/Text';
 import { listAreas, listCrags, type AreaRow, type CragRow } from '../../src/db/repo';
-import { areaPath, childLevel, childrenOf, cragCounts } from '../../src/domain/areas';
+import { areaPath, childLevel, childrenOf, cragCounts, descendantIds, pathLabels } from '../../src/domain/areas';
 import { IconButton } from '../../src/ui/icons';
-import { Button, EmptyState } from '../../src/ui/kit';
+import { Button, EmptyState, Field } from '../../src/ui/kit';
 import { NavRow, SectionTitle } from '../../src/ui/NavRow';
+import { PlaceSearch } from '../../src/ui/PlaceSearch';
 import { useTheme } from '../../src/ui/theme';
 
-/** One region, rejon or group: its sub-areas and the crags directly in it. */
+/** One region, rejon or group: a search inside it, its sub-areas and the crags directly in it. */
 export default function AreaScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const db = useSQLiteContext();
@@ -27,6 +28,12 @@ export default function AreaScreen() {
 
   const area = areas?.find((a) => a.id === id) ?? null;
   const counts = useMemo(() => cragCounts(areas ?? [], crags.map((c) => c.region_id)), [areas, crags]);
+  const [query, setQuery] = useState('');
+  // The search covers this area and everything below it.
+  const inside = useMemo(() => (areas ? [...descendantIds(areas, id)] : []), [areas, id]);
+  const insideCrags = useMemo(() => { const set = new Set(inside); return crags.filter((c) => c.region_id != null && set.has(c.region_id)); }, [crags, inside]);
+  const labels = useMemo(() => pathLabels(areas ?? []), [areas]);
+  const path = (c: CragRow) => (c.region_id ? labels.get(c.region_id) ?? '' : '');
   const gone = areas != null && !area;
   useEffect(() => { if (gone) router.back(); }, [gone, router]); // deleted from the edit screen
   if (!areas || !area) return null;
@@ -37,7 +44,7 @@ export default function AreaScreen() {
   const next = childLevel(area);
 
   return (
-    <ScrollView style={{ backgroundColor: th.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 32 }}>
+    <ScrollView style={{ backgroundColor: th.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 32 }} keyboardShouldPersistTaps="handled">
       <Stack.Screen
         options={{
           title: area.name,
@@ -47,13 +54,21 @@ export default function AreaScreen() {
       <Text style={{ color: th.muted }}>
         {[t(`areas.level.${area.level}`), parents.map((p) => p.name).join(' › ')].filter(Boolean).join(' · ')}
       </Text>
-      {children.length ? <SectionTitle>{t(next === 'group' ? 'areas.groups' : 'areas.areas')}</SectionTitle> : null}
-      {children.map((a) => (
-        <NavRow key={a.id} title={a.name} subtitle={t('areas.cragCount', { count: counts.get(a.id) ?? 0 })} onPress={() => router.push(`/area/${a.id}`)} />
-      ))}
-      {here.length ? <SectionTitle>{t('crags.title')}</SectionTitle> : null}
-      {here.map((c) => <NavRow key={c.id} title={c.name} subtitle={t('crags.routes', { count: c.routes })} onPress={() => router.push(`/crag/${c.id}`)} />)}
-      {!children.length && !here.length ? <EmptyState title={t('areas.empty')} /> : null}
+      <Field value={query} onChangeText={setQuery} placeholder={t('areas.searchIn', { name: area.name })} accessibilityLabel={t('areas.searchIn', { name: area.name })} returnKeyType="search" style={{ marginTop: 10 }} />
+      <Button label={t('routeSearch.openHere')} variant="plain" onPress={() => router.push({ pathname: '/route/search', params: { areaId: id } })} />
+      {query.trim() ? (
+        <PlaceSearch query={query} crags={insideCrags} areaIds={inside} path={path} onOpenCrag={(c) => router.push(`/crag/${c.id}`)} />
+      ) : (
+        <>
+        {children.length ? <SectionTitle>{t(next === 'group' ? 'areas.groups' : 'areas.areas')}</SectionTitle> : null}
+        {children.map((a) => (
+          <NavRow key={a.id} title={a.name} subtitle={t('areas.cragCount', { count: counts.get(a.id) ?? 0 })} onPress={() => router.push(`/area/${a.id}`)} />
+        ))}
+        {here.length ? <SectionTitle>{t('crags.title')}</SectionTitle> : null}
+        {here.map((c) => <NavRow key={c.id} title={c.name} subtitle={t('crags.routes', { count: c.routes })} onPress={() => router.push(`/crag/${c.id}`)} />)}
+        {!children.length && !here.length ? <EmptyState title={t('areas.empty')} /> : null}
+        </>
+      )}
       <View style={{ flexDirection: 'row', gap: 8, marginTop: 16 }}>
         {next ? (
           <View style={{ flex: 1 }}>
