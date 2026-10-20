@@ -47,11 +47,16 @@ export function CragMap({ crags, onOpen }: { crags: MapCrag[]; onOpen: (id: stri
   return (
     <View style={{ flex: 1 }}>
       <Map style={{ flex: 1 }} mapStyle={mapStyle(mapBase)} attribution logo={false} compass touchPitch={false}
-        onPress={() => setSelected(null)}>
+        onPress={(e) => { if (!('features' in e.nativeEvent && e.nativeEvent.features?.length)) setSelected(null); }}>
         <Camera ref={camera}
           initialViewState={bounds ? { bounds, padding: { top: 60, bottom: 60, left: 40, right: 40 } } : { center: DEFAULT_VIEW.center, zoom: DEFAULT_VIEW.zoom }} />
         <GeoJSONSource id="crags" data={data}
-          onPress={(e) => { const id = e.nativeEvent.features[0]?.properties?.id; if (typeof id === 'string') setSelected(id); }}>
+          onPress={(e) => {
+            // The press also bubbles to the map, whose handler would close the card again.
+            e.stopPropagation();
+            const id = e.nativeEvent.features[0]?.properties?.id;
+            if (typeof id === 'string') setSelected(id);
+          }}>
           <Layer type="circle" id="crag-dots" paint={{
               'circle-radius': 7, 'circle-color': ['case', ['get', 'approx'], th.surface, th.accent],
               'circle-stroke-width': ['case', ['get', 'approx'], 2.5, 2], 'circle-stroke-color': ['case', ['get', 'approx'], th.accent, th.surface],
