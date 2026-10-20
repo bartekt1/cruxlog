@@ -1,0 +1,85 @@
+import { Ionicons } from '@expo/vector-icons';
+import { View } from 'react-native';
+import { Contours } from './Contours';
+import { F } from './fonts';
+import { Text } from './Text';
+import { paperTheme as c } from './theme';
+
+export type ShareCardData = {
+  /** Small heading, e.g. "Przejście" or "Zapraszam na skałę". */
+  tag: string;
+  title: string;
+  /** Grade square; null for a crag. */
+  grade: string | null;
+  style: string | null;
+  rating: number | null;
+  /** Crag and sector, then the area path, then facts such as length and bolts. */
+  line: string; path: string; facts: string[];
+  date: string | null;
+  message: string;
+  /** Coordinates already formatted; null when left out. */
+  place: { coords: string; approx: boolean } | null;
+  approxLabel: string;
+};
+
+export const CARD_RATIO = 1.25;
+const BRAND = 'Cruxlog'; // the app's name is not translated
+
+/**
+ * The picture sent to a friend. Always on paper, in the app's own look, whatever the phone's theme.
+ * Sized by `width` (dp) so the preview and the saved image look the same.
+ */
+export function ShareCard({ data, width }: { data: ShareCardData; width: number }) {
+  const u = width / 360;
+  return (
+    <View collapsable={false} style={{ width, height: width * CARD_RATIO, backgroundColor: c.bg, overflow: 'hidden' }}>
+      <Contours height={width * 0.5} color={c.contour} />
+      <View style={{ flex: 1, padding: 24 * u }}>
+        <Text style={{ color: c.accent, fontFamily: F.semi, fontSize: 12 * u, letterSpacing: 2 * u, textTransform: 'uppercase' }}>{data.tag}</Text>
+        <Text numberOfLines={3} adjustsFontSizeToFit minimumFontScale={0.6}
+          style={{ color: c.ink, fontFamily: F.display, fontSize: 46 * u, lineHeight: 48 * u, textTransform: 'uppercase', marginTop: 10 * u }}>
+          {data.title}
+        </Text>
+
+        {data.grade ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 * u, marginTop: 18 * u }}>
+            <View style={{ minWidth: 70 * u, height: 70 * u, paddingHorizontal: 8 * u, borderRadius: 12 * u, backgroundColor: c.badge, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ color: c.onBadge, fontFamily: F.display, fontSize: 32 * u }}>{data.grade}</Text>
+            </View>
+            <View>
+              {data.style ? <Text style={{ color: c.accent, fontFamily: F.cond, fontSize: 30 * u, lineHeight: 32 * u }}>{data.style}</Text> : null}
+              {data.rating ? <Text style={{ color: c.sun, fontSize: 18 * u }}>{'★'.repeat(data.rating)}</Text> : null}
+            </View>
+          </View>
+        ) : null}
+
+        <View style={{ marginTop: 18 * u, gap: 2 * u }}>
+          <Text style={{ color: c.ink, fontFamily: F.semi, fontSize: 17 * u }}>{data.line}</Text>
+          {data.path ? <Text style={{ color: c.muted, fontSize: 13 * u }}>{data.path}</Text> : null}
+          {data.facts.length ? <Text style={{ color: c.muted, fontSize: 13 * u }}>{data.facts.join(' · ')}</Text> : null}
+          {data.date ? <Text style={{ color: c.muted, fontSize: 13 * u }}>{data.date}</Text> : null}
+        </View>
+
+        {data.message ? (
+          <View style={{ marginTop: 18 * u, borderLeftWidth: 3 * u, borderLeftColor: c.accent, paddingLeft: 12 * u }}>
+            <Text numberOfLines={4} style={{ color: c.ink, fontSize: 17 * u, lineHeight: 23 * u }}>{data.message}</Text>
+          </View>
+        ) : null}
+
+        <View style={{ flex: 1 }} />
+        <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12 * u }}>
+          {data.place ? (
+            <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6 * u }}>
+              <Ionicons name={data.place.approx ? 'location-outline' : 'location'} size={18 * u} color={c.accent} />
+              <View style={{ flexShrink: 1 }}>
+                <Text style={{ color: c.ink, fontFamily: F.semi, fontSize: 13 * u }}>{data.place.coords}</Text>
+                {data.place.approx ? <Text style={{ color: c.muted, fontSize: 12 * u }}>{data.approxLabel}</Text> : null}
+              </View>
+            </View>
+          ) : <View style={{ flex: 1 }} />}
+          <Text style={{ color: c.ink, fontFamily: F.display, fontSize: 20 * u, letterSpacing: 1.5 * u, textTransform: 'uppercase' }}>{BRAND}</Text>
+        </View>
+      </View>
+    </View>
+  );
+}

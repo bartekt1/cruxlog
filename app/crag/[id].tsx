@@ -64,7 +64,12 @@ export default function CragScreen() {
         <Stack.Screen
           options={{
             title: crag.name,
-            headerRight: () => <IconButton name="create-outline" size={26} label={t('edit.cragTitle')} onPress={() => router.push({ pathname: '/crag/edit', params: { id: crag.id } })} />,
+            headerRight: () => (
+              <View style={{ flexDirection: 'row' }}>
+                <IconButton name="share-social-outline" size={26} label={t('share.title')} onPress={() => router.push({ pathname: '/share', params: { kind: 'crag', id: crag.id } })} />
+                <IconButton name="create-outline" size={26} label={t('edit.cragTitle')} onPress={() => router.push({ pathname: '/crag/edit', params: { id: crag.id } })} />
+              </View>
+            ),
           }}
         />
       ) : null}

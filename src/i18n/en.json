@@ -103,6 +103,16 @@
     "approx": "Approximate position (area of the group)", "about": "about {{distance}}", "aboutAway": "about {{distance}} from you", "improve": "Improve",
     "locateApproxHint": "This position is approximate: worked out from crags of the same group. Move the map so the pin points at the crag, or save the spot where you are standing."
   },
+  "share": {
+    "title": "Share", "brag": "Show it off", "notFound": "Not found.",
+    "tagAscent": "Ascent", "tagRoute": "Join me on this route", "tagCrag": "Join me at this crag",
+    "message": "Message on the card", "messagePlaceholder": "e.g. Saturday morning at Krowia?",
+    "withPlace": "Include the crag's position", "noPlace": "This crag has no position yet, so there is no map to include.",
+    "placeHint": "This is the crag's position, not yours. Your own position is never sent.",
+    "approxHint": "This crag's position is approximate. The card and the text say so.",
+    "approxCard": "approximate position", "approxText": "approximate position", "mapLabel": "Map",
+    "sendImage": "Send picture", "sendText": "Send text with a map link", "failed": "Could not prepare the message."
+  },
   "settings": {
     "title": "Settings", "language": "Language", "theme": "Appearance", "themes": { "system": "Like the phone", "light": "Light", "dark": "Dark" }, "routeGrades": "Route grades",
     "backup": "Backup", "backupHelp": "Export saves all your data to one file. Import merges a file into the app; newer entries win, nothing is deleted.",

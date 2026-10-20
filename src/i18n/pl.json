@@ -103,6 +103,16 @@
     "approx": "Położenie przybliżone (okolica grupy)", "about": "ok. {{distance}}", "aboutAway": "ok. {{distance}} od Ciebie", "improve": "Popraw",
     "locateApproxHint": "To położenie jest przybliżone: wyliczone ze skał z tej samej grupy. Przesuń mapę tak, żeby szpilka wskazywała skałę, albo zapisz miejsce, w którym stoisz."
   },
+  "share": {
+    "title": "Udostępnij", "brag": "Pochwal się", "notFound": "Nie znaleziono.",
+    "tagAscent": "Przejście", "tagRoute": "Zapraszam na drogę", "tagCrag": "Zapraszam na skałę",
+    "message": "Wiadomość na karcie", "messagePlaceholder": "np. Sobota rano na Krowiej?",
+    "withPlace": "Dołącz położenie skały", "noPlace": "Ta skała nie ma jeszcze położenia, więc nie dołączę mapy.",
+    "placeHint": "To położenie skały, nie Twoje. Twojej pozycji nie wysyłam.",
+    "approxHint": "Położenie tej skały jest przybliżone. Napiszę to na karcie i w tekście.",
+    "approxCard": "położenie przybliżone", "approxText": "położenie przybliżone", "mapLabel": "Mapa",
+    "sendImage": "Wyślij obrazek", "sendText": "Wyślij tekst z linkiem do mapy", "failed": "Nie udało się przygotować wiadomości."
+  },
   "settings": {
     "title": "Ustawienia", "language": "Język", "theme": "Wygląd", "themes": { "system": "Jak w telefonie", "light": "Jasny", "dark": "Ciemny" }, "routeGrades": "Wyceny dróg",
     "backup": "Kopia zapasowa", "backupHelp": "Eksport zapisuje wszystkie dane w jednym pliku. Import scala plik z aplikacją; nowsze wpisy wygrywają, nic nie jest usuwane.",

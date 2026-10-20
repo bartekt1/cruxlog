@@ -67,7 +67,12 @@ export default function RouteScreen() {
       <Stack.Screen
         options={{
           title: t('route.title'),
-          headerRight: () => <IconButton name="create-outline" size={26} label={t('edit.routeTitle')} onPress={() => router.push({ pathname: '/route/edit', params: { id: route.id } })} />,
+          headerRight: () => (
+            <View style={{ flexDirection: 'row' }}>
+              <IconButton name="share-social-outline" size={26} label={t('share.title')} onPress={() => router.push({ pathname: '/share', params: { kind: 'route', id: route.id } })} />
+              <IconButton name="create-outline" size={26} label={t('edit.routeTitle')} onPress={() => router.push({ pathname: '/route/edit', params: { id: route.id } })} />
+            </View>
+          ),
         }}
       />
       <FlatList

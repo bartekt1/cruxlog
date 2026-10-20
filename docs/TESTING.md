@@ -114,6 +114,16 @@ Write down the result of every step (OK / problem). Report problems with: step n
 6. Open a region, then an area and a group: each has "Search in: <name>". Expected: only crags and routes inside that place; "Find routes with filters" opens the finder already limited to it.
 7. Crag screen: "Search routes on this crag". Expected: the list narrows while typing, empty sectors hide, Polish letters optional ("lysa" finds "Łysa").
 
+## 3g. Sharing a route, an ascent or a crag
+1. Ascent screen › "Show it off" (Pochwal się). Expected: a screen with a paper card: tag "Ascent", the route name, grade square, style (RP…) and stars, crag › sector, area path, date, the crag's coordinates at the bottom and "Cruxlog". The card is light also when the phone is in dark mode.
+2. Type a message (up to 90 characters). Expected: it shows on the card at once.
+3. Switch "Include the crag's position" off. Expected: coordinates disappear from the card. On a crag with only an approximate position the card says "approximate position".
+4. "Send picture": the phone's share sheet opens; pick WhatsApp (or save to Files). Expected: a sharp portrait image (not blurry, fonts as in the app, nothing cut off).
+5. "Send text with a map link": share sheet with a short text and a Google Maps link. Expected: tapping the link in WhatsApp opens the map at the crag; for an approximate position the text says so.
+6. Route screen and crag screen: the share icon next to the pencil (top right). Expected: cards "Join me on this route" (with length and bolts) and "Join me at this crag" (with the route count).
+7. A crag without a position: no switch, a note that there is no map to include, and no coordinates on the card or in the text.
+8. Your own position is never in the card or the text.
+
 ## 4. Crags and goals
 1. Crags tab. Expected: "Test Crag" with the number of routes. Tap it. Expected: the crag screen with routes grouped by sector; "Test Route 1" shows "✓ sends: 1" (rust) or "tried: N". Tap the route. Expected: the route screen (§2c).
 1a. Editing (your own and imported crags, sectors, routes and regions; re-importing a file undoes changes to imported ones, see §5b):
