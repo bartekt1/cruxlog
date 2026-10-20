@@ -12,7 +12,15 @@ Status (2026-10-20): the app runs on the owner's phone (APK from GitHub Actions)
 ## Ideas under discussion (April list)
 
 - **Sharing** (card + map link): done, see `docs/TESTING.md` §3g. A photo on the card comes with photos.
-- **Export to theCrag**: no write API for individuals, so the plan is a CSV for theCrag's own logbook import (it matches by crag + route + country, no password in the app). Needs a sample export from the owner's theCrag logbook first, and a country for every crag.
+- **Export to theCrag** (plan approved in principle 2026-10-20, postponed; Cruxlog is the main logbook, theCrag gets a copy, one way only):
+  - Why a file: no write API for individuals (the full API is closed to non-commercial use, the personal key is read-only), and no password in the app. theCrag has its own logbook import from CSV (matches crag + route + country, the user confirms the matches there).
+  - Screen "Export to theCrag" (Settings and Journal): list of ascents with check boxes. Default: only sends (OS, flash, RP, PP) not yet exported. Attempts, top-rope and projects are unchecked but can be checked. Ascents on the user's own routes are unchecked (they do not exist on theCrag). Year filter, "check all new", a counter.
+  - Country: theCrag needs it. Ask once per region of the checked ascents, default "Polska", remember the answer in settings.
+  - File: UTF-8 CSV, columns Country, Crag, Route, Date, Grade, Style, Notes, Partner, Stars; shared with the Android share sheet. Notes behind a switch, off by default; partner on by default.
+  - Styles (a guess, to verify): OS Onsight, Flash Flash, RP Redpoint, PP Pinkpoint, TR Top rope, Attempt Attempt. First build a 3-row test file for the owner to try in theCrag's import and fix names, date format and columns from the result.
+  - Remember what was sent: after the export ask "Did you upload the file?" and only then mark the ascents (new column on `ascent`, migration, bump `BACKUP_VERSION`, old backups still import). A small label "sent to theCrag <date>" on the ascent, undoable.
+  - Not planned: password login, direct upload, importing from theCrag back.
+  - Sources: help pages on theCrag (API, "import logbook", "export logbook"), read through search summaries only because thecrag.com was not reachable from the sandbox; verify on the real site.
 - **Photos**: memory photos on ascents first (needs a backup that carries photos), then a photo of a wall, then drawing topo lines on it. Drawing is the biggest piece.
 
 ## To do, in the owner's order
