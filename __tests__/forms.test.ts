@@ -1,4 +1,4 @@
-import { isFirstTry, validateAscentDraft, validateCragDraft, validateGoalDraft, validateName, validateRouteDraft, type RouteDraft } from '../src/domain/forms';
+import { isFirstTry, validateAscentDraft, validateCragDraft, validateGoalDraft, type GoalDraft, validateName, validateRouteDraft, type RouteDraft } from '../src/domain/forms';
 import { parseGrade } from '../src/domain/grades';
 
 const route: RouteDraft = { crag: ' Test Crag ', sector: '', name: 'Route 1', type: 'sport', system: 'kr', grade: 'VI.3' };
@@ -38,17 +38,27 @@ describe('validateAscentDraft', () => {
 });
 
 describe('validateGoalDraft', () => {
-  it('requires a title', () => {
-    expect(validateGoalDraft({ kind: 'project', title: '  ', target: '' })).toEqual({ ok: false, error: 'goals.errors.title' });
+  const g = (over: Partial<GoalDraft>): GoalDraft => ({ kind: 'count', title: 'x', target: '', gradeIndex: null, routeId: null, ...over });
+  const none = { gradeIndex: null, routeId: null };
+  it('requires a title, or uses the fallback', () => {
+    expect(validateGoalDraft(g({ kind: 'project', title: '  ' }))).toEqual({ ok: false, error: 'goals.errors.title' });
+    expect(validateGoalDraft(g({ kind: 'project', title: ' ', fallbackTitle: 'Wielki komin', routeId: 'r1' })))
+      .toEqual({ ok: true, value: { title: 'Wielki komin', target: null, gradeIndex: null, routeId: 'r1' } });
   });
-  it('parses a count target and ignores it for other kinds', () => {
-    expect(validateGoalDraft({ kind: 'count', title: '200 sends', target: '200' })).toEqual({ ok: true, value: { title: '200 sends', target: 200 } });
-    expect(validateGoalDraft({ kind: 'count', title: 'x', target: '' })).toEqual({ ok: true, value: { title: 'x', target: null } });
-    expect(validateGoalDraft({ kind: 'wishlist', title: 'x', target: 'abc' })).toEqual({ ok: true, value: { title: 'x', target: null } });
+  it('parses a count target and keeps only the fields of the kind', () => {
+    expect(validateGoalDraft(g({ title: '200 sends', target: '200' }))).toEqual({ ok: true, value: { title: '200 sends', target: 200, ...none } });
+    expect(validateGoalDraft(g({ target: '' }))).toEqual({ ok: true, value: { title: 'x', target: null, ...none } });
+    expect(validateGoalDraft(g({ kind: 'wishlist', target: 'abc', gradeIndex: 3 }))).toEqual({ ok: true, value: { title: 'x', target: null, ...none } });
+    expect(validateGoalDraft(g({ routeId: 'r1' }))).toEqual({ ok: true, value: { title: 'x', target: null, ...none } });
   });
-  it('rejects a non-numeric count target instead of storing NaN', () => {
-    expect(validateGoalDraft({ kind: 'count', title: 'x', target: 'abc' })).toEqual({ ok: false, error: 'goals.errors.target' });
-    expect(validateGoalDraft({ kind: 'count', title: 'x', target: '0' })).toEqual({ ok: false, error: 'goals.errors.target' });
+  it('needs a grade for a grade goal and counts one route by default', () => {
+    expect(validateGoalDraft(g({ kind: 'grade' }))).toEqual({ ok: false, error: 'goals.errors.grade' });
+    expect(validateGoalDraft(g({ kind: 'grade', gradeIndex: 9 }))).toEqual({ ok: true, value: { title: 'x', target: 1, gradeIndex: 9, routeId: null } });
+    expect(validateGoalDraft(g({ kind: 'grade', gradeIndex: 9, target: '3' }))).toEqual({ ok: true, value: { title: 'x', target: 3, gradeIndex: 9, routeId: null } });
+  });
+  it('rejects a non-numeric target instead of storing NaN', () => {
+    expect(validateGoalDraft(g({ target: 'abc' }))).toEqual({ ok: false, error: 'goals.errors.target' });
+    expect(validateGoalDraft(g({ kind: 'grade', gradeIndex: 9, target: '0' }))).toEqual({ ok: false, error: 'goals.errors.target' });
   });
 });
 

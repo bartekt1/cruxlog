@@ -18,13 +18,15 @@ const ROUTE_COLS = `r.id, r.name, r.type, r.grade_label, r.grade_system, r.grade
 
 export type AscentRow = {
   id: string; date: string; style: AscentStyle; attempts: number; rating: number | null; notes: string;
+  /** The grade the climber felt (ladder index), or null when it matches the route's. */
+  felt_grade_index: number | null;
   route_id: string; route_name: string; type: RouteType; grade_index: number; grade_label: string; grade_system: GradeSystem;
   crag_name: string; partner_name: string | null;
 };
 
 export async function listAscents(db: SQLiteDatabase): Promise<AscentRow[]> {
   return db.getAllAsync<AscentRow>(
-    `SELECT a.id, a.date, a.style, a.attempts, a.rating, a.notes, r.id AS route_id, r.name AS route_name, r.type,
+    `SELECT a.id, a.date, a.style, a.attempts, a.rating, a.notes, a.felt_grade_index, r.id AS route_id, r.name AS route_name, r.type,
             r.grade_index, r.grade_label, r.grade_system, c.name AS crag_name, p.name AS partner_name
      FROM ascent a JOIN route r ON r.id = a.route_id JOIN sector s ON s.id = r.sector_id JOIN crag c ON c.id = s.crag_id
      LEFT JOIN partner p ON p.id = a.partner_id
@@ -64,6 +66,53 @@ async function searchIndex(db: SQLiteDatabase): Promise<SearchIndex> {
   return index;
 }
 
+export type RouteStatus = 'all' | 'todo' | 'tried' | 'sent';
+export type RouteFilter = {
+  query: string;
+  /** Inclusive ladder indices; null = no limit. */
+  minGrade: number | null; maxGrade: number | null;
+  /** The area and everything below it; null = everywhere. */
+  areaIds: string[] | null;
+  status: RouteStatus;
+  type: RouteType | null;
+};
+export type FoundRoute = RouteRow & { region_id: string | null; ascents: number; sends: number };
+
+/**
+ * Routes matching the filters, easiest first. `total` counts all matches; at most `limit` are returned.
+ * todo = never climbed, tried = only attempts, sent = at least one send.
+ */
+export async function findRoutes(db: SQLiteDatabase, f: RouteFilter, limit = 200): Promise<{ total: number; rows: FoundRoute[] }> {
+  const where = ['r.deleted_at IS NULL', 's.deleted_at IS NULL', 'c.deleted_at IS NULL'];
+  const params: (string | number)[] = [];
+  if (f.minGrade != null) { where.push('r.grade_index >= ?'); params.push(f.minGrade); }
+  if (f.maxGrade != null) { where.push('r.grade_index <= ?'); params.push(f.maxGrade); }
+  if (f.type) { where.push('r.type = ?'); params.push(f.type); }
+  if (f.areaIds) {
+    if (!f.areaIds.length) return { total: 0, rows: [] };
+    where.push(`c.region_id IN (${f.areaIds.map(() => '?').join(',')})`);
+    params.push(...f.areaIds);
+  }
+  const status = f.status === 'todo' ? 'WHERE ascents = 0' : f.status === 'tried' ? 'WHERE ascents > 0 AND sends = 0' : f.status === 'sent' ? 'WHERE sends > 0' : '';
+  const words = fold(f.query).split(' ').filter(Boolean);
+  const sql = (select: string, tail: string) => `SELECT ${select} FROM (
+       SELECT ${ROUTE_COLS}, c.region_id, COALESCE(x.ascents, 0) AS ascents, COALESCE(x.sends, 0) AS sends
+       FROM route r JOIN sector s ON s.id = r.sector_id JOIN crag c ON c.id = s.crag_id
+       LEFT JOIN (SELECT route_id, COUNT(*) AS ascents, SUM(style <> 'attempt') AS sends FROM ascent WHERE deleted_at IS NULL GROUP BY route_id) x
+         ON x.route_id = r.id
+       WHERE ${where.join(' AND ')}
+     ) ${status} ${tail}`;
+  // Without a name the database does the limiting; a name is matched in JS (ignoring case and Polish letters).
+  if (!words.length) {
+    const total = await db.getFirstAsync<{ n: number }>(sql('COUNT(*) AS n', ''), params);
+    const rows = await db.getAllAsync<FoundRoute>(sql('*', 'ORDER BY grade_index, name LIMIT ?'), [...params, limit]);
+    return { total: total?.n ?? 0, rows };
+  }
+  const all = await db.getAllAsync<FoundRoute>(sql('*', 'ORDER BY grade_index, name'), params);
+  const hits = all.filter((r) => { const hay = fold(`${r.name} ${r.sector_name} ${r.crag_name}`); return words.every((w) => hay.includes(w)); });
+  return { total: hits.length, rows: hits.slice(0, limit) };
+}
+
 /** Builds the search index ahead of the first keystroke (call when a screen with route search opens). */
 export async function warmSearch(db: SQLiteDatabase): Promise<void> {
   await searchIndex(db);
@@ -96,11 +145,11 @@ export async function recentRoutes(db: SQLiteDatabase, limit = 5): Promise<Route
   );
 }
 
-export type CragChoice = { id: string; name: string; region_id: string | null; region_name: string | null; routes: number };
+export type CragChoice = { id: string; name: string; region_id: string | null; region_name: string | null; routes: number; lat: number | null; lng: number | null; pos_source: PosSource };
 
 export async function listCragChoices(db: SQLiteDatabase): Promise<CragChoice[]> {
   return db.getAllAsync<CragChoice>(
-    `SELECT c.id, c.name, c.region_id, g.name AS region_name,
+    `SELECT c.id, c.name, c.region_id, g.name AS region_name, c.lat, c.lng, c.pos_source,
             (SELECT COUNT(*) FROM route r JOIN sector s ON s.id = r.sector_id WHERE s.crag_id = c.id AND r.deleted_at IS NULL) AS routes
      FROM crag c LEFT JOIN region g ON g.id = c.region_id AND g.deleted_at IS NULL
      WHERE c.deleted_at IS NULL ORDER BY c.name`);
@@ -117,7 +166,7 @@ export async function listPartners(db: SQLiteDatabase): Promise<string[]> {
 /** All of the user's ascents of one route, newest first. */
 export async function listRouteAscents(db: SQLiteDatabase, routeId: string): Promise<AscentRow[]> {
   return db.getAllAsync<AscentRow>(
-    `SELECT a.id, a.date, a.style, a.attempts, a.rating, a.notes, r.id AS route_id, r.name AS route_name, r.type,
+    `SELECT a.id, a.date, a.style, a.attempts, a.rating, a.notes, a.felt_grade_index, r.id AS route_id, r.name AS route_name, r.type,
             r.grade_index, r.grade_label, r.grade_system, c.name AS crag_name, p.name AS partner_name
      FROM ascent a JOIN route r ON r.id = a.route_id JOIN sector s ON s.id = r.sector_id JOIN crag c ON c.id = s.crag_id
      LEFT JOIN partner p ON p.id = a.partner_id
@@ -129,6 +178,8 @@ export async function listRouteAscents(db: SQLiteDatabase, routeId: string): Pro
 export type NewAscent = {
   routeId: string; date: string; style: AscentStyle; attempts: number; rating: number | null;
   notes: string; partnerName: string; weather: string;
+  /** Own grade (ladder index); null or left out = same as the route. */
+  feltGradeIndex?: number | null;
 };
 
 async function partnerId(db: SQLiteDatabase, partnerName: string, t: number): Promise<string | null> {
@@ -147,10 +198,11 @@ export async function addAscent(db: SQLiteDatabase, a: NewAscent): Promise<strin
   await db.withTransactionAsync(async () => {
     const pid = await partnerId(db, a.partnerName, t);
     await db.runAsync(
-      `INSERT INTO ascent (id, route_id, date, style, attempts, rating, notes, partner_id, weather, created_at, updated_at)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
-      [id, a.routeId, a.date, a.style, a.attempts, a.rating, a.notes, pid, a.weather, t, t],
+      `INSERT INTO ascent (id, route_id, date, style, attempts, rating, felt_grade_index, notes, partner_id, weather, created_at, updated_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
+      [id, a.routeId, a.date, a.style, a.attempts, a.rating, a.feltGradeIndex ?? null, a.notes, pid, a.weather, t, t],
     );
+    await completeRouteGoals(db, t);
   });
   return id;
 }
@@ -160,10 +212,11 @@ export async function updateAscent(db: SQLiteDatabase, id: string, a: NewAscent)
   await db.withTransactionAsync(async () => {
     const pid = await partnerId(db, a.partnerName, t);
     await db.runAsync(
-      `UPDATE ascent SET route_id = ?, date = ?, style = ?, attempts = ?, rating = ?, notes = ?, partner_id = ?, weather = ?, updated_at = ?
-       WHERE id = ?`,
-      [a.routeId, a.date, a.style, a.attempts, a.rating, a.notes, pid, a.weather, t, id],
+      `UPDATE ascent SET route_id = ?, date = ?, style = ?, attempts = ?, rating = ?, felt_grade_index = ?, notes = ?, partner_id = ?, weather = ?,
+         updated_at = ? WHERE id = ?`,
+      [a.routeId, a.date, a.style, a.attempts, a.rating, a.feltGradeIndex ?? null, a.notes, pid, a.weather, t, id],
     );
+    await completeRouteGoals(db, t);
   });
 }
 
@@ -177,7 +230,7 @@ export type AscentDetail = AscentRow & { weather: string; route: RouteRow };
 
 export async function getAscent(db: SQLiteDatabase, id: string): Promise<AscentDetail | null> {
   const a = await db.getFirstAsync<AscentRow & { weather: string }>(
-    `SELECT a.id, a.date, a.style, a.attempts, a.rating, a.notes, a.weather, r.id AS route_id, r.name AS route_name, r.type,
+    `SELECT a.id, a.date, a.style, a.attempts, a.rating, a.notes, a.felt_grade_index, a.weather, r.id AS route_id, r.name AS route_name, r.type,
             r.grade_index, r.grade_label, r.grade_system, c.name AS crag_name, p.name AS partner_name
      FROM ascent a JOIN route r ON r.id = a.route_id JOIN sector s ON s.id = r.sector_id JOIN crag c ON c.id = s.crag_id
      LEFT JOIN partner p ON p.id = a.partner_id
@@ -232,14 +285,14 @@ export async function addUserRoute(db: SQLiteDatabase, r: NewRoute): Promise<str
 }
 
 export type CragRow = {
-  id: string; name: string; lat: number | null; lng: number | null; routes: number; source: string;
+  id: string; name: string; lat: number | null; lng: number | null; pos_source: PosSource; routes: number; source: string;
   /** The crag's own area (the deepest: group, area or region). */
   region_id: string | null; region_name: string | null;
 };
 
 export async function listCrags(db: SQLiteDatabase): Promise<CragRow[]> {
   return db.getAllAsync<CragRow>(
-    `SELECT c.id, c.name, c.lat, c.lng, c.source, g.id AS region_id, g.name AS region_name,
+    `SELECT c.id, c.name, c.lat, c.lng, c.pos_source, c.source, g.id AS region_id, g.name AS region_name,
             (SELECT COUNT(*) FROM route r JOIN sector s ON s.id = r.sector_id
              WHERE s.crag_id = c.id AND r.deleted_at IS NULL) AS routes
      FROM crag c LEFT JOIN region g ON g.id = c.region_id AND g.deleted_at IS NULL
@@ -247,11 +300,53 @@ export async function listCrags(db: SQLiteDatabase): Promise<CragRow[]> {
   );
 }
 
-export type CragDetail = { id: string; name: string; description: string; approach: string; region: string | null; region_id: string | null; source: string };
+/** Sets (or clears, with null) where a crag is, e.g. from the phone's GPS under the crag or a pin on the map. */
+export async function setCragLocation(db: SQLiteDatabase, id: string, at: { lat: number; lng: number } | null): Promise<void> {
+  await db.runAsync('UPDATE crag SET lat = ?, lng = ?, pos_source = ?, updated_at = ? WHERE id = ?', [at?.lat ?? null, at?.lng ?? null, at ? 'user' : '', now(), id]);
+}
+
+/** Where a crag's position came from; see migration 5. */
+export type PosSource = '' | 'user' | 'file' | 'approx';
+
+export type CragPosition = { key: string; name: string; lat: number; lng: number; approx?: boolean };
+
+/**
+ * Sets crag positions from a file: by crag key (imported crags) or else by name when exactly one crag has it.
+ * A position the user set on the phone is kept. Returns how many crags got a position, how many were kept,
+ * and the rows that matched none (or more than one) crag.
+ */
+export async function applyCragPositions(db: SQLiteDatabase, rows: CragPosition[]): Promise<{ updated: number; kept: number; unmatched: CragPosition[] }> {
+  const t = now();
+  const crags = await db.getAllAsync<{ id: string; name: string; pos_source: PosSource }>('SELECT id, name, pos_source FROM crag WHERE deleted_at IS NULL');
+  const byId = new Set(crags.map((c) => c.id));
+  const own = new Set(crags.filter((c) => c.pos_source === 'user').map((c) => c.id));
+  let updated = 0;
+  let kept = 0;
+  const unmatched: CragPosition[] = [];
+  await db.withTransactionAsync(async () => {
+    for (const r of rows) {
+      let id: string | null = r.key && byId.has(`imp:crag:${r.key}`) ? `imp:crag:${r.key}` : null;
+      if (!id) {
+        const same = crags.filter((c) => sameName(c.name, r.name));
+        id = same.length === 1 ? same[0].id : null;
+      }
+      if (!id) { unmatched.push(r); continue; }
+      if (own.has(id)) { kept++; continue; }
+      await db.runAsync('UPDATE crag SET lat = ?, lng = ?, pos_source = ?, updated_at = ? WHERE id = ?', [r.lat, r.lng, r.approx ? 'approx' : 'file', t, id]);
+      updated++;
+    }
+  });
+  return { updated, kept, unmatched };
+}
+
+export type CragDetail = {
+  id: string; name: string; description: string; approach: string; region: string | null; region_id: string | null; source: string;
+  lat: number | null; lng: number | null; pos_source: PosSource;
+};
 
 export async function getCrag(db: SQLiteDatabase, id: string): Promise<CragDetail | null> {
   return db.getFirstAsync<CragDetail>(
-    `SELECT c.id, c.name, c.description, c.approach, c.source, g.name AS region, g.id AS region_id
+    `SELECT c.id, c.name, c.description, c.approach, c.source, c.lat, c.lng, c.pos_source, g.name AS region, g.id AS region_id
      FROM crag c LEFT JOIN region g ON g.id = c.region_id AND g.deleted_at IS NULL WHERE c.id = ? AND c.deleted_at IS NULL`,
     [id],
   );
@@ -502,15 +597,76 @@ export async function listCragRoutes(db: SQLiteDatabase, cragId: string): Promis
   );
 }
 
-export type GoalRow = { id: string; kind: string; title: string; target: number | null; done_at: number | null };
+export type GoalRow = {
+  id: string; kind: string; title: string; target: number | null; grade_index: number | null; done_at: number | null; created_at: number;
+  /** The linked route of a project or wishlist goal (null when none or deleted). */
+  route_id: string | null; route_name: string | null; route_grade_index: number | null; route_grade_label: string | null;
+  route_grade_system: GradeSystem | null; route_type: RouteType | null; crag_name: string | null; region_id: string | null;
+};
+
+const GOAL_SELECT = `SELECT g.id, g.kind, g.title, g.target, g.grade_index, g.done_at, g.created_at,
+    r.id AS route_id, r.name AS route_name, r.grade_index AS route_grade_index, r.grade_label AS route_grade_label,
+    r.grade_system AS route_grade_system, r.type AS route_type, c.name AS crag_name, c.region_id
+  FROM goal g LEFT JOIN route r ON r.id = g.route_id AND r.deleted_at IS NULL
+  LEFT JOIN sector s ON s.id = r.sector_id LEFT JOIN crag c ON c.id = s.crag_id`;
 
 export async function listGoals(db: SQLiteDatabase): Promise<GoalRow[]> {
-  return db.getAllAsync<GoalRow>('SELECT id, kind, title, target, done_at FROM goal WHERE deleted_at IS NULL ORDER BY done_at IS NOT NULL, created_at DESC');
+  return db.getAllAsync<GoalRow>(`${GOAL_SELECT} WHERE g.deleted_at IS NULL ORDER BY g.done_at IS NOT NULL, g.created_at DESC`);
 }
 
-export async function addGoal(db: SQLiteDatabase, kind: 'count' | 'project' | 'wishlist', title: string, target: number | null): Promise<void> {
+export async function getGoal(db: SQLiteDatabase, id: string): Promise<GoalRow | null> {
+  return db.getFirstAsync<GoalRow>(`${GOAL_SELECT} WHERE g.id = ? AND g.deleted_at IS NULL`, [id]);
+}
+
+/** Open project or wishlist goals linked to a route. */
+export async function routeGoals(db: SQLiteDatabase, routeId: string): Promise<GoalRow[]> {
+  return db.getAllAsync<GoalRow>(`${GOAL_SELECT} WHERE g.route_id = ? AND g.deleted_at IS NULL AND g.done_at IS NULL`, [routeId]);
+}
+
+/** Open project or wishlist goal per route, for the badges in route lists. */
+export async function routeGoalKinds(db: SQLiteDatabase): Promise<Map<string, 'project' | 'wishlist'>> {
+  const rows = await db.getAllAsync<{ route_id: string; kind: 'project' | 'wishlist' }>(
+    `SELECT route_id, kind FROM goal WHERE route_id IS NOT NULL AND kind IN ('project', 'wishlist') AND deleted_at IS NULL AND done_at IS NULL
+     ORDER BY kind = 'project'`);
+  return new Map(rows.map((r) => [r.route_id, r.kind])); // a project wins over a wish for the same route
+}
+
+/** Makes a route a project or a wish, named after it. A route that already is an open goal of that kind keeps it. */
+export async function addRouteGoal(db: SQLiteDatabase, routeId: string, kind: 'project' | 'wishlist'): Promise<string> {
+  const open = await db.getFirstAsync<{ id: string }>(
+    'SELECT id FROM goal WHERE route_id = ? AND kind = ? AND deleted_at IS NULL AND done_at IS NULL', [routeId, kind]);
+  if (open) return open.id;
+  const r = await db.getFirstAsync<{ name: string }>('SELECT name FROM route WHERE id = ?', [routeId]);
+  if (!r) throw new Error('Route not found');
+  return addGoal(db, { kind, title: r.name, target: null, gradeIndex: null, routeId });
+}
+
+export type GoalInput = { kind: 'count' | 'grade' | 'project' | 'wishlist'; title: string; target: number | null; gradeIndex: number | null; routeId: string | null };
+
+export async function addGoal(db: SQLiteDatabase, g: GoalInput): Promise<string> {
   const t = now();
-  await db.runAsync('INSERT INTO goal (id, kind, title, target, created_at, updated_at) VALUES (?,?,?,?,?,?)', [newId(), kind, title, target, t, t]);
+  const id = newId();
+  await db.runAsync('INSERT INTO goal (id, kind, title, target, grade_index, route_id, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?)',
+    [id, g.kind, g.title, g.target, g.gradeIndex, g.routeId, t, t]);
+  return id;
+}
+
+export async function updateGoal(db: SQLiteDatabase, id: string, g: GoalInput): Promise<void> {
+  await db.runAsync('UPDATE goal SET kind = ?, title = ?, target = ?, grade_index = ?, route_id = ?, updated_at = ? WHERE id = ?',
+    [g.kind, g.title, g.target, g.gradeIndex, g.routeId, now(), id]);
+}
+
+/**
+ * Closes open project and wishlist goals whose route got a led send (OS, flash, RP, PP) on or after the day the goal was set.
+ * Runs when an ascent is saved, so a goal reopened by hand stays open until the next send.
+ */
+async function completeRouteGoals(db: SQLiteDatabase, t: number): Promise<void> {
+  await db.runAsync(
+    `UPDATE goal SET done_at = ?, updated_at = ?
+     WHERE deleted_at IS NULL AND done_at IS NULL AND route_id IS NOT NULL AND kind IN ('project', 'wishlist')
+       AND EXISTS (SELECT 1 FROM ascent a WHERE a.route_id = goal.route_id AND a.deleted_at IS NULL
+         AND a.style IN ('os', 'flash', 'rp', 'pp') AND a.date >= date(goal.created_at / 1000, 'unixepoch', 'localtime'))`,
+    [t, t]);
 }
 
 export async function setGoalDone(db: SQLiteDatabase, id: string, done: boolean): Promise<void> {
@@ -611,12 +767,15 @@ export async function applyImport(db: SQLiteDatabase, plan: ImportPlan): Promise
     const crags: (string | number | null)[][] = [];
     for (const c of plan.crags) {
       const regionId = await areaIdFor(db, { region: c.region, area: c.area, group: c.group }, t, 'import', memo);
-      crags.push([idOf('crag', c.key), regionId, c.name, c.lat, c.lng, c.description, c.approach, t, t]);
+      crags.push([idOf('crag', c.key), regionId, c.name, c.lat, c.lng, c.description, c.approach, t, t, c.lat != null && c.lng != null ? 'file' : '']);
     }
     await runMany(db,
-      `INSERT INTO crag (id, region_id, name, lat, lng, description, approach, source, status, created_at, updated_at)
-       VALUES (?,?,?,?,?,?,?,'import','private',?,?)
-       ON CONFLICT(id) DO UPDATE SET region_id=excluded.region_id, name=excluded.name, lat=excluded.lat, lng=excluded.lng,
+      `INSERT INTO crag (id, region_id, name, lat, lng, description, approach, source, status, created_at, updated_at, pos_source)
+       VALUES (?,?,?,?,?,?,?,'import','private',?,?,?)
+       ON CONFLICT(id) DO UPDATE SET region_id=excluded.region_id, name=excluded.name,
+         lat=CASE WHEN crag.pos_source = 'user' OR excluded.lat IS NULL THEN crag.lat ELSE excluded.lat END,
+         lng=CASE WHEN crag.pos_source = 'user' OR excluded.lat IS NULL THEN crag.lng ELSE excluded.lng END,
+         pos_source=CASE WHEN crag.pos_source = 'user' OR excluded.lat IS NULL THEN crag.pos_source ELSE 'file' END,
          description=excluded.description, approach=excluded.approach, updated_at=excluded.updated_at, deleted_at=NULL`,
       crags);
     await runMany(db,

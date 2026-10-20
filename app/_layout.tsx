@@ -26,15 +26,18 @@ export default function RootLayout() {
         <Stack.Screen name="ascent/new" options={{ title: t('ascent.title'), presentation: 'modal' }} />
         <Stack.Screen name="ascent/[id]" options={{ title: t('ascent.detailTitle') }} />
         <Stack.Screen name="crag/[id]" options={{ title: t('crags.detailTitle') }} />
+        <Stack.Screen name="crag/locate" options={{ title: t('map.locateShort') }} />
         <Stack.Screen name="crag/edit" options={{ title: t('edit.cragTitle') }} />
         <Stack.Screen name="route/edit" options={{ title: t('edit.routeTitle') }} />
         <Stack.Screen name="route/[id]" options={{ title: t('route.title') }} />
         <Stack.Screen name="route/new" options={{ title: t('edit.addRoutesTitle') }} />
+        <Stack.Screen name="route/search" options={{ title: t('routeSearch.title') }} />
         <Stack.Screen name="sector/new" options={{ title: t('edit.addSectorTitle') }} />
         <Stack.Screen name="sector/[id]" options={{ title: t('edit.sectorTitle') }} />
         <Stack.Screen name="region/[id]" options={{ title: t('areas.edit.region') }} />
         <Stack.Screen name="area/[id]" options={{ title: t('areas.level.region') }} />
         <Stack.Screen name="area/new" options={{ title: t('areas.add.region') }} />
+        <Stack.Screen name="goal/[id]" options={{ title: t('goals.editTitle') }} />
         <Stack.Screen name="settings" options={{ title: t('settings.title') }} />
       </Stack>
     </SQLiteProvider>

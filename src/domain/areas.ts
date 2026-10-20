@@ -83,3 +83,13 @@ export function cragCounts(areas: Area[], cragAreaIds: (string | null)[]): Map<s
 export function childrenOf(areas: Area[], parentId: string | null): Area[] {
   return areas.filter((a) => (a.parent_id ?? null) === parentId).sort((a, b) => a.name.localeCompare(b.name));
 }
+
+/** The area and every area below it. */
+export function descendantIds(areas: Area[], id: string): Set<string> {
+  const inside = new Set<string>([id]);
+  for (let grew = true; grew;) {
+    grew = false;
+    for (const a of areas) if (a.parent_id && inside.has(a.parent_id) && !inside.has(a.id)) { inside.add(a.id); grew = true; }
+  }
+  return inside;
+}

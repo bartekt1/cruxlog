@@ -3,11 +3,11 @@ import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-rou
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList, Pressable, View } from 'react-native';
+import { Alert, FlatList, Pressable, View } from 'react-native';
 import { Text } from '../../src/ui/Text';
-import { getRoute, listRouteAscents, type AscentRow, type RouteRow } from '../../src/db/repo';
+import { addRouteGoal, getRoute, listRouteAscents, routeGoals, type AscentRow, type GoalRow, type RouteRow } from '../../src/db/repo';
 import { formatDay, isoDate } from '../../src/domain/dates';
-import { routeGrade, type AscentStyle } from '../../src/domain/grades';
+import { type AscentStyle, feltGrade, formatGrade, routeGrade } from '../../src/domain/grades';
 import { routeSummary } from '../../src/domain/history';
 import { IconButton } from '../../src/ui/icons';
 import { Contours } from '../../src/ui/Contours';
@@ -26,6 +26,7 @@ export default function RouteScreen() {
   const { routeSystem } = useSettings();
   const [route, setRoute] = useState<RouteRow | null>(null);
   const [ascents, setAscents] = useState<AscentRow[]>([]);
+  const [goals, setGoals] = useState<GoalRow[]>([]);
 
   useFocusEffect(useCallback(() => {
     getRoute(db, id).then((r) => {
@@ -33,7 +34,18 @@ export default function RouteScreen() {
       setRoute(r);
     });
     listRouteAscents(db, id).then(setAscents);
+    routeGoals(db, id).then(setGoals);
   }, [db, id, router]));
+
+  // Project or wish, picked in a small dialog; the badge then replaces the button.
+  const addToGoals = () =>
+    Alert.alert(t('goals.addRouteTitle'), t('goals.addRouteQuestion', { name: route?.name ?? '' }), [
+      { text: t('common.cancel'), style: 'cancel' },
+      ...(['wishlist', 'project'] as const).map((kind) => ({
+        text: t(`goals.${kind}`),
+        onPress: async () => { await addRouteGoal(db, id, kind); setGoals(await routeGoals(db, id)); },
+      })),
+    ]);
 
   const summary = useMemo(() => routeSummary(ascents), [ascents]);
   const today = isoDate(new Date());
@@ -80,6 +92,20 @@ export default function RouteScreen() {
                   .filter(Boolean).join(' · ')}
               </Text>
             ) : null}
+            {goals.map((g) => (
+              <Pressable key={g.id} onPress={() => router.push(`/goal/${g.id}`)} accessibilityRole="link"
+                style={{ alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4, paddingHorizontal: 12, minHeight: 32, borderRadius: 16, backgroundColor: th.badge }}>
+                <Ionicons name="flag" size={14} color={th.onBadge} />
+                <Text style={{ color: th.onBadge, fontFamily: F.semi, fontSize: 13 }}>{t(g.kind === 'project' ? 'goals.yourProject' : 'goals.yourWish')}</Text>
+              </Pressable>
+            ))}
+            {goals.length ? null : (
+              <Pressable onPress={addToGoals} accessibilityRole="button"
+                style={({ pressed }) => ({ alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4, paddingHorizontal: 12, minHeight: 36, borderRadius: 18, borderWidth: 1, borderColor: th.accent, opacity: pressed ? 0.6 : 1 })}>
+                <Ionicons name="flag-outline" size={15} color={th.accent} />
+                <Text style={{ color: th.accent, fontFamily: F.semi, fontSize: 14 }}>{t('goals.addRoute')}</Text>
+              </Pressable>
+            )}
             <Card style={{ padding: 14, marginTop: 8 }}>
               <Text style={{ color: th.ink, fontFamily: F.semi, fontSize: 16 }}>{summary.firstSend ? '✓ ' : ''}{status}</Text>
               {summary.ascents ? <Text style={{ color: th.muted, fontSize: 13, marginTop: 2 }}>{t('route.totals', { ascents: summary.ascents, sends: summary.sends })}</Text> : null}
@@ -110,7 +136,11 @@ export default function RouteScreen() {
             <View style={{ flex: 1, paddingVertical: 8 }}>
               <Text style={{ color: th.ink, fontFamily: F.semi }}>{day(item.date)}</Text>
               <Text style={{ color: th.muted, fontSize: 12 }}>
-                {item.attempts > 1 ? t('journal.attempts', { count: item.attempts }) : ''}{item.attempts > 1 && item.partner_name ? ' · ' : ''}{item.partner_name ?? ''}
+                {[
+                  feltGrade(item.felt_grade_index, item.grade_index) != null ? t('ascent.feltFor', { grade: formatGrade(item.felt_grade_index!, routeSystem) }) : '',
+                  item.attempts > 1 ? t('journal.attempts', { count: item.attempts }) : '',
+                  item.partner_name ?? '',
+                ].filter(Boolean).join(' · ')}
               </Text>
             </View>
             <Text style={{ color: item.style === 'attempt' ? th.muted : th.accent, fontFamily: F.cond, fontSize: 17 }}>{t(`styles.${item.style as AscentStyle}`)}</Text>

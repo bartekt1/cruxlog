@@ -12,7 +12,7 @@
     "backupNever": "Nie masz jeszcze kopii zapasowej", "backupOld": "Ostatnia kopia: {{n}} dni temu", "backupHint": "Twoje przejścia są tylko w tym telefonie. Dotknij, aby zrobić kopię."
   },
   "ascent": {
-    "title": "Nowe przejście", "editTitle": "Edycja przejścia", "detailTitle": "Przejście", "notFound": "To przejście już nie istnieje.",
+    "title": "Nowe przejście", "felt": "Twoja wycena", "feltSame": "{{grade}} (jak droga)", "feltFor": "dla mnie {{grade}}", "editTitle": "Edycja przejścia", "detailTitle": "Przejście", "notFound": "To przejście już nie istnieje.",
     "deleteTitle": "Usunąć przejście?", "deleteQuestion": "Przejście drogi „{{name}}” zniknie z dziennika i statystyk.",
     "pickDate": "Otwiera kalendarz", "recent": "Ostatnio wspinane", "routesHeader": "Drogi", "cragsHeader": "Skały", "cragHitHint": "Dotknij skałę, aby dodać na niej nową drogę.", "newCragHint": "Nowa skała: zostanie utworzona przy zapisie.", "cragPlaceholder": "Zacznij pisać, aby zobaczyć skały",
     "sectorPlaceholder": "np. Lewa ściana", "noSectorsYet": "Ta skała nie ma jeszcze sektorów. Wpisz nowy albo zostaw puste.", "sectorNewCrag": "Nowa skała: wpisz sektor albo zostaw puste.",
@@ -29,6 +29,7 @@
     }
   },
   "progress": {
+    "months": ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paź", "lis", "gru"], "byMonth": "Najtrudniejsze przejście w miesiącu", "byYear": "Najtrudniejsze przejście w roku", "styles": "Style przejść", "activityYear": "Aktywność w {{year}}", "topCrags": "Najczęściej odwiedzane skały", "topPartners": "Partnerzy", "noData": "Brak danych.", "noPartners": "Dodaj partnera przy przejściu, aby zobaczyć listę.", "daysCount": "dni: {{count}}",
     "title": "Postępy", "sends": "Przejścia", "days": "Dni na skale", "hardestRoute": "Najtrudniejsza droga",
     "pyramidRoutes": "Piramida dróg", "activity": "Aktywność (ostatnie 18 tygodni)",
     "empty": "Brak przejść w {{year}}", "emptyHint": "Dodaj przejście w Dzienniku, aby zobaczyć statystyki.", "noSends": "Brak przejść.", "prevYear": "Poprzedni rok", "nextYear": "Następny rok",
@@ -36,7 +37,7 @@
   },
   "crags": {
     "title": "Skały", "detailTitle": "Skała", "sends": "przejścia: {{count}}", "tried": "próby: {{count}}", "approach": "Dojście",
-    "tapRoute": "Dotknij drogę, aby zobaczyć historię i dodać przejście.", "logHint": "Otwiera historię drogi", "noRoutes": "Ta skała nie ma jeszcze dróg.", "noRegion": "Bez rejonu", "routes": "Drogi: {{count}}", "empty": "Brak skał", "emptyHint": "Zaimportuj CSV w ustawieniach lub utwórz drogę przy dodawaniu przejścia." },
+    "tapRoute": "Dotknij drogę, aby zobaczyć historię i dodać przejście.", "logHint": "Otwiera historię drogi", "noRoutes": "Ta skała nie ma jeszcze dróg.", "searchRoutes": "Szukaj drogi na tej skale", "noRouteHits": "Brak dróg „{{query}}” na tej skale.", "noRegion": "Bez rejonu", "routes": "Drogi: {{count}}", "empty": "Brak skał", "emptyHint": "Zaimportuj CSV w ustawieniach lub utwórz drogę przy dodawaniu przejścia." },
   "route": {
     "title": "Droga", "history": "Twoje przejścia", "logAnother": "Dodaj przejście", "openHint": "Otwiera historię drogi",
     "sentOn": "Przejście {{date}} ({{style}}).", "daysToSend": "Zajęło to {{n}} dni.", "notSent": "Jeszcze bez przejścia. Dni prób: {{n}}.", "neverTried": "Brak podejść do tej drogi.",
@@ -58,14 +59,27 @@
   },
   "goals": {
     "title": "Cele", "count": "Liczba", "project": "Projekt", "wishlist": "Lista życzeń", "newTitle": "Nazwa celu", "target": "Cel (liczba)",
-    "kind": "Rodzaj", "empty": "Brak celów", "emptyHint": "Dodaj roczny cel, projekt albo drogę marzeń.",
+    "grade": "Wycena", "gradeTitle": "{{count}} × {{grade}} lub trudniej w {{year}}", "gradeProgress": "{{value}} / {{target}} dróg {{grade}} lub trudniej w {{year}}", "routesCount": "Ile dróg (domyślnie 1)",
+    "help": { "count": "Ile przejść chcesz zrobić w tym roku.", "grade": "Wybierz wycenę: liczą się drogi tej wyceny lub trudniejsze, przejście z prowadzeniem (bez wędki), w tym roku.", "project": "Droga, nad którą pracujesz. Odhaczy się sama, gdy ją przejdziesz z prowadzeniem.", "wishlist": "Droga marzeń. Odhaczy się sama, gdy ją przejdziesz z prowadzeniem." },
+    "route": "Droga", "routeSearch": "Zacznij pisać nazwę drogi lub skały", "sentOn": "przejście {{date}}", "tries": "próby: {{tries}} · dni prób: {{days}}", "notTried": "jeszcze bez prób",
+    "add": "+ Dodaj cel", "yours": "Twoje cele", "editHint": "Otwiera edycję celu", "editTitle": "Edycja celu", "yourProject": "Twój projekt", "yourWish": "Na Twojej liście życzeń",
+    "addRoute": "Dodaj do celów", "addRouteTitle": "Dodaj do celów", "addRouteQuestion": "Dodać „{{name}}” jako projekt czy na listę życzeń?",
+    "asProject": "Dodaj tę drogę jako projekt", "isProject": "Ta droga jest Twoim projektem.", "addAsProject": "Dodaj jako projekt", "badgeProject": "projekt", "badgeWish": "lista życzeń",
+    "kind": "Rodzaj", "empty": "Brak celów", "emptyHint": "Dodaj roczny cel, cel wyceny, projekt albo drogę marzeń.",
     "progress": "{{value}} / {{target}} przejść w {{year}}", "markDone": "Oznacz jako zrobione", "reopen": "Przywróć",
     "deleteTitle": "Usunąć cel?", "deleteQuestion": "„{{title}}” zostanie usunięty.",
-    "errors": { "title": "Podaj nazwę celu.", "target": "Cel musi być liczbą całkowitą, co najmniej 1." }
+    "errors": { "title": "Podaj nazwę celu.", "target": "Cel musi być liczbą całkowitą, co najmniej 1.", "grade": "Wybierz wycenę." }
+  },
+  "routeSearch": {
+    "open": "Szukaj dróg", "openHere": "Szukaj dróg z filtrami", "title": "Szukaj dróg", "name": "Nazwa drogi lub skały", "any": "Dowolna", "from": "Wycena od", "to": "Wycena do",
+    "where": "Gdzie", "up": "Poziom wyżej", "everywhere": "Wszędzie", "status": "Twoje przejścia",
+    "statuses": { "all": "Wszystkie", "todo": "Jeszcze niezrobione", "tried": "Próbowane, bez przejścia", "sent": "Zrobione" },
+    "found": "Znaleziono: {{total}}", "foundSome": "Znaleziono: {{total}} (pokazano {{shown}}, zawęź filtry)",
+    "none": "Brak dróg", "noneHint": "Zmień filtry, np. poszerz zakres wycen."
   },
   "areas": {
     "region": "Region", "area": "Rejon", "groupOptional": "Grupa skał (opcjonalnie)", "where": "Gdzie jest ta skała?",
-    "regionPlaceholder": "np. Czarnorzeki", "areaPlaceholder": "np. Kamieniec", "search": "Szukaj skały", "noHits": "Nie znaleziono skały",
+    "regionPlaceholder": "np. Czarnorzeki", "areaPlaceholder": "np. Kamieniec", "search": "Szukaj skały lub drogi", "noHits": "Nic nie znaleziono", "searchIn": "Szukaj w: {{name}}", "cragsHeader": "Skały", "routesHeader": "Drogi", "moreRoutes": "Pokazano {{shown}} z {{total}} dróg. Wpisz więcej liter albo użyj wyszukiwarki z filtrami.",
     "regions": "Regiony", "areas": "Rejony", "groups": "Grupy skał", "cragCount": "Skały: {{count}}", "inside": "W: {{name}}", "addRegion": "+ Dodaj region",
     "empty": "Tu nie ma jeszcze nic. Dodaj skałę albo niższy poziom.",
     "deleteHint": "Skały i to, co jest w środku, nie zostaną usunięte, tylko przeniesione poziom wyżej.",
@@ -75,11 +89,25 @@
     "add": { "region": "+ Dodaj region", "area": "+ Dodaj rejon", "group": "+ Dodaj grupę" },
     "placeholder": { "region": "np. Czarnorzeki", "area": "np. Kamieniec", "group": "np. Krowia Turnia" }
   },
+  "map": {
+    "title": "Mapa", "list": "Lista", "standard": "Mapa", "topo": "Turystyczna", "switchBase": "Zmień podkład mapy",
+    "showMe": "Pokaż mnie", "denied": "Brak zgody na położenie. Możesz ją dać w ustawieniach telefonu.",
+    "noPositions": "Żadna skała nie ma jeszcze zapisanego położenia.", "noPositionsHint": "Otwórz skałę i wybierz „Ustaw położenie skały”.",
+    "openCrag": "Otwórz skałę", "nearby": "W pobliżu", "showNearby": "Pokaż skały w pobliżu",
+    "locateShort": "Położenie skały", "locateTitle": "Położenie: {{name}}",
+    "locateHint": "Przesuń mapę tak, żeby szpilka wskazywała skałę, albo zapisz miejsce, w którym stoisz.",
+    "saveCenter": "Zapisz położenie szpilki", "saveHere": "Zapisz położenie skały tutaj", "clear": "Usuń położenie",
+    "noFix": "Nie udało się ustalić Twojego położenia. Wyjdź na otwarty teren i spróbuj jeszcze raz.",
+    "privacy": "Położenie zostaje tylko na tym telefonie.",
+    "hasPosition": "Położenie zapisane", "away": "{{distance}} od Ciebie", "setPosition": "Ustaw położenie skały", "changeHint": "Zmień położenie skały",
+    "approx": "Położenie przybliżone (okolica grupy)", "about": "ok. {{distance}}", "aboutAway": "ok. {{distance}} od Ciebie", "improve": "Popraw",
+    "locateApproxHint": "To położenie jest przybliżone: wyliczone ze skał z tej samej grupy. Przesuń mapę tak, żeby szpilka wskazywała skałę, albo zapisz miejsce, w którym stoisz."
+  },
   "settings": {
     "title": "Ustawienia", "language": "Język", "theme": "Wygląd", "themes": { "system": "Jak w telefonie", "light": "Jasny", "dark": "Ciemny" }, "routeGrades": "Wyceny dróg",
     "backup": "Kopia zapasowa", "backupHelp": "Eksport zapisuje wszystkie dane w jednym pliku. Import scala plik z aplikacją; nowsze wpisy wygrywają, nic nie jest usuwane.",
     "export": "Eksportuj kopię", "import": "Importuj kopię", "csv": "Importuj skały z pliku CSV",
-    "csvHelp": "Wybierz jeden plik z listą dróg (np. plik z przewodnika albo eksport z theCrag). Każdy wiersz to jedna droga: region, rejon, grupa, skała, sektor, nazwa, wycena. Działa też dawny import z plików crags.csv i routes.csv.",
+    "csvHelp": "Wybierz jeden plik z listą dróg (np. plik z przewodnika albo eksport z theCrag). Każdy wiersz to jedna droga: region, rejon, grupa, skała, sektor, nazwa, wycena. Działa też dawny import z plików crags.csv i routes.csv. Plik z kolumnami Skała, lat, lng zapisuje tylko położenia skał na mapie.",
     "csvSkipped": "Pominięte wiersze: {{count}} (bouldery, lód, via ferraty, drogi bez nazwy, projekty, drogi bez wyceny lub z nieznaną wyceną).",
     "removeImported": "Usuń zaimportowane skały i drogi", "removeImportedHelp": "Przed wczytaniem pliku, który ma zastąpić poprzedni. Drogi z Twoimi przejściami i wszystko, co dodałeś sam, zostaje.",
     "removeImportedTitle": "Usunąć zaimportowane dane?", "removeImportedConfirm": "Zostanie usuniętych dróg: {{routes}} i skał: {{crags}}. Drogi z Twoimi przejściami i wszystko, co dodałeś sam, zostaje.",
@@ -89,6 +117,10 @@
     "csvErrors": "Znaleziono problemów: {{count}}. Nic nie zaimportowano.", "csvMissing": "Wymagane są crags.csv i routes.csv. Wybrano: {{files}}.",
     "notBackup": "Ten plik nie jest kopią zapasową Cruxlog.", "lastBackupNever": "Nie masz jeszcze kopii.", "lastBackupToday": "Ostatnia kopia: dziś.", "lastBackupDays": "Ostatnia kopia: {{n}} dni temu.",
     "done": "Gotowe", "problem": "Problem",
+    "positionsConfirm": "Plik zawiera położenia skał: {{count}}. Zostaną zapisane przy skałach o tej samej nazwie lub kluczu. Drogi i przejścia się nie zmienią.",
+    "positionsDone": "Zapisano położenie skał: {{count}}.", "positionsNone": "W pliku nie ma żadnego poprawnego położenia.",
+    "positionsApprox": "W tym przybliżone (wyliczone ze skał obok): {{count}}. Na mapie mają pustą kropkę.", "positionsKept": "Bez zmian, bo ustawiłeś je sam w telefonie: {{count}}.",
+    "positionsUnmatched": "Nie znaleziono w aplikacji skał: {{count}} ({{names}}).",
     "csvConfirmTitle": "Zaimportować?", "csvConfirmYes": "Importuj",
     "csvConfirm": "Zostanie zaimportowanych skał: {{crags}}, dróg: {{routes}}. Jeśli ten plik był już importowany, Twoje zmiany w tych skałach i drogach zostaną nadpisane, a usunięte wrócą. Twoje przejścia się nie zmienią."
   }

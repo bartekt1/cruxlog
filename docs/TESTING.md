@@ -75,6 +75,41 @@ Write down the result of every step (OK / problem). Report problems with: step n
 3. Headings, grades and numbers use the narrow font; works without internet.
 4. Journal: three tiles on top (sends this year, days out, hardest); ascents of one day share a card, the header says how many. Route screen: big name and grade, history as a timeline (rust dots for sends, grey for attempts).
 
+## 3c. Own grade and route finder
+1. New ascent on a VI.1 route: under Style a "Your grade" row of grades around VI.1, the route's own marked "(as the route)" and chosen by default. Pick VI.2 and save. Expected: Journal shows "… · felt VI.2" ("dla mnie VI.2"), the ascent screen has a "Your grade" line, the route's timeline shows it. Progress still counts the route as VI.1.
+2. Edit the ascent and tap the route's own grade again: the "felt" text disappears.
+3. Crags tab -> "Find routes". Filters: name, grade from and to (any), where (tap region, then area or group chips; "One level up", "Everywhere"), your ascents (all, not climbed yet, tried but not sent, sent) and type. Expected: the count updates at once, results easiest first with the grade square, path and your status; tapping one opens the route.
+4. Example: from VI to VI.2, Skałki Czarnorzeckie, "Not climbed yet". Log an ascent on one result, go back: it disappears from that list.
+
+## 3d. Goals and progress
+1. Goals tab -> "+ Add a goal". Kinds: Count, Grade, Project, Wishlist, each with a one-line explanation.
+2. Grade: pick "VI.3+" and 3. Leave the name empty: it becomes "3 × VI.3 or harder in <year>". The bar counts different routes of VI.3 or harder led this year (OS, flash, RP, PP; top-rope does not count) and lists them.
+3. Project: type a route name, pick it from the list; the name fills in. The card shows grade, path and "tries: N · days: M". The route screen shows a "Your project" badge.
+4. Log a top-rope ascent of the project: it stays open. Log an RP: it is ticked off and moves down the list.
+5. Tap a goal: edit name, number, grade or route; "Mark done"/"Reopen"; "Delete" asks first.
+6. Progress: pick a past year with the arrows. Expected: the calendar shows the whole year by month; hardest send per month and per year, styles, most visited crags and partners for that year.
+
+## 3e. Map and nearby crags
+1. Crags › Map. With no saved positions: a card says so and how to set one. The map shows Poland. Expected: no crash without internet beyond empty tiles.
+2. Open a crag › "Set crag position". Move the map under the pin › "Save pin position". Back on the crag: "Position saved". Expected: the crag is a dot on Crags › Map, its name shows when zoomed in, and tapping it opens a card with "Open crag".
+3. On site: "Save crag position here". The first time the phone asks for location permission. Expected: the position is saved; "Remove position" clears it.
+4. Map: tap the top-right button to switch Map / Topo. Expected: the tourist map (OpenTopoMap) with trails; the choice is kept after a restart.
+5. Map: "Show me". Expected: a blue dot at your position and the map flies to it. Deny permission: a short note how to allow it.
+6. With permission and a crag within 50 km: Crags list shows "Nearby" with distances. Within 3 km: the ascent form shows the crag as a chip, tapping it lists its routes.
+7. Settings › CSV import with a file `Skała;lat;lng`. Expected: a question with the count, then "Crag positions saved" and the names not found.
+8. Re-import the route list. Expected: saved positions stay.
+9. Import a positions file with a column `przybliżone` (`tak` on some rows). Expected: the message counts the approximate ones; on the map they are hollow dots; the crag screen says "Approximate position (area of the group)", distances read "about 2 km", and "Improve" opens the position screen zoomed out a little.
+10. Set one crag's position on the phone, then import the positions file again. Expected: "Unchanged because you set them on the phone: 1", and that crag keeps your position.
+
+## 3f. Goals from a route, search on every level
+1. Open a route that is not a goal › "Add to goals" › Wishlist. Expected: the badge "On your wishlist" replaces the button; the crag's route list shows a small "wishlist" label on that route; Goals lists it.
+2. Log an ascent with style "Attempt" on a route that is not a project: switch "Add this route as a project" on, save. Expected: the route is a project (badge on the route, "project" label in the crag list). With the switch off nothing is added.
+3. Open a saved attempt › "Add as a project". Expected: the button changes to "This route is your project."
+4. Send the project with a lead (RP). Expected: the goal ticks off and the labels disappear.
+5. Crags tab: type part of a route name. Expected: "Crags" and "Routes" sections; tapping a route opens it.
+6. Open a region, then an area and a group: each has "Search in: <name>". Expected: only crags and routes inside that place; "Find routes with filters" opens the finder already limited to it.
+7. Crag screen: "Search routes on this crag". Expected: the list narrows while typing, empty sectors hide, Polish letters optional ("lysa" finds "Łysa").
+
 ## 3b. Icons
 1. The bottom bar shows an icon above each tab name (book, chart, mountains, flag); the selected tab's icon is filled. No empty squares.
 2. Top right: a clear gear icon opens Settings. In the middle of the bottom bar a raised orange "+" opens a new ascent from any tab, in light and dark mode. The route screen's "Log an ascent" button is orange too.
@@ -137,8 +172,8 @@ Write down the result of every step (OK / problem). Report problems with: step n
 ## Known gaps (do not report as bugs)
 - Language and grade system settings reset after restart.
 - No crag/route detail screens, no edit/delete.
-- No multipitch pitch form (data model only), no map, no nearby crags.
-- Goals do not track progress yet.
+- No multipitch pitch form (data model only).
+- Imported crags have no positions until you set them (no GPS tracks are ever recorded).
 - Grade conversions between systems are approximate.
 
 ## Report template

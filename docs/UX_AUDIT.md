@@ -154,8 +154,32 @@ Severity: **H** blocks a task or loses/corrupts data, **M** slows a task or conf
 | V2 | Dark mode followed the phone only | L | Settings › Appearance: like the phone, light or dark; the dark theme is deep green, not black |
 | V3 | Journal had no summary | L | Three season tiles (sends, days out, hardest) on top of the journal |
 
+## Round 11 (goals and progress)
+
+| # | Issue | Sev | Status |
+|---|---|---|---|
+| P1 | Goals could not be edited | M | Fixed: tap a goal to edit it, mark it done or reopen it, delete it |
+| P2 | No goal for a grade; projects were plain text | M | Grade goal (distinct led routes at or above a grade this year); project and wishlist linked to a route, with tries and days, ticked off by a led send |
+| P3 | Activity only for the current year, few stats | L | Whole-year calendar for any year; hardest per month and per year, styles, top crags, partners |
+
+## Round 12 (map and nearby crags)
+
+| # | Issue | Sev | Status |
+|---|---|---|---|
+| M1 | No way to see crags on a map | M | Crags › List/Map: crag pins on OpenFreeMap, switch to the tourist map (OpenTopoMap), "Show me" |
+| M2 | Imported crags have no coordinates | M | Crag screen › "Set crag position": a pin under a moving map, or "here" from the phone's GPS; positions file import; re-imports keep positions |
+| M3 | Logging at the crag meant searching by name | L | Nearby crags (3 km) as chips in the ascent form; "Nearby" list with distances in Crags |
+| M5 | Many crags have no position in OSM | L | Approximate positions from the crag's group, marked as such (hollow dot, "approximate", "about" distances); a position set on the phone is never overwritten by a file |
+| M4 | Location privacy | L | Permission asked only on a tap; the position is never stored or sent, only shown on the map and used for distances |
+
+## Round 13 (goals where you are, search everywhere)
+
+| # | Issue | Sev | Status |
+|---|---|---|---|
+| G1 | A route could only become a goal from the Goals tab | M | "Add to goals" on the route screen (project or wishlist), a project switch for attempts in the ascent form, "Add as a project" on a saved attempt; labels in the crag's route list |
+| S1 | The search disappeared below the top level of the Crags tab | M | "Search in: <place>" on every region, area and group (crags and routes inside it), a route search on the crag screen, and the Crags tab search also finds routes; the filtered finder opens limited to the place |
+| S2 | Tapping a crag dot on the map did nothing | H | The dot press also reached the map, which closed the card at once; fixed |
+
 ## Open items
 
-1. Edit a goal's title or target; link a project goal to a route.
-2. Activity calendar only for the current year.
-3. Device checks: localized dates on Hermes, calendar picker, keyboard behavior, large font sizes, TalkBack labels.
+1. Device checks: localized dates on Hermes, calendar picker, keyboard behavior, large font sizes, TalkBack labels.

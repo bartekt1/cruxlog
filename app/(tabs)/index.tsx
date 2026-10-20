@@ -7,7 +7,7 @@ import { Pressable, SectionList, View } from 'react-native';
 import { Text } from '../../src/ui/Text';
 import { listAscents, type AscentRow } from '../../src/db/repo';
 import { formatDay, isoDate, relativeDay } from '../../src/domain/dates';
-import { formatGrade, routeGrade, type AscentStyle } from '../../src/domain/grades';
+import { feltGrade, formatGrade, routeGrade, type AscentStyle } from '../../src/domain/grades';
 import { backupStatus } from '../../src/domain/history';
 import { yearStats } from '../../src/domain/stats';
 import { Contours } from '../../src/ui/Contours';
@@ -34,6 +34,11 @@ export default function Journal() {
 
   const year = new Date().getFullYear();
   const season = useMemo(() => yearStats(rows.map((r) => ({ date: r.date, type: r.type, gradeIndex: r.grade_index, style: r.style })), year), [rows, year]);
+
+  const feltLabel = (a: AscentRow) => {
+    const f = feltGrade(a.felt_grade_index, a.grade_index);
+    return f == null ? '' : ` · ${t('ascent.feltFor', { grade: formatGrade(f, routeSystem) })}`;
+  };
 
   const today = isoDate(new Date());
   const backup = backupStatus(lastBackupAt, Date.now(), rows.length > 0);
@@ -102,7 +107,7 @@ export default function Journal() {
               <View style={{ flex: 1 }}>
                 <Text style={{ color: th.ink, fontFamily: F.semi, fontSize: 16 }}>{item.route_name}</Text>
                 <Text style={{ color: th.muted, fontSize: 13 }}>
-                  {item.crag_name}{item.attempts > 1 ? ` · ${t('journal.attempts', { count: item.attempts })}` : ''}{item.partner_name ? ` · ${item.partner_name}` : ''}
+                  {item.crag_name}{feltLabel(item)}{item.attempts > 1 ? ` · ${t('journal.attempts', { count: item.attempts })}` : ''}{item.partner_name ? ` · ${item.partner_name}` : ''}
                 </Text>
               </View>
               <Text style={{ color: item.style === 'attempt' ? th.muted : th.accent, fontFamily: F.cond, fontSize: 17, minWidth: 44, textAlign: 'right' }}>{t(`styles.${item.style as AscentStyle}`)}</Text>

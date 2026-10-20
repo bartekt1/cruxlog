@@ -7,11 +7,12 @@ import { MIGRATIONS, migrate } from '../src/db/migrate';
 import {
   addAscent, addGoal, addUserRoute, applyImport, cragUsage, deleteAscent, deleteCrag, deleteGoal, deleteArea, deleteRoute, deleteSector,
   getAscent, getCrag, getArea, getRoute, getSector, listAscents, listCragRoutes, listCrags, listGoals, listAreas, listSectorNames, addArea, areaIdFor,
-  renameArea, renameSector, routeUsage, saveCrag, searchRoutes, sectorUsage, setGoalDone, updateAscent, updateRoute, type NewRoute,
-  listCragChoices, listPartners, listRouteAscents, recentRoutes, listSectors, addSector, createRoute, importedUsage, removeImported,
+  renameArea, renameSector, routeUsage, saveCrag, searchRoutes, sectorUsage, setGoalDone, updateAscent, updateRoute, type NewRoute, type RouteFilter,
+  listCragChoices, listPartners, applyCragPositions, addRouteGoal, routeGoalKinds, setCragLocation, listRouteAscents, recentRoutes, listSectors, addSector, createRoute, importedUsage, removeImported, findRoutes, getGoal, updateGoal, routeGoals,
 } from '../src/db/repo';
+import { descendantIds } from '../src/domain/areas';
 import { buildImportPlan } from '../src/domain/csvImport';
-import { parseFlatCsv, planFromFlatRows, type FlatRow } from '../src/domain/flatImport';
+import { detectFormat, parseFlatCsv, parsePositionsCsv, planFromFlatRows, type FlatRow } from '../src/domain/flatImport';
 import { parseGrade } from '../src/domain/grades';
 import { openTestDb } from './helpers/sqlite';
 
@@ -49,7 +50,7 @@ describe('migrate', () => {
   });
   it('is a no-op when run again and keeps data', async () => {
     const db = await freshDb();
-    await addGoal(db, 'project', 'Keep me', null);
+    await addGoal(db, { kind: 'project', title: 'Keep me', target: null, gradeIndex: null, routeId: null });
     await migrate(db);
     expect(await count(db, 'goal')).toBe(1);
   });
@@ -100,7 +101,7 @@ describe('repo', () => {
   });
   it('stores goals', async () => {
     const db = await freshDb();
-    await addGoal(db, 'count', '200 sends', 200);
+    await addGoal(db, { kind: 'count', title: '200 sends', target: 200, gradeIndex: null, routeId: null });
     expect(await listGoals(db)).toEqual([expect.objectContaining({ kind: 'count', title: '200 sends', target: 200 })]);
   });
   it('reads, edits and soft-deletes an ascent', async () => {
@@ -137,8 +138,8 @@ describe('repo', () => {
   });
   it('completes, reopens and deletes goals; done goals go last', async () => {
     const db = await freshDb();
-    await addGoal(db, 'project', 'First', null);
-    await addGoal(db, 'wishlist', 'Second', null);
+    await addGoal(db, { kind: 'project', title: 'First', target: null, gradeIndex: null, routeId: null });
+    await addGoal(db, { kind: 'wishlist', title: 'Second', target: null, gradeIndex: null, routeId: null });
     const first = (await listGoals(db)).find((g) => g.title === 'First')!;
     await setGoalDone(db, first.id, true);
     expect((await listGoals(db)).map((g) => [g.title, g.done_at != null])).toEqual([['Second', false], ['First', true]]);
@@ -444,6 +445,94 @@ describe('big imports', () => {
   });
 });
 
+describe('own grade and route finder', () => {
+  it('stores the own grade of an ascent and clears it on edit', async () => {
+    const db = await freshDb();
+    const r = await addUserRoute(db, route());
+    const id = await addAscent(db, { ...ascent(r), feltGradeIndex: parseGrade('VI.2', 'kr')! });
+    expect((await listAscents(db))[0].felt_grade_index).toBe(parseGrade('VI.2', 'kr'));
+    expect((await getAscent(db, id))!.felt_grade_index).toBe(parseGrade('VI.2', 'kr'));
+    await updateAscent(db, id, ascent(r));
+    expect((await listRouteAscents(db, r))[0].felt_grade_index).toBeNull();
+  });
+  it('finds routes by grade range, area, status, type and name', async () => {
+    const db = await freshDb();
+    const plan = planFromFlatRows([
+      ['Czarnorzeki', 'Kamieniec', 'Krowia', 'Łatwa', 'IV', 'sport'],
+      ['Czarnorzeki', 'Kamieniec', 'Krowia', 'Średnia', 'VI.1', 'sport'],
+      ['Czarnorzeki', 'Strzelnica', 'Okap', 'Trudna', 'VI.2', 'sport'],
+      ['Czarnorzeki', 'Strzelnica', 'Okap', 'Długa', 'VI.1', 'multipitch'],
+      ['Jura', 'Rzędkowice', 'Okiennik', 'Jurajska', 'VI.1', 'sport'],
+    ].map(([region, area, crag, name, grade, type]) => ({ region, area, group: '', crag, sector: '', name, grade, type, gradeSystem: 'kr' })));
+    await applyImport(db, plan);
+    const all: RouteFilter = { query: '', minGrade: null, maxGrade: null, areaIds: null, status: 'all', type: null };
+    const names = async (f: Partial<RouteFilter>) => (await findRoutes(db, { ...all, ...f })).rows.map((r) => r.name);
+    expect(await names({})).toEqual(['Łatwa', 'Długa', 'Jurajska', 'Średnia', 'Trudna']);
+    expect(await names({ minGrade: parseGrade('VI', 'kr'), maxGrade: parseGrade('VI.1', 'kr') })).toEqual(['Długa', 'Jurajska', 'Średnia']);
+    const areas = await listAreas(db);
+    const czarnorzeki = areas.find((a) => a.name === 'Czarnorzeki')!;
+    expect(await names({ areaIds: [...descendantIds(areas, czarnorzeki.id)], type: 'sport' })).toEqual(['Łatwa', 'Średnia', 'Trudna']);
+    const [trudna] = await searchRoutes(db, 'trudna');
+    const [srednia] = await searchRoutes(db, 'srednia');
+    await addAscent(db, ascent(trudna.id, { style: 'attempt' }));
+    await addAscent(db, ascent(srednia.id));
+    expect(await names({ status: 'tried' })).toEqual(['Trudna']);
+    expect(await names({ status: 'sent' })).toEqual(['Średnia']);
+    expect(await names({ status: 'todo', areaIds: [...descendantIds(areas, czarnorzeki.id)] })).toEqual(['Łatwa', 'Długa']);
+    expect(await names({ query: 'OKAP' })).toEqual(['Długa', 'Trudna']);
+    const limited = await findRoutes(db, all, 2);
+    expect([limited.total, limited.rows.length]).toEqual([5, 2]);
+  });
+});
+
+describe('goals linked to routes and grades', () => {
+  const today = new Date().toLocaleDateString('sv-SE');
+  it('stores a grade goal and a project, and edits them', async () => {
+    const db = await freshDb();
+    const r = await addUserRoute(db, route());
+    const id = await addGoal(db, { kind: 'grade', title: '3 × VI.3+', target: 3, gradeIndex: parseGrade('VI.3', 'kr')!, routeId: null });
+    expect(await getGoal(db, id)).toMatchObject({ kind: 'grade', target: 3, grade_index: parseGrade('VI.3', 'kr'), route_id: null });
+    await updateGoal(db, id, { kind: 'project', title: 'Test Route 1', target: null, gradeIndex: null, routeId: r });
+    expect(await getGoal(db, id)).toMatchObject({ kind: 'project', title: 'Test Route 1', route_id: r, route_name: 'Test Route 1', crag_name: 'Test Crag' });
+    expect((await routeGoals(db, r)).map((x) => x.id)).toEqual([id]);
+  });
+  it('adds a route as a project or wish from its screen, once, and lists the badges', async () => {
+    const db = await freshDb();
+    const r = await addUserRoute(db, route());
+    const r2 = await addUserRoute(db, route({ name: 'Test Route 2' }));
+    const wish = await addRouteGoal(db, r, 'wishlist');
+    expect(await addRouteGoal(db, r, 'wishlist')).toBe(wish);
+    expect(await getGoal(db, wish)).toMatchObject({ kind: 'wishlist', title: 'Test Route 1', route_id: r });
+    await addRouteGoal(db, r2, 'project');
+    expect([...(await routeGoalKinds(db))]).toEqual(expect.arrayContaining([[r, 'wishlist'], [r2, 'project']]));
+    await addRouteGoal(db, r, 'project');
+    expect((await routeGoalKinds(db)).get(r)).toBe('project'); // a project wins over a wish
+    await addAscent(db, ascent(r2, { date: today, style: 'rp' }));
+    expect((await routeGoalKinds(db)).has(r2)).toBe(false); // done goals have no badge
+  });
+  it('ticks a project off on a led send, not on top-rope; a reopened one stays open until a send is saved again', async () => {
+    const db = await freshDb();
+    const r = await addUserRoute(db, route());
+    const id = await addGoal(db, { kind: 'project', title: 'P', target: null, gradeIndex: null, routeId: r });
+    await addAscent(db, ascent(r, { date: today, style: 'tr' }));
+    expect((await getGoal(db, id))!.done_at).toBeNull();
+    const a = await addAscent(db, ascent(r, { date: today, style: 'rp' }));
+    expect((await getGoal(db, id))!.done_at).not.toBeNull();
+    expect(await routeGoals(db, r)).toEqual([]);
+    await setGoalDone(db, id, false);
+    await updateAscent(db, a, ascent(r, { date: today, style: 'rp', notes: 'edited' }));
+    expect((await getGoal(db, id))!.done_at).not.toBeNull(); // saving a send closes it again
+  });
+  it('does not tick off a project for a send from before the goal was set', async () => {
+    const db = await freshDb();
+    const r = await addUserRoute(db, route());
+    const old = await addAscent(db, ascent(r, { date: '2020-01-01', style: 'rp' }));
+    const id = await addGoal(db, { kind: 'wishlist', title: 'W', target: null, gradeIndex: null, routeId: r });
+    await updateAscent(db, old, ascent(r, { date: '2020-01-01', style: 'rp', notes: 'x' }));
+    expect((await getGoal(db, id))!.done_at).toBeNull();
+  });
+});
+
 describe('building a crag from its screen', () => {
   it('creates a crag with sectors, adds sectors and routes without ascents', async () => {
     const db = await freshDb();
@@ -461,13 +550,70 @@ describe('building a crag from its screen', () => {
   });
 });
 
+describe('crag positions for the map', () => {
+  const row = (name: string, crag: string): FlatRow => ({
+    region: 'Jura', area: 'Jura Południowa', group: 'Dolina', crag, sector: '', name, type: 'sport', grade: 'VI.1', gradeSystem: 'kr',
+  });
+  it('reads a positions file', () => {
+    const text = 'Skała;lat;lng;przybliżone\nOkap;50,4;19,8;\nBaszta;50,5;19,9;tak\nZła;abc;19;\nZero;0;0;\n';
+    expect(detectFormat(text)).toBe('positions');
+    expect(parsePositionsCsv(text)).toEqual([
+      { key: '', name: 'Okap', lat: 50.4, lng: 19.8, approx: false },
+      { key: '', name: 'Baszta', lat: 50.5, lng: 19.9, approx: true },
+    ]);
+  });
+  it('matches by key or unique name, reports the rest, and a re-import keeps the positions', async () => {
+    const db = await freshDb();
+    const plan = planFromFlatRows([row('Rysa', 'Okap'), row('Filar', 'Baszta')]);
+    await applyImport(db, plan);
+    const crags = await listCragChoices(db);
+    const baszta = crags.find((c) => c.name === 'Baszta')!;
+    const res = await applyCragPositions(db, [
+      { key: '', name: 'okap', lat: 50.1, lng: 19.1 },
+      { key: baszta.id.replace('imp:crag:', ''), name: 'inna nazwa', lat: 50.2, lng: 19.2 },
+      { key: '', name: 'Nieznana', lat: 50.3, lng: 19.3 },
+    ]);
+    expect(res.updated).toBe(2);
+    expect(res.unmatched.map((r) => r.name)).toEqual(['Nieznana']);
+    await applyImport(db, plan);
+    expect(await getCrag(db, baszta.id)).toMatchObject({ lat: 50.2, lng: 19.2 });
+    await setCragLocation(db, baszta.id, null);
+    expect(await getCrag(db, baszta.id)).toMatchObject({ lat: null, lng: null, pos_source: '' });
+  });
+  it('marks approximate positions and never overwrites one the user set on the phone', async () => {
+    const db = await freshDb();
+    await applyImport(db, planFromFlatRows([row('Rysa', 'Okap'), row('Filar', 'Baszta')]));
+    const [baszta, okap] = await listCragChoices(db);
+    await setCragLocation(db, okap.id, { lat: 50.01, lng: 19.01 });
+    const res = await applyCragPositions(db, [
+      { key: '', name: 'Okap', lat: 51, lng: 20 },
+      { key: '', name: 'Baszta', lat: 50.2, lng: 19.2, approx: true },
+    ]);
+    expect(res).toMatchObject({ updated: 1, kept: 1 });
+    expect(await getCrag(db, okap.id)).toMatchObject({ lat: 50.01, pos_source: 'user' });
+    expect(await getCrag(db, baszta.id)).toMatchObject({ lat: 50.2, pos_source: 'approx' });
+    // A route list with positions updates the estimate but still keeps the user's own.
+    await applyImport(db, planFromFlatRows([{ ...row('Rysa', 'Okap'), lat: '52', lng: '21' }, { ...row('Filar', 'Baszta'), lat: '50.3', lng: '19.3' }]));
+    expect(await getCrag(db, okap.id)).toMatchObject({ lat: 50.01, pos_source: 'user' });
+    expect(await getCrag(db, baszta.id)).toMatchObject({ lat: 50.3, pos_source: 'file' });
+  });
+  it('counts positions saved before the upgrade as the user\'s own', async () => {
+    const db = openTestDb();
+    await db.execAsync(MIGRATIONS.slice(0, 4).join('\n') + 'PRAGMA user_version = 4;');
+    await db.execAsync(`INSERT INTO crag (id, name, lat, lng, created_at, updated_at) VALUES ('a', 'A', 50, 19, 1, 1), ('b', 'B', NULL, NULL, 1, 1);`);
+    await migrate(db);
+    expect(await getCrag(db, 'a')).toMatchObject({ name: 'A', lat: 50, pos_source: 'user' });
+    expect(await getCrag(db, 'b')).toMatchObject({ name: 'B', lat: null, pos_source: '' });
+  });
+});
+
 describe('backup', () => {
   async function seeded() {
     const db = await freshDb();
     await applyImport(db, samples());
     const r = await addUserRoute(db, route());
     await addAscent(db, ascent(r));
-    await addGoal(db, 'project', 'Project', null);
+    await addGoal(db, { kind: 'project', title: 'Project', target: null, gradeIndex: null, routeId: null });
     return db;
   }
 

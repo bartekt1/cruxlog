@@ -1,4 +1,4 @@
-import { formatGrade, gradeExample, parseGrade, routeGrade } from '../src/domain/grades';
+import { feltGrade, formatGrade, gradeExample, nearbyGrades, parseGrade, ROUTE_LADDER, routeGrade } from '../src/domain/grades';
 
 describe('grades', () => {
   it('parses and converts route grades', () => {
@@ -57,5 +57,18 @@ describe('routeGrade', () => {
     expect(routeGrade(r, 'kr')).toBe('VI.4/4+');
     expect(routeGrade(r, 'fr')).toBe('7a');
     expect(routeGrade({ ...r, grade_label: '' }, 'kr')).toBe('VI.4');
+  });
+});
+
+describe('own grade', () => {
+  it('offers the grades around the route, clipped to the ladder', () => {
+    expect(nearbyGrades(5, 2, 2)).toEqual([3, 4, 5, 6, 7]);
+    expect(nearbyGrades(0, 2, 1)).toEqual([0, 1]);
+    expect(nearbyGrades(ROUTE_LADDER.length - 1, 1, 3)).toEqual([ROUTE_LADDER.length - 2, ROUTE_LADDER.length - 1]);
+  });
+  it('shows it only when it differs from the route', () => {
+    expect(feltGrade(null, 5)).toBeNull();
+    expect(feltGrade(5, 5)).toBeNull();
+    expect(feltGrade(7, 5)).toBe(7);
   });
 });

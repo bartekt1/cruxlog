@@ -2,20 +2,22 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, Switch, View } from 'react-native';
 import { Text } from '../../src/ui/Text';
 import {
-  addAscent, addUserRoute, getAscent, getRoute, listCragChoices, listCragRoutes, listAreas, listPartners, listSectorNames, recentRoutes, searchRoutes, warmSearch,
+  addAscent, addRouteGoal, addUserRoute, getAscent, getRoute, listCragChoices, listCragRoutes, listAreas, listPartners, listSectorNames, recentRoutes, routeGoals, searchRoutes, warmSearch,
   updateAscent, type AreaNames, type AreaRow, type CragChoice, type CragRouteRow, type RouteRow,
 } from '../../src/db/repo';
 import { isoDate, shiftDay } from '../../src/domain/dates';
 import { isFirstTry, validateAscentDraft, validateRouteDraft } from '../../src/domain/forms';
-import { ASCENT_STYLES, gradeExample, routeGrade, systemsFor, type AscentStyle, type GradeSystem, type RouteType } from '../../src/domain/grades';
+import { ASCENT_STYLES, feltGrade, formatGrade, gradeExample, nearbyGrades, parseGrade, routeGrade, systemsFor, type AscentStyle, type GradeSystem, type RouteType } from '../../src/domain/grades';
 import { DateField } from '../../src/ui/DateField';
 import { pathLabel, pathLabels, pathNames } from '../../src/domain/areas';
 import { sameName, suggest } from '../../src/domain/text';
 import { AreaPicker } from '../../src/ui/AreaPicker';
 import { Button, Chip, ChipRow, ErrorText, Field, HIT, Label, LinkButton, Suggestions, type SuggestionItem } from '../../src/ui/kit';
+import { useLocation } from '../../src/ui/useLocation';
+import { formatDistance, nearest } from '../../src/domain/geo';
 import { useSettings } from '../../src/ui/settingsStore';
 import { useTheme } from '../../src/ui/theme';
 
@@ -30,7 +32,7 @@ export default function NewAscent() {
   const { id, routeId } = useLocalSearchParams<{ id?: string; routeId?: string }>();
   const db = useSQLiteContext();
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const th = useTheme();
   const settings = useSettings();
 
@@ -51,6 +53,9 @@ export default function NewAscent() {
   const labels = useMemo(() => pathLabels(areaRows), [areaRows]);
   const [sectorNames, setSectorNames] = useState<string[]>([]);
   const [cragRoutes, setCragRoutes] = useState<CragRouteRow[]>([]);
+  const loc = useLocation();
+  const [nearCrag, setNearCrag] = useState<string | null>(null);
+  const [nearRoutes, setNearRoutes] = useState<CragRouteRow[]>([]);
   const [partners, setPartners] = useState<string[]>([]);
   const [focus, setFocus] = useState<'crag' | 'sector' | 'region' | 'partner' | null>(null);
 
@@ -59,17 +64,21 @@ export default function NewAscent() {
   const [style, setStyle] = useState<AscentStyle>('rp');
   const [attempts, setAttempts] = useState('1');
   const [rating, setRating] = useState<number | null>(null);
+  const [felt, setFelt] = useState<number | null>(null);
   const [partner, setPartner] = useState('');
   const [weather, setWeather] = useState('');
   const [notes, setNotes] = useState('');
   const [error, setError] = useState<{ key: string; field?: FieldName; message?: string } | null>(null);
   const [saving, setSaving] = useState(false);
+  // An attempt can make the route a project in one go (new ascents only).
+  const [asProject, setAsProject] = useState(false);
+  const [isProject, setIsProject] = useState(false);
 
   useEffect(() => {
     if (id) {
       getAscent(db, id).then((a) => {
         if (!a) return;
-        setRoute(a.route); setDate(a.date); setStyle(a.style); setAttempts(String(a.attempts)); setRating(a.rating);
+        setRoute(a.route); setDate(a.date); setStyle(a.style); setAttempts(String(a.attempts)); setRating(a.rating); setFelt(a.felt_grade_index);
         setPartner(a.partner_name ?? ''); setWeather(a.weather); setNotes(a.notes);
       });
     } else if (routeId) {
@@ -91,6 +100,11 @@ export default function NewAscent() {
     searchRoutes(db, query).then((r) => { if (live) setResults(r); });
     return () => { live = false; };
   }, [db, query]);
+
+  useEffect(() => {
+    if (!route) { setIsProject(false); return; }
+    routeGoals(db, route.id).then((g) => setIsProject(g.some((x) => x.kind === 'project')));
+  }, [db, route?.id]);
 
   // The crag typed in the new-route form, if it already exists (ignoring case and Polish letters).
   const existingCrag = crags.find((c) => sameName(c.name, crag)) ?? null;
@@ -134,6 +148,12 @@ export default function NewAscent() {
     setCreating(true);
   }
   const cragPath = (c: CragChoice) => (c.region_id ? labels.get(c.region_id) ?? '' : '');
+  // Crags within 3 km, only when the phone already allowed the position; one tap lists that crag's routes.
+  const near = useMemo(() => (loc.position ? nearest(crags, loc.position, 4, 3_000) : []), [crags, loc.position]);
+  useEffect(() => {
+    if (!nearCrag) { setNearRoutes([]); return; }
+    listCragRoutes(db, nearCrag).then(setNearRoutes);
+  }, [db, nearCrag]);
   const cragHits = query.trim() ? suggest(crags, query, (c) => c.name, (c) => [cragPath(c)], 3) : [];
 
   function pickDuplicate() {
@@ -190,15 +210,25 @@ export default function NewAscent() {
     setSaving(true);
     try {
       const rid = route?.id ?? await addUserRoute(db, { ...newRoute!, cragName: existingCrag?.name ?? newRoute!.cragName, type, gradeSystem: system, areas });
-      const values = { routeId: rid, date: draft.value.date, style, attempts: draft.value.attempts, rating, notes: notes.trim(), partnerName: partner, weather: weather.trim() };
+      const values = {
+        routeId: rid, date: draft.value.date, style, attempts: draft.value.attempts, rating, notes: notes.trim(), partnerName: partner, weather: weather.trim(),
+        feltGradeIndex: baseGrade == null ? null : feltGrade(felt, baseGrade),
+      };
       if (id) await updateAscent(db, id, values);
       else await addAscent(db, values);
+      if (!id && style === 'attempt' && asProject && !isProject) await addRouteGoal(db, rid, 'project');
       router.back();
     } catch (e) {
       setError({ key: 'common.failed', message: (e as Error).message });
       setSaving(false);
     }
   }
+
+  // Another route chosen in a new ascent: the own grade picked for the previous one no longer applies.
+  useEffect(() => { if (!id) setFelt(null); }, [id, route?.id]);
+
+  // The route's grade the own grade is compared with: the chosen route, or the grade typed for a new one.
+  const baseGrade = route ? route.grade_index : creating ? parseGrade(grade, system) : null;
 
   const errorText = error ? t(error.key, { example: gradeExample(system, type), message: error.message ?? '' }) : '';
   const bad = (f: FieldName) => error?.field === f;
@@ -306,7 +336,23 @@ export default function NewAscent() {
               {cragHits.length ? <Text style={{ color: th.muted, fontSize: 12, marginTop: 2 }}>{t('ascent.cragHitHint')}</Text> : null}
             </>
           ) : (
-            <Suggestions title={t('ascent.recent')} items={recent.map(routeItem)} onPick={pickRoute(recent)} />
+            <>
+              {near.length ? (
+                <>
+                  <Text style={{ color: th.muted, fontSize: 12, marginTop: 6 }}>{t('map.nearby')}</Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                    {near.map((c) => (
+                      <Chip key={c.id} label={`${c.name} · ${c.pos_source === 'approx' ? t('map.about', { distance: formatDistance(c.distance, i18n.language) }) : formatDistance(c.distance, i18n.language)}`} on={nearCrag === c.id} onPress={() => setNearCrag(nearCrag === c.id ? null : c.id)} />
+                    ))}
+                  </ScrollView>
+                </>
+              ) : null}
+              {nearCrag ? (
+                <Suggestions title={near.find((c) => c.id === nearCrag)?.name} items={nearRoutes.map(routeItem)} onPick={pickRoute(nearRoutes)} />
+              ) : (
+                <Suggestions title={t('ascent.recent')} items={recent.map(routeItem)} onPick={pickRoute(recent)} />
+              )}
+            </>
           )}
           {query.trim() && results.length === 0 && cragHits.length === 0 ? <Text style={{ color: th.muted, paddingVertical: 6 }}>{t('ascent.noResults', { query: query.trim() })}</Text> : null}
           <LinkButton label={query.trim() ? t('ascent.newRouteNamed', { name: query.trim() }) : t('ascent.newRoute')} onPress={startCreating} />
@@ -331,6 +377,30 @@ export default function NewAscent() {
           <Field value={attempts} onChangeText={setAttempts} keyboardType="number-pad" accessibilityLabel={t('ascent.attempts')} invalid={bad('attempts')} style={{ width: 96 }} />
         </>
       )}
+
+      {!id && style === 'attempt' ? (
+        isProject ? (
+          <Text style={{ color: th.muted, marginTop: 10 }}>{t('goals.isProject')}</Text>
+        ) : (
+          <Pressable onPress={() => setAsProject(!asProject)} accessibilityRole="switch" accessibilityState={{ checked: asProject }}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10, minHeight: 44 }}>
+            <Switch value={asProject} onValueChange={setAsProject} trackColor={{ false: th.line, true: th.accent }} thumbColor={th.surface} importantForAccessibility="no" />
+            <Text style={{ color: th.ink, flex: 1 }}>{t('goals.asProject')}</Text>
+          </Pressable>
+        )
+      ) : null}
+
+      {baseGrade != null ? (
+        <>
+          <Label>{t('ascent.felt')}</Label>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingRight: 8 }}>
+            {nearbyGrades(baseGrade, 4, 4).map((i) => (
+              <Chip key={i} label={i === baseGrade ? t('ascent.feltSame', { grade: formatGrade(i, settings.routeSystem) }) : formatGrade(i, settings.routeSystem)}
+                on={(feltGrade(felt, baseGrade) ?? baseGrade) === i} onPress={() => setFelt(i === baseGrade ? null : i)} />
+            ))}
+          </ScrollView>
+        </>
+      ) : null}
 
       <Label>{t('ascent.rating')}</Label>
       <View style={{ flexDirection: 'row', gap: 4 }}>
