@@ -74,7 +74,7 @@ Severity: **H** blocks a task or loses/corrupts data, **M** slows a task or conf
 | S2 | Result message appeared at the bottom, often off screen | M | Fixed: alert |
 | S3 | Buttons could be pressed again during import | M | Fixed: disabled + spinner |
 | S4 | A wrong file gave a raw JSON parse error | M | Fixed: "This file is not a Cruxlog backup." |
-| S5 | Missing crags.csv or routes.csv gave confusing parser errors | M | Fixed: names the required files and what was selected |
+| S5 | Missing crags.csv or routes.csv gave confusing parser errors | M | Fixed; the three-file import was removed on 2026-10-21 |
 | S6 | Import behavior (merge, newer wins) was not explained | L | Fixed: help text |
 
 | N11 | Dates other than today or yesterday had to be typed as YYYY-MM-DD | M | Fixed: system calendar (`@react-native-community/datetimepicker`), future days blocked |

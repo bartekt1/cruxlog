@@ -8,6 +8,9 @@ Cruxlog: climbing logbook and crag guide. Expo SDK 57, React Native, TypeScript,
 - All user-visible strings go through i18n in `src/i18n/pl.json` and `en.json`. Keep both files in sync.
 - Schema changes: append a new entry to `MIGRATIONS` in `src/db/migrate.ts`, never edit an old one. Bump `BACKUP_VERSION` if the backup format changes.
 - Keep domain logic in `src/domain/` pure and covered by tests in `__tests__/`.
+- Queries live in `src/db/` by topic; screens import them from `src/db/repo.ts`. A save that writes several tables runs in one transaction (see `saveAscent`).
+- Errors for the user: throw `AppError` (`src/domain/errors.ts`) with an i18n key; show failures with `runOrAlert`/`showError` (`src/ui/errors.ts`), never swallow them. Backup work goes through `withBackupLock` (`src/ui/autoBackup.ts`).
+- Reuse `src/ui/kit.tsx`, `rows.tsx` (RouteCard, GroupedRow, SwitchRow, CtaButton) and `GradeFields.tsx` before writing a new row or field.
 - Look ("przewodnik kredą"): colors only from `useTheme()` (`src/ui/theme.ts`, light and dark); import `Text` from `src/ui/Text`, not react-native, so the bundled Barlow fonts apply; headings, grades and numbers use `F.display`/`F.cond` from `src/ui/fonts.ts`.
 - No GPS tracks or routes. The map shows only a pin and the user's position, and location stays on the device.
 - Map: MapLibre (`@maplibre/maplibre-react-native`, native, needs a new APK). Base styles (OpenFreeMap, OpenTopoMap) are in `src/ui/mapStyles.ts`, location in `src/ui/useLocation.ts`, distance helpers in `src/domain/geo.ts`.

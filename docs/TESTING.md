@@ -5,7 +5,7 @@ Write down the result of every step (OK / problem). Report problems with: step n
 
 ## 0. Preparation
 1. Uninstall any older Cruxlog, install the new APK, open it. Expected: the Journal tab opens with the text "No ascents yet..." (or Polish equivalent).
-2. Copy the files from `samples/` (crags.csv, sectors.csv, routes.csv, pitches.csv) to the phone (Downloads).
+2. Put a one-file route list on the phone (Downloads), e.g. the guidebook export or a theCrag export (§5a–5c).
 3. Note the phone language (Polish or English). The app should start in that language (other languages fall back to English).
 
 ## 1. Navigation and language
@@ -135,16 +135,7 @@ Write down the result of every step (OK / problem). Report problems with: step n
    - Pencil next to a route: change name, sector (moves the route), type, grade; "Delete route" lists your ascents of it. After deleting, those ascents are gone from the Journal and Progress.
 2. Goals: see §3d and §3f.
 
-## 5. CSV import
-1. Settings -> Import crags from CSV. Select all four sample files at once. Expected: an alert with counts (1 crag, 1 sector, 2 routes, 3 pitches). Buttons are disabled with a spinner while it runs.
-2. Crags tab shows "Example crag". In a new ascent, searching "Example" finds the sport route and the multipitch route.
-3. Import the same files again. Expected: same message, and no duplicates in the Crags list or in the search.
-4. Error handling: edit a copy of routes.csv on the phone (or on a computer) so that one grade is wrong (for example `9z`) and one `sector_key` does not exist. Import. Expected: "problems found, nothing was imported" with file and line numbers, and no data changed.
-5. Select only routes.csv and crags.csv without sectors.csv. Expected: errors about unknown `sector_key`, nothing imported.
-5a. Select only sectors.csv. Expected: "crags.csv and routes.csv are required. Selected: sectors.csv".
-6. File names must be exactly `crags.csv`, `sectors.csv`, `routes.csv`, `pitches.csv`. A different name is ignored (note what happens).
-
-## 5a. One-file import
+## 5a. One-file import (the only CSV route import; the old crags.csv/routes.csv set is gone)
 1. Settings -> Import crags from a CSV file. Pick one file with the headers `Region;Rejon;Grupa;Skała;Sektor;Nazwa;Typ;Wycena` (English headers and commas work too). Expected: the question "Import?", then the crags appear under region › area › group.
 2. A row without region or area, or with a wrong grade, shows "<file>, line N: …" and nothing is imported.
 3. A file with other headers shows "File … was not recognised".
@@ -221,6 +212,16 @@ Since the automatic backup (§6a) these buttons are under Settings › "Other wa
 13. Full-screen wall photo: tap a route's number disc. Expected: the route screen opens.
 14. Route screen: a "Topo" section with the wall photo, this route in full and the others dimmed; tap it to open the photo full screen at that photo. A route without a line on a wall that has photos shows "Draw this route on the wall photo", which opens the editor with the route already chosen.
 15. Share a route: "Include a photo" offers the photo with its line first; "Show the topo line on the photo" (on by default) draws its line on the card, placed right on the cropped picture. Sharing a crag draws all lines of the photo with their numbers.
+
+## 6e. After the clean-up (2026-10-21): things that changed inside
+1. New ascent with a new route and 2 photos, Save. Expected: one ascent, one new route, both photos. If an error message ever appears after Save, tapping Save again must not make a second ascent or route.
+2. Topo editor: tap "Save the line" twice quickly. Expected: one save, back on the photo once (not two screens back).
+3. Delete a photo, a goal, a sector, a crag: if anything fails, a "Problem" message now says so (before it failed silently). Normally everything works as before.
+4. Rename a sector to the name of another sector of the same crag (or an area to its neighbour's name). Expected: "The name … is already used here", nothing changed.
+5. Settings › "Back up now" right after opening the app (while the automatic copy may be running). Expected: one new copy, no error; the folder keeps 5 copies and one `zdjecia` folder.
+6. Errors about the backup folder are now in the app's language (e.g. remove the folder on Drive, "Back up now").
+7. Route finder with a name typed, on the big theCrag import: results appear without delay; the counts match the filters.
+8. Look of lists: section headings, route cards, the switches on the share screen and the "Log another ascent" / "Save the line" buttons look as before (spacing may differ by a few points).
 
 ## 7. Robustness
 1. Change the language and the route grade system, close the app completely (swipe away) and reopen it. Expected: all data is still there, and the language and grade system are the ones you chose.

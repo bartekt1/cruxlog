@@ -15,11 +15,10 @@ npx expo start           # needs a development build: the map (MapLibre) is a na
 ## Layout
 
 - `app/` expo-router screens: tabs (Journal, Progress, Crags with a list and a map, Goals), new ascent, settings, the share card (`share.tsx`), the full-screen photo (`photo.tsx`) and the topo editor (`topo.tsx`)
-- `src/ui/` shared components (`kit.tsx`), theme and fonts, the map (`CragMap.tsx`, `mapStyles.ts`), location (`useLocation.ts`), photo files (`photos.ts`, `PhotoViews.tsx`), topo drawing (`TopoLines.tsx`), the share card (`ShareCard.tsx`), the automatic backup (`autoBackup.ts`, `AutoBackup.tsx`, `backupFolder.ts`)
-- `src/db/` SQLite schema and migrations (`PRAGMA user_version`), queries (`repo.ts`), JSON backup (`backup.ts`)
+- `src/ui/` shared components (`kit.tsx`, `rows.tsx`, `GradeFields.tsx`), error alerts (`errors.ts`), parts of big screens (`ascent/`, `settings/`, `useTopoGestures.ts`), theme and fonts, the map (`CragMap.tsx`, `mapStyles.ts`), location (`useLocation.ts`), photo files (`photos.ts`, `PhotoViews.tsx`), topo drawing (`TopoLines.tsx`), the share card (`ShareCard.tsx`), the automatic backup (`autoBackup.ts`, `AutoBackup.tsx`, `backupFolder.ts`)
+- `src/db/` SQLite schema and migrations (`PRAGMA user_version`), queries by topic (`routes.ts`, `ascents.ts`, `crags.ts`, `areas.ts`, `goals.ts`, `imports.ts`, `photos.ts`, `topo.ts`; screens import them through `repo.ts`), JSON backup (`backup.ts`)
 - `src/domain/` pure logic with tests: grade ladder and conversions, CSV imports, statistics, goals, distances, backup rotation and index, photo sizes, topo geometry (smoothing, zoom, undo), share text
 - `src/i18n/` `pl.json` and `en.json`
-- `samples/` fictional CSV files in the old three-file import format (used by the DB tests)
 - `docs/` next steps (`NEXT.md`), manual test procedure (`TESTING.md`), UX audit (`UX_AUDIT.md`), design document (`design.html`, Polish)
 
 Main libraries: expo-router, expo-sqlite, Zustand, i18next, MapLibre, react-native-svg, expo-image-picker and expo-image-manipulator (photos), react-native-view-shot and expo-sharing (share card), fflate (gzipped backups).

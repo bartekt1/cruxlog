@@ -1,8 +1,8 @@
 # Next steps
 
-Status (2026-10-21): the app runs on the owner's phone (APK from GitHub Actions). Done:
+Status (2026-10-21): the app runs on the owner's phone (APK from GitHub Actions). Code clean-up after an audit done the same day (see `docs/TESTING.md` §6e). Done:
 - journal, ascent form with own grade, route history;
-- crags tree (region › area › group › crag › sector) with editing, and imports (theCrag, guidebook, one-file CSV, positions file);
+- crags tree (region › area › group › crag › sector) with editing, and imports (theCrag, guidebook, one-file CSV, positions file; the old three-file CSV import was removed);
 - route finder with filters, and search on every level of the Crags tab;
 - goals (count, grade, project, wishlist), added from a route or an attempt too;
 - progress for any year;

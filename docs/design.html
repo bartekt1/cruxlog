@@ -281,15 +281,15 @@ ul{margin:0 0 12px;padding-left:20px} li{margin-bottom:5px;max-width:68ch}
   <h3>Pozycja użytkownika</h3>
   <p>Pozycja jest pokazywana na mapie i służy do podpowiadania pobliskich skał przy dodawaniu wpisu. Używamy jej tylko na urządzeniu, za zgodą systemu i bez wysyłania na serwer. Polityka prywatności musi to opisywać, bo sklepy tego wymagają.</p>
   <h3>Import CSV</h3>
-  <p>Trzy pliki: <span class="mono">crags.csv</span>, <span class="mono">sectors.csv</span>, <span class="mono">routes.csv</span> (oraz opcjonalnie <span class="mono">pitches.csv</span>). Powiązania idą przez klucze tekstowe, które nadajemy ręcznie lub przy parsowaniu. Aplikacja pokazuje podgląd i raport błędów przed zapisem.</p>
+  <p>Jeden plik, jeden wiersz na drogę z całą ścieżką: region, rejon, grupa, skała, sektor, nazwa, typ, wycena (nagłówki po polsku lub angielsku, separator przecinek, średnik lub tabulator). Aplikacja rozpoznaje też eksport z przewodnika i z theCrag oraz plik samych położeń skał (skała, lat, lng). Przed zapisem pokazuje liczby i raport błędów z numerami wierszy; ponowny import tego samego pliku aktualizuje dane zamiast je dublować.</p>
   <div class="scroll"><table>
-    <tr><th>Plik</th><th>Kolumny</th></tr>
-    <tr><td><code>crags.csv</code></td><td class="mono">key, region, name, country, lat, lng, description, approach</td></tr>
-    <tr><td><code>sectors.csv</code></td><td class="mono">key, crag_key, name, lat, lng, aspect</td></tr>
-    <tr><td><code>routes.csv</code></td><td class="mono">key, sector_key, name, type, grade, grade_system, length_m, bolts, author, year, lat, lng, description</td></tr>
-    <tr><td><code>pitches.csv</code></td><td class="mono">route_key, number, grade, grade_system, length_m, description</td></tr>
+    <tr><th>Kolumna</th><th>Znaczenie</th></tr>
+    <tr><td class="mono">Region; Rejon; Grupa</td><td>miejsce skały; grupa opcjonalna, może mieć kilka poziomów (A › B)</td></tr>
+    <tr><td class="mono">Skała; Sektor</td><td>sektor opcjonalny (bez niego droga trafia do sektora nazwanego jak skała)</td></tr>
+    <tr><td class="mono">Nazwa; Typ; Wycena; Skala_wycen</td><td>typ: droga lub wielowyciąg; skala domyślnie kręgowa</td></tr>
+    <tr><td class="mono">Długość; Przeloty; Opis; lat; lng</td><td>opcjonalne</td></tr>
   </table></div>
-  <p class="note">Współrzędne są opcjonalne. Drogi bez nich nie mają pinezki, ale pojawiają się w przewodniku. Pole <span class="mono">type</span> przyjmuje: sport, boulder, multipitch.</p>
+  <p class="note">Bouldery są pomijane. Dawny import z trzech plików (crags.csv, sectors.csv, routes.csv) usunięto w październiku 2026.</p>
   <h3>Style przejścia</h3>
   <p>OS, flash, RP, PP, TR i próba (nieudana). Boulder dodatkowo używa „flash” i „RP”. Do piramidy trudności liczą się tylko style zaliczające drogę.</p>
 </section>

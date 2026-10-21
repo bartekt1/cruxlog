@@ -18,7 +18,7 @@ CI=1 EXPO_OFFLINE=1 npx expo export --platform android --output-dir "$(mktemp -d
 ## Layout
 
 - Routes live in `app/` (not `src/app/`). Every file there is a screen, `_layout.tsx` files define navigators. Import `Link`, `router`, `useLocalSearchParams` from `expo-router`.
-- `src/domain/`: pure logic with tests in `__tests__/`. `src/db/`: SQLite schema, queries, backup. `src/ui/`: shared components (`kit.tsx`), theme, stores, map, photos, topo, share card, automatic backup. `src/i18n/`: `pl.json` and `en.json`.
+- `src/domain/`: pure logic with tests in `__tests__/`. `src/db/`: SQLite schema, queries split by topic behind `repo.ts`, backup. `src/ui/`: shared components (`kit.tsx`), theme, stores, map, photos, topo, share card, automatic backup. `src/i18n/`: `pl.json` and `en.json`.
 
 ## Rules
 
