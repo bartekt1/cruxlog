@@ -1,6 +1,7 @@
 import { Storage } from 'expo-sqlite/kv-store';
 import { create } from 'zustand';
 import type { GradeSystem } from '../domain/grades';
+import { resetBackupIndex } from './backupIndexStore';
 import { parseSettings, type Lang, type MapBase, type Settings, type ThemeMode } from '../domain/settings';
 
 const KEY = 'settings';
@@ -47,7 +48,10 @@ export const useSettings = create<SettingsState>((set, get) => {
     setMapBase: (mapBase) => save({ mapBase }),
     setLastBackupAt: (lastBackupAt) => save({ lastBackupAt }),
     // A new folder starts afresh: no earlier copy counts for it.
-    setBackupDir: (backupDir, backupDirName = '') => save({ backupDir, backupDirName: backupDir ? backupDirName : '', autoBackupAt: null, autoBackupTryAt: null, autoBackupError: '', photosSyncedAt: null }),
+    setBackupDir: (backupDir, backupDirName = '') => {
+      resetBackupIndex();
+      save({ backupDir, backupDirName: backupDir ? backupDirName : '', autoBackupAt: null, autoBackupTryAt: null, autoBackupError: '', photosSyncedAt: null });
+    },
     // A good photo sync also clears an earlier photo error.
     setPhotosSynced: (photosSyncedAt) => save(photosSyncedAt != null && get().autoBackupError.startsWith('photos:') ? { photosSyncedAt, autoBackupError: '' } : { photosSyncedAt }),
     setAutoBackupResult: (at, error) => save(error ? { autoBackupTryAt: at, autoBackupError: error } : { autoBackupAt: at, autoBackupTryAt: at, autoBackupError: '', lastBackupAt: at }),

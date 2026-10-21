@@ -6,29 +6,12 @@ export const BACKUP_INTERVAL_DAYS = 7;
 /** After a failed try the app waits this long before it tries again. */
 export const RETRY_AFTER_MS = 60 * 60 * 1000;
 
-const NAME = /^cruxlog-(\d{4})-(\d{2})-(\d{2})-(\d{2})(\d{2})\.json\.gz$/;
 const pad = (n: number) => String(n).padStart(2, '0');
 
-/** e.g. cruxlog-2026-10-20-0812.json.gz (local time, so names sort by date). */
+/** e.g. cruxlog-2026-10-20-0812.json.gz (local time). */
 export function backupFileName(at: number): string {
   const d = new Date(at);
   return `cruxlog-${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}.json.gz`;
-}
-
-/** When the copy was made, from its file name; null for files that are not ours. */
-export function backupTime(name: string): number | null {
-  const m = NAME.exec(name);
-  return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), Number(m[4]), Number(m[5])).getTime() : null;
-}
-
-/** Our backup files, newest first. Other files in the folder are not ours and never listed. */
-export function sortBackups(names: string[]): string[] {
-  return names.filter((n) => NAME.test(n)).sort().reverse();
-}
-
-/** The files to delete so that only the `keep` newest remain. */
-export function expiredBackups(names: string[], keep = BACKUP_KEEP): string[] {
-  return sortBackups(names).slice(keep);
 }
 
 /**

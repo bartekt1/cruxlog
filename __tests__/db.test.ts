@@ -9,7 +9,7 @@ import {
   addAscent, addGoal, addUserRoute, applyImport, cragUsage, deleteAscent, deleteCrag, deleteGoal, deleteArea, deleteRoute, deleteSector,
   getAscent, getCrag, getArea, getRoute, getSector, listAscents, listCragRoutes, listCrags, listGoals, listAreas, listSectorNames, addArea, areaIdFor,
   renameArea, renameSector, routeUsage, saveCrag, searchRoutes, sectorUsage, setGoalDone, updateAscent, updateRoute, type NewRoute, type RouteFilter,
-  listCragChoices, listPartners, applyCragPositions, addRouteGoal, routeGoalKinds, addPhotos, listPhotos, removePhotos, activePhotos, latestPhotoChange, setCragLocation, listRouteAscents, recentRoutes, listSectors, addSector, createRoute, importedUsage, removeImported, findRoutes, getGoal, updateGoal, routeGoals,
+  listCragChoices, listPartners, applyCragPositions, addRouteGoal, routeGoalKinds, addPhotos, listPhotos, listPhotosOf, removePhotos, activePhotos, latestPhotoChange, setCragLocation, listRouteAscents, recentRoutes, listSectors, addSector, createRoute, importedUsage, removeImported, findRoutes, getGoal, updateGoal, routeGoals,
 } from '../src/db/repo';
 import { descendantIds } from '../src/domain/areas';
 import { buildImportPlan } from '../src/domain/csvImport';
@@ -640,6 +640,24 @@ describe('photos', () => {
     expect((await activePhotos(db)).map((p) => p.id)).toEqual(['x2']);
     await deleteRoute(db, r);
     expect(await activePhotos(db)).toEqual([]);
+  });
+  it('keeps photos of a crag and of its sectors, and drops them with the crag or the sector', async () => {
+    const db = await freshDb();
+    const r = await addUserRoute(db, route());
+    const [r1] = await searchRoutes(db, 'Test Route 1');
+    const crag = r1.crag_id;
+    const sectorId = (await listSectors(db, crag))[0].id;
+    await addPhotos(db, 'crag', crag, [pic('c1'), pic('c2')]);
+    await addPhotos(db, 'sector', sectorId, [pic('s1')]);
+    expect((await listPhotos(db, 'crag', crag)).map((p) => p.id)).toEqual(['c1', 'c2']);
+    expect([...(await listPhotosOf(db, 'sector', [sectorId, 'none'])).keys()]).toEqual([sectorId]);
+    expect((await listPhotosOf(db, 'sector', [])).size).toBe(0);
+    expect((await activePhotos(db)).map((p) => p.id).sort()).toEqual(['c1', 'c2', 's1']);
+    await deleteSector(db, sectorId);
+    expect((await activePhotos(db)).map((p) => p.id).sort()).toEqual(['c1', 'c2']);
+    await deleteCrag(db, crag);
+    expect(await activePhotos(db)).toEqual([]);
+    expect(r).toBeTruthy();
   });
   it('is part of the backup and of the change tracking; an older backup has none', async () => {
     const db = await freshDb();

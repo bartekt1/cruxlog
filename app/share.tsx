@@ -12,6 +12,7 @@ import { formatDay, isoDate } from '../src/domain/dates';
 import { isLatLng } from '../src/domain/geo';
 import { routeGrade } from '../src/domain/grades';
 import { coordsLabel, shareMessage, type SharePlace } from '../src/domain/share';
+import { sameName } from '../src/domain/text';
 import { Button, Chip, ChipRow, EmptyState, Field, Label } from '../src/ui/kit';
 import { photoUri } from '../src/ui/photos';
 import { CARD_RATIO, ShareCard, type ShareCardData } from '../src/ui/ShareCard';
@@ -46,8 +47,20 @@ export default function ShareScreen() {
   const [photoIndex, setPhotoIndex] = useState(0);
   const [loadedPhoto, setLoadedPhoto] = useState<string | null>(null);
 
+  // Which photos can go on the card: those of the ascent; of the crag; for a route the photos of its wall, then of its crag.
   useEffect(() => {
-    if (kind === 'ascent') listPhotos(db, 'ascent', id).then((rows) => setPhotoIds(rows.map((p) => p.id)));
+    let live = true;
+    (async () => {
+      let rows: { id: string }[] = [];
+      if (kind === 'ascent') rows = await listPhotos(db, 'ascent', id);
+      else if (kind === 'crag') rows = await listPhotos(db, 'crag', id);
+      else if (kind === 'route') {
+        const r = await getRoute(db, id);
+        if (r) rows = [...(await listPhotos(db, 'sector', r.sector_id)), ...(await listPhotos(db, 'crag', r.crag_id))];
+      }
+      if (live) setPhotoIds(rows.map((p) => p.id));
+    })();
+    return () => { live = false; };
   }, [db, kind, id]);
 
   useEffect(() => {
@@ -57,7 +70,8 @@ export default function ShareScreen() {
       const placeOf = (c: CragDetail | null): SharePlace | null =>
         c && isLatLng(c.lat, c.lng) ? { lat: c.lat!, lng: c.lng!, approx: c.pos_source === 'approx' } : null;
       const pathOf = (c: CragDetail) => (c.region_id ? pathLabel(areas, c.region_id) : c.region ?? '');
-      const sectorLine = (r: RouteRow) => [r.crag_name, r.sector_name].filter(Boolean).join(' › ');
+      // A crag's only sector is often named like the crag; then the name is said once.
+      const sectorLine = (r: RouteRow) => (sameName(r.crag_name, r.sector_name) ? r.crag_name : [r.crag_name, r.sector_name].filter(Boolean).join(' › '));
       const routeFacts = (r: RouteRow) => [
         t(`types.${r.type}`), r.length_m != null ? t('route.length', { m: r.length_m }) : '', r.bolts != null ? t('route.bolts', { count: r.bolts }) : '',
       ].filter(Boolean);

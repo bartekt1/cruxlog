@@ -69,7 +69,7 @@ export default function AscentScreen() {
       {photoIds.length ? (
         <>
           <Label>{t('photos.title')}</Label>
-          <PhotoStrip ids={photoIds} onOpen={(i) => router.push({ pathname: '/photo', params: { ownerId: a.id, index: String(i) } })} />
+          <PhotoStrip ids={photoIds} onOpen={(i) => router.push({ pathname: '/photo', params: { ownerType: 'ascent', ownerId: a.id, index: String(i) } })} />
         </>
       ) : null}
 

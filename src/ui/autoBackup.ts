@@ -1,76 +1,89 @@
-import { Directory, File } from 'expo-file-system';
+import { Directory, File, FileMode } from 'expo-file-system';
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { exportBackup, importBackup, latestChange } from '../db/backup';
 import { activePhotos, latestPhotoChange } from '../db/repo';
-import { backupDue, backupFileName, backupTime, expiredBackups, packBackup, RETRY_AFTER_MS, sortBackups, unpackBackup } from '../domain/autoBackup';
-import { BACKUP_PHOTO_DIR, missingIds, photoFileName, photoIdFromFile } from '../domain/photos';
+import { backupDue, backupFileName, packBackup, RETRY_AFTER_MS, unpackBackup } from '../domain/autoBackup';
+import { addCopy, dropCopies, expiredCopies, mergeScan, readPhotoMarker, withPhotoMarker, type FolderCopy } from '../domain/backupIndex';
+import { BACKUP_PHOTO_DIR, missingIds, photoFileName } from '../domain/photos';
+import { getBackupIndex, setBackupIndex } from './backupIndexStore';
 import { photoFile } from './photos';
 import { useSettings } from './settingsStore';
 
-const filesIn = (dir: Directory): File[] => dir.list().filter((x): x is File => x instanceof File);
+// Google Drive gives files no readable names through the system folder access, only opaque addresses. So nothing here
+// looks for a file by name: the app keeps the addresses of what it wrote (backupIndex), and when it has to look through
+// a folder it recognises its own files by their content.
 
-/** The photos subfolder of the backup folder; created when `create` is set, else null if it is not there. */
-function photoFolder(dir: Directory, create: boolean): Directory | null {
-  const found = dir.list().find((x): x is Directory => x instanceof Directory && x.name === BACKUP_PHOTO_DIR);
-  return found ?? (create ? dir.createDirectory(BACKUP_PHOTO_DIR) : null);
+export type FolderBackup = FolderCopy;
+
+const isFile = (x: unknown): x is File => x instanceof File;
+const isDirectory = (x: unknown): x is Directory => x instanceof Directory;
+
+/** A file of ours? Reads it and checks it is a Cruxlog backup (gzipped or plain). */
+async function identifyCopy(file: File): Promise<FolderCopy | null> {
+  try {
+    const size = file.size ?? 0;
+    if (size < 3 || size > 60_000_000) return null;
+    const data = unpackBackup(new Uint8Array(await file.arrayBuffer())) as { app?: unknown; exportedAt?: unknown };
+    if (data?.app !== 'cruxlog') return null;
+    return { uri: file.uri, at: typeof data.exportedAt === 'number' ? data.exportedAt : file.modificationTime ?? 0, size };
+  } catch {
+    return null;
+  }
 }
 
-/** Copies the photos that are not yet in the folder's photo subfolder. Each photo is written once and never again. Returns how many were copied. */
-export async function syncPhotos(db: SQLiteDatabase, dirUri: string): Promise<number> {
+/** The photo id written inside a photo file, read from its first bytes; null for any other file. */
+function photoIdOf(file: File): string | null {
+  try {
+    const handle = file.open(FileMode.ReadOnly);
+    try { return readPhotoMarker(handle.readBytes(128)); } finally { handle.close(); }
+  } catch {
+    return null;
+  }
+}
+
+/** Looks through the folder once: which files are backups, which subfolder holds photos and which photo is where. */
+export async function scanFolder(dirUri: string): Promise<void> {
   const dir = new Directory(dirUri);
-  if (!dir.exists) throw new Error('The folder is no longer there. Choose it again.');
-  const wanted = (await activePhotos(db)).map((p) => p.id).filter((id) => photoFile(id).exists);
-  if (!wanted.length) return 0;
-  const target = photoFolder(dir, true)!;
-  const present = target.list().filter((x): x is File => x instanceof File).map((f) => photoIdFromFile(f.name)).filter((x): x is string => x != null);
-  const todo = missingIds(wanted, present);
-  for (const id of todo) {
-    const bytes = photoFile(id).bytesSync();
-    const file = target.createFile(photoFileName(id), 'image/jpeg');
-    try {
-      file.write(bytes);
-      if ((file.size ?? 0) < bytes.length) throw new Error('A photo was written only in part.');
-    } catch (e) {
-      try { file.delete(); } catch { /* nothing more to do */ }
-      throw e;
+  const copies: FolderCopy[] = [];
+  const photos: Record<string, string> = {};
+  let photoDir: string | null = null;
+  for (const item of dir.list()) {
+    if (isFile(item)) {
+      const copy = await identifyCopy(item);
+      if (copy) copies.push(copy);
+    } else if (isDirectory(item)) {
+      let found = 0;
+      for (const f of item.list().filter(isFile)) {
+        const id = photoIdOf(f);
+        if (id) { photos[id] = f.uri; found++; }
+      }
+      if (found && !photoDir) photoDir = item.uri;
     }
   }
-  return todo.length;
+  setBackupIndex(mergeScan(getBackupIndex(), { copies, photos, photoDir }));
 }
 
-/** Brings back the picture files that the database knows but this phone lacks, from the folder. Returns how many. */
-export async function restorePhotos(db: SQLiteDatabase, dirUri: string): Promise<number> {
-  const source = photoFolder(new Directory(dirUri), false);
-  if (!source) return 0;
-  const files = new Map(source.list().filter((x): x is File => x instanceof File).map((f) => [f.name, f]));
-  let restored = 0;
-  for (const p of await activePhotos(db)) {
-    const local = photoFile(p.id);
-    const from = files.get(photoFileName(p.id));
-    if (local.exists || !from) continue;
-    local.create({ overwrite: true });
-    local.write(new Uint8Array(await from.arrayBuffer()));
-    restored++;
-  }
-  return restored;
+/** Looks through the folder the first time (earlier copies and photos are then known). */
+async function ensureScanned(dirUri: string): Promise<void> {
+  if (getBackupIndex().scanned) return;
+  try { await scanFolder(dirUri); } catch { /* not important enough to stop a backup */ }
 }
 
-export type FolderBackup = { name: string; at: number; size: number; file: File };
-
-/** The copies in the folder, newest first. */
-export function listBackups(dirUri: string): FolderBackup[] {
-  const files = filesIn(new Directory(dirUri));
-  const byName = new Map(files.map((f) => [f.name, f]));
-  return sortBackups([...byName.keys()]).map((name) => ({ name, at: backupTime(name) ?? 0, size: byName.get(name)!.size ?? 0, file: byName.get(name)! }));
+/** The copies in the folder, newest first. An empty list is looked up in the folder once more. */
+export async function listBackups(dirUri: string): Promise<FolderBackup[]> {
+  const index = getBackupIndex();
+  if (!index.scanned || !index.copies.length) await scanFolder(dirUri);
+  return getBackupIndex().copies;
 }
 
 /** Writes a new copy into the folder, then deletes the oldest so only 5 stay. A half-written file is removed. */
 export async function writeBackup(db: SQLiteDatabase, dirUri: string): Promise<{ name: string; bytes: number; count: number }> {
   const dir = new Directory(dirUri);
   if (!dir.exists) throw new Error('The folder is no longer there. Choose it again.');
+  await ensureScanned(dirUri);
   const bytes = packBackup(JSON.stringify(await exportBackup(db)));
-  const name = backupFileName(Date.now());
-  for (const f of filesIn(dir)) if (f.name === name) f.delete(); // two copies in the same minute: the newer one replaces
+  const at = Date.now();
+  const name = backupFileName(at);
   const file = dir.createFile(name, 'application/gzip');
   try {
     file.write(bytes);
@@ -79,16 +92,74 @@ export async function writeBackup(db: SQLiteDatabase, dirUri: string): Promise<{
     try { file.delete(); } catch { /* nothing more to do */ }
     throw e;
   }
-  const all = filesIn(dir);
-  const old = new Set(expiredBackups(all.map((f) => f.name)));
-  for (const f of all) if (old.has(f.name)) { try { f.delete(); } catch { /* an old copy that stays is harmless */ } }
-  return { name, bytes: bytes.length, count: sortBackups(filesIn(dir).map((f) => f.name)).length };
+  let index = addCopy(getBackupIndex(), { uri: file.uri, at, size: bytes.length });
+  const deleted: string[] = [];
+  for (const old of expiredCopies(index)) {
+    try { new File(old.uri).delete(); deleted.push(old.uri); } catch { /* it stays in the list and is tried again next time */ }
+  }
+  index = dropCopies(index, deleted);
+  setBackupIndex(index);
+  return { name, bytes: bytes.length, count: index.copies.length };
 }
 
 /** Merges a copy from the folder into the database (newer entries win, nothing is deleted). */
-export async function restoreBackup(db: SQLiteDatabase, file: File): Promise<number> {
-  const data = unpackBackup(new Uint8Array(await file.arrayBuffer()));
-  return importBackup(db, data);
+export async function restoreBackup(db: SQLiteDatabase, copy: FolderBackup): Promise<number> {
+  return importBackup(db, unpackBackup(new Uint8Array(await new File(copy.uri).arrayBuffer())));
+}
+
+/**
+ * Copies the photos the folder does not have yet into its photo subfolder. Every photo is written once and never again
+ * (the file carries its id inside, see withPhotoMarker). Returns how many were copied.
+ */
+export async function syncPhotos(db: SQLiteDatabase, dirUri: string): Promise<number> {
+  const dir = new Directory(dirUri);
+  if (!dir.exists) throw new Error('The folder is no longer there. Choose it again.');
+  await ensureScanned(dirUri);
+  const wanted = (await activePhotos(db)).map((p) => p.id).filter((id) => photoFile(id).exists);
+  if (!wanted.length) return 0;
+  let index = getBackupIndex();
+  let target = index.photoDir ? new Directory(index.photoDir) : null;
+  if (!target || !target.exists) { // the subfolder is new, or was removed: nothing is known to be in it
+    target = dir.createDirectory(BACKUP_PHOTO_DIR);
+    index = { ...index, photoDir: target.uri, photos: {} };
+    setBackupIndex(index);
+  }
+  const todo = missingIds(wanted, Object.keys(index.photos));
+  for (const id of todo) {
+    const bytes = withPhotoMarker(photoFile(id).bytesSync(), id);
+    const file = target.createFile(photoFileName(id), 'image/jpeg');
+    try {
+      file.write(bytes);
+      if ((file.size ?? 0) < bytes.length) throw new Error('A photo was written only in part.');
+    } catch (e) {
+      try { file.delete(); } catch { /* nothing more to do */ }
+      throw e;
+    }
+    index = { ...index, photos: { ...index.photos, [id]: file.uri } };
+    setBackupIndex(index); // saved after each photo, so a break in the middle loses nothing
+  }
+  return todo.length;
+}
+
+/** Brings back the picture files that the database knows but this phone lacks, from the folder. Returns how many. */
+export async function restorePhotos(db: SQLiteDatabase, dirUri: string): Promise<number> {
+  const missing = (await activePhotos(db)).filter((p) => !photoFile(p.id).exists);
+  if (!missing.length) return 0;
+  if (missing.some((p) => !getBackupIndex().photos[p.id])) await scanFolder(dirUri);
+  const where = getBackupIndex().photos;
+  let restored = 0;
+  for (const p of missing) {
+    const uri = where[p.id];
+    if (!uri) continue;
+    try {
+      const local = photoFile(p.id);
+      const bytes = new Uint8Array(await new File(uri).arrayBuffer());
+      local.create({ overwrite: true });
+      local.write(bytes);
+      restored++;
+    } catch { /* this one stays missing; the rest are still restored */ }
+  }
+  return restored;
 }
 
 let running = false;

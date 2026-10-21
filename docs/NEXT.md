@@ -21,7 +21,7 @@ Status (2026-10-20): the app runs on the owner's phone (APK from GitHub Actions)
   - Remember what was sent: after the export ask "Did you upload the file?" and only then mark the ascents (new column on `ascent`, migration, bump `BACKUP_VERSION`, old backups still import). A small label "sent to theCrag <date>" on the ascent, undoable.
   - Not planned: password login, direct upload, importing from theCrag back.
   - Sources: help pages on theCrag (API, "import logbook", "export logbook"), read through search summaries only because thecrag.com was not reachable from the sandbox; verify on the real site.
-- **Photos**: stage 1 done (up to 5 photos per ascent, from the gallery, shrunk to 1600 px, no thumbnails; copied once each to `zdjecia/` in the backup folder). Stage 2: photos of a crag and of a wall (sector), bigger (about 2000 px). Stage 3: drawing topo lines on a wall photo, one photo and several routes, the biggest piece.
+- **Photos**: stage 1 done (up to 5 photos per ascent, from the gallery, shrunk to 1600 px, no thumbnails; copied once each to `zdjecia/` in the backup folder). Stage 2 done too: photos of a crag and of a wall (sector), up to 10 each, 2000 px, delete in the full-screen view, optional on the share card of a crag or route. Stage 3: drawing topo lines on a wall photo, one photo and several routes, the biggest piece.
 
 ## To do, in the owner's order
 

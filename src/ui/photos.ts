@@ -2,9 +2,9 @@ import { Directory, File, Paths } from 'expo-file-system';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import type { SQLiteDatabase } from 'expo-sqlite';
-import { activePhotos } from '../db/repo';
+import { activePhotos, addPhotos, type PhotoOwner } from '../db/repo';
 import { newId } from '../db/ids';
-import { orphanFiles, photoFileName, PHOTO_QUALITY, scaleTo } from '../domain/photos';
+import { orphanFiles, PHOTO_EDGE, PHOTO_MAX_EDGE, photoFileName, PHOTO_QUALITY, scaleTo, slotsLeft } from '../domain/photos';
 
 /** A photo that was chosen and shrunk but is not saved yet: its file is still in the cache. */
 export type PreparedPhoto = { id: string; uri: string; width: number; height: number; bytes: number };
@@ -33,8 +33,8 @@ export async function pickPhotos(limit: number): Promise<ImagePicker.ImagePicker
   return res.canceled ? [] : res.assets.slice(0, limit);
 }
 
-/** Shrinks a chosen picture (longer side 1600 px, JPEG) into a new cache file. The result carries no location data from the original. */
-export async function preparePhoto(asset: ImagePicker.ImagePickerAsset): Promise<PreparedPhoto> {
+/** Shrinks a chosen picture (longer side `maxEdge`, 1600 px for an ascent; JPEG) into a new cache file. The result carries no location data from the original. */
+export async function preparePhoto(asset: ImagePicker.ImagePickerAsset, maxEdge = PHOTO_MAX_EDGE): Promise<PreparedPhoto> {
   let width = asset.width;
   let height = asset.height;
   if (!(width > 0 && height > 0)) { // the system did not say how big it is: load it once to find out
@@ -42,10 +42,32 @@ export async function preparePhoto(asset: ImagePicker.ImagePickerAsset): Promise
     ({ width, height } = probe);
   }
   let context = ImageManipulator.manipulate(asset.uri);
-  const size = scaleTo(width, height);
+  const size = scaleTo(width, height, maxEdge);
   if (size) context = context.resize(size);
   const out = await (await context.renderAsync()).saveAsync({ format: SaveFormat.JPEG, compress: PHOTO_QUALITY });
   return { id: newId(), uri: out.uri, width: out.width, height: out.height, bytes: new File(out.uri).size ?? 0 };
+}
+
+/**
+ * For a crag or a wall (sector), which exist already: picks photos, shrinks them, stores them and records them in one go.
+ * Returns how many were added; throws only when none could be.
+ */
+export async function addPhotosFromGallery(db: SQLiteDatabase, owner: PhotoOwner, ownerId: string, have: number): Promise<number> {
+  const assets = await pickPhotos(slotsLeft(have, owner));
+  const done: PreparedPhoto[] = [];
+  let failure: unknown = null;
+  for (const asset of assets) {
+    try {
+      const p = await preparePhoto(asset, PHOTO_EDGE[owner]);
+      storePhoto(p);
+      done.push(p);
+    } catch (e) {
+      failure = e;
+    }
+  }
+  await addPhotos(db, owner, ownerId, done.map((p) => ({ id: p.id, width: p.width, height: p.height, bytes: p.bytes })));
+  if (!done.length && failure) throw failure;
+  return done.length;
 }
 
 /** Moves a prepared photo from the cache into the photos folder. */

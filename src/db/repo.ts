@@ -815,7 +815,7 @@ export async function applyImport(db: SQLiteDatabase, plan: ImportPlan): Promise
 
 // ---- Photos -------------------------------------------------------------------------------------------------------
 
-export type PhotoOwner = 'ascent';
+export type PhotoOwner = 'ascent' | 'crag' | 'sector';
 export type PhotoRow = { id: string; owner_type: PhotoOwner; owner_id: string; width: number; height: number; bytes: number; position: number };
 
 /** The photos of one ascent, in the order they were added. */
@@ -853,8 +853,23 @@ export async function removePhotos(db: SQLiteDatabase, ids: string[]): Promise<v
 export async function activePhotos(db: SQLiteDatabase): Promise<PhotoRow[]> {
   return db.getAllAsync<PhotoRow>(
     `SELECT p.id, p.owner_type, p.owner_id, p.width, p.height, p.bytes, p.position FROM photo p
-     JOIN ascent a ON a.id = p.owner_id AND p.owner_type = 'ascent'
-     WHERE p.deleted_at IS NULL AND a.deleted_at IS NULL ORDER BY p.created_at`);
+     WHERE p.deleted_at IS NULL AND (
+       (p.owner_type = 'ascent' AND EXISTS (SELECT 1 FROM ascent a WHERE a.id = p.owner_id AND a.deleted_at IS NULL)) OR
+       (p.owner_type = 'crag' AND EXISTS (SELECT 1 FROM crag c WHERE c.id = p.owner_id AND c.deleted_at IS NULL)) OR
+       (p.owner_type = 'sector' AND EXISTS (SELECT 1 FROM sector s WHERE s.id = p.owner_id AND s.deleted_at IS NULL)))
+     ORDER BY p.created_at`);
+}
+
+/** The photos of several owners of one kind (e.g. all sectors of a crag) in one go, in each owner's order. */
+export async function listPhotosOf(db: SQLiteDatabase, ownerType: PhotoOwner, ownerIds: string[]): Promise<Map<string, PhotoRow[]>> {
+  const byOwner = new Map<string, PhotoRow[]>();
+  if (!ownerIds.length) return byOwner;
+  const rows = await db.getAllAsync<PhotoRow>(
+    `SELECT id, owner_type, owner_id, width, height, bytes, position FROM photo
+     WHERE owner_type = ? AND deleted_at IS NULL AND owner_id IN (${ownerIds.map(() => '?').join(',')}) ORDER BY position, created_at`,
+    [ownerType, ...ownerIds]);
+  for (const r of rows) byOwner.set(r.owner_id, [...(byOwner.get(r.owner_id) ?? []), r]);
+  return byOwner;
 }
 
 /** When photos last changed (added, removed); null when there never were any. */

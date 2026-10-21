@@ -8,7 +8,7 @@ import { ActivityIndicator, Alert, ScrollView } from 'react-native';
 import { Text } from '../src/ui/Text';
 import { exportBackup, importBackup } from '../src/db/backup';
 import { devicePath, folderKind } from '../src/domain/autoBackup';
-import { listBackups, restorePhotos, restoreBackup, syncPhotos, writeBackup, type FolderBackup } from '../src/ui/autoBackup';
+import { listBackups, restorePhotos, restoreBackup, scanFolder, syncPhotos, writeBackup, type FolderBackup } from '../src/ui/autoBackup';
 import { formatBytes } from '../src/domain/photos';
 import { pickBackupFolder, testBackupFolder } from '../src/ui/backupFolder';
 import { activePhotos, applyCragPositions, applyImport, importedUsage, listAscents, removeImported } from '../src/db/repo';
@@ -83,6 +83,7 @@ export default function Settings() {
       throw new UserError(t('settings.folderFailed', { message: (e as Error).message }));
     }
     s.setBackupDir(dir.uri, dir.name);
+    try { await scanFolder(dir.uri); } catch { /* the folder is looked through again when needed */ } // so copies and photos already there are recognised
     return t('settings.folderOk', { name: dir.name });
   });
 
@@ -112,14 +113,16 @@ export default function Settings() {
     }
   });
 
-  const showCopies = () => {
-    try { setCopies(copies ? null : listBackups(s.backupDir!)); } catch (e) { Alert.alert(t('settings.problem'), (e as Error).message); }
-  };
+  // The list is looked up in the folder (a short wait on Google Drive), so it shows a spinner.
+  const showCopies = () => run(async () => {
+    if (copies) { setCopies(null); return; }
+    setCopies(await listBackups(s.backupDir!));
+  });
 
   const doRestore = (b: FolderBackup) => run(async () => {
     const ok = await ask(t('settings.restoreTitle'), t('settings.restoreQuestion', { when: when(b.at) }), t('settings.restoreYes'), t('common.cancel'));
     if (!ok) return;
-    const records = await restoreBackup(db, b.file);
+    const records = await restoreBackup(db, b);
     const photos = await restorePhotos(db, s.backupDir!);
     return t('settings.importDone', { count: records }) + (photos ? `\n\n${t('photos.restored', { count: photos })}` : '');
   });
@@ -261,12 +264,12 @@ export default function Settings() {
           <Button label={copies ? t('settings.hideCopies') : t('settings.showCopies')} onPress={showCopies} variant="plain" disabled={busy} />
           {copies ? (
             copies.length ? copies.map((b) => (
-              <Text key={b.name} style={{ color: th.ink, marginTop: 6 }} accessibilityLabel={`${when(b.at)}, ${Math.max(1, Math.round(b.size / 1024))} KB`}>
+              <Text key={b.uri} style={{ color: th.ink, marginTop: 6 }} accessibilityLabel={`${when(b.at)}, ${Math.max(1, Math.round(b.size / 1024))} KB`}>
                 {when(b.at)} · {Math.max(1, Math.round(b.size / 1024))} KB
               </Text>
             )) : <Text style={{ color: th.muted, marginTop: 6 }}>{t('settings.noCopies')}</Text>
           ) : null}
-          {copies?.map((b) => <LinkButton key={`r-${b.name}`} label={t('settings.restoreOne', { when: when(b.at) })} onPress={() => doRestore(b)} />)}
+          {copies?.map((b) => <LinkButton key={`r-${b.uri}`} label={t('settings.restoreOne', { when: when(b.at) })} onPress={() => doRestore(b)} />)}
           <Button label={t('settings.changeFolder')} onPress={doPickFolder} variant="plain" disabled={busy} />
           <LinkButton label={t('settings.autoOff')} onPress={() => { s.setBackupDir(null); setCopies(null); }} />
         </>

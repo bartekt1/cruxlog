@@ -198,6 +198,14 @@ Severity: **H** blocks a task or loses/corrupts data, **M** slows a task or conf
 |---|---|---|---|
 | F1 | No way to keep a picture of a climb | M | Up to 5 photos per ascent from the gallery (the system picker, no permission), shrunk to 1600 px; strip and full-screen view on the ascent; a small camera with the count in the Journal and the route history (no thumbnails); optional photo on the share card, off by default; copied once each into the backup folder and restored with it |
 
+## Round 17 (photos of crags and walls; sharing with a photo)
+
+| # | Issue | Sev | Status |
+|---|---|---|---|
+| F2 | No place for photos of a crag or a wall | M | Crag screen: "Photos of the crag" (up to 10, 2000 px) and a camera icon on each sector with a strip of its photos; full-screen view with delete; photos copied and restored with the backup |
+| F3 | The photo on the share card was a thin strip | M | With a photo the card puts it first: it fills the upper half, the grade and style sit on it like a label, the text is below |
+| F4 | Backups on Google Drive: a new photo folder and all photos again on every copy; old copies never removed | H | Drive gives no readable file names, so the app now remembers the addresses of what it wrote, recognises its own files by their content (backups) and by an id written in the photo (photos), and removes old copies by address |
+
 ## Open items
 
 1. Device checks: localized dates on Hermes, calendar picker, keyboard behavior, large font sizes, TalkBack labels.

@@ -115,7 +115,7 @@
   },
   "photos": {
     "title": "Photos", "add": "Add photos", "usage": "Photos: {{count}} of {{max}}", "preparing": "Preparing the photos…",
-    "removeA11y": "Remove photo", "openA11y": "Open photo {{n}}", "missing": "Photo not available", "viewerTitle": "Photo {{n}} of {{total}}",
+    "cragTitle": "Photos of the crag", "addWall": "Add photos of the wall: {{sector}}", "delete": "Delete photo", "deleteTitle": "Delete this photo?", "deleteQuestion": "The photo disappears from this phone. The copy on Drive stays.", "removeA11y": "Remove photo", "openA11y": "Open photo {{n}}", "missing": "Photo not available", "viewerTitle": "Photo {{n}} of {{total}}",
     "failed": "Could not add the photos: {{message}}", "stats": "Photos: {{count}} ({{size}})", "restored": "Photos restored: {{count}}.",
     "backupFailed": "The database copy is saved, but the photos could not be copied: {{message}}",
     "useOnCard": "Include a photo", "cardHint": "Photos often show other people. A photo is sent only when you turn it on here."

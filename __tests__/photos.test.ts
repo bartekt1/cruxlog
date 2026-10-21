@@ -1,4 +1,4 @@
-import { formatBytes, missingIds, MAX_PHOTOS, orphanFiles, photoFileName, photoIdFromFile, scaleTo, slotsLeft } from '../src/domain/photos';
+import { formatBytes, missingIds, MAX_PHOTOS, orphanFiles, PHOTO_EDGE, PHOTO_LIMIT, photoFileName, photoIdFromFile, scaleTo, slotsLeft } from '../src/domain/photos';
 
 describe('photos', () => {
   it('counts the slots left of five', () => {
@@ -6,6 +6,14 @@ describe('photos', () => {
     expect(slotsLeft(0)).toBe(5);
     expect(slotsLeft(3)).toBe(2);
     expect(slotsLeft(7)).toBe(0);
+  });
+  it('allows more and bigger photos for a crag or a wall than for an ascent', () => {
+    expect(PHOTO_LIMIT).toEqual({ ascent: 5, crag: 10, sector: 10 });
+    expect(PHOTO_EDGE).toEqual({ ascent: 1600, crag: 2000, sector: 2000 });
+    expect(slotsLeft(4, 'crag')).toBe(6);
+    expect(slotsLeft(10, 'sector')).toBe(0);
+    expect(scaleTo(4000, 3000, PHOTO_EDGE.sector)).toEqual({ width: 2000 });
+    expect(scaleTo(1800, 1200, PHOTO_EDGE.sector)).toBeNull();
   });
   it('scales the longer side to 1600 and never enlarges', () => {
     expect(scaleTo(4000, 3000)).toEqual({ width: 1600 });

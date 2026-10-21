@@ -1,9 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image, Pressable, ScrollView, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { MAX_PHOTOS } from '../domain/photos';
+import { MAX_PHOTOS, PHOTO_LIMIT, type PhotoOwnerType } from '../domain/photos';
 import { F } from './fonts';
-import { Button } from './kit';
+import { Button, LinkButton } from './kit';
 import { photoUri, type PreparedPhoto } from './photos';
 import { Text } from './Text';
 import { useTheme } from './theme';
@@ -43,6 +43,21 @@ export function PhotoStrip({ ids, onOpen }: { ids: string[]; onOpen: (index: num
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 4 }}>
       {ids.map((id, i) => <Tile key={id} uri={photoUri(id)} onPress={() => onOpen(i)} label={t('photos.openA11y', { n: i + 1 })} />)}
     </ScrollView>
+  );
+}
+
+/** The photos of a crag or a wall (sector): a row of tiles and the button to add more; they are saved at once. */
+export function PhotoSection({ owner, ids, busy, onAdd, onOpen }: {
+  owner: PhotoOwnerType; ids: string[]; busy: boolean; onAdd: () => void; onOpen: (index: number) => void;
+}) {
+  const th = useTheme();
+  const { t } = useTranslation();
+  return (
+    <View>
+      <PhotoStrip ids={ids} onOpen={onOpen} />
+      {busy ? <Text style={{ color: th.muted, fontSize: 13 }}>{t('photos.preparing')}</Text> : null}
+      {ids.length < PHOTO_LIMIT[owner] && !busy ? <LinkButton label={t('photos.add')} onPress={onAdd} /> : null}
+    </View>
   );
 }
 

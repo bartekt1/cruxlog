@@ -115,7 +115,7 @@
   },
   "photos": {
     "title": "Zdjęcia", "add": "Dodaj zdjęcia", "usage": "Zdjęcia: {{count}} z {{max}}", "preparing": "Przygotowuję zdjęcia…",
-    "removeA11y": "Usuń zdjęcie", "openA11y": "Otwórz zdjęcie {{n}}", "missing": "Zdjęcie niedostępne", "viewerTitle": "Zdjęcie {{n}} z {{total}}",
+    "cragTitle": "Zdjęcia skały", "addWall": "Dodaj zdjęcia ściany: {{sector}}", "delete": "Usuń zdjęcie", "deleteTitle": "Usunąć zdjęcie?", "deleteQuestion": "Zdjęcie zniknie z tego telefonu. Kopia na Dysku zostaje.", "removeA11y": "Usuń zdjęcie", "openA11y": "Otwórz zdjęcie {{n}}", "missing": "Zdjęcie niedostępne", "viewerTitle": "Zdjęcie {{n}} z {{total}}",
     "failed": "Nie udało się dodać zdjęć: {{message}}", "stats": "Zdjęcia: {{count}} ({{size}})", "restored": "Przywrócone zdjęcia: {{count}}.",
     "backupFailed": "Kopia bazy zapisana, ale zdjęć nie udało się skopiować: {{message}}",
     "useOnCard": "Dołącz zdjęcie", "cardHint": "Na zdjęciach często są inni ludzie. Zdjęcie wysyłasz tylko wtedy, gdy je tu włączysz."
