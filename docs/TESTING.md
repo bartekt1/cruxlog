@@ -124,6 +124,16 @@ Write down the result of every step (OK / problem). Report problems with: step n
 7. A crag without a position: no switch, a note that there is no map to include, and no coordinates on the card or in the text.
 8. Your own position is never in the card or the text.
 
+## 6a. Automatic backup to a folder (Google Drive)
+1. Settings › Automatic backup › "Choose folder", pick a folder on Google Drive. Expected: after a moment "Writing to the folder … works"; the label says "Folder: on Google Drive". Nothing is left in the folder (the test file is removed at once).
+2. Close the app completely and open it again. Expected: Settings still shows the folder.
+3. "Back up now". Expected: a message with the file name (`cruxlog-YYYY-MM-DD-HHMM.json.gz`), its size (a few hundred KB) and the number of copies; the file is in the Drive folder (give Drive a moment to show it). The status line shows the time.
+4. "Show copies in the folder". Expected: the list with date and size. Tap "Restore the copy from …": a question, then "Imported records: N"; nothing is deleted.
+5. Make 7 copies (change something small between them, tap "Back up now" each time). Expected: only the 5 newest files remain in the folder.
+6. Automatic: after 7 days and with something changed since the last copy, open the app. Expected: within a few seconds the status line shows a new "Last automatic copy"; with nothing changed no copy is made. (To try sooner: change the phone date a week ahead, then back.)
+7. Remove the folder on Drive (or its access), tap "Back up now". Expected: a clear error; the status line is red and says the last try failed; the Journal reminder appears as before. Choosing a folder again fixes it. "Turn off automatic backup" forgets the folder.
+8. Manual "Export backup" and "Import backup" still work as before.
+
 ## 4. Crags and goals
 1. Crags tab. Expected: "Test Crag" with the number of routes. Tap it. Expected: the crag screen with routes grouped by sector; "Test Route 1" shows "✓ sends: 1" (rust) or "tried: N". Tap the route. Expected: the route screen (§2c).
 1a. Editing (your own and imported crags, sectors, routes and regions; re-importing a file undoes changes to imported ones, see §5b):

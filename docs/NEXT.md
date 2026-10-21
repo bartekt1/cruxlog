@@ -29,7 +29,7 @@ Status (2026-10-20): the app runs on the owner's phone (APK from GitHub Actions)
 2. **Multipitch in the ascent form.** Pitch list, who led each pitch (self, partner, swing), and the style per pitch. The data model already has `pitch` and `ascent_pitch`.
 3. **Crags without a position.** 40 crags have none and 288 have an approximate one. These are improved on site with "Improve". The OSM matching scripts are kept outside the repo, so a new run can be repeated on request.
 4. **Device checks.** TalkBack, the largest font size, dark mode on every screen, the calendar picker and the keyboard in forms (see `docs/TESTING.md` §8).
-5. **Automatic backup**, e.g. to Google Drive. Today the backup is manual with a reminder, and the data lives only on the phone.
+5. ~~Automatic backup~~ Done (2026-10): a folder chosen once (Google Drive through the system folder picker); a gzipped copy when the app opens and 7 days passed with changes, the 5 latest kept, restore from the list in Settings. Photos will add a `zdjecia/` subfolder with only the missing files (each photo is sent once).
 
 ## Later, before a store release
 

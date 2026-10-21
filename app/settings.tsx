@@ -7,7 +7,8 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, ScrollView } from 'react-native';
 import { Text } from '../src/ui/Text';
 import { exportBackup, importBackup } from '../src/db/backup';
-import { Directory } from 'expo-file-system';
+import { devicePath, folderKind } from '../src/domain/autoBackup';
+import { listBackups, restoreBackup, writeBackup, type FolderBackup } from '../src/ui/autoBackup';
 import { pickBackupFolder, testBackupFolder } from '../src/ui/backupFolder';
 import { applyCragPositions, applyImport, importedUsage, listAscents, removeImported } from '../src/db/repo';
 import { backupStatus } from '../src/domain/history';
@@ -18,7 +19,7 @@ import { theCragRows } from '../src/domain/thecragCsv';
 import { ROUTE_SYSTEMS } from '../src/domain/grades';
 import type { Lang } from '../src/domain/settings';
 import i18n from '../src/i18n';
-import { Button, Chip, ChipRow, Label } from '../src/ui/kit';
+import { Button, Chip, ChipRow, Label, LinkButton } from '../src/ui/kit';
 import { useSettings } from '../src/ui/settingsStore';
 import { useTheme } from '../src/ui/theme';
 
@@ -39,6 +40,7 @@ export default function Settings() {
   const s = useSettings();
   const [busy, setBusy] = useState(false);
   const [hasData, setHasData] = useState(false);
+  const [copies, setCopies] = useState<FolderBackup[] | null>(null); // the copies in the folder, once "show" was tapped
   useEffect(() => { listAscents(db).then((a) => setHasData(a.length > 0)); }, [db]);
   const backup = backupStatus(s.lastBackupAt, Date.now(), hasData);
 
@@ -79,6 +81,34 @@ export default function Settings() {
     }
     s.setBackupDir(dir.uri, dir.name);
     return t('settings.folderOk', { name: dir.name });
+  });
+
+  const when = (at: number) => new Date(at).toLocaleString(i18n.language, { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const folderText = !s.backupDir ? t('settings.folderNone')
+    : folderKind(s.backupDir) === 'drive' ? t('settings.folderDrive')
+    : folderKind(s.backupDir) === 'device' ? t('settings.folderDevice', { path: devicePath(s.backupDir) || s.backupDirName })
+    : t('settings.folderIs', { name: s.backupDirName || s.backupDir });
+
+  const doBackupNow = () => run(async () => {
+    try {
+      const r = await writeBackup(db, s.backupDir!);
+      s.setAutoBackupResult(Date.now(), '');
+      setCopies(null);
+      return t('settings.backupNowDone', { name: r.name, kb: Math.max(1, Math.round(r.bytes / 1024)), count: r.count });
+    } catch (e) {
+      s.setAutoBackupResult(Date.now(), (e as Error).message);
+      throw e;
+    }
+  });
+
+  const showCopies = () => {
+    try { setCopies(copies ? null : listBackups(s.backupDir!)); } catch (e) { Alert.alert(t('settings.problem'), (e as Error).message); }
+  };
+
+  const doRestore = (b: FolderBackup) => run(async () => {
+    const ok = await ask(t('settings.restoreTitle'), t('settings.restoreQuestion', { when: when(b.at) }), t('settings.restoreYes'), t('common.cancel'));
+    if (!ok) return;
+    return t('settings.importDone', { count: await restoreBackup(db, b.file) });
   });
 
   const doImport = () => run(async () => {
@@ -206,8 +236,29 @@ export default function Settings() {
       </Text>
       <Label>{t('settings.autoBackup')}</Label>
       <Text style={{ color: th.muted }}>{t('settings.autoBackupHelp')}</Text>
-      <Text style={{ color: th.ink, marginTop: 8, fontWeight: '600' }}>{s.backupDir ? t('settings.folderIs', { name: s.backupDirName || s.backupDir }) : t('settings.folderNone')}</Text>
-      <Button label={s.backupDir ? t('settings.changeFolder') : t('settings.pickFolder')} onPress={doPickFolder} variant="plain" disabled={busy} />
+      <Text style={{ color: th.ink, marginTop: 8, fontWeight: '600' }}>{folderText}</Text>
+      {s.backupDir ? (
+        <>
+          <Text style={{ color: s.autoBackupError ? th.warn : th.muted, marginTop: 4 }}>
+            {s.autoBackupError ? t('settings.autoFailed', { message: s.autoBackupError })
+              : s.autoBackupAt ? t('settings.autoLast', { when: when(s.autoBackupAt) }) : t('settings.autoNever')}
+          </Text>
+          <Button label={t('settings.backupNow')} onPress={doBackupNow} disabled={busy} />
+          <Button label={copies ? t('settings.hideCopies') : t('settings.showCopies')} onPress={showCopies} variant="plain" disabled={busy} />
+          {copies ? (
+            copies.length ? copies.map((b) => (
+              <Text key={b.name} style={{ color: th.ink, marginTop: 6 }} accessibilityLabel={`${when(b.at)}, ${Math.max(1, Math.round(b.size / 1024))} KB`}>
+                {when(b.at)} · {Math.max(1, Math.round(b.size / 1024))} KB
+              </Text>
+            )) : <Text style={{ color: th.muted, marginTop: 6 }}>{t('settings.noCopies')}</Text>
+          ) : null}
+          {copies?.map((b) => <LinkButton key={`r-${b.name}`} label={t('settings.restoreOne', { when: when(b.at) })} onPress={() => doRestore(b)} />)}
+          <Button label={t('settings.changeFolder')} onPress={doPickFolder} variant="plain" disabled={busy} />
+          <LinkButton label={t('settings.autoOff')} onPress={() => { s.setBackupDir(null); setCopies(null); }} />
+        </>
+      ) : (
+        <Button label={t('settings.pickFolder')} onPress={doPickFolder} variant="plain" disabled={busy} />
+      )}
       <Button label={t('settings.export')} onPress={doExport} variant="plain" disabled={busy} />
       <Button label={t('settings.import')} onPress={doImport} variant="plain" disabled={busy} />
       {busy ? <ActivityIndicator color={th.accent} style={{ marginTop: 16 }} /> : null}

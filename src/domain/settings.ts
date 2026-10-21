@@ -7,9 +7,11 @@ export type Settings = {
   language: Lang | null; routeSystem: GradeSystem; themeMode: ThemeMode; mapBase: MapBase; lastBackupAt: number | null;
   /** The folder (Android tree URI) automatic backups go to, and its name for display; null = not chosen. */
   backupDir: string | null; backupDirName: string;
+  /** The last good automatic copy, the last try (good or not) and why it failed ('' when it did not). */
+  autoBackupAt: number | null; autoBackupTryAt: number | null; autoBackupError: string;
 };
 
-export const DEFAULT_SETTINGS: Settings = { language: null, routeSystem: 'kr', themeMode: 'system', mapBase: 'standard', lastBackupAt: null, backupDir: null, backupDirName: '' };
+export const DEFAULT_SETTINGS: Settings = { language: null, routeSystem: 'kr', themeMode: 'system', mapBase: 'standard', lastBackupAt: null, backupDir: null, backupDirName: '', autoBackupAt: null, autoBackupTryAt: null, autoBackupError: '' };
 
 /** Turns stored JSON (possibly old, partial or corrupt) into valid settings. */
 export function parseSettings(raw: string | null): Settings {
@@ -29,6 +31,9 @@ export function parseSettings(raw: string | null): Settings {
     lastBackupAt: typeof data.lastBackupAt === 'number' && Number.isFinite(data.lastBackupAt) ? data.lastBackupAt : null,
     backupDir: typeof data.backupDir === 'string' && data.backupDir ? data.backupDir : null,
     backupDirName: typeof data.backupDirName === 'string' ? data.backupDirName : '',
+    autoBackupAt: typeof data.autoBackupAt === 'number' && Number.isFinite(data.autoBackupAt) ? data.autoBackupAt : null,
+    autoBackupTryAt: typeof data.autoBackupTryAt === 'number' && Number.isFinite(data.autoBackupTryAt) ? data.autoBackupTryAt : null,
+    autoBackupError: typeof data.autoBackupError === 'string' ? data.autoBackupError : '',
   };
 }
 

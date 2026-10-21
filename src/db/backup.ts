@@ -6,6 +6,13 @@ import { HIDE_BOULDERS } from './migrate';
 export const BACKUP_VERSION = 4; // 4: crag.pos_source
 const TABLES = ['region', 'crag', 'sector', 'route', 'pitch', 'partner', 'ascent', 'ascent_pitch', 'goal'] as const;
 
+/** When anything in the backed-up tables last changed (also deletions); null for an empty database. */
+export async function latestChange(db: SQLiteDatabase): Promise<number | null> {
+  const parts = TABLES.map((t) => `SELECT MAX(updated_at) AS m FROM ${t}`).join(' UNION ALL ');
+  const row = await db.getFirstAsync<{ m: number | null }>(`SELECT MAX(m) AS m FROM (${parts})`);
+  return row?.m ?? null;
+}
+
 export type Backup = { app: 'cruxlog'; version: number; exportedAt: number; tables: Record<string, Record<string, unknown>[]> };
 
 export async function exportBackup(db: SQLiteDatabase): Promise<Backup> {

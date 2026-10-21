@@ -2,7 +2,8 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { SQLiteDatabase } from 'expo-sqlite';
-import { BACKUP_VERSION, exportBackup, importBackup } from '../src/db/backup';
+import { BACKUP_VERSION, exportBackup, importBackup, latestChange } from '../src/db/backup';
+import { packBackup, unpackBackup } from '../src/domain/autoBackup';
 import { MIGRATIONS, migrate } from '../src/db/migrate';
 import {
   addAscent, addGoal, addUserRoute, applyImport, cragUsage, deleteAscent, deleteCrag, deleteGoal, deleteArea, deleteRoute, deleteSector,
@@ -604,6 +605,30 @@ describe('crag positions for the map', () => {
     await migrate(db);
     expect(await getCrag(db, 'a')).toMatchObject({ name: 'A', lat: 50, pos_source: 'user' });
     expect(await getCrag(db, 'b')).toMatchObject({ name: 'B', lat: null, pos_source: '' });
+  });
+});
+
+describe('automatic backup support', () => {
+  it('knows when the data last changed', async () => {
+    const db = await freshDb();
+    expect(await latestChange(db)).toBeNull();
+    const r = await addUserRoute(db, route());
+    const a = await addAscent(db, ascent(r));
+    const first = await latestChange(db);
+    expect(first).not.toBeNull();
+    await new Promise((res) => setTimeout(res, 5));
+    await deleteAscent(db, a); // a deletion counts as a change too
+    expect(await latestChange(db)).toBeGreaterThan(first!);
+  });
+  it('a gzipped copy restores into an empty database', async () => {
+    const db = await freshDb();
+    const r = await addUserRoute(db, route());
+    await addAscent(db, ascent(r));
+    const bytes = packBackup(JSON.stringify(await exportBackup(db)));
+    const other = await freshDb();
+    expect(await importBackup(other, unpackBackup(bytes))).toBeGreaterThan(0);
+    expect(await count(other, 'ascent')).toBe(1);
+    expect(await count(other, 'route')).toBe(1);
   });
 });
 

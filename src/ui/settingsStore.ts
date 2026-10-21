@@ -12,6 +12,8 @@ type SettingsState = Settings & {
   setMapBase: (m: MapBase) => void;
   setLastBackupAt: (t: number) => void;
   setBackupDir: (uri: string | null, name?: string) => void;
+  /** Records a try: ok = it worked (error ''), else the reason. */
+  setAutoBackupResult: (at: number, error: string) => void;
 };
 
 function load(): Settings {
@@ -26,9 +28,11 @@ function load(): Settings {
 export const useSettings = create<SettingsState>((set, get) => {
   const save = (patch: Partial<Settings>) => {
     set(patch);
-    const { language, routeSystem, themeMode, mapBase, lastBackupAt, backupDir, backupDirName } = get();
+    const { language, routeSystem, themeMode, mapBase, lastBackupAt, backupDir, backupDirName, autoBackupAt, autoBackupTryAt, autoBackupError } = get();
     try {
-      Storage.setItemSync(KEY, JSON.stringify({ language, routeSystem, themeMode, mapBase, lastBackupAt, backupDir, backupDirName }));
+      Storage.setItemSync(KEY, JSON.stringify({
+        language, routeSystem, themeMode, mapBase, lastBackupAt, backupDir, backupDirName, autoBackupAt, autoBackupTryAt, autoBackupError,
+      }));
     } catch {
       // Keep the in-memory value; it will be saved on the next change.
     }
@@ -40,6 +44,8 @@ export const useSettings = create<SettingsState>((set, get) => {
     setThemeMode: (themeMode) => save({ themeMode }),
     setMapBase: (mapBase) => save({ mapBase }),
     setLastBackupAt: (lastBackupAt) => save({ lastBackupAt }),
-    setBackupDir: (backupDir, backupDirName = '') => save({ backupDir, backupDirName: backupDir ? backupDirName : '' }),
+    // A new folder starts afresh: no earlier copy counts for it.
+    setBackupDir: (backupDir, backupDirName = '') => save({ backupDir, backupDirName: backupDir ? backupDirName : '', autoBackupAt: null, autoBackupTryAt: null, autoBackupError: '' }),
+    setAutoBackupResult: (at, error) => save(error ? { autoBackupTryAt: at, autoBackupError: error } : { autoBackupAt: at, autoBackupTryAt: at, autoBackupError: '', lastBackupAt: at }),
   };
 });

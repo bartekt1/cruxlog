@@ -5,6 +5,7 @@ import { useFonts } from 'expo-font';
 import { StatusBar } from 'expo-status-bar';
 import { useTranslation } from 'react-i18next';
 import { migrate } from '../src/db/migrate';
+import { AutoBackup } from '../src/ui/AutoBackup';
 import { F, FONT_ASSETS } from '../src/ui/fonts';
 import { useIsDark, useTheme } from '../src/ui/theme';
 
@@ -18,6 +19,7 @@ export default function RootLayout() {
   return (
     <SQLiteProvider databaseName="cruxlog.db" onInit={migrate}>
       <StatusBar style={dark ? 'light' : 'dark'} />
+      <AutoBackup />
       <Stack screenOptions={{
         headerStyle: { backgroundColor: th.bg }, headerShadowVisible: false, headerTintColor: th.ink,
         headerTitleStyle: { fontFamily: F.display, fontSize: 24, color: th.ink }, contentStyle: { backgroundColor: th.bg },

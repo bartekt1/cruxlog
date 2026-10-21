@@ -186,6 +186,12 @@ Severity: **H** blocks a task or loses/corrupts data, **M** slows a task or conf
 |---|---|---|---|
 | H1 | No way to show an ascent or invite a friend | M | Share screen: a card in the guidebook look and a text with a map link, from the ascent, route and crag screens. The crag's position is on by default (a switch turns it off); an approximate one is labelled; the user's own position is never sent |
 
+## Round 15 (automatic backup)
+
+| # | Issue | Sev | Status |
+|---|---|---|---|
+| B1 | The backup was manual; the data lives only on the phone | H | A folder is chosen once (Google Drive). A gzipped copy (a few hundred KB) is written when the app opens, 7 days after the last one and only if something changed; the 5 newest stay; a status line, "Back up now", a list with restore; a failure shows in red and the old reminder stays |
+
 ## Open items
 
 1. Device checks: localized dates on Hermes, calendar picker, keyboard behavior, large font sizes, TalkBack labels.
