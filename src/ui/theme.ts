@@ -8,11 +8,14 @@ const light = {
   bg: '#f3eee3', surface: '#fbf8f1', ink: '#1e1c18', muted: '#6a6152', line: '#d6ccb8', outline: '#8a7f6c',
   accent: '#9a3f22', onAccent: '#ffffff', soft: '#e9e1d1', warn: '#b3261e', sun: '#b07a12',
   cta: '#9a3f22', onCta: '#ffffff', badge: '#1e1c18', onBadge: '#f3eee3', contour: '#ddd3bf',
+  // Topo lines are drawn on photos, not on the page, so they are the same by day and by night: one strong red with a white edge.
+  topo: '#e0261b', topoHalo: '#ffffff',
 };
 const dark: typeof light = {
   bg: '#141a16', surface: '#1c241f', ink: '#efe9dc', muted: '#a9a08e', line: '#2e3a32', outline: '#6f7a70',
   accent: '#e8865e', onAccent: '#1a0e08', soft: '#222c25', warn: '#f28b82', sun: '#e9b02f',
   cta: '#e8865e', onCta: '#1a0e08', badge: '#efe9dc', onBadge: '#141a16', contour: '#222c25',
+  topo: '#e0261b', topoHalo: '#ffffff',
 };
 
 export type Theme = typeof light;

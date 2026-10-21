@@ -113,9 +113,35 @@
     "approxCard": "approximate position", "approxText": "approximate position", "mapLabel": "Map",
     "sendImage": "Send picture", "sendText": "Send text with a map link", "failed": "Could not prepare the message."
   },
+  "photos": {
+    "title": "Photos", "add": "Add photos", "usage": "Photos: {{count}} of {{max}}", "preparing": "Preparing the photos…",
+    "cragTitle": "Photos of the crag", "addWall": "Add photos of the wall: {{sector}}", "delete": "Delete photo", "deleteTitle": "Delete this photo?", "deleteQuestion": "The photo disappears from this phone. The copy on Drive stays.", "removeA11y": "Remove photo", "openA11y": "Open photo {{n}}", "missing": "Photo not available", "viewerTitle": "Photo {{n}} of {{total}}",
+    "failed": "Could not add the photos: {{message}}", "stats": "Photos: {{count}} ({{size}})", "restored": "Photos restored: {{count}}.",
+    "backupFailed": "The database copy is saved, but the photos could not be copied: {{message}}",
+    "useOnCard": "Include a photo", "cardHint": "Photos often show other people. A photo is sent only when you turn it on here."
+  },
+  "topo": {
+    "title": "Topo", "draw": "Draw topo", "pickRoute": "Which route are you drawing?", "hasLine": "already has a line on this photo",
+    "noRoutes": "This wall has no routes yet. Add them on the crag screen.", "changeRoute": "Change route",
+    "hint": "Tap the start of the route, then the bolts from the bottom up, and the anchor last. Two fingers zoom and move the photo.",
+    "points": "Points: {{count}}. Drag a point to move it; tap it to select it.",
+    "modeBolts": "Bolts", "modeFree": "By hand", "hintFree": "Draw the line with a finger from the start to the anchor; pieces are fine, each one continues the line. Two fingers zoom and move the photo.", "openRoute": "Route {{n}}: {{name}}", "openPhoto": "Topo of {{name}}. Tap to open the photo.", "drawThis": "Draw this route on the wall photo", "onCard": "Show the topo line on the photo", "zoomIn": "Zoom in", "zoomOut": "Zoom out", "fit": "Whole photo", "undo": "Undo", "redo": "Redo",
+    "deletePoint": "Delete the selected point", "clear": "Clear the line", "save": "Save line",
+    "needTwo": "A line needs at least two points: the start and the anchor.",
+    "deleteLine": "Delete line", "deleteLineTitle": "Delete the line?", "deleteLineQuestion": "The line of “{{name}}” disappears from this photo.",
+    "discardTitle": "Discard changes?", "discardQuestion": "The line will not be saved.", "discard": "Discard",
+    "canvasA11y": "Photo of the wall. Tap to add a point of the line."
+  },
   "settings": {
     "title": "Settings", "language": "Language", "theme": "Appearance", "themes": { "system": "Like the phone", "light": "Light", "dark": "Dark" }, "routeGrades": "Route grades",
-    "backup": "Backup", "backupHelp": "Export saves all your data to one file. Import merges a file into the app; newer entries win, nothing is deleted.",
+    "backup": "Backup", "manualBackup": "Other ways to back up (one file, no photos)", "autoBackup": "Automatic backup", "autoBackupHelp": "Choose a folder, e.g. on Google Drive. When the app opens and 7 days have passed since the last copy and something changed, it saves a copy there by itself. The 5 latest stay. First I check that the folder can be written to. On a new phone choose the same folder, then “Restore from a copy in the folder”.",
+    "folderNone": "No folder chosen.", "folderDrive": "Folder: on Google Drive", "folderDevice": "Folder: {{path}} (phone storage)",
+    "autoLast": "Last automatic copy: {{when}}", "autoNever": "No automatic copy has been made yet.", "autoFailed": "The last try failed: {{message}}",
+    "backupNow": "Back up now", "backupNowDone": "Saved the copy “{{name}}” ({{kb}} KB). Copies in the folder: {{count}}.",
+    "showCopies": "Restore from a copy in the folder…", "hideCopies": "Hide the list", "noCopies": "No copies in the folder yet.",
+    "restoreTitle": "Restore this copy?", "restoreQuestion": "The data from the copy of {{when}} will be merged with what is on the phone. Newer entries win, nothing is deleted.", "restoreYes": "Restore", "photosCopied": "Photos copied: {{count}}.", "autoOff": "Turn off automatic backup", "folderIs": "Folder: {{name}}", "pickFolder": "Choose folder", "changeFolder": "Change folder",
+    "folderOk": "Writing to the folder “{{name}}” works.", "folderFailed": "Could not write to this folder: {{message}}",
+    "backupHelp": "Export saves all data in one file, without photos; handy to send yourself a copy or to move the data without a backup folder. Import merges a file with the app: newer entries win, nothing is deleted. Import also reads an automatic copy (.json.gz).",
     "export": "Export backup", "import": "Import backup", "csv": "Import crags from a CSV file",
     "csvHelp": "Pick one file with a list of routes (e.g. a guidebook export or a theCrag export). Each row is one route: region, area, group, crag, sector, name, grade. The older import with crags.csv and routes.csv still works. A file with columns Crag, lat, lng only saves crag positions for the map.",
     "csvSkipped": "Rows left out: {{count}} (boulders, ice, via ferratas, unnamed routes, projects, routes without a grade or with an unknown grade).",

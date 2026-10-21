@@ -124,6 +124,57 @@ Write down the result of every step (OK / problem). Report problems with: step n
 7. A crag without a position: no switch, a note that there is no map to include, and no coordinates on the card or in the text.
 8. Your own position is never in the card or the text.
 
+## 6a. Automatic backup to a folder (Google Drive)
+1. Settings › Automatic backup › "Choose folder", pick a folder on Google Drive. Expected: after a moment "Writing to the folder … works"; the label says "Folder: on Google Drive". Nothing is left in the folder (the test file is removed at once).
+2. Close the app completely and open it again. Expected: Settings still shows the folder.
+3. "Back up now". Expected: a message with the file name (`cruxlog-YYYY-MM-DD-HHMM.json.gz`), its size (a few hundred KB) and the number of copies; the file is in the Drive folder (give Drive a moment to show it). The status line shows the time.
+4. "Restore from a copy in the folder…". Expected: the list of copies, each row with its date, size and a "Restore" button; Restore asks first, then "Imported records: N" (and the photos restored); nothing is deleted. "Import backup" also accepts an automatic copy (`.json.gz`) picked anywhere, e.g. on Drive.
+4a. A folder on the phone instead of Drive (e.g. Documents/Cruxlog; Android does not allow the top of the storage or the Download folder itself): everything works the same, the label says "(phone storage)". Such a copy survives clearing the app's data or reinstalling it, but not a lost or broken phone.
+5. Make 7 copies (change something small between them, tap "Back up now" each time). Expected: only the 5 newest files remain in the folder.
+6. Automatic: after 7 days and with something changed since the last copy, open the app. Expected: within a few seconds the status line shows a new "Last automatic copy"; with nothing changed no copy is made. (To try sooner: change the phone date a week ahead, then back.)
+7. Remove the folder on Drive (or its access), tap "Back up now". Expected: a clear error; the status line is red and says the last try failed; the Journal reminder appears as before. Choosing a folder again fixes it. "Turn off automatic backup" forgets the folder.
+8. The manual "Export backup" and "Import backup" are folded under "Other ways to back up (one file, no photos)" at the bottom of Settings; tapping it shows them with a short explanation. They work as before.
+
+## 6b. Photos on an ascent
+1. New ascent › the "Photos" section › "Add photos". Expected: the system gallery picker opens without any permission question; you can tick several photos at once, at most 5 in all ("Photos: 3 of 5"). A short "Preparing the photos…" while they are shrunk. Each shows as a tile with a cross.
+2. Cross on a tile removes it. Leave the form without saving. Expected: nothing is kept.
+3. Save the ascent. Expected: in the Journal the row has a small camera with the number (no picture); the route's history shows the same.
+4. Open the ascent. Expected: a "Photos" strip; tapping one opens it full screen, swipe sideways ("Photo 2 of 3"), the right way up (a portrait photo must be portrait).
+5. Edit the ascent: remove one photo, add another (up to 5 in all), save. Expected: the strip and the number follow.
+6. Check the size: the photo is much smaller than the original (a few hundred KB; Settings shows "Photos: N (x MB)" once a backup folder is set). Check in your gallery's file details that the saved copy carries no location (there is no copy in the gallery; the original stays untouched).
+7. Delete the ascent. Expected: its photos go too. Restart the app: the space is freed (Settings › photo size drops).
+8. Share: ascent screen › "Show it off". Expected: with an ascent that has photos a switch "Include a photo", off by default, and a hint about other people. Turn it on: the photo fills the free space on the card between the text and the coordinates; with several photos chips 1…n choose which. "Send picture" waits until the photo has loaded; the picture shows it sharp.
+9. Backup: with a backup folder chosen, add a photo and open the app again (or tap "Back up now"). Expected: in the Drive folder a subfolder `zdjecia` with `<id>.jpg` files; each photo is copied once, a second backup copies none, and no second `zdjecia` folder appears. (Drive shows files by name; the app itself remembers their addresses and recognises its photos by the id written inside, so a renamed file is still recognised.)
+9a. The list of copies (Settings › "Show copies in the folder") shows the copies made by this app, newest first, and only the 5 newest stay in the folder. On a new phone (or after clearing the app data): choose the same folder; the list then finds the earlier copies by their content.
+10. Restore: on a phone (or after clearing the app data) choose the folder, "Show copies", "Restore the copy from…". Expected: the ascents come back and the message says how many photos were restored; the strips show the pictures. Restoring from a plain backup file (no folder) brings back the ascents with "Photo not available" tiles.
+
+## 6c. Photos of a crag and of a wall
+1. Crag screen › "Photos of the crag" › "Add photos". Expected: the gallery picker (up to 10 photos in all); the tiles show at once under the heading; tap one for the full-screen swipe view.
+2. In the full-screen view the bin at the top right: "Delete this photo?" with the note that the Drive copy stays. After deleting the last photo the view closes.
+3. Next to a sector's name (the wall) a camera icon: add photos to that sector (up to 10); they show as a strip under the sector name. On a crag with one unnamed sector the "sector" is named like the crag; photos go there all the same.
+4. Photos here are shrunk to 2000 px (a bit larger than on ascents), a few hundred KB each.
+5. Share: crag screen › share icon › "Include a photo" (off by default) offers the crag's photos; a route's share card offers the photos of its wall, then of its crag.
+6. Backup: open the app after adding (or "Back up now"): the photos of crags and walls are copied into the folder's photo subfolder like the others, once each, and the subfolder is the same one every time (no new folder per backup, no repeated copies). Restore brings them back.
+7. Delete a sector or the crag: its photos are gone after the next start of the app.
+
+## 6d. Drawing topo lines
+1. Crag screen › a photo of a wall (or of the crag) › full screen › the brush icon "Draw topo". Expected: a list of the routes of that wall ("already has a line" on those drawn); a crag photo lists all routes of the crag.
+2. Pick a route. Expected: the photo fills the screen; a hint says what to tap.
+3. Tap the start at the bottom, then 3–4 bolts going up, then the anchor. Expected: a red line with a white edge appears after the second point and goes as a smooth curve exactly through every point; the start shows a red disc with the route number, bolts small rings, the anchor a double ring.
+4. Zoom: two fingers apart and together (the point between the fingers stays put), two fingers move the photo; the − / whole photo / + buttons do the same; one finger on an empty spot moves a zoomed photo. Expected: the line stays exactly on the rock at every zoom; markers keep their size. At the largest zoom (8×) more + taps or a wider pinch do nothing (and never close the app).
+5. Drag a point: it follows the finger. Tap a point: a dashed ring marks it; "Delete the selected point" removes it.
+6. Undo / Redo step through every action (point added, moved, deleted, clear). "Clear the line" empties it (undo brings it back).
+7. Save with one point: "A line needs at least two points". Save with more: back on the full-screen photo the line shows with its number.
+8. Draw a second route on the same photo. Expected: while drawing, the other lines are dimmed; numbers go 1, 2… from left to right by where the lines start.
+9. Open a drawn route again: its line is loaded for editing; the bin at the top right deletes it (asks first).
+10. Leave the editor with unsaved changes (back button or "Change route"): "Discard changes?"; Cancel keeps you there.
+11. Backup and restore: lines come back with the photos. Deleting a photo removes its lines.
+12. "By hand": in the editor switch the chips from "Bolts" to "By hand" and draw the line with one finger. Expected: the line follows the finger and is smoothed when you lift it; a second piece continues the line; undo removes the last piece; two fingers still zoom (a second finger cancels the piece being drawn). No bolt rings on a hand-drawn line, only the start number and the anchor. The mode is saved with the line.
+13. Full-screen wall photo: tap a route's number disc. Expected: the route screen opens.
+14. Route screen: a "Topo" section with the wall photo, this route in full and the others dimmed; tap it to open the photo full screen at that photo. A route without a line on a wall that has photos shows "Draw this route on the wall photo", which opens the editor with the route already chosen.
+15. Share a route: "Include a photo" offers the photo with its line first; "Show the topo line on the photo" (on by default) draws its line on the card, placed right on the cropped picture. Sharing a crag draws all lines of the photo with their numbers.
+
+
 ## 4. Crags and goals
 1. Crags tab. Expected: "Test Crag" with the number of routes. Tap it. Expected: the crag screen with routes grouped by sector; "Test Route 1" shows "✓ sends: 1" (rust) or "tried: N". Tap the route. Expected: the route screen (§2c).
 1a. Editing (your own and imported crags, sectors, routes and regions; re-importing a file undoes changes to imported ones, see §5b):

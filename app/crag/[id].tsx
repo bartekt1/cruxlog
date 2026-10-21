@@ -2,9 +2,9 @@ import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-rou
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, SectionList, View } from 'react-native';
+import { Alert, Pressable, SectionList, View } from 'react-native';
 import { Text } from '../../src/ui/Text';
-import { getCrag, listAreas, listCragRoutes, listSectors, routeGoalKinds, type AreaRow, type CragDetail, type CragRouteRow, type SectorRow } from '../../src/db/repo';
+import { getCrag, listAreas, listCragRoutes, listPhotos, listPhotosOf, listSectors, routeGoalKinds, type AreaRow, type CragDetail, type CragRouteRow, type PhotoOwner, type PhotoRow, type SectorRow } from '../../src/db/repo';
 import { pathLabel } from '../../src/domain/areas';
 import { routeGrade } from '../../src/domain/grades';
 import { IconButton } from '../../src/ui/icons';
@@ -15,6 +15,9 @@ import { matches } from '../../src/domain/text';
 import { useLocation } from '../../src/ui/useLocation';
 import { distanceM, formatDistance, isLatLng } from '../../src/domain/geo';
 import { Ionicons } from '@expo/vector-icons';
+import { PHOTO_LIMIT } from '../../src/domain/photos';
+import { PhotoSection, PhotoStrip } from '../../src/ui/PhotoViews';
+import { addPhotosFromGallery } from '../../src/ui/photos';
 import { useSettings } from '../../src/ui/settingsStore';
 import { useTheme } from '../../src/ui/theme';
 
@@ -33,6 +36,30 @@ export default function CragScreen() {
   const approx = crag?.pos_source === 'approx';
   const [query, setQuery] = useState('');
   const [goalKinds, setGoalKinds] = useState<Map<string, 'project' | 'wishlist'>>(new Map());
+  // Photos of the crag and of its walls (sectors); `photoBusy` names the owner whose photos are being prepared.
+  const [cragPhotos, setCragPhotos] = useState<PhotoRow[]>([]);
+  const [sectorPhotos, setSectorPhotos] = useState<Map<string, PhotoRow[]>>(new Map());
+  const [photoBusy, setPhotoBusy] = useState<string | null>(null);
+
+  const loadPhotos = useCallback(async () => {
+    setCragPhotos(await listPhotos(db, 'crag', id));
+    const sectors = await listSectors(db, id);
+    setSectorPhotos(await listPhotosOf(db, 'sector', sectors.map((s) => s.id)));
+  }, [db, id]);
+
+  async function addPhotoTo(owner: PhotoOwner, ownerId: string, have: number) {
+    setPhotoBusy(`${owner}:${ownerId}`);
+    try {
+      await addPhotosFromGallery(db, owner, ownerId, have);
+      await loadPhotos();
+    } catch (e) {
+      Alert.alert(t('photos.title'), t('photos.failed', { message: (e as Error).message }));
+    } finally {
+      setPhotoBusy(null);
+    }
+  }
+  const openPhotos = (owner: PhotoOwner, ownerId: string, index: number) =>
+    router.push({ pathname: '/photo', params: { ownerType: owner, ownerId, index: String(index) } });
 
   useFocusEffect(useCallback(() => {
     getCrag(db, id).then((c) => {
@@ -43,7 +70,8 @@ export default function CragScreen() {
     listSectors(db, id).then(setSectorRows);
     listAreas(db).then(setAreas);
     routeGoalKinds(db).then(setGoalKinds);
-  }, [db, id, router]));
+    loadPhotos();
+  }, [db, id, router, loadPhotos]));
 
   // Every sector, also empty ones, so a sector added without routes shows up; while searching, only sectors with hits.
   const sections = useMemo(() => {
@@ -51,9 +79,9 @@ export default function CragScreen() {
     for (const r of routes) if (matches(query, r.name)) bySector.set(r.sector_id, [...(bySector.get(r.sector_id) ?? []), r]);
     return [...sectorRows]
       .sort((a, b) => a.name.localeCompare(b.name))
-      .map((sec) => ({ sectorId: sec.id, sector: sec.name, data: bySector.get(sec.id) ?? [] }))
+      .map((sec) => ({ sectorId: sec.id, sector: sec.name, photos: sectorPhotos.get(sec.id) ?? [], data: bySector.get(sec.id) ?? [] }))
       .filter((sec) => !query.trim() || sec.data.length);
-  }, [routes, sectorRows, query]);
+  }, [routes, sectorRows, sectorPhotos, query]);
 
   const status = (r: CragRouteRow) =>
     r.sends > 0 ? `✓ ${t('crags.sends', { count: r.sends })}` : r.ascents > 0 ? t('crags.tried', { count: r.ascents }) : '';
@@ -97,6 +125,9 @@ export default function CragScreen() {
               )}
               {crag.description ? <Text style={{ color: th.ink }}>{crag.description}</Text> : null}
               {crag.approach ? <Text style={{ color: th.muted }}>{t('crags.approach')}: {crag.approach}</Text> : null}
+              <Text accessibilityRole="header" style={{ color: th.muted, fontSize: 12, fontFamily: F.semi, textTransform: 'uppercase', letterSpacing: 1.5, marginTop: 8 }}>{t('photos.cragTitle')}</Text>
+              <PhotoSection owner="crag" ids={cragPhotos.map((p) => p.id)} busy={photoBusy === `crag:${crag.id}`}
+                onAdd={() => addPhotoTo('crag', crag.id, cragPhotos.length)} onOpen={(i) => openPhotos('crag', crag.id, i)} />
               <Text style={{ color: th.muted, fontSize: 12, marginTop: 4 }}>{t('crags.tapRoute')}</Text>
               <View style={{ flexDirection: 'row', gap: 8 }}>
                 <View style={{ flex: 1 }}>
@@ -114,13 +145,20 @@ export default function CragScreen() {
         }
         ListEmptyComponent={<EmptyState title={query.trim() ? t('crags.noRouteHits', { query: query.trim() }) : t('crags.noRoutes')} />}
         renderSectionHeader={({ section }) => (
-          <View style={{ flexDirection: 'row', alignItems: 'center', paddingTop: 16, paddingBottom: 2, paddingLeft: 4, backgroundColor: th.bg }}>
+          <View style={{ paddingTop: 16, paddingBottom: 2, paddingLeft: 4, backgroundColor: th.bg }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Text accessibilityRole="header" style={{ flex: 1, color: th.muted, fontSize: 12, fontFamily: F.semi, textTransform: 'uppercase', letterSpacing: 1.5 }}>
               {section.sector}
             </Text>
+            {section.photos.length < PHOTO_LIMIT.sector ? (
+              <IconButton name={photoBusy === `sector:${section.sectorId}` ? 'hourglass-outline' : 'camera-outline'} size={22} label={t('photos.addWall', { sector: section.sector })}
+                onPress={() => addPhotoTo('sector', section.sectorId, section.photos.length)} />
+            ) : null}
             <IconButton name="add-circle-outline" size={22} label={t('edit.addRouteInSector', { sector: section.sector })}
               onPress={() => router.push({ pathname: '/route/new', params: { cragId: id, sector: section.sector } })} />
             <IconButton name="create-outline" size={20} label={t('edit.sectorTitle')} onPress={() => router.push(`/sector/${section.sectorId}`)} />
+          </View>
+          {section.photos.length ? <PhotoStrip ids={section.photos.map((p) => p.id)} onOpen={(i) => openPhotos('sector', section.sectorId, i)} /> : null}
           </View>
         )}
         renderSectionFooter={({ section }) =>

@@ -34,7 +34,14 @@
           "locationWhenInUsePermission": "Cruxlog uses your location to show it on the map and suggest nearby crags. It never leaves your device."
         }
       ],
-      "@maplibre/maplibre-react-native"
+      "@maplibre/maplibre-react-native",
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ]
     ]
   }
 }

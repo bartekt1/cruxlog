@@ -113,9 +113,35 @@
     "approxCard": "położenie przybliżone", "approxText": "położenie przybliżone", "mapLabel": "Mapa",
     "sendImage": "Wyślij obrazek", "sendText": "Wyślij tekst z linkiem do mapy", "failed": "Nie udało się przygotować wiadomości."
   },
+  "photos": {
+    "title": "Zdjęcia", "add": "Dodaj zdjęcia", "usage": "Zdjęcia: {{count}} z {{max}}", "preparing": "Przygotowuję zdjęcia…",
+    "cragTitle": "Zdjęcia skały", "addWall": "Dodaj zdjęcia ściany: {{sector}}", "delete": "Usuń zdjęcie", "deleteTitle": "Usunąć zdjęcie?", "deleteQuestion": "Zdjęcie zniknie z tego telefonu. Kopia na Dysku zostaje.", "removeA11y": "Usuń zdjęcie", "openA11y": "Otwórz zdjęcie {{n}}", "missing": "Zdjęcie niedostępne", "viewerTitle": "Zdjęcie {{n}} z {{total}}",
+    "failed": "Nie udało się dodać zdjęć: {{message}}", "stats": "Zdjęcia: {{count}} ({{size}})", "restored": "Przywrócone zdjęcia: {{count}}.",
+    "backupFailed": "Kopia bazy zapisana, ale zdjęć nie udało się skopiować: {{message}}",
+    "useOnCard": "Dołącz zdjęcie", "cardHint": "Na zdjęciach często są inni ludzie. Zdjęcie wysyłasz tylko wtedy, gdy je tu włączysz."
+  },
+  "topo": {
+    "title": "Topo", "draw": "Rysuj topo", "pickRoute": "Którą drogę rysujesz?", "hasLine": "ma już linię na tym zdjęciu",
+    "noRoutes": "Ta ściana nie ma jeszcze dróg. Dodaj je na ekranie skały.", "changeRoute": "Zmień drogę",
+    "hint": "Dotknij startu drogi, potem kolejnych ringów od dołu, na końcu stanowiska. Dwoma palcami powiększasz i przesuwasz zdjęcie.",
+    "points": "Punkty: {{count}}. Przeciągnij punkt, żeby go przesunąć; dotknij, żeby go zaznaczyć.",
+    "modeBolts": "Ringi", "modeFree": "Ręcznie", "hintFree": "Rysuj linię palcem od startu do stanowiska; można w kilku kawałkach, każdy przedłuża linię. Dwoma palcami powiększasz i przesuwasz zdjęcie.", "openRoute": "Droga {{n}}: {{name}}", "openPhoto": "Topo drogi {{name}}. Dotknij, aby otworzyć zdjęcie.", "drawThis": "Narysuj tę drogę na zdjęciu ściany", "onCard": "Pokaż linię topo na zdjęciu", "zoomIn": "Powiększ", "zoomOut": "Pomniejsz", "fit": "Całe zdjęcie", "undo": "Cofnij", "redo": "Ponów",
+    "deletePoint": "Usuń zaznaczony punkt", "clear": "Wyczyść linię", "save": "Zapisz linię",
+    "needTwo": "Linia potrzebuje co najmniej dwóch punktów: startu i stanowiska.",
+    "deleteLine": "Usuń linię", "deleteLineTitle": "Usunąć linię?", "deleteLineQuestion": "Linia drogi „{{name}}” zniknie z tego zdjęcia.",
+    "discardTitle": "Odrzucić zmiany?", "discardQuestion": "Linia nie zostanie zapisana.", "discard": "Odrzuć",
+    "canvasA11y": "Zdjęcie ściany. Dotknij, aby dodać punkt linii."
+  },
   "settings": {
     "title": "Ustawienia", "language": "Język", "theme": "Wygląd", "themes": { "system": "Jak w telefonie", "light": "Jasny", "dark": "Ciemny" }, "routeGrades": "Wyceny dróg",
-    "backup": "Kopia zapasowa", "backupHelp": "Eksport zapisuje wszystkie dane w jednym pliku. Import scala plik z aplikacją; nowsze wpisy wygrywają, nic nie jest usuwane.",
+    "backup": "Kopia zapasowa", "manualBackup": "Inne sposoby kopii (jeden plik, bez zdjęć)", "autoBackup": "Kopia automatyczna", "autoBackupHelp": "Wybierz folder, np. na Dysku Google. Po otwarciu aplikacji, gdy od ostatniej kopii minęło 7 dni i coś się zmieniło, sama zapisze tam kopię. Zostaje 5 ostatnich. Najpierw sprawdzę, czy da się do tego folderu zapisać. Na nowym telefonie wybierz ten sam folder, a potem „Przywróć z kopii w folderze”.",
+    "folderNone": "Folder nie jest wybrany.", "folderDrive": "Folder: na Dysku Google", "folderDevice": "Folder: {{path}} (pamięć telefonu)",
+    "autoLast": "Ostatnia kopia automatyczna: {{when}}", "autoNever": "Kopia automatyczna jeszcze się nie zrobiła.", "autoFailed": "Ostatnia próba kopii się nie udała: {{message}}",
+    "backupNow": "Zrób kopię teraz", "backupNowDone": "Zapisano kopię „{{name}}” ({{kb}} KB). Kopie w folderze: {{count}}.",
+    "showCopies": "Przywróć z kopii w folderze…", "hideCopies": "Ukryj listę kopii", "noCopies": "W folderze nie ma jeszcze kopii.",
+    "restoreTitle": "Przywrócić kopię?", "restoreQuestion": "Dane z kopii z {{when}} zostaną scalone z tym, co jest w telefonie. Nowsze wpisy wygrywają, nic nie jest usuwane.", "restoreYes": "Przywróć", "photosCopied": "Skopiowane zdjęcia: {{count}}.", "autoOff": "Wyłącz kopię automatyczną", "folderIs": "Folder: {{name}}", "pickFolder": "Wybierz folder", "changeFolder": "Zmień folder",
+    "folderOk": "Zapis do folderu „{{name}}” działa.", "folderFailed": "Nie udało się zapisać w tym folderze: {{message}}",
+    "backupHelp": "Eksport zapisuje wszystkie dane w jednym pliku, bez zdjęć; przydaje się np. do wysłania sobie kopii albo przeniesienia danych bez folderu kopii. Import scala plik z aplikacją: nowsze wpisy wygrywają, nic nie jest usuwane. Import wczyta też plik kopii automatycznej (.json.gz).",
     "export": "Eksportuj kopię", "import": "Importuj kopię", "csv": "Importuj skały z pliku CSV",
     "csvHelp": "Wybierz jeden plik z listą dróg (np. plik z przewodnika albo eksport z theCrag). Każdy wiersz to jedna droga: region, rejon, grupa, skała, sektor, nazwa, wycena. Działa też dawny import z plików crags.csv i routes.csv. Plik z kolumnami Skała, lat, lng zapisuje tylko położenia skał na mapie.",
     "csvSkipped": "Pominięte wiersze: {{count}} (bouldery, lód, via ferraty, drogi bez nazwy, projekty, drogi bez wyceny lub z nieznaną wyceną).",

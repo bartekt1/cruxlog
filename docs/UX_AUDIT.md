@@ -186,6 +186,48 @@ Severity: **H** blocks a task or loses/corrupts data, **M** slows a task or conf
 |---|---|---|---|
 | H1 | No way to show an ascent or invite a friend | M | Share screen: a card in the guidebook look and a text with a map link, from the ascent, route and crag screens. The crag's position is on by default (a switch turns it off); an approximate one is labelled; the user's own position is never sent |
 
+## Round 15 (automatic backup)
+
+| # | Issue | Sev | Status |
+|---|---|---|---|
+| B1 | The backup was manual; the data lives only on the phone | H | A folder is chosen once (Google Drive). A gzipped copy (a few hundred KB) is written when the app opens, 7 days after the last one and only if something changed; the 5 newest stay; a status line, "Back up now", a list with restore; a failure shows in red and the old reminder stays |
+
+## Round 16 (photos on an ascent)
+
+| # | Issue | Sev | Status |
+|---|---|---|---|
+| F1 | No way to keep a picture of a climb | M | Up to 5 photos per ascent from the gallery (the system picker, no permission), shrunk to 1600 px; strip and full-screen view on the ascent; a small camera with the count in the Journal and the route history (no thumbnails); optional photo on the share card, off by default; copied once each into the backup folder and restored with it |
+
+## Round 17 (photos of crags and walls; sharing with a photo)
+
+| # | Issue | Sev | Status |
+|---|---|---|---|
+| F2 | No place for photos of a crag or a wall | M | Crag screen: "Photos of the crag" (up to 10, 2000 px) and a camera icon on each sector with a strip of its photos; full-screen view with delete; photos copied and restored with the backup |
+| F3 | The photo on the share card was a thin strip | M | With a photo the card puts it first: it fills the upper half, the grade and style sit on it like a label, the text is below |
+| F4 | Backups on Google Drive: a new photo folder and all photos again on every copy; old copies never removed | H | Drive gives no readable file names, so the app now remembers the addresses of what it wrote, recognises its own files by their content (backups) and by an id written in the photo (photos), and removes old copies by address |
+
+## Round 18 (topo lines, first delivery)
+
+| # | Issue | Sev | Status |
+|---|---|---|---|
+| T1 | No way to show where a route goes | M | Topo editor on a wall or crag photo: tap the start, the bolts and the anchor, the app draws a smooth curve through them; zoom with two fingers or buttons; drag, select and delete points; undo/redo; one line per route and photo; lines with numbers (left to right) on the full-screen photo |
+
+## Round 19 (topo lines, second delivery)
+
+| # | Issue | Sev | Status |
+|---|---|---|---|
+| T2 | Routes without bolts, or with a winding line, could not be drawn | M | "By hand" mode: draw with a finger, in pieces, smoothed; undo per piece |
+| T3 | A drawn line was only visible on the photo | M | Route screen "Topo" section (this route in full, the others dimmed), route numbers on the photo open the route, "Draw this route" from the route screen, the line on the share card |
+
+## Round 20 (owner's test of topo and backup)
+
+| # | Issue | Sev | Status |
+|---|---|---|---|
+| T4 | The app closed when zooming the topo editor to the maximum | H | On Android the line drawing keeps its whole surface as one picture in memory; at 8× that was hundreds of MB. The lines are now drawn on the visible canvas only |
+| L1 | "Save line" (and the buttons at the bottom of the crag position screen) sat under Android's navigation bar | H | Every stacked screen keeps the strip of the navigation bar free (safe-area inset); the photo viewer sizes its photos by its own area |
+| B3 | Manual and automatic backup side by side were confusing | L | The manual copy (one file, no photos) is folded under "Other ways to back up"; the automatic one is the main way |
+| B2 | Restoring an automatic copy was hard to find | M | "Restore from a copy in the folder…" with a Restore button on each row; "Import backup" also reads the automatic `.json.gz` copies; help text says what to do on a new phone |
+
 ## Open items
 
 1. Device checks: localized dates on Hermes, calendar picker, keyboard behavior, large font sizes, TalkBack labels.

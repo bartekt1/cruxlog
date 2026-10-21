@@ -21,7 +21,7 @@ Status (2026-10-20): the app runs on the owner's phone (APK from GitHub Actions)
   - Remember what was sent: after the export ask "Did you upload the file?" and only then mark the ascents (new column on `ascent`, migration, bump `BACKUP_VERSION`, old backups still import). A small label "sent to theCrag <date>" on the ascent, undoable.
   - Not planned: password login, direct upload, importing from theCrag back.
   - Sources: help pages on theCrag (API, "import logbook", "export logbook"), read through search summaries only because thecrag.com was not reachable from the sandbox; verify on the real site.
-- **Photos**: memory photos on ascents first (needs a backup that carries photos), then a photo of a wall, then drawing topo lines on it. Drawing is the biggest piece.
+- **Photos**: stage 1 done (up to 5 photos per ascent, from the gallery, shrunk to 1600 px, no thumbnails; copied once each to `zdjecia/` in the backup folder). Stage 2 done too: photos of a crag and of a wall (sector), up to 10 each, 2000 px, delete in the full-screen view, optional on the share card of a crag or route. Stage 3, first delivery done: the topo editor (bolts mode, zoom by two fingers and buttons, drag/select/delete points, undo/redo) and lines with numbers on the full-screen photo. Second delivery done: drawing by finger ("free" mode), a "Topo" section on the route screen with the route highlighted, tapping a number opens the route, topo on the share card. Next ideas: inserting a point between two bolts, a magnifier under the finger, if the owner finds tapping imprecise.
 
 ## To do, in the owner's order
 
@@ -29,7 +29,7 @@ Status (2026-10-20): the app runs on the owner's phone (APK from GitHub Actions)
 2. **Multipitch in the ascent form.** Pitch list, who led each pitch (self, partner, swing), and the style per pitch. The data model already has `pitch` and `ascent_pitch`.
 3. **Crags without a position.** 40 crags have none and 288 have an approximate one. These are improved on site with "Improve". The OSM matching scripts are kept outside the repo, so a new run can be repeated on request.
 4. **Device checks.** TalkBack, the largest font size, dark mode on every screen, the calendar picker and the keyboard in forms (see `docs/TESTING.md` §8).
-5. **Automatic backup**, e.g. to Google Drive. Today the backup is manual with a reminder, and the data lives only on the phone.
+5. ~~Automatic backup~~ Done (2026-10): a folder chosen once (Google Drive through the system folder picker); a gzipped copy when the app opens and 7 days passed with changes, the 5 latest kept, restore from the list in Settings. Photos will add a `zdjecia/` subfolder with only the missing files (each photo is sent once).
 
 ## Later, before a store release
 

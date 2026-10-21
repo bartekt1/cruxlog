@@ -6,13 +6,16 @@ import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, ScrollView, Share, Switch, useWindowDimensions, View } from 'react-native';
 import { captureRef } from 'react-native-view-shot';
 import { Text } from '../src/ui/Text';
-import { getAscent, getCrag, getRoute, listAreas, listCragRoutes, type CragDetail, type RouteRow } from '../src/db/repo';
+import { getAscent, getCrag, getRoute, listAreas, listCragRoutes, listPhotos, listTopoLines, routeTopos, type PhotoRow, type TopoLineRow, type CragDetail, type RouteRow } from '../src/db/repo';
 import { pathLabel } from '../src/domain/areas';
 import { formatDay, isoDate } from '../src/domain/dates';
 import { isLatLng } from '../src/domain/geo';
 import { routeGrade } from '../src/domain/grades';
 import { coordsLabel, shareMessage, type SharePlace } from '../src/domain/share';
-import { Button, EmptyState, Field, Label } from '../src/ui/kit';
+import { numberLines } from '../src/domain/topo';
+import { sameName } from '../src/domain/text';
+import { Button, Chip, ChipRow, EmptyState, Field, Label } from '../src/ui/kit';
+import { photoUri } from '../src/ui/photos';
 import { CARD_RATIO, ShareCard, type ShareCardData } from '../src/ui/ShareCard';
 import { useSettings } from '../src/ui/settingsStore';
 import { useTheme } from '../src/ui/theme';
@@ -39,6 +42,42 @@ export default function ShareScreen() {
   const [message, setMessage] = useState('');
   const [withPlace, setWithPlace] = useState(true);
   const [busy, setBusy] = useState(false);
+  // A photo on the card (ascents with photos only): off unless chosen, because photos often show other people.
+  const [photoRows, setPhotoRows] = useState<PhotoRow[]>([]);
+  const photoIds = photoRows.map((p) => p.id);
+  // Topo lines of the chosen photo (wall or crag photos), drawn on the card unless switched off.
+  const [photoLines, setPhotoLines] = useState<TopoLineRow[]>([]);
+  const [withTopo, setWithTopo] = useState(true);
+  const [withPhoto, setWithPhoto] = useState(false);
+  const [photoIndex, setPhotoIndex] = useState(0);
+  const [loadedPhoto, setLoadedPhoto] = useState<string | null>(null);
+
+  // Which photos can go on the card: those of the ascent; of the crag; for a route the photos of its wall, then of its crag.
+  useEffect(() => {
+    let live = true;
+    (async () => {
+      let rows: PhotoRow[] = [];
+      if (kind === 'ascent') rows = await listPhotos(db, 'ascent', id);
+      else if (kind === 'crag') rows = await listPhotos(db, 'crag', id);
+      else if (kind === 'route') {
+        const r = await getRoute(db, id);
+        if (r) {
+          // Photos the route is drawn on come first, so the default photo shows its line.
+          const drawn = new Set((await routeTopos(db, id)).map((x) => x.photo.id));
+          const all = [...(await listPhotos(db, 'sector', r.sector_id)), ...(await listPhotos(db, 'crag', r.crag_id))];
+          rows = [...all.filter((p) => drawn.has(p.id)), ...all.filter((p) => !drawn.has(p.id))];
+        }
+      }
+      if (live) setPhotoRows(rows);
+    })();
+    return () => { live = false; };
+  }, [db, kind, id]);
+
+  const chosenPhoto = withPhoto && photoRows.length ? photoRows[Math.min(photoIndex, photoRows.length - 1)] : null;
+  useEffect(() => {
+    if (!chosenPhoto || chosenPhoto.owner_type === 'ascent') { setPhotoLines([]); return; }
+    listTopoLines(db, chosenPhoto.id).then((all) => setPhotoLines(kind === 'route' ? all.filter((l) => l.route_id === id) : all));
+  }, [db, chosenPhoto?.id, chosenPhoto?.owner_type, kind, id]);
 
   useEffect(() => {
     let live = true;
@@ -47,7 +86,8 @@ export default function ShareScreen() {
       const placeOf = (c: CragDetail | null): SharePlace | null =>
         c && isLatLng(c.lat, c.lng) ? { lat: c.lat!, lng: c.lng!, approx: c.pos_source === 'approx' } : null;
       const pathOf = (c: CragDetail) => (c.region_id ? pathLabel(areas, c.region_id) : c.region ?? '');
-      const sectorLine = (r: RouteRow) => [r.crag_name, r.sector_name].filter(Boolean).join(' › ');
+      // A crag's only sector is often named like the crag; then the name is said once.
+      const sectorLine = (r: RouteRow) => (sameName(r.crag_name, r.sector_name) ? r.crag_name : [r.crag_name, r.sector_name].filter(Boolean).join(' › '));
       const routeFacts = (r: RouteRow) => [
         t(`types.${r.type}`), r.length_m != null ? t('route.length', { m: r.length_m }) : '', r.bolts != null ? t('route.bolts', { count: r.bolts }) : '',
       ].filter(Boolean);
@@ -101,7 +141,17 @@ export default function ShareScreen() {
     tag: content.tag, title: content.title, grade: content.grade, style: content.style, rating: content.rating,
     line: content.line, path: content.path, facts: content.facts, date: content.date, message: message.trim(),
     place: place ? { coords: coordsLabel(place), approx: place.approx } : null, approxLabel: t('share.approxCard'),
+    photoUri: chosenPhoto ? photoUri(chosenPhoto.id) : null,
+    topo: chosenPhoto && withTopo && photoLines.length ? {
+      photoW: chosenPhoto.width, photoH: chosenPhoto.height,
+      lines: (() => {
+        const numbers = numberLines(photoLines.map((l) => ({ routeId: l.route_id, points: l.points })));
+        return photoLines.map((l) => ({ routeId: l.route_id, mode: l.mode, points: l.points, number: numbers.get(l.route_id) }));
+      })(),
+    } : null,
   };
+  // The picture is captured only once the photo has loaded into the card.
+  const photoPending = card.photoUri != null && loadedPhoto !== card.photoUri;
 
   const sendImage = async () => {
     setBusy(true);
@@ -127,9 +177,30 @@ export default function ShareScreen() {
       <Stack.Screen options={{ title: t('share.title') }} />
       <View style={{ alignItems: 'center' }}>
         <View ref={cardRef} collapsable={false} style={{ borderWidth: 1, borderColor: th.line }}>
-          <ShareCard data={card} width={cardWidth} />
+          <ShareCard data={card} width={cardWidth} onPhotoLoaded={setLoadedPhoto} />
         </View>
       </View>
+
+      {photoIds.length ? (
+        <>
+          <Pressable onPress={() => setWithPhoto(!withPhoto)} accessibilityRole="switch" accessibilityState={{ checked: withPhoto }}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 14, minHeight: 44 }}>
+            <Switch value={withPhoto} onValueChange={setWithPhoto} trackColor={{ false: th.line, true: th.accent }} thumbColor={th.surface} importantForAccessibility="no" />
+            <Text style={{ color: th.ink, flex: 1 }}>{t('photos.useOnCard')}</Text>
+          </Pressable>
+          <Text style={{ color: th.muted, fontSize: 13 }}>{t('photos.cardHint')}</Text>
+          {withPhoto && photoIds.length > 1 ? (
+            <ChipRow>{photoIds.map((pid, i) => <Chip key={pid} label={String(i + 1)} on={photoIndex === i} onPress={() => setPhotoIndex(i)} />)}</ChipRow>
+          ) : null}
+          {withPhoto && photoLines.length ? (
+            <Pressable onPress={() => setWithTopo(!withTopo)} accessibilityRole="switch" accessibilityState={{ checked: withTopo }}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6, minHeight: 44 }}>
+              <Switch value={withTopo} onValueChange={setWithTopo} trackColor={{ false: th.line, true: th.accent }} thumbColor={th.surface} importantForAccessibility="no" />
+              <Text style={{ color: th.ink, flex: 1 }}>{t('topo.onCard')}</Text>
+            </Pressable>
+          ) : null}
+        </>
+      ) : null}
 
       <Label>{t('share.message')}</Label>
       <Field value={message} onChangeText={setMessage} maxLength={90} placeholder={t('share.messagePlaceholder')} accessibilityLabel={t('share.message')} />
@@ -148,7 +219,7 @@ export default function ShareScreen() {
       )}
 
       <View style={{ marginTop: 12 }}>
-        <Button label={t('share.sendImage')} onPress={sendImage} disabled={busy} />
+        <Button label={t('share.sendImage')} onPress={sendImage} disabled={busy || photoPending} />
         <Button label={t('share.sendText')} variant="plain" onPress={sendText} disabled={busy} />
       </View>
     </ScrollView>

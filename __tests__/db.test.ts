@@ -2,13 +2,14 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { SQLiteDatabase } from 'expo-sqlite';
-import { BACKUP_VERSION, exportBackup, importBackup } from '../src/db/backup';
+import { BACKUP_VERSION, exportBackup, importBackup, latestChange } from '../src/db/backup';
+import { packBackup, unpackBackup } from '../src/domain/autoBackup';
 import { MIGRATIONS, migrate } from '../src/db/migrate';
 import {
   addAscent, addGoal, addUserRoute, applyImport, cragUsage, deleteAscent, deleteCrag, deleteGoal, deleteArea, deleteRoute, deleteSector,
   getAscent, getCrag, getArea, getRoute, getSector, listAscents, listCragRoutes, listCrags, listGoals, listAreas, listSectorNames, addArea, areaIdFor,
   renameArea, renameSector, routeUsage, saveCrag, searchRoutes, sectorUsage, setGoalDone, updateAscent, updateRoute, type NewRoute, type RouteFilter,
-  listCragChoices, listPartners, applyCragPositions, addRouteGoal, routeGoalKinds, setCragLocation, listRouteAscents, recentRoutes, listSectors, addSector, createRoute, importedUsage, removeImported, findRoutes, getGoal, updateGoal, routeGoals,
+  listCragChoices, listPartners, applyCragPositions, addRouteGoal, routeGoalKinds, addPhotos, listPhotos, listPhotosOf, removePhotos, activePhotos, latestPhotoChange, getPhoto, listTopoLines, topoRoutes, saveTopoLine, deleteTopoLine, routeTopos, setCragLocation, listRouteAscents, recentRoutes, listSectors, addSector, createRoute, importedUsage, removeImported, findRoutes, getGoal, updateGoal, routeGoals,
 } from '../src/db/repo';
 import { descendantIds } from '../src/domain/areas';
 import { buildImportPlan } from '../src/domain/csvImport';
@@ -604,6 +605,177 @@ describe('crag positions for the map', () => {
     await migrate(db);
     expect(await getCrag(db, 'a')).toMatchObject({ name: 'A', lat: 50, pos_source: 'user' });
     expect(await getCrag(db, 'b')).toMatchObject({ name: 'B', lat: null, pos_source: '' });
+  });
+});
+
+describe('photos', () => {
+  const pic = (id: string) => ({ id, width: 1600, height: 1200, bytes: 250_000 });
+  it('keeps photos in order, counts them on the ascent and removes them softly', async () => {
+    const db = await freshDb();
+    const r = await addUserRoute(db, route());
+    const a = await addAscent(db, ascent(r));
+    expect((await listAscents(db))[0].photos).toBe(0);
+    await addPhotos(db, 'ascent', a, [pic('p1'), pic('p2')]);
+    await addPhotos(db, 'ascent', a, [pic('p3')]);
+    expect((await listPhotos(db, 'ascent', a)).map((p) => p.id)).toEqual(['p1', 'p2', 'p3']);
+    expect((await listPhotos(db, 'ascent', a)).map((p) => p.position)).toEqual([0, 1, 2]);
+    expect((await listAscents(db))[0].photos).toBe(3);
+    expect((await getAscent(db, a))!.photos).toBe(3);
+    expect((await listRouteAscents(db, r))[0].photos).toBe(3);
+    await removePhotos(db, ['p2']);
+    expect((await listPhotos(db, 'ascent', a)).map((p) => p.id)).toEqual(['p1', 'p3']);
+    expect(await count(db, 'photo')).toBe(3); // the row stays, like everywhere else
+    await addPhotos(db, 'ascent', a, [pic('p4')]);
+    expect((await listPhotos(db, 'ascent', a)).map((p) => p.position)).toEqual([0, 2, 3]);
+  });
+  it('drops the photos of a deleted ascent, also when a route delete took the ascent', async () => {
+    const db = await freshDb();
+    const r = await addUserRoute(db, route());
+    const a1 = await addAscent(db, ascent(r));
+    const a2 = await addAscent(db, ascent(r, { date: '2026-10-11' }));
+    await addPhotos(db, 'ascent', a1, [pic('x1')]);
+    await addPhotos(db, 'ascent', a2, [pic('x2')]);
+    expect((await activePhotos(db)).map((p) => p.id).sort()).toEqual(['x1', 'x2']);
+    await deleteAscent(db, a1);
+    expect((await activePhotos(db)).map((p) => p.id)).toEqual(['x2']);
+    await deleteRoute(db, r);
+    expect(await activePhotos(db)).toEqual([]);
+  });
+  it('keeps photos of a crag and of its sectors, and drops them with the crag or the sector', async () => {
+    const db = await freshDb();
+    const r = await addUserRoute(db, route());
+    const [r1] = await searchRoutes(db, 'Test Route 1');
+    const crag = r1.crag_id;
+    const sectorId = (await listSectors(db, crag))[0].id;
+    await addPhotos(db, 'crag', crag, [pic('c1'), pic('c2')]);
+    await addPhotos(db, 'sector', sectorId, [pic('s1')]);
+    expect((await listPhotos(db, 'crag', crag)).map((p) => p.id)).toEqual(['c1', 'c2']);
+    expect([...(await listPhotosOf(db, 'sector', [sectorId, 'none'])).keys()]).toEqual([sectorId]);
+    expect((await listPhotosOf(db, 'sector', [])).size).toBe(0);
+    expect((await activePhotos(db)).map((p) => p.id).sort()).toEqual(['c1', 'c2', 's1']);
+    await deleteSector(db, sectorId);
+    expect((await activePhotos(db)).map((p) => p.id).sort()).toEqual(['c1', 'c2']);
+    await deleteCrag(db, crag);
+    expect(await activePhotos(db)).toEqual([]);
+    expect(r).toBeTruthy();
+  });
+  it('is part of the backup and of the change tracking; an older backup has none', async () => {
+    const db = await freshDb();
+    expect(await latestPhotoChange(db)).toBeNull();
+    const r = await addUserRoute(db, route());
+    const a = await addAscent(db, ascent(r));
+    await addPhotos(db, 'ascent', a, [pic('y1')]);
+    expect(await latestPhotoChange(db)).not.toBeNull();
+    const backup = await exportBackup(db);
+    expect(backup.version).toBe(BACKUP_VERSION);
+    expect(backup.tables.photo).toHaveLength(1);
+    const other = await freshDb();
+    await importBackup(other, backup);
+    expect((await listPhotos(other, 'ascent', a)).map((p) => p.id)).toEqual(['y1']);
+    const old = { ...backup, version: 4, tables: { ...backup.tables, photo: undefined } };
+    expect(await importBackup(await freshDb(), old)).toBeGreaterThan(0);
+  });
+  it('migrates from version 5 and keeps the data', async () => {
+    const db = openTestDb();
+    await db.execAsync(MIGRATIONS.slice(0, 5).join('\n') + 'PRAGMA user_version = 5;');
+    await db.execAsync("INSERT INTO crag (id, name, created_at, updated_at) VALUES ('c', 'C', 1, 1);");
+    await migrate(db);
+    expect(await getCrag(db, 'c')).toMatchObject({ name: 'C' });
+    expect(await count(db, 'photo')).toBe(0);
+  });
+});
+
+describe('topo lines', () => {
+  const pic = (id: string) => ({ id, width: 2000, height: 1500, bytes: 400_000 });
+  it('offers the routes of the wall, keeps one line per route and photo, and goes with the photo', async () => {
+    const db = await freshDb();
+    const r1 = await addUserRoute(db, route({ sectorName: 'Lewa' }));
+    const r2 = await addUserRoute(db, route({ name: 'Test Route 2', sectorName: 'Lewa' }));
+    const r3 = await addUserRoute(db, route({ name: 'Test Route 3', sectorName: 'Prawa' }));
+    const crag = (await getRoute(db, r1))!.crag_id;
+    const lewa = (await getRoute(db, r1))!.sector_id;
+    await addPhotos(db, 'sector', lewa, [pic('wall')]);
+    await addPhotos(db, 'crag', crag, [pic('whole')]);
+    const wall = (await getPhoto(db, 'wall'))!;
+    expect((await topoRoutes(db, wall)).map((r) => r.id).sort()).toEqual([r1, r2].sort());
+    expect((await topoRoutes(db, (await getPhoto(db, 'whole'))!)).map((r) => r.id).sort()).toEqual([r1, r2, r3].sort());
+
+    const pts = [{ x: 0.3, y: 0.95 }, { x: 0.32, y: 0.6 }, { x: 0.35, y: 0.1 }];
+    const id = await saveTopoLine(db, { photoId: 'wall', routeId: r1, mode: 'bolts', points: pts });
+    expect(await saveTopoLine(db, { photoId: 'wall', routeId: r1, mode: 'bolts', points: pts.slice(0, 2) })).toBe(id); // replaced, not added
+    await saveTopoLine(db, { photoId: 'wall', routeId: r2, mode: 'free', points: pts });
+    const lines = await listTopoLines(db, 'wall');
+    expect(lines.map((l) => [l.route_id, l.points.length]).sort()).toEqual([[r1, 2], [r2, 3]].sort());
+    expect(lines.find((l) => l.route_id === r2)).toMatchObject({ mode: 'free', route_name: 'Test Route 2' });
+
+    await deleteTopoLine(db, id);
+    expect((await listTopoLines(db, 'wall')).map((l) => l.route_id)).toEqual([r2]);
+    await deleteRoute(db, r2);
+    expect(await listTopoLines(db, 'wall')).toEqual([]); // a deleted route's line is not shown
+    await saveTopoLine(db, { photoId: 'wall', routeId: r1, mode: 'bolts', points: pts });
+    await removePhotos(db, ['wall']);
+    expect(await listTopoLines(db, 'wall')).toEqual([]);
+    expect(await getPhoto(db, 'wall')).toBeNull();
+  });
+  it('lists the photos a route is drawn on, each with all its lines', async () => {
+    const db = await freshDb();
+    const r1 = await addUserRoute(db, route());
+    const r2 = await addUserRoute(db, route({ name: 'Test Route 2' }));
+    const sector = (await getRoute(db, r1))!.sector_id;
+    await addPhotos(db, 'sector', sector, [pic('a'), pic('b')]);
+    const line = [{ x: 0.5, y: 1 }, { x: 0.5, y: 0 }];
+    await saveTopoLine(db, { photoId: 'a', routeId: r1, mode: 'bolts', points: line });
+    await saveTopoLine(db, { photoId: 'a', routeId: r2, mode: 'free', points: line });
+    await saveTopoLine(db, { photoId: 'b', routeId: r2, mode: 'bolts', points: line });
+    const topos = await routeTopos(db, r1);
+    expect(topos.map((x) => x.photo.id)).toEqual(['a']);
+    expect(topos[0].lines.map((l) => l.route_id).sort()).toEqual([r1, r2].sort()); // the neighbours come along, to be dimmed
+    expect((await routeTopos(db, r2)).map((x) => x.photo.id).sort()).toEqual(['a', 'b']);
+    await removePhotos(db, ['a']);
+    expect(await routeTopos(db, r1)).toEqual([]);
+  });
+  it('is part of the backup, and migrates from version 6', async () => {
+    const db = await freshDb();
+    const r = await addUserRoute(db, route());
+    const sector = (await getRoute(db, r))!.sector_id;
+    await addPhotos(db, 'sector', sector, [pic('w')]);
+    await saveTopoLine(db, { photoId: 'w', routeId: r, mode: 'bolts', points: [{ x: 0.5, y: 1 }, { x: 0.5, y: 0 }] });
+    const backup = await exportBackup(db);
+    expect(backup.tables.topo_line).toHaveLength(1);
+    const other = await freshDb();
+    await importBackup(other, backup);
+    expect((await listTopoLines(other, 'w'))[0].points).toEqual([{ x: 0.5, y: 1 }, { x: 0.5, y: 0 }]);
+
+    const old = openTestDb();
+    await old.execAsync(MIGRATIONS.slice(0, 6).join('\n') + 'PRAGMA user_version = 6;');
+    await old.execAsync("INSERT INTO crag (id, name, created_at, updated_at) VALUES ('c', 'C', 1, 1);");
+    await migrate(old);
+    expect(await getCrag(old, 'c')).toMatchObject({ name: 'C' });
+    expect(await count(old, 'topo_line')).toBe(0);
+  });
+});
+
+describe('automatic backup support', () => {
+  it('knows when the data last changed', async () => {
+    const db = await freshDb();
+    expect(await latestChange(db)).toBeNull();
+    const r = await addUserRoute(db, route());
+    const a = await addAscent(db, ascent(r));
+    const first = await latestChange(db);
+    expect(first).not.toBeNull();
+    await new Promise((res) => setTimeout(res, 5));
+    await deleteAscent(db, a); // a deletion counts as a change too
+    expect(await latestChange(db)).toBeGreaterThan(first!);
+  });
+  it('a gzipped copy restores into an empty database', async () => {
+    const db = await freshDb();
+    const r = await addUserRoute(db, route());
+    await addAscent(db, ascent(r));
+    const bytes = packBackup(JSON.stringify(await exportBackup(db)));
+    const other = await freshDb();
+    expect(await importBackup(other, unpackBackup(bytes))).toBeGreaterThan(0);
+    expect(await count(other, 'ascent')).toBe(1);
+    expect(await count(other, 'route')).toBe(1);
   });
 });
 

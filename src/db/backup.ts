@@ -3,8 +3,16 @@ import { HIDE_BOULDERS } from './migrate';
 
 // 2: region.source added. Version 1 backups still import (their regions came from CSV).
 // 3: region.parent_id and region.level (nested areas). Older backups import as top-level regions.
-export const BACKUP_VERSION = 4; // 4: crag.pos_source
-const TABLES = ['region', 'crag', 'sector', 'route', 'pitch', 'partner', 'ascent', 'ascent_pitch', 'goal'] as const;
+// 5: the photo table. Older backups simply have no photos. 6: the topo_line table.
+export const BACKUP_VERSION = 6; // 4: crag.pos_source
+const TABLES = ['region', 'crag', 'sector', 'route', 'pitch', 'partner', 'ascent', 'ascent_pitch', 'goal', 'photo', 'topo_line'] as const;
+
+/** When anything in the backed-up tables last changed (also deletions); null for an empty database. */
+export async function latestChange(db: SQLiteDatabase): Promise<number | null> {
+  const parts = TABLES.map((t) => `SELECT MAX(updated_at) AS m FROM ${t}`).join(' UNION ALL ');
+  const row = await db.getFirstAsync<{ m: number | null }>(`SELECT MAX(m) AS m FROM (${parts})`);
+  return row?.m ?? null;
+}
 
 export type Backup = { app: 'cruxlog'; version: number; exportedAt: number; tables: Record<string, Record<string, unknown>[]> };
 

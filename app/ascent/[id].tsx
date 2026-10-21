@@ -4,10 +4,11 @@ import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, ScrollView, View } from 'react-native';
 import { Text } from '../../src/ui/Text';
-import { addRouteGoal, deleteAscent, getAscent, routeGoals, type AscentDetail } from '../../src/db/repo';
+import { addRouteGoal, deleteAscent, getAscent, listPhotos, routeGoals, type AscentDetail } from '../../src/db/repo';
 import { formatDay, isoDate } from '../../src/domain/dates';
 import { feltGrade, formatGrade, routeGrade } from '../../src/domain/grades';
 import { Button, EmptyState, GradeBadge, Label, Title } from '../../src/ui/kit';
+import { PhotoStrip } from '../../src/ui/PhotoViews';
 import { useSettings } from '../../src/ui/settingsStore';
 import { useTheme } from '../../src/ui/theme';
 
@@ -20,10 +21,12 @@ export default function AscentScreen() {
   const { routeSystem } = useSettings();
   const [a, setA] = useState<AscentDetail | null | undefined>(undefined);
   const [isProject, setIsProject] = useState(false);
+  const [photoIds, setPhotoIds] = useState<string[]>([]);
 
   useFocusEffect(useCallback(() => {
     getAscent(db, id).then(async (x) => {
       setA(x);
+      if (x) listPhotos(db, 'ascent', x.id).then((rows) => setPhotoIds(rows.map((p) => p.id)));
       if (x) setIsProject((await routeGoals(db, x.route_id)).some((g) => g.kind === 'project'));
     });
   }, [db, id]));
@@ -63,6 +66,12 @@ export default function AscentScreen() {
       {row(t('ascent.partner'), a.partner_name)}
       {row(t('ascent.weather'), a.weather)}
       {row(t('ascent.notes'), a.notes)}
+      {photoIds.length ? (
+        <>
+          <Label>{t('photos.title')}</Label>
+          <PhotoStrip ids={photoIds} onOpen={(i) => router.push({ pathname: '/photo', params: { ownerType: 'ascent', ownerId: a.id, index: String(i) } })} />
+        </>
+      ) : null}
 
       {a.style === 'attempt' ? (
         isProject ? (

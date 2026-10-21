@@ -3,16 +3,18 @@ import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-rou
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, FlatList, Pressable, View } from 'react-native';
+import { Alert, FlatList, Pressable, useWindowDimensions, View } from 'react-native';
 import { Text } from '../../src/ui/Text';
-import { addRouteGoal, getRoute, listRouteAscents, routeGoals, type AscentRow, type GoalRow, type RouteRow } from '../../src/db/repo';
+import { addRouteGoal, getRoute, listPhotos, listRouteAscents, routeGoals, routeTopos, type AscentRow, type GoalRow, type PhotoRow, type RouteRow, type TopoLineRow } from '../../src/db/repo';
 import { formatDay, isoDate } from '../../src/domain/dates';
 import { type AscentStyle, feltGrade, formatGrade, routeGrade } from '../../src/domain/grades';
 import { routeSummary } from '../../src/domain/history';
 import { IconButton } from '../../src/ui/icons';
 import { Contours } from '../../src/ui/Contours';
 import { F } from '../../src/ui/fonts';
-import { Card, EmptyState, GradeBadge, Screen, Title } from '../../src/ui/kit';
+import { Card, EmptyState, GradeBadge, LinkButton, Screen, Title } from '../../src/ui/kit';
+import { TopoPreview } from '../../src/ui/TopoLines';
+import { PhotoBadge } from '../../src/ui/PhotoViews';
 import { useSettings } from '../../src/ui/settingsStore';
 import { useTheme } from '../../src/ui/theme';
 
@@ -27,6 +29,9 @@ export default function RouteScreen() {
   const [route, setRoute] = useState<RouteRow | null>(null);
   const [ascents, setAscents] = useState<AscentRow[]>([]);
   const [goals, setGoals] = useState<GoalRow[]>([]);
+  const [topos, setTopos] = useState<{ photo: PhotoRow; lines: TopoLineRow[] }[]>([]);
+  const [wallPhotos, setWallPhotos] = useState<PhotoRow[]>([]);
+  const { width: screenW, height: screenH } = useWindowDimensions();
 
   useFocusEffect(useCallback(() => {
     getRoute(db, id).then((r) => {
@@ -35,7 +40,14 @@ export default function RouteScreen() {
     });
     listRouteAscents(db, id).then(setAscents);
     routeGoals(db, id).then(setGoals);
+    routeTopos(db, id).then(setTopos);
   }, [db, id, router]));
+
+  // Wall photos (of its sector, then of its crag) where the route could be drawn when it has no topo yet.
+  useFocusEffect(useCallback(() => {
+    if (!route) return;
+    Promise.all([listPhotos(db, 'sector', route.sector_id), listPhotos(db, 'crag', route.crag_id)]).then(([a, b]) => setWallPhotos([...a, ...b]));
+  }, [db, route]));
 
   // Project or wish, picked in a small dialog; the badge then replaces the button.
   const addToGoals = () =>
@@ -123,6 +135,18 @@ export default function RouteScreen() {
               <Ionicons name="add" size={24} color={th.onCta} />
               <Text style={{ color: th.onCta, fontFamily: F.display, fontSize: 20, letterSpacing: 0.8, textTransform: 'uppercase' }}>{t('route.logAnother')}</Text>
             </Pressable>
+            {topos.length || wallPhotos.length ? (
+              <Text accessibilityRole="header" style={{ color: th.muted, fontSize: 12, fontFamily: F.semi, marginTop: 18, marginBottom: 4, textTransform: 'uppercase', letterSpacing: 1.5 }}>{t('topo.title')}</Text>
+            ) : null}
+            {topos.map(({ photo, lines }) => (
+              <View key={photo.id} style={{ marginBottom: 8 }}>
+                <TopoPreview photo={photo} lines={lines} highlight={route.id} width={screenW - 32} maxHeight={screenH * 0.6} label={t('topo.openPhoto', { name: route.name })}
+                  onPress={() => router.push({ pathname: '/photo', params: { ownerType: photo.owner_type, ownerId: photo.owner_id, photoId: photo.id } })} />
+              </View>
+            ))}
+            {!topos.length && wallPhotos.length ? (
+              <LinkButton label={t('topo.drawThis')} onPress={() => router.push({ pathname: '/topo', params: { photoId: wallPhotos[0].id, routeId: route.id } })} />
+            ) : null}
             {ascents.length ? <Text accessibilityRole="header" style={{ color: th.muted, fontSize: 12, fontFamily: F.semi, marginTop: 18, marginBottom: 4, textTransform: 'uppercase', letterSpacing: 1.5 }}>{t('route.history')}</Text> : null}
           </View>
         }
@@ -148,6 +172,7 @@ export default function RouteScreen() {
                 ].filter(Boolean).join(' · ')}
               </Text>
             </View>
+            {item.photos ? <PhotoBadge count={item.photos} /> : null}
             <Text style={{ color: item.style === 'attempt' ? th.muted : th.accent, fontFamily: F.cond, fontSize: 17 }}>{t(`styles.${item.style as AscentStyle}`)}</Text>
           </Pressable>
         )}
