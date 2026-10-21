@@ -156,7 +156,7 @@ Write down the result of every step (OK / problem). Report problems with: step n
 6. Backup: open the app after adding (or "Back up now"): the photos of crags and walls are copied into the folder's photo subfolder like the others, once each, and the subfolder is the same one every time (no new folder per backup, no repeated copies). Restore brings them back.
 7. Delete a sector or the crag: its photos are gone after the next start of the app.
 
-## 6d. Drawing topo lines (first delivery)
+## 6d. Drawing topo lines
 1. Crag screen › a photo of a wall (or of the crag) › full screen › the brush icon "Draw topo". Expected: a list of the routes of that wall ("already has a line" on those drawn); a crag photo lists all routes of the crag.
 2. Pick a route. Expected: the photo fills the screen; a hint says what to tap.
 3. Tap the start at the bottom, then 3–4 bolts going up, then the anchor. Expected: a red line with a white edge appears after the second point and goes as a smooth curve exactly through every point; the start shows a red disc with the route number, bolts small rings, the anchor a double ring.
@@ -168,6 +168,11 @@ Write down the result of every step (OK / problem). Report problems with: step n
 9. Open a drawn route again: its line is loaded for editing; the bin at the top right deletes it (asks first).
 10. Leave the editor with unsaved changes (back button or "Change route"): "Discard changes?"; Cancel keeps you there.
 11. Backup and restore: lines come back with the photos. Deleting a photo removes its lines.
+12. "By hand": in the editor switch the chips from "Bolts" to "By hand" and draw the line with one finger. Expected: the line follows the finger and is smoothed when you lift it; a second piece continues the line; undo removes the last piece; two fingers still zoom (a second finger cancels the piece being drawn). No bolt rings on a hand-drawn line, only the start number and the anchor. The mode is saved with the line.
+13. Full-screen wall photo: tap a route's number disc. Expected: the route screen opens.
+14. Route screen: a "Topo" section with the wall photo, this route in full and the others dimmed; tap it to open the photo full screen at that photo. A route without a line on a wall that has photos shows "Draw this route on the wall photo", which opens the editor with the route already chosen.
+15. Share a route: "Include a photo" offers the photo with its line first; "Show the topo line on the photo" (on by default) draws its line on the card, placed right on the cropped picture. Sharing a crag draws all lines of the photo with their numbers.
+
 
 ## 4. Crags and goals
 1. Crags tab. Expected: "Test Crag" with the number of routes. Tap it. Expected: the crag screen with routes grouped by sector; "Test Route 1" shows "✓ sends: 1" (rust) or "tried: N". Tap the route. Expected: the route screen (§2c).

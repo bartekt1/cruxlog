@@ -933,3 +933,16 @@ export async function deleteTopoLine(db: SQLiteDatabase, id: string): Promise<vo
   const t = now();
   await db.runAsync('UPDATE topo_line SET deleted_at = ?, updated_at = ? WHERE id = ?', [t, t, id]);
 }
+
+/** The photos a route is drawn on, each with all its lines (so the route can be shown among its neighbours). */
+export async function routeTopos(db: SQLiteDatabase, routeId: string): Promise<{ photo: PhotoRow; lines: TopoLineRow[] }[]> {
+  const rows = await db.getAllAsync<{ photo_id: string }>(
+    `SELECT DISTINCT t.photo_id FROM topo_line t JOIN photo p ON p.id = t.photo_id
+     WHERE t.route_id = ? AND t.deleted_at IS NULL AND p.deleted_at IS NULL ORDER BY p.created_at`, [routeId]);
+  const out: { photo: PhotoRow; lines: TopoLineRow[] }[] = [];
+  for (const r of rows) {
+    const photo = await getPhoto(db, r.photo_id);
+    if (photo) out.push({ photo, lines: await listTopoLines(db, photo.id) });
+  }
+  return out;
+}

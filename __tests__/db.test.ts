@@ -9,7 +9,7 @@ import {
   addAscent, addGoal, addUserRoute, applyImport, cragUsage, deleteAscent, deleteCrag, deleteGoal, deleteArea, deleteRoute, deleteSector,
   getAscent, getCrag, getArea, getRoute, getSector, listAscents, listCragRoutes, listCrags, listGoals, listAreas, listSectorNames, addArea, areaIdFor,
   renameArea, renameSector, routeUsage, saveCrag, searchRoutes, sectorUsage, setGoalDone, updateAscent, updateRoute, type NewRoute, type RouteFilter,
-  listCragChoices, listPartners, applyCragPositions, addRouteGoal, routeGoalKinds, addPhotos, listPhotos, listPhotosOf, removePhotos, activePhotos, latestPhotoChange, getPhoto, listTopoLines, topoRoutes, saveTopoLine, deleteTopoLine, setCragLocation, listRouteAscents, recentRoutes, listSectors, addSector, createRoute, importedUsage, removeImported, findRoutes, getGoal, updateGoal, routeGoals,
+  listCragChoices, listPartners, applyCragPositions, addRouteGoal, routeGoalKinds, addPhotos, listPhotos, listPhotosOf, removePhotos, activePhotos, latestPhotoChange, getPhoto, listTopoLines, topoRoutes, saveTopoLine, deleteTopoLine, routeTopos, setCragLocation, listRouteAscents, recentRoutes, listSectors, addSector, createRoute, importedUsage, removeImported, findRoutes, getGoal, updateGoal, routeGoals,
 } from '../src/db/repo';
 import { descendantIds } from '../src/domain/areas';
 import { buildImportPlan } from '../src/domain/csvImport';
@@ -716,6 +716,23 @@ describe('topo lines', () => {
     await removePhotos(db, ['wall']);
     expect(await listTopoLines(db, 'wall')).toEqual([]);
     expect(await getPhoto(db, 'wall')).toBeNull();
+  });
+  it('lists the photos a route is drawn on, each with all its lines', async () => {
+    const db = await freshDb();
+    const r1 = await addUserRoute(db, route());
+    const r2 = await addUserRoute(db, route({ name: 'Test Route 2' }));
+    const sector = (await getRoute(db, r1))!.sector_id;
+    await addPhotos(db, 'sector', sector, [pic('a'), pic('b')]);
+    const line = [{ x: 0.5, y: 1 }, { x: 0.5, y: 0 }];
+    await saveTopoLine(db, { photoId: 'a', routeId: r1, mode: 'bolts', points: line });
+    await saveTopoLine(db, { photoId: 'a', routeId: r2, mode: 'free', points: line });
+    await saveTopoLine(db, { photoId: 'b', routeId: r2, mode: 'bolts', points: line });
+    const topos = await routeTopos(db, r1);
+    expect(topos.map((x) => x.photo.id)).toEqual(['a']);
+    expect(topos[0].lines.map((l) => l.route_id).sort()).toEqual([r1, r2].sort()); // the neighbours come along, to be dimmed
+    expect((await routeTopos(db, r2)).map((x) => x.photo.id).sort()).toEqual(['a', 'b']);
+    await removePhotos(db, ['a']);
+    expect(await routeTopos(db, r1)).toEqual([]);
   });
   it('is part of the backup, and migrates from version 6', async () => {
     const db = await freshDb();

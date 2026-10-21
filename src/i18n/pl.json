@@ -125,7 +125,7 @@
     "noRoutes": "Ta ściana nie ma jeszcze dróg. Dodaj je na ekranie skały.", "changeRoute": "Zmień drogę",
     "hint": "Dotknij startu drogi, potem kolejnych ringów od dołu, na końcu stanowiska. Dwoma palcami powiększasz i przesuwasz zdjęcie.",
     "points": "Punkty: {{count}}. Przeciągnij punkt, żeby go przesunąć; dotknij, żeby go zaznaczyć.",
-    "zoomIn": "Powiększ", "zoomOut": "Pomniejsz", "fit": "Całe zdjęcie", "undo": "Cofnij", "redo": "Ponów",
+    "modeBolts": "Ringi", "modeFree": "Ręcznie", "hintFree": "Rysuj linię palcem od startu do stanowiska; można w kilku kawałkach, każdy przedłuża linię. Dwoma palcami powiększasz i przesuwasz zdjęcie.", "openRoute": "Droga {{n}}: {{name}}", "openPhoto": "Topo drogi {{name}}. Dotknij, aby otworzyć zdjęcie.", "drawThis": "Narysuj tę drogę na zdjęciu ściany", "onCard": "Pokaż linię topo na zdjęciu", "zoomIn": "Powiększ", "zoomOut": "Pomniejsz", "fit": "Całe zdjęcie", "undo": "Cofnij", "redo": "Ponów",
     "deletePoint": "Usuń zaznaczony punkt", "clear": "Wyczyść linię", "save": "Zapisz linię",
     "needTwo": "Linia potrzebuje co najmniej dwóch punktów: startu i stanowiska.",
     "deleteLine": "Usuń linię", "deleteLineTitle": "Usunąć linię?", "deleteLineQuestion": "Linia drogi „{{name}}” zniknie z tego zdjęcia.",

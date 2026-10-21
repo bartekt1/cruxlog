@@ -8,11 +8,11 @@ import {
 } from '../src/db/repo';
 import { routeGrade } from '../src/domain/grades';
 import {
-  clampZoom, commit, FIT, hitPoint, numberLines, redo, startHistory, toPhoto, undo, zoomAt, type History, type Pt, type Zoom,
+  clampZoom, commit, FIT, hitPoint, numberLines, redo, simplify, startHistory, toPhoto, undo, zoomAt, type History, type Pt, type TopoMode, type Zoom,
 } from '../src/domain/topo';
 import { F } from '../src/ui/fonts';
 import { IconButton, type IconName } from '../src/ui/icons';
-import { EmptyState, GradeBadge, LinkButton } from '../src/ui/kit';
+import { Chip, ChipRow, EmptyState, GradeBadge, LinkButton } from '../src/ui/kit';
 import { photoUri } from '../src/ui/photos';
 import { useSettings } from '../src/ui/settingsStore';
 import { Text } from '../src/ui/Text';
@@ -26,12 +26,14 @@ const BUTTON_ZOOM = 1.6;
 type Gesture =
   | { kind: 'pinch'; dist: number; mid: { x: number; y: number }; zoom: Zoom }
   | { kind: 'drag'; index: number; moved: boolean }
-  | { kind: 'pan'; start: { x: number; y: number }; zoom: Zoom; moved: boolean; at: number };
+  | { kind: 'pan'; start: { x: number; y: number }; zoom: Zoom; moved: boolean; at: number }
+  | { kind: 'stroke'; points: Pt[] };
 
 /**
- * /topo?photoId=<photo>[&routeId=<route>]: draw a route on a wall photo. Tap the start, then the bolts from the bottom up,
- * then the anchor; the line is a smooth curve through them. Two fingers zoom and move the photo (so do the buttons and one
- * finger on an empty spot); a point is moved by dragging it. Every step can be undone.
+ * /topo?photoId=<photo>[&routeId=<route>]: draw a route on a wall photo. "Bolts": tap the start, then the bolts from the
+ * bottom up, then the anchor; the line is a smooth curve through them, a point is moved by dragging it. "By hand": draw
+ * the line with a finger, in one go or in pieces (each piece continues the line). Two fingers zoom and move the photo
+ * (so do the buttons, and in bolts mode one finger on an empty spot). Every step can be undone.
  */
 export default function TopoEditor() {
   const { photoId, routeId: startRoute } = useLocalSearchParams<{ photoId: string; routeId?: string }>();
@@ -52,6 +54,7 @@ export default function TopoEditor() {
   const [zoom, setZoom] = useState<Zoom>(FIT);
   const [canvas, setCanvas] = useState({ w: 0, h: 0 });
   const [dirty, setDirty] = useState(false);
+  const [mode, setMode] = useState<TopoMode>('bolts');
   const leaving = useRef(false); // set once the line is saved or deleted, so the unsaved-changes question is skipped
 
   useEffect(() => {
@@ -67,7 +70,9 @@ export default function TopoEditor() {
   // Picking a route loads its line, if it has one on this photo.
   useEffect(() => {
     if (!routeId) return;
-    setHistory(startHistory(lines.find((l) => l.route_id === routeId)?.points ?? []));
+    const line = lines.find((l) => l.route_id === routeId);
+    setHistory(startHistory(line?.points ?? []));
+    setMode(line?.mode ?? 'bolts');
     setSelected(-1);
     setDirty(false);
   }, [routeId, lines]);
@@ -86,8 +91,8 @@ export default function TopoEditor() {
   const points = draft ?? history.present;
 
   // The touch handler is made once, so it reads the latest values through a ref.
-  const live = useRef({ zoom, box, canvas, points, history });
-  live.current = { zoom, box, canvas, points, history };
+  const live = useRef({ zoom, box, canvas, points, history, mode });
+  live.current = { zoom, box, canvas, points, history, mode };
   const gesture = useRef<Gesture | null>(null);
 
   const rel = (x: number, y: number) => ({ x: x - live.current.canvas.w / 2, y: y - live.current.canvas.h / 2 });
@@ -99,9 +104,10 @@ export default function TopoEditor() {
     onMoveShouldSetPanResponder: () => true,
     onPanResponderGrant: (e) => {
       const touches = touchesOf(e);
-      const { zoom: z, box: b, points: pts } = live.current;
+      const { zoom: z, box: b, points: pts, mode: m } = live.current;
       if (touches.length >= 2) { gesture.current = pinchStart(touches, z); return; }
       const at = toPhoto(touches[0], z, b.width, b.height);
+      if (m === 'free' && at) { gesture.current = { kind: 'stroke', points: [at] }; return; }
       const hit = at ? hitPoint(pts, at, b.width * z.scale, b.height * z.scale, HIT_RADIUS) : -1;
       gesture.current = hit >= 0
         ? { kind: 'drag', index: hit, moved: false }
@@ -115,7 +121,7 @@ export default function TopoEditor() {
       if (touches.length >= 2) {
         // A second finger turns any gesture into a pinch; a point being dragged stays where it was.
         if (g.kind !== 'pinch') {
-          if (g.kind === 'drag') setDraft(null);
+          if (g.kind === 'drag' || g.kind === 'stroke') setDraft(null); // a second finger cancels the stroke or the drag
           gesture.current = pinchStart(touches, z);
           return;
         }
@@ -124,7 +130,12 @@ export default function TopoEditor() {
         setZoom(clampZoom({ ...zoomed, tx: zoomed.tx + mid.x - g.mid.x, ty: zoomed.ty + mid.y - g.mid.y }, b.width, b.height));
         return;
       }
-      if (g.kind === 'drag') {
+      if (g.kind === 'stroke') {
+        const at = toPhoto(touches[0], z, b.width, b.height);
+        if (!at) return;
+        g.points.push(at);
+        setDraft([...live.current.history.present, ...g.points]);
+      } else if (g.kind === 'drag') {
         const at = toPhoto(touches[0], z, b.width, b.height);
         if (!at) return;
         g.moved = true;
@@ -142,7 +153,11 @@ export default function TopoEditor() {
       gesture.current = null;
       if (!g) return;
       const { zoom: z, box: b, points: pts, history: h } = live.current;
-      if (g.kind === 'drag') {
+      if (g.kind === 'stroke') {
+        // The stroke is thinned out (finer when zoomed in) and continues the line drawn so far.
+        step([...h.present, ...simplify(g.points, 0.004 / z.scale)], -1);
+        setDraft(null);
+      } else if (g.kind === 'drag') {
         if (g.moved) step(pts, g.index); else setSelected(g.index); // a tap on a point only selects it
         setDraft(null);
       } else if (g.kind === 'pan' && !g.moved && Date.now() - g.at < 600) {
@@ -187,7 +202,7 @@ export default function TopoEditor() {
   const numbers = numberLines([...lines.filter((l) => l.route_id !== route.id).map((l) => ({ routeId: l.route_id, points: l.points })), { routeId: route.id, points }]);
   const shown = [
     ...lines.filter((l) => l.route_id !== route.id).map((l) => ({ routeId: l.route_id, mode: l.mode, points: l.points, number: numbers.get(l.route_id), dim: true })),
-    { routeId: route.id, mode: 'bolts' as const, points, number: numbers.get(route.id) },
+    { routeId: route.id, mode, points, number: numbers.get(route.id) },
   ];
   const scaledW = box.width * zoom.scale;
   const scaledH = box.height * zoom.scale;
@@ -195,7 +210,7 @@ export default function TopoEditor() {
   const zoomBy = (f: number) => setZoom((z) => zoomAt(z, f, { x: 0, y: 0 }, box.width, box.height));
   const save = async () => {
     if (points.length < 2) { Alert.alert(t('topo.title'), t('topo.needTwo')); return; }
-    await saveTopoLine(db, { photoId: photo.id, routeId: route.id, mode: 'bolts', points });
+    await saveTopoLine(db, { photoId: photo.id, routeId: route.id, mode, points });
     leaving.current = true;
     router.back();
   };
@@ -241,8 +256,14 @@ export default function TopoEditor() {
           accessible accessibilityLabel={t('topo.canvasA11y')} />
       </View>
 
-      <Text style={{ color: th.muted, fontSize: 12, paddingHorizontal: 16, paddingTop: 6 }}>
-        {points.length ? t('topo.points', { count: points.length }) : t('topo.hint')}
+      <View style={{ paddingHorizontal: 16 }}>
+        <ChipRow>
+          <Chip label={t('topo.modeBolts')} on={mode === 'bolts'} onPress={() => { if (mode !== 'bolts') { setMode('bolts'); setDirty(true); } }} />
+          <Chip label={t('topo.modeFree')} on={mode === 'free'} onPress={() => { if (mode !== 'free') { setMode('free'); setSelected(-1); setDirty(true); } }} />
+        </ChipRow>
+      </View>
+      <Text style={{ color: th.muted, fontSize: 12, paddingHorizontal: 16 }}>
+        {mode === 'free' ? t('topo.hintFree') : points.length ? t('topo.points', { count: points.length }) : t('topo.hint')}
       </Text>
       <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', paddingHorizontal: 8, paddingTop: 4 }}>
         {tool('remove-circle-outline', t('topo.zoomOut'), () => zoomBy(1 / BUTTON_ZOOM), zoom.scale <= 1)}
@@ -250,7 +271,7 @@ export default function TopoEditor() {
         {tool('add-circle-outline', t('topo.zoomIn'), () => zoomBy(BUTTON_ZOOM))}
         {tool('arrow-undo-outline', t('topo.undo'), () => { setHistory(undo); setSelected(-1); setDirty(true); }, !history.past.length)}
         {tool('arrow-redo-outline', t('topo.redo'), () => { setHistory(redo); setSelected(-1); setDirty(true); }, !history.future.length)}
-        {tool('close-circle-outline', t('topo.deletePoint'), () => { step(points.filter((_, i) => i !== selected), -1); }, selected < 0)}
+        {tool('close-circle-outline', t('topo.deletePoint'), () => { step(points.filter((_, i) => i !== selected), -1); }, selected < 0 || mode === 'free')}
         {tool('refresh-outline', t('topo.clear'), () => step([], -1), !points.length)}
       </View>
       <Pressable onPress={save} accessibilityRole="button"

@@ -1,4 +1,7 @@
+import { Image, Pressable, View } from 'react-native';
 import Svg, { Circle, G, Path, Text as SvgText } from 'react-native-svg';
+import { numberLines } from '../domain/topo';
+import { photoUri } from './photos';
 import { smoothPath, type Pt, type TopoMode } from '../domain/topo';
 import { F } from './fonts';
 import { useTheme } from './theme';
@@ -61,4 +64,32 @@ export function fitRect(photoW: number, photoH: number, boxW: number, boxH: numb
   const width = photoW * s;
   const height = photoH * s;
   return { left: (boxW - width) / 2, top: (boxH - height) / 2, width, height };
+}
+
+/**
+ * A photo with its topo lines, fitted into `width` (and at most `maxHeight`); `highlight` is the route shown in full,
+ * the other routes are dimmed. Tapping it calls `onPress`.
+ */
+export function TopoPreview({ photo, lines, highlight, width, maxHeight, onPress, label }: {
+  photo: { id: string; width: number; height: number };
+  lines: { route_id: string; mode: TopoMode; points: Pt[] }[];
+  highlight: string | null; width: number; maxHeight: number; onPress?: () => void; label: string;
+}) {
+  const th = useTheme();
+  const uri = photoUri(photo.id);
+  const boxH = Math.min(maxHeight, photo.width ? (width * photo.height) / photo.width : maxHeight);
+  const rect = fitRect(photo.width, photo.height, width, boxH);
+  const numbers = numberLines(lines.map((l) => ({ routeId: l.route_id, points: l.points })));
+  return (
+    <Pressable onPress={onPress} disabled={!onPress} accessibilityRole="imagebutton" accessibilityLabel={label}
+      style={{ width, height: boxH, borderRadius: 12, overflow: 'hidden', backgroundColor: th.soft }}>
+      {uri ? <Image source={{ uri }} style={{ width, height: boxH }} resizeMode="contain" /> : null}
+      {uri ? (
+        <View pointerEvents="none" style={{ position: 'absolute', left: rect.left, top: rect.top, width: rect.width, height: rect.height }}>
+          <TopoLines width={rect.width} height={rect.height}
+            lines={lines.map((l) => ({ routeId: l.route_id, mode: l.mode, points: l.points, number: numbers.get(l.route_id), dim: highlight != null && l.route_id !== highlight }))} />
+        </View>
+      ) : null}
+    </Pressable>
+  );
 }

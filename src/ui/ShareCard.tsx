@@ -1,5 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useState } from 'react';
 import { Image, View } from 'react-native';
+import { TopoLines, type DrawnLine } from './TopoLines';
 import { Contours } from './Contours';
 import { F } from './fonts';
 import { Text } from './Text';
@@ -22,6 +24,8 @@ export type ShareCardData = {
   approxLabel: string;
   /** A photo of the ascent to show on the card (a file address), or null. */
   photoUri: string | null;
+  /** Topo lines to draw over the photo, with the photo's own size (to place them on the cropped picture); null = none. */
+  topo: { photoW: number; photoH: number; lines: DrawnLine[] } | null;
 };
 
 export const CARD_RATIO = 1.25;
@@ -49,11 +53,13 @@ function Footer({ data, u }: { data: ShareCardData; u: number }) {
 /** With a photo the picture comes first: it fills the top of the card, the grade sits on it like a label, the text is below. */
 function PhotoCard({ data, width, onPhotoLoaded }: { data: ShareCardData; width: number; onPhotoLoaded?: (uri: string) => void }) {
   const u = width / 360;
+  const [frame, setFrame] = useState({ w: 0, h: 0 }); // the photo's area, to place topo lines on the cropped picture
   return (
     <View collapsable={false} style={{ width, height: width * CARD_RATIO, backgroundColor: c.bg, overflow: 'hidden' }}>
-      <View style={{ flex: 1, backgroundColor: c.soft }}>
+      <View style={{ flex: 1, backgroundColor: c.soft, overflow: 'hidden' }} onLayout={(e) => setFrame({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}>
         <Image source={{ uri: data.photoUri! }} resizeMode="cover" style={{ width: '100%', height: '100%' }}
           onLoad={() => onPhotoLoaded?.(data.photoUri!)} onError={() => onPhotoLoaded?.(data.photoUri!)} />
+        {data.topo && frame.w ? <CoverTopo topo={data.topo} w={frame.w} h={frame.h} /> : null}
         {data.grade ? (
           <View style={{ position: 'absolute', left: 14 * u, bottom: 12 * u, flexDirection: 'row', alignItems: 'center', gap: 8 * u }}>
             <View style={{ minWidth: 56 * u, height: 56 * u, paddingHorizontal: 8 * u, borderRadius: 10 * u, backgroundColor: c.badge, alignItems: 'center', justifyContent: 'center' }}>
@@ -83,6 +89,18 @@ function PhotoCard({ data, width, onPhotoLoaded }: { data: ShareCardData; width:
         ) : null}
         <View style={{ marginTop: 6 * u }}><Footer data={data} u={u} /></View>
       </View>
+    </View>
+  );
+}
+
+/** Topo lines placed like the photo under them, which fills the area and is cropped at the edges ("cover"). */
+function CoverTopo({ topo, w, h }: { topo: NonNullable<ShareCardData['topo']>; w: number; h: number }) {
+  const s = Math.max(w / topo.photoW, h / topo.photoH);
+  const dw = topo.photoW * s;
+  const dh = topo.photoH * s;
+  return (
+    <View pointerEvents="none" style={{ position: 'absolute', left: (w - dw) / 2, top: (h - dh) / 2, width: dw, height: dh }}>
+      <TopoLines lines={topo.lines} width={dw} height={dh} />
     </View>
   );
 }

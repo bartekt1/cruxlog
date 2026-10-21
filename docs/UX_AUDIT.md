@@ -212,6 +212,13 @@ Severity: **H** blocks a task or loses/corrupts data, **M** slows a task or conf
 |---|---|---|---|
 | T1 | No way to show where a route goes | M | Topo editor on a wall or crag photo: tap the start, the bolts and the anchor, the app draws a smooth curve through them; zoom with two fingers or buttons; drag, select and delete points; undo/redo; one line per route and photo; lines with numbers (left to right) on the full-screen photo |
 
+## Round 19 (topo lines, second delivery)
+
+| # | Issue | Sev | Status |
+|---|---|---|---|
+| T2 | Routes without bolts, or with a winding line, could not be drawn | M | "By hand" mode: draw with a finger, in pieces, smoothed; undo per piece |
+| T3 | A drawn line was only visible on the photo | M | Route screen "Topo" section (this route in full, the others dimmed), route numbers on the photo open the route, "Draw this route" from the route screen, the line on the share card |
+
 ## Open items
 
 1. Device checks: localized dates on Hermes, calendar picker, keyboard behavior, large font sizes, TalkBack labels.
