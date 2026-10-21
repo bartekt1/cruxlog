@@ -8,9 +8,10 @@ import { ActivityIndicator, Alert, ScrollView } from 'react-native';
 import { Text } from '../src/ui/Text';
 import { exportBackup, importBackup } from '../src/db/backup';
 import { devicePath, folderKind } from '../src/domain/autoBackup';
-import { listBackups, restoreBackup, writeBackup, type FolderBackup } from '../src/ui/autoBackup';
+import { listBackups, restorePhotos, restoreBackup, syncPhotos, writeBackup, type FolderBackup } from '../src/ui/autoBackup';
+import { formatBytes } from '../src/domain/photos';
 import { pickBackupFolder, testBackupFolder } from '../src/ui/backupFolder';
-import { applyCragPositions, applyImport, importedUsage, listAscents, removeImported } from '../src/db/repo';
+import { activePhotos, applyCragPositions, applyImport, importedUsage, listAscents, removeImported } from '../src/db/repo';
 import { backupStatus } from '../src/domain/history';
 import { buildImportPlan, type ImportPlan } from '../src/domain/csvImport';
 import { detectFormat, parseFlatCsv, parsePositionsCsv, planFromFlatRows, type FlatRow } from '../src/domain/flatImport';
@@ -40,8 +41,10 @@ export default function Settings() {
   const s = useSettings();
   const [busy, setBusy] = useState(false);
   const [hasData, setHasData] = useState(false);
+  const [photoStats, setPhotoStats] = useState({ count: 0, bytes: 0 });
   const [copies, setCopies] = useState<FolderBackup[] | null>(null); // the copies in the folder, once "show" was tapped
   useEffect(() => { listAscents(db).then((a) => setHasData(a.length > 0)); }, [db]);
+  useEffect(() => { activePhotos(db).then((p) => setPhotoStats({ count: p.length, bytes: p.reduce((sum, x) => sum + x.bytes, 0) })); }, [db]);
   const backup = backupStatus(s.lastBackupAt, Date.now(), hasData);
 
   // Results go to an alert so they are seen even when the button is far down the screen.
@@ -94,7 +97,15 @@ export default function Settings() {
       const r = await writeBackup(db, s.backupDir!);
       s.setAutoBackupResult(Date.now(), '');
       setCopies(null);
-      return t('settings.backupNowDone', { name: r.name, kb: Math.max(1, Math.round(r.bytes / 1024)), count: r.count });
+      const done = t('settings.backupNowDone', { name: r.name, kb: Math.max(1, Math.round(r.bytes / 1024)), count: r.count });
+      try {
+        const n = await syncPhotos(db, s.backupDir!);
+        s.setPhotosSynced(Date.now());
+        return n ? `${done}\n\n${t('settings.photosCopied', { count: n })}` : done;
+      } catch (e) {
+        s.setAutoBackupResult(Date.now(), `photos:${(e as Error).message}`);
+        return `${done}\n\n${t('photos.backupFailed', { message: (e as Error).message })}`;
+      }
     } catch (e) {
       s.setAutoBackupResult(Date.now(), (e as Error).message);
       throw e;
@@ -108,7 +119,9 @@ export default function Settings() {
   const doRestore = (b: FolderBackup) => run(async () => {
     const ok = await ask(t('settings.restoreTitle'), t('settings.restoreQuestion', { when: when(b.at) }), t('settings.restoreYes'), t('common.cancel'));
     if (!ok) return;
-    return t('settings.importDone', { count: await restoreBackup(db, b.file) });
+    const records = await restoreBackup(db, b.file);
+    const photos = await restorePhotos(db, s.backupDir!);
+    return t('settings.importDone', { count: records }) + (photos ? `\n\n${t('photos.restored', { count: photos })}` : '');
   });
 
   const doImport = () => run(async () => {
@@ -240,9 +253,10 @@ export default function Settings() {
       {s.backupDir ? (
         <>
           <Text style={{ color: s.autoBackupError ? th.warn : th.muted, marginTop: 4 }}>
-            {s.autoBackupError ? t('settings.autoFailed', { message: s.autoBackupError })
+            {s.autoBackupError ? (s.autoBackupError.startsWith('photos:') ? t('photos.backupFailed', { message: s.autoBackupError.slice(7) }) : t('settings.autoFailed', { message: s.autoBackupError }))
               : s.autoBackupAt ? t('settings.autoLast', { when: when(s.autoBackupAt) }) : t('settings.autoNever')}
           </Text>
+          {photoStats.count ? <Text style={{ color: th.muted, marginTop: 2 }}>{t('photos.stats', { count: photoStats.count, size: formatBytes(photoStats.bytes, i18n.language) })}</Text> : null}
           <Button label={t('settings.backupNow')} onPress={doBackupNow} disabled={busy} />
           <Button label={copies ? t('settings.hideCopies') : t('settings.showCopies')} onPress={showCopies} variant="plain" disabled={busy} />
           {copies ? (

@@ -134,6 +134,18 @@ Write down the result of every step (OK / problem). Report problems with: step n
 7. Remove the folder on Drive (or its access), tap "Back up now". Expected: a clear error; the status line is red and says the last try failed; the Journal reminder appears as before. Choosing a folder again fixes it. "Turn off automatic backup" forgets the folder.
 8. Manual "Export backup" and "Import backup" still work as before.
 
+## 6b. Photos on an ascent
+1. New ascent › the "Photos" section › "Add photos". Expected: the system gallery picker opens without any permission question; you can tick several photos at once, at most 5 in all ("Photos: 3 of 5"). A short "Preparing the photos…" while they are shrunk. Each shows as a tile with a cross.
+2. Cross on a tile removes it. Leave the form without saving. Expected: nothing is kept.
+3. Save the ascent. Expected: in the Journal the row has a small camera with the number (no picture); the route's history shows the same.
+4. Open the ascent. Expected: a "Photos" strip; tapping one opens it full screen, swipe sideways ("Photo 2 of 3"), the right way up (a portrait photo must be portrait).
+5. Edit the ascent: remove one photo, add another (up to 5 in all), save. Expected: the strip and the number follow.
+6. Check the size: the photo is much smaller than the original (a few hundred KB; Settings shows "Photos: N (x MB)" once a backup folder is set). Check in your gallery's file details that the saved copy carries no location (there is no copy in the gallery; the original stays untouched).
+7. Delete the ascent. Expected: its photos go too. Restart the app: the space is freed (Settings › photo size drops).
+8. Share: ascent screen › "Show it off". Expected: with an ascent that has photos a switch "Include a photo", off by default, and a hint about other people. Turn it on: the photo fills the free space on the card between the text and the coordinates; with several photos chips 1…n choose which. "Send picture" waits until the photo has loaded; the picture shows it sharp.
+9. Backup: with a backup folder chosen, add a photo and open the app again (or tap "Back up now"). Expected: in the Drive folder a subfolder `zdjecia` with `<id>.jpg` files; each photo is copied once, a second backup copies none.
+10. Restore: on a phone (or after clearing the app data) choose the folder, "Show copies", "Restore the copy from…". Expected: the ascents come back and the message says how many photos were restored; the strips show the pictures. Restoring from a plain backup file (no folder) brings back the ascents with "Photo not available" tiles.
+
 ## 4. Crags and goals
 1. Crags tab. Expected: "Test Crag" with the number of routes. Tap it. Expected: the crag screen with routes grouped by sector; "Test Route 1" shows "✓ sends: 1" (rust) or "tried: N". Tap the route. Expected: the route screen (§2c).
 1a. Editing (your own and imported crags, sectors, routes and regions; re-importing a file undoes changes to imported ones, see §5b):

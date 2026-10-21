@@ -70,6 +70,14 @@ export const MIGRATIONS: string[] = [
   ALTER TABLE crag ADD COLUMN pos_source TEXT NOT NULL DEFAULT '';
   UPDATE crag SET pos_source = 'user' WHERE lat IS NOT NULL AND lng IS NOT NULL;
   `,
+  // 6: photos. owner_type says what the photo belongs to ('ascent' now; crag and sector come later), owner_id is that row's id.
+  // The picture itself is a file named after the photo id in the app's own folder; width, height and bytes describe that file.
+  `
+  CREATE TABLE photo (
+    id TEXT PRIMARY KEY, owner_type TEXT NOT NULL, owner_id TEXT NOT NULL,
+    width INTEGER NOT NULL, height INTEGER NOT NULL, bytes INTEGER NOT NULL, position INTEGER NOT NULL DEFAULT 0, ${COMMON});
+  CREATE INDEX idx_photo_owner ON photo(owner_type, owner_id);
+  `,
 ];
 
 export async function migrate(db: SQLiteDatabase): Promise<void> {

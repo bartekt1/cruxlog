@@ -28,6 +28,7 @@ export default function RootLayout() {
         <Stack.Screen name="ascent/new" options={{ title: t('ascent.title'), presentation: 'modal' }} />
         <Stack.Screen name="ascent/[id]" options={{ title: t('ascent.detailTitle') }} />
         <Stack.Screen name="crag/[id]" options={{ title: t('crags.detailTitle') }} />
+        <Stack.Screen name="photo" options={{ title: '', presentation: 'modal' }} />
         <Stack.Screen name="share" options={{ title: t('share.title'), presentation: 'modal' }} />
         <Stack.Screen name="crag/locate" options={{ title: t('map.locateShort') }} />
         <Stack.Screen name="crag/edit" options={{ title: t('edit.cragTitle') }} />

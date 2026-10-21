@@ -113,6 +113,13 @@
     "approxCard": "położenie przybliżone", "approxText": "położenie przybliżone", "mapLabel": "Mapa",
     "sendImage": "Wyślij obrazek", "sendText": "Wyślij tekst z linkiem do mapy", "failed": "Nie udało się przygotować wiadomości."
   },
+  "photos": {
+    "title": "Zdjęcia", "add": "Dodaj zdjęcia", "usage": "Zdjęcia: {{count}} z {{max}}", "preparing": "Przygotowuję zdjęcia…",
+    "removeA11y": "Usuń zdjęcie", "openA11y": "Otwórz zdjęcie {{n}}", "missing": "Zdjęcie niedostępne", "viewerTitle": "Zdjęcie {{n}} z {{total}}",
+    "failed": "Nie udało się dodać zdjęć: {{message}}", "stats": "Zdjęcia: {{count}} ({{size}})", "restored": "Przywrócone zdjęcia: {{count}}.",
+    "backupFailed": "Kopia bazy zapisana, ale zdjęć nie udało się skopiować: {{message}}",
+    "useOnCard": "Dołącz zdjęcie", "cardHint": "Na zdjęciach często są inni ludzie. Zdjęcie wysyłasz tylko wtedy, gdy je tu włączysz."
+  },
   "settings": {
     "title": "Ustawienia", "language": "Język", "theme": "Wygląd", "themes": { "system": "Jak w telefonie", "light": "Jasny", "dark": "Ciemny" }, "routeGrades": "Wyceny dróg",
     "backup": "Kopia zapasowa", "autoBackup": "Kopia automatyczna", "autoBackupHelp": "Wybierz folder, np. na Dysku Google. Po otwarciu aplikacji, gdy od ostatniej kopii minęło 7 dni i coś się zmieniło, sama zapisze tam kopię. Zostaje 5 ostatnich. Najpierw sprawdzę, czy da się do tego folderu zapisać.",
@@ -120,7 +127,7 @@
     "autoLast": "Ostatnia kopia automatyczna: {{when}}", "autoNever": "Kopia automatyczna jeszcze się nie zrobiła.", "autoFailed": "Ostatnia próba kopii się nie udała: {{message}}",
     "backupNow": "Zrób kopię teraz", "backupNowDone": "Zapisano kopię „{{name}}” ({{kb}} KB). Kopie w folderze: {{count}}.",
     "showCopies": "Pokaż kopie w folderze", "hideCopies": "Ukryj listę kopii", "noCopies": "W folderze nie ma jeszcze kopii.",
-    "restoreOne": "Przywróć kopię z {{when}}", "restoreTitle": "Przywrócić kopię?", "restoreQuestion": "Dane z kopii z {{when}} zostaną scalone z tym, co jest w telefonie. Nowsze wpisy wygrywają, nic nie jest usuwane.", "restoreYes": "Przywróć", "autoOff": "Wyłącz kopię automatyczną", "folderIs": "Folder: {{name}}", "pickFolder": "Wybierz folder", "changeFolder": "Zmień folder",
+    "restoreOne": "Przywróć kopię z {{when}}", "restoreTitle": "Przywrócić kopię?", "restoreQuestion": "Dane z kopii z {{when}} zostaną scalone z tym, co jest w telefonie. Nowsze wpisy wygrywają, nic nie jest usuwane.", "restoreYes": "Przywróć", "photosCopied": "Skopiowane zdjęcia: {{count}}.", "autoOff": "Wyłącz kopię automatyczną", "folderIs": "Folder: {{name}}", "pickFolder": "Wybierz folder", "changeFolder": "Zmień folder",
     "folderOk": "Zapis do folderu „{{name}}” działa.", "folderFailed": "Nie udało się zapisać w tym folderze: {{message}}",
     "backupHelp": "Eksport zapisuje wszystkie dane w jednym pliku. Import scala plik z aplikacją; nowsze wpisy wygrywają, nic nie jest usuwane.",
     "export": "Eksportuj kopię", "import": "Importuj kopię", "csv": "Importuj skały z pliku CSV",

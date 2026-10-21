@@ -22,12 +22,15 @@ export type AscentRow = {
   felt_grade_index: number | null;
   route_id: string; route_name: string; type: RouteType; grade_index: number; grade_label: string; grade_system: GradeSystem;
   crag_name: string; partner_name: string | null;
+  /** How many photos the ascent has. */
+  photos: number;
 };
 
 export async function listAscents(db: SQLiteDatabase): Promise<AscentRow[]> {
   return db.getAllAsync<AscentRow>(
     `SELECT a.id, a.date, a.style, a.attempts, a.rating, a.notes, a.felt_grade_index, r.id AS route_id, r.name AS route_name, r.type,
-            r.grade_index, r.grade_label, r.grade_system, c.name AS crag_name, p.name AS partner_name
+            r.grade_index, r.grade_label, r.grade_system, c.name AS crag_name, p.name AS partner_name,
+            (SELECT COUNT(*) FROM photo ph WHERE ph.owner_type = 'ascent' AND ph.owner_id = a.id AND ph.deleted_at IS NULL) AS photos
      FROM ascent a JOIN route r ON r.id = a.route_id JOIN sector s ON s.id = r.sector_id JOIN crag c ON c.id = s.crag_id
      LEFT JOIN partner p ON p.id = a.partner_id
      WHERE a.deleted_at IS NULL ORDER BY a.date DESC, a.created_at DESC`,
@@ -167,7 +170,8 @@ export async function listPartners(db: SQLiteDatabase): Promise<string[]> {
 export async function listRouteAscents(db: SQLiteDatabase, routeId: string): Promise<AscentRow[]> {
   return db.getAllAsync<AscentRow>(
     `SELECT a.id, a.date, a.style, a.attempts, a.rating, a.notes, a.felt_grade_index, r.id AS route_id, r.name AS route_name, r.type,
-            r.grade_index, r.grade_label, r.grade_system, c.name AS crag_name, p.name AS partner_name
+            r.grade_index, r.grade_label, r.grade_system, c.name AS crag_name, p.name AS partner_name,
+            (SELECT COUNT(*) FROM photo ph WHERE ph.owner_type = 'ascent' AND ph.owner_id = a.id AND ph.deleted_at IS NULL) AS photos
      FROM ascent a JOIN route r ON r.id = a.route_id JOIN sector s ON s.id = r.sector_id JOIN crag c ON c.id = s.crag_id
      LEFT JOIN partner p ON p.id = a.partner_id
      WHERE a.route_id = ? AND a.deleted_at IS NULL ORDER BY a.date DESC, a.created_at DESC`,
@@ -224,6 +228,7 @@ export async function updateAscent(db: SQLiteDatabase, id: string, a: NewAscent)
 export async function deleteAscent(db: SQLiteDatabase, id: string): Promise<void> {
   const t = now();
   await db.runAsync('UPDATE ascent SET deleted_at = ?, updated_at = ? WHERE id = ?', [t, t, id]);
+  await db.runAsync("UPDATE photo SET deleted_at = ?, updated_at = ? WHERE owner_type = 'ascent' AND owner_id = ? AND deleted_at IS NULL", [t, t, id]);
 }
 
 export type AscentDetail = AscentRow & { weather: string; route: RouteRow };
@@ -231,7 +236,8 @@ export type AscentDetail = AscentRow & { weather: string; route: RouteRow };
 export async function getAscent(db: SQLiteDatabase, id: string): Promise<AscentDetail | null> {
   const a = await db.getFirstAsync<AscentRow & { weather: string }>(
     `SELECT a.id, a.date, a.style, a.attempts, a.rating, a.notes, a.felt_grade_index, a.weather, r.id AS route_id, r.name AS route_name, r.type,
-            r.grade_index, r.grade_label, r.grade_system, c.name AS crag_name, p.name AS partner_name
+            r.grade_index, r.grade_label, r.grade_system, c.name AS crag_name, p.name AS partner_name,
+            (SELECT COUNT(*) FROM photo ph WHERE ph.owner_type = 'ascent' AND ph.owner_id = a.id AND ph.deleted_at IS NULL) AS photos
      FROM ascent a JOIN route r ON r.id = a.route_id JOIN sector s ON s.id = r.sector_id JOIN crag c ON c.id = s.crag_id
      LEFT JOIN partner p ON p.id = a.partner_id
      WHERE a.id = ? AND a.deleted_at IS NULL`,
@@ -805,4 +811,54 @@ export async function applyImport(db: SQLiteDatabase, plan: ImportPlan): Promise
     await removeEmptyImports(db, plan, t);
   });
   return { crags: plan.crags.length, sectors: plan.sectors.length, routes: plan.routes.length, pitches: plan.pitches.length };
+}
+
+// ---- Photos -------------------------------------------------------------------------------------------------------
+
+export type PhotoOwner = 'ascent';
+export type PhotoRow = { id: string; owner_type: PhotoOwner; owner_id: string; width: number; height: number; bytes: number; position: number };
+
+/** The photos of one ascent, in the order they were added. */
+export async function listPhotos(db: SQLiteDatabase, ownerType: PhotoOwner, ownerId: string): Promise<PhotoRow[]> {
+  return db.getAllAsync<PhotoRow>(
+    'SELECT id, owner_type, owner_id, width, height, bytes, position FROM photo WHERE owner_type = ? AND owner_id = ? AND deleted_at IS NULL ORDER BY position, created_at',
+    [ownerType, ownerId]);
+}
+
+export type NewPhoto = { id: string; width: number; height: number; bytes: number };
+
+/** Adds photos after the ones already there. The picture files are saved by the caller, under the same ids. */
+export async function addPhotos(db: SQLiteDatabase, ownerType: PhotoOwner, ownerId: string, photos: NewPhoto[]): Promise<void> {
+  if (!photos.length) return;
+  const t = now();
+  const last = await db.getFirstAsync<{ p: number | null }>(
+    'SELECT MAX(position) AS p FROM photo WHERE owner_type = ? AND owner_id = ? AND deleted_at IS NULL', [ownerType, ownerId]);
+  let position = (last?.p ?? -1) + 1;
+  await db.withTransactionAsync(async () => {
+    for (const p of photos) {
+      await db.runAsync('INSERT INTO photo (id, owner_type, owner_id, width, height, bytes, position, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?)',
+        [p.id, ownerType, ownerId, p.width, p.height, p.bytes, position++, t, t]);
+    }
+  });
+}
+
+/** Soft delete. The files go when the app next tidies up (see cleanOrphanPhotos). */
+export async function removePhotos(db: SQLiteDatabase, ids: string[]): Promise<void> {
+  if (!ids.length) return;
+  const t = now();
+  await db.runAsync(`UPDATE photo SET deleted_at = ?, updated_at = ? WHERE deleted_at IS NULL AND id IN (${ids.map(() => '?').join(',')})`, [t, t, ...ids]);
+}
+
+/** Photos that count: not deleted, and their ascent is not deleted either (a route, sector or crag delete removes ascents). */
+export async function activePhotos(db: SQLiteDatabase): Promise<PhotoRow[]> {
+  return db.getAllAsync<PhotoRow>(
+    `SELECT p.id, p.owner_type, p.owner_id, p.width, p.height, p.bytes, p.position FROM photo p
+     JOIN ascent a ON a.id = p.owner_id AND p.owner_type = 'ascent'
+     WHERE p.deleted_at IS NULL AND a.deleted_at IS NULL ORDER BY p.created_at`);
+}
+
+/** When photos last changed (added, removed); null when there never were any. */
+export async function latestPhotoChange(db: SQLiteDatabase): Promise<number | null> {
+  const row = await db.getFirstAsync<{ m: number | null }>('SELECT MAX(updated_at) AS m FROM photo');
+  return row?.m ?? null;
 }

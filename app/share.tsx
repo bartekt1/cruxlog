@@ -6,13 +6,14 @@ import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, ScrollView, Share, Switch, useWindowDimensions, View } from 'react-native';
 import { captureRef } from 'react-native-view-shot';
 import { Text } from '../src/ui/Text';
-import { getAscent, getCrag, getRoute, listAreas, listCragRoutes, type CragDetail, type RouteRow } from '../src/db/repo';
+import { getAscent, getCrag, getRoute, listAreas, listCragRoutes, listPhotos, type CragDetail, type RouteRow } from '../src/db/repo';
 import { pathLabel } from '../src/domain/areas';
 import { formatDay, isoDate } from '../src/domain/dates';
 import { isLatLng } from '../src/domain/geo';
 import { routeGrade } from '../src/domain/grades';
 import { coordsLabel, shareMessage, type SharePlace } from '../src/domain/share';
-import { Button, EmptyState, Field, Label } from '../src/ui/kit';
+import { Button, Chip, ChipRow, EmptyState, Field, Label } from '../src/ui/kit';
+import { photoUri } from '../src/ui/photos';
 import { CARD_RATIO, ShareCard, type ShareCardData } from '../src/ui/ShareCard';
 import { useSettings } from '../src/ui/settingsStore';
 import { useTheme } from '../src/ui/theme';
@@ -39,6 +40,15 @@ export default function ShareScreen() {
   const [message, setMessage] = useState('');
   const [withPlace, setWithPlace] = useState(true);
   const [busy, setBusy] = useState(false);
+  // A photo on the card (ascents with photos only): off unless chosen, because photos often show other people.
+  const [photoIds, setPhotoIds] = useState<string[]>([]);
+  const [withPhoto, setWithPhoto] = useState(false);
+  const [photoIndex, setPhotoIndex] = useState(0);
+  const [loadedPhoto, setLoadedPhoto] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (kind === 'ascent') listPhotos(db, 'ascent', id).then((rows) => setPhotoIds(rows.map((p) => p.id)));
+  }, [db, kind, id]);
 
   useEffect(() => {
     let live = true;
@@ -101,7 +111,10 @@ export default function ShareScreen() {
     tag: content.tag, title: content.title, grade: content.grade, style: content.style, rating: content.rating,
     line: content.line, path: content.path, facts: content.facts, date: content.date, message: message.trim(),
     place: place ? { coords: coordsLabel(place), approx: place.approx } : null, approxLabel: t('share.approxCard'),
+    photoUri: withPhoto && photoIds.length ? photoUri(photoIds[Math.min(photoIndex, photoIds.length - 1)]) : null,
   };
+  // The picture is captured only once the photo has loaded into the card.
+  const photoPending = card.photoUri != null && loadedPhoto !== card.photoUri;
 
   const sendImage = async () => {
     setBusy(true);
@@ -127,9 +140,23 @@ export default function ShareScreen() {
       <Stack.Screen options={{ title: t('share.title') }} />
       <View style={{ alignItems: 'center' }}>
         <View ref={cardRef} collapsable={false} style={{ borderWidth: 1, borderColor: th.line }}>
-          <ShareCard data={card} width={cardWidth} />
+          <ShareCard data={card} width={cardWidth} onPhotoLoaded={setLoadedPhoto} />
         </View>
       </View>
+
+      {photoIds.length ? (
+        <>
+          <Pressable onPress={() => setWithPhoto(!withPhoto)} accessibilityRole="switch" accessibilityState={{ checked: withPhoto }}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 14, minHeight: 44 }}>
+            <Switch value={withPhoto} onValueChange={setWithPhoto} trackColor={{ false: th.line, true: th.accent }} thumbColor={th.surface} importantForAccessibility="no" />
+            <Text style={{ color: th.ink, flex: 1 }}>{t('photos.useOnCard')}</Text>
+          </Pressable>
+          <Text style={{ color: th.muted, fontSize: 13 }}>{t('photos.cardHint')}</Text>
+          {withPhoto && photoIds.length > 1 ? (
+            <ChipRow>{photoIds.map((pid, i) => <Chip key={pid} label={String(i + 1)} on={photoIndex === i} onPress={() => setPhotoIndex(i)} />)}</ChipRow>
+          ) : null}
+        </>
+      ) : null}
 
       <Label>{t('share.message')}</Label>
       <Field value={message} onChangeText={setMessage} maxLength={90} placeholder={t('share.messagePlaceholder')} accessibilityLabel={t('share.message')} />
@@ -148,7 +175,7 @@ export default function ShareScreen() {
       )}
 
       <View style={{ marginTop: 12 }}>
-        <Button label={t('share.sendImage')} onPress={sendImage} disabled={busy} />
+        <Button label={t('share.sendImage')} onPress={sendImage} disabled={busy || photoPending} />
         <Button label={t('share.sendText')} variant="plain" onPress={sendText} disabled={busy} />
       </View>
     </ScrollView>

@@ -13,6 +13,7 @@ import { IconButton } from '../../src/ui/icons';
 import { Contours } from '../../src/ui/Contours';
 import { F } from '../../src/ui/fonts';
 import { Card, EmptyState, GradeBadge, Screen, Title } from '../../src/ui/kit';
+import { PhotoBadge } from '../../src/ui/PhotoViews';
 import { useSettings } from '../../src/ui/settingsStore';
 import { useTheme } from '../../src/ui/theme';
 
@@ -148,6 +149,7 @@ export default function RouteScreen() {
                 ].filter(Boolean).join(' · ')}
               </Text>
             </View>
+            {item.photos ? <PhotoBadge count={item.photos} /> : null}
             <Text style={{ color: item.style === 'attempt' ? th.muted : th.accent, fontFamily: F.cond, fontSize: 17 }}>{t(`styles.${item.style as AscentStyle}`)}</Text>
           </Pressable>
         )}

@@ -9,7 +9,7 @@ import {
   addAscent, addGoal, addUserRoute, applyImport, cragUsage, deleteAscent, deleteCrag, deleteGoal, deleteArea, deleteRoute, deleteSector,
   getAscent, getCrag, getArea, getRoute, getSector, listAscents, listCragRoutes, listCrags, listGoals, listAreas, listSectorNames, addArea, areaIdFor,
   renameArea, renameSector, routeUsage, saveCrag, searchRoutes, sectorUsage, setGoalDone, updateAscent, updateRoute, type NewRoute, type RouteFilter,
-  listCragChoices, listPartners, applyCragPositions, addRouteGoal, routeGoalKinds, setCragLocation, listRouteAscents, recentRoutes, listSectors, addSector, createRoute, importedUsage, removeImported, findRoutes, getGoal, updateGoal, routeGoals,
+  listCragChoices, listPartners, applyCragPositions, addRouteGoal, routeGoalKinds, addPhotos, listPhotos, removePhotos, activePhotos, latestPhotoChange, setCragLocation, listRouteAscents, recentRoutes, listSectors, addSector, createRoute, importedUsage, removeImported, findRoutes, getGoal, updateGoal, routeGoals,
 } from '../src/db/repo';
 import { descendantIds } from '../src/domain/areas';
 import { buildImportPlan } from '../src/domain/csvImport';
@@ -605,6 +605,65 @@ describe('crag positions for the map', () => {
     await migrate(db);
     expect(await getCrag(db, 'a')).toMatchObject({ name: 'A', lat: 50, pos_source: 'user' });
     expect(await getCrag(db, 'b')).toMatchObject({ name: 'B', lat: null, pos_source: '' });
+  });
+});
+
+describe('photos', () => {
+  const pic = (id: string) => ({ id, width: 1600, height: 1200, bytes: 250_000 });
+  it('keeps photos in order, counts them on the ascent and removes them softly', async () => {
+    const db = await freshDb();
+    const r = await addUserRoute(db, route());
+    const a = await addAscent(db, ascent(r));
+    expect((await listAscents(db))[0].photos).toBe(0);
+    await addPhotos(db, 'ascent', a, [pic('p1'), pic('p2')]);
+    await addPhotos(db, 'ascent', a, [pic('p3')]);
+    expect((await listPhotos(db, 'ascent', a)).map((p) => p.id)).toEqual(['p1', 'p2', 'p3']);
+    expect((await listPhotos(db, 'ascent', a)).map((p) => p.position)).toEqual([0, 1, 2]);
+    expect((await listAscents(db))[0].photos).toBe(3);
+    expect((await getAscent(db, a))!.photos).toBe(3);
+    expect((await listRouteAscents(db, r))[0].photos).toBe(3);
+    await removePhotos(db, ['p2']);
+    expect((await listPhotos(db, 'ascent', a)).map((p) => p.id)).toEqual(['p1', 'p3']);
+    expect(await count(db, 'photo')).toBe(3); // the row stays, like everywhere else
+    await addPhotos(db, 'ascent', a, [pic('p4')]);
+    expect((await listPhotos(db, 'ascent', a)).map((p) => p.position)).toEqual([0, 2, 3]);
+  });
+  it('drops the photos of a deleted ascent, also when a route delete took the ascent', async () => {
+    const db = await freshDb();
+    const r = await addUserRoute(db, route());
+    const a1 = await addAscent(db, ascent(r));
+    const a2 = await addAscent(db, ascent(r, { date: '2026-10-11' }));
+    await addPhotos(db, 'ascent', a1, [pic('x1')]);
+    await addPhotos(db, 'ascent', a2, [pic('x2')]);
+    expect((await activePhotos(db)).map((p) => p.id).sort()).toEqual(['x1', 'x2']);
+    await deleteAscent(db, a1);
+    expect((await activePhotos(db)).map((p) => p.id)).toEqual(['x2']);
+    await deleteRoute(db, r);
+    expect(await activePhotos(db)).toEqual([]);
+  });
+  it('is part of the backup and of the change tracking; an older backup has none', async () => {
+    const db = await freshDb();
+    expect(await latestPhotoChange(db)).toBeNull();
+    const r = await addUserRoute(db, route());
+    const a = await addAscent(db, ascent(r));
+    await addPhotos(db, 'ascent', a, [pic('y1')]);
+    expect(await latestPhotoChange(db)).not.toBeNull();
+    const backup = await exportBackup(db);
+    expect(backup.version).toBe(BACKUP_VERSION);
+    expect(backup.tables.photo).toHaveLength(1);
+    const other = await freshDb();
+    await importBackup(other, backup);
+    expect((await listPhotos(other, 'ascent', a)).map((p) => p.id)).toEqual(['y1']);
+    const old = { ...backup, version: 4, tables: { ...backup.tables, photo: undefined } };
+    expect(await importBackup(await freshDb(), old)).toBeGreaterThan(0);
+  });
+  it('migrates from version 5 and keeps the data', async () => {
+    const db = openTestDb();
+    await db.execAsync(MIGRATIONS.slice(0, 5).join('\n') + 'PRAGMA user_version = 5;');
+    await db.execAsync("INSERT INTO crag (id, name, created_at, updated_at) VALUES ('c', 'C', 1, 1);");
+    await migrate(db);
+    expect(await getCrag(db, 'c')).toMatchObject({ name: 'C' });
+    expect(await count(db, 'photo')).toBe(0);
   });
 });
 

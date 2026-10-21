@@ -192,6 +192,12 @@ Severity: **H** blocks a task or loses/corrupts data, **M** slows a task or conf
 |---|---|---|---|
 | B1 | The backup was manual; the data lives only on the phone | H | A folder is chosen once (Google Drive). A gzipped copy (a few hundred KB) is written when the app opens, 7 days after the last one and only if something changed; the 5 newest stay; a status line, "Back up now", a list with restore; a failure shows in red and the old reminder stays |
 
+## Round 16 (photos on an ascent)
+
+| # | Issue | Sev | Status |
+|---|---|---|---|
+| F1 | No way to keep a picture of a climb | M | Up to 5 photos per ascent from the gallery (the system picker, no permission), shrunk to 1600 px; strip and full-screen view on the ascent; a small camera with the count in the Journal and the route history (no thumbnails); optional photo on the share card, off by default; copied once each into the backup folder and restored with it |
+
 ## Open items
 
 1. Device checks: localized dates on Hermes, calendar picker, keyboard behavior, large font sizes, TalkBack labels.

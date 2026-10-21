@@ -1,10 +1,59 @@
 import { Directory, File } from 'expo-file-system';
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { exportBackup, importBackup, latestChange } from '../db/backup';
-import { backupDue, backupFileName, backupTime, expiredBackups, packBackup, sortBackups, unpackBackup } from '../domain/autoBackup';
+import { activePhotos, latestPhotoChange } from '../db/repo';
+import { backupDue, backupFileName, backupTime, expiredBackups, packBackup, RETRY_AFTER_MS, sortBackups, unpackBackup } from '../domain/autoBackup';
+import { BACKUP_PHOTO_DIR, missingIds, photoFileName, photoIdFromFile } from '../domain/photos';
+import { photoFile } from './photos';
 import { useSettings } from './settingsStore';
 
 const filesIn = (dir: Directory): File[] => dir.list().filter((x): x is File => x instanceof File);
+
+/** The photos subfolder of the backup folder; created when `create` is set, else null if it is not there. */
+function photoFolder(dir: Directory, create: boolean): Directory | null {
+  const found = dir.list().find((x): x is Directory => x instanceof Directory && x.name === BACKUP_PHOTO_DIR);
+  return found ?? (create ? dir.createDirectory(BACKUP_PHOTO_DIR) : null);
+}
+
+/** Copies the photos that are not yet in the folder's photo subfolder. Each photo is written once and never again. Returns how many were copied. */
+export async function syncPhotos(db: SQLiteDatabase, dirUri: string): Promise<number> {
+  const dir = new Directory(dirUri);
+  if (!dir.exists) throw new Error('The folder is no longer there. Choose it again.');
+  const wanted = (await activePhotos(db)).map((p) => p.id).filter((id) => photoFile(id).exists);
+  if (!wanted.length) return 0;
+  const target = photoFolder(dir, true)!;
+  const present = target.list().filter((x): x is File => x instanceof File).map((f) => photoIdFromFile(f.name)).filter((x): x is string => x != null);
+  const todo = missingIds(wanted, present);
+  for (const id of todo) {
+    const bytes = photoFile(id).bytesSync();
+    const file = target.createFile(photoFileName(id), 'image/jpeg');
+    try {
+      file.write(bytes);
+      if ((file.size ?? 0) < bytes.length) throw new Error('A photo was written only in part.');
+    } catch (e) {
+      try { file.delete(); } catch { /* nothing more to do */ }
+      throw e;
+    }
+  }
+  return todo.length;
+}
+
+/** Brings back the picture files that the database knows but this phone lacks, from the folder. Returns how many. */
+export async function restorePhotos(db: SQLiteDatabase, dirUri: string): Promise<number> {
+  const source = photoFolder(new Directory(dirUri), false);
+  if (!source) return 0;
+  const files = new Map(source.list().filter((x): x is File => x instanceof File).map((f) => [f.name, f]));
+  let restored = 0;
+  for (const p of await activePhotos(db)) {
+    const local = photoFile(p.id);
+    const from = files.get(photoFileName(p.id));
+    if (local.exists || !from) continue;
+    local.create({ overwrite: true });
+    local.write(new Uint8Array(await from.arrayBuffer()));
+    restored++;
+  }
+  return restored;
+}
 
 export type FolderBackup = { name: string; at: number; size: number; file: File };
 
@@ -49,13 +98,29 @@ export async function autoBackupIfDue(db: SQLiteDatabase): Promise<void> {
   const s = useSettings.getState();
   if (!s.backupDir || running) return;
   const now = Date.now();
-  if (!backupDue({ now, lastAt: s.autoBackupAt, changedAt: await latestChange(db), lastTryAt: s.autoBackupTryAt })) return;
+  const dbDue = backupDue({ now, lastAt: s.autoBackupAt, changedAt: await latestChange(db), lastTryAt: s.autoBackupTryAt });
+  // New photos are copied soon after they appear (not once a week), unless the last try failed less than an hour ago.
+  const photoChange = await latestPhotoChange(db);
+  const failedRecently = s.autoBackupError !== '' && s.autoBackupTryAt != null && now - s.autoBackupTryAt < RETRY_AFTER_MS;
+  const photosDue = photoChange != null && (s.photosSyncedAt == null || photoChange > s.photosSyncedAt) && !failedRecently;
+  if (!dbDue && !photosDue) return;
   running = true;
   try {
-    await writeBackup(db, s.backupDir);
-    useSettings.getState().setAutoBackupResult(Date.now(), '');
-  } catch (e) {
-    useSettings.getState().setAutoBackupResult(Date.now(), (e as Error).message || 'error');
+    if (dbDue) {
+      try {
+        await writeBackup(db, s.backupDir);
+        useSettings.getState().setAutoBackupResult(Date.now(), '');
+      } catch (e) {
+        useSettings.getState().setAutoBackupResult(Date.now(), (e as Error).message || 'error');
+        return;
+      }
+    }
+    try {
+      await syncPhotos(db, s.backupDir);
+      useSettings.getState().setPhotosSynced(Date.now());
+    } catch (e) {
+      useSettings.getState().setAutoBackupResult(Date.now(), `photos:${(e as Error).message || 'error'}`);
+    }
   } finally {
     running = false;
   }

@@ -2,13 +2,16 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, Switch, View } from 'react-native';
+import { Alert, Pressable, ScrollView, Switch, View } from 'react-native';
 import { Text } from '../../src/ui/Text';
 import {
-  addAscent, addRouteGoal, addUserRoute, getAscent, getRoute, listCragChoices, listCragRoutes, listAreas, listPartners, listSectorNames, recentRoutes, routeGoals, searchRoutes, warmSearch,
+  addAscent, addPhotos, addRouteGoal, addUserRoute, getAscent, listPhotos, removePhotos, getRoute, listCragChoices, listCragRoutes, listAreas, listPartners, listSectorNames, recentRoutes, routeGoals, searchRoutes, warmSearch,
   updateAscent, type AreaNames, type AreaRow, type CragChoice, type CragRouteRow, type RouteRow,
 } from '../../src/db/repo';
 import { isoDate, shiftDay } from '../../src/domain/dates';
+import { slotsLeft } from '../../src/domain/photos';
+import { editorPhoto, PhotoEditor, type EditorPhoto } from '../../src/ui/PhotoViews';
+import { photoUri, pickPhotos, preparePhoto, storePhoto, type PreparedPhoto } from '../../src/ui/photos';
 import { isFirstTry, validateAscentDraft, validateRouteDraft } from '../../src/domain/forms';
 import { ASCENT_STYLES, feltGrade, formatGrade, gradeExample, nearbyGrades, parseGrade, routeGrade, systemsFor, type AscentStyle, type GradeSystem, type RouteType } from '../../src/domain/grades';
 import { DateField } from '../../src/ui/DateField';
@@ -73,6 +76,11 @@ export default function NewAscent() {
   // An attempt can make the route a project in one go (new ascents only).
   const [asProject, setAsProject] = useState(false);
   const [isProject, setIsProject] = useState(false);
+  // Photos: the ones the ascent already has (editing) and the ones chosen now; nothing is saved until the ascent is.
+  const [photos, setPhotos] = useState<EditorPhoto[]>([]);
+  const [originalPhotoIds, setOriginalPhotoIds] = useState<string[]>([]);
+  const [prepared, setPrepared] = useState<Record<string, PreparedPhoto>>({});
+  const [photoBusy, setPhotoBusy] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -80,6 +88,10 @@ export default function NewAscent() {
         if (!a) return;
         setRoute(a.route); setDate(a.date); setStyle(a.style); setAttempts(String(a.attempts)); setRating(a.rating); setFelt(a.felt_grade_index);
         setPartner(a.partner_name ?? ''); setWeather(a.weather); setNotes(a.notes);
+      });
+      listPhotos(db, 'ascent', id).then((rows) => {
+        setOriginalPhotoIds(rows.map((p) => p.id));
+        setPhotos(rows.map((p) => ({ id: p.id, uri: photoUri(p.id), added: false })));
       });
     } else if (routeId) {
       getRoute(db, routeId).then((r) => { if (r) setRoute(r); });
@@ -193,6 +205,31 @@ export default function NewAscent() {
   const sub = { color: th.muted, fontSize: 12, marginTop: 12, marginBottom: 4 } as const;
   const hint = { color: th.muted, fontSize: 12, marginTop: 4 } as const;
 
+  async function addPhotoFiles() {
+    setPhotoBusy(true);
+    try {
+      const assets = await pickPhotos(slotsLeft(photos.length));
+      for (const asset of assets) {
+        const p = await preparePhoto(asset);
+        setPrepared((all) => ({ ...all, [p.id]: p }));
+        setPhotos((all) => [...all, editorPhoto(p)]);
+      }
+    } catch (e) {
+      Alert.alert(t('photos.title'), t('photos.failed', { message: (e as Error).message }));
+    } finally {
+      setPhotoBusy(false);
+    }
+  }
+
+  // Applies the photo changes to a saved ascent: removed ones are marked deleted, new ones are moved into place and recorded.
+  async function savePhotos(ascentId: string) {
+    const keep = new Set(photos.filter((p) => !p.added).map((p) => p.id));
+    await removePhotos(db, originalPhotoIds.filter((pid) => !keep.has(pid)));
+    const fresh = photos.filter((p) => p.added).map((p) => prepared[p.id]).filter(Boolean);
+    for (const p of fresh) storePhoto(p);
+    await addPhotos(db, 'ascent', ascentId, fresh.map((p) => ({ id: p.id, width: p.width, height: p.height, bytes: p.bytes })));
+  }
+
   async function save() {
     if (saving) return;
     setError(null);
@@ -214,8 +251,10 @@ export default function NewAscent() {
         routeId: rid, date: draft.value.date, style, attempts: draft.value.attempts, rating, notes: notes.trim(), partnerName: partner, weather: weather.trim(),
         feltGradeIndex: baseGrade == null ? null : feltGrade(felt, baseGrade),
       };
+      let ascentId = id;
       if (id) await updateAscent(db, id, values);
-      else await addAscent(db, values);
+      else ascentId = await addAscent(db, values);
+      await savePhotos(ascentId!);
       if (!id && style === 'attempt' && asProject && !isProject) await addRouteGoal(db, rid, 'project');
       router.back();
     } catch (e) {
@@ -428,6 +467,9 @@ export default function NewAscent() {
       <Field value={weather} onChangeText={setWeather} accessibilityLabel={t('ascent.weather')} />
       <Label>{t('ascent.notes')}</Label>
       <Field value={notes} onChangeText={setNotes} accessibilityLabel={t('ascent.notes')} multiline textAlignVertical="top" style={{ minHeight: 80 }} />
+      <Label>{t('photos.title')}</Label>
+      <PhotoEditor photos={photos} busy={photoBusy} onAdd={addPhotoFiles}
+        onRemove={(pid) => setPhotos((all) => all.filter((p) => p.id !== pid))} />
 
       {error ? <ErrorText>{errorText}</ErrorText> : null}
       <Button label={saving ? t('common.saving') : t('common.save')} onPress={save} disabled={saving} />

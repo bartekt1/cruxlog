@@ -9,6 +9,7 @@ import { listAscents, type AscentRow } from '../../src/db/repo';
 import { formatDay, isoDate, relativeDay } from '../../src/domain/dates';
 import { feltGrade, formatGrade, routeGrade, type AscentStyle } from '../../src/domain/grades';
 import { backupStatus } from '../../src/domain/history';
+import { PhotoBadge } from '../../src/ui/PhotoViews';
 import { yearStats } from '../../src/domain/stats';
 import { Contours } from '../../src/ui/Contours';
 import { F } from '../../src/ui/fonts';
@@ -110,6 +111,7 @@ export default function Journal() {
                   {item.crag_name}{feltLabel(item)}{item.attempts > 1 ? ` · ${t('journal.attempts', { count: item.attempts })}` : ''}{item.partner_name ? ` · ${item.partner_name}` : ''}
                 </Text>
               </View>
+              {item.photos ? <PhotoBadge count={item.photos} /> : null}
               <Text style={{ color: item.style === 'attempt' ? th.muted : th.accent, fontFamily: F.cond, fontSize: 17, minWidth: 44, textAlign: 'right' }}>{t(`styles.${item.style as AscentStyle}`)}</Text>
             </Pressable>
           );

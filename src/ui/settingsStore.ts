@@ -14,6 +14,8 @@ type SettingsState = Settings & {
   setBackupDir: (uri: string | null, name?: string) => void;
   /** Records a try: ok = it worked (error ''), else the reason. */
   setAutoBackupResult: (at: number, error: string) => void;
+  /** The photos are in the folder as of `at`; null forgets it. */
+  setPhotosSynced: (at: number | null) => void;
 };
 
 function load(): Settings {
@@ -28,10 +30,10 @@ function load(): Settings {
 export const useSettings = create<SettingsState>((set, get) => {
   const save = (patch: Partial<Settings>) => {
     set(patch);
-    const { language, routeSystem, themeMode, mapBase, lastBackupAt, backupDir, backupDirName, autoBackupAt, autoBackupTryAt, autoBackupError } = get();
+    const { language, routeSystem, themeMode, mapBase, lastBackupAt, backupDir, backupDirName, autoBackupAt, autoBackupTryAt, autoBackupError, photosSyncedAt } = get();
     try {
       Storage.setItemSync(KEY, JSON.stringify({
-        language, routeSystem, themeMode, mapBase, lastBackupAt, backupDir, backupDirName, autoBackupAt, autoBackupTryAt, autoBackupError,
+        language, routeSystem, themeMode, mapBase, lastBackupAt, backupDir, backupDirName, autoBackupAt, autoBackupTryAt, autoBackupError, photosSyncedAt,
       }));
     } catch {
       // Keep the in-memory value; it will be saved on the next change.
@@ -45,7 +47,9 @@ export const useSettings = create<SettingsState>((set, get) => {
     setMapBase: (mapBase) => save({ mapBase }),
     setLastBackupAt: (lastBackupAt) => save({ lastBackupAt }),
     // A new folder starts afresh: no earlier copy counts for it.
-    setBackupDir: (backupDir, backupDirName = '') => save({ backupDir, backupDirName: backupDir ? backupDirName : '', autoBackupAt: null, autoBackupTryAt: null, autoBackupError: '' }),
+    setBackupDir: (backupDir, backupDirName = '') => save({ backupDir, backupDirName: backupDir ? backupDirName : '', autoBackupAt: null, autoBackupTryAt: null, autoBackupError: '', photosSyncedAt: null }),
+    // A good photo sync also clears an earlier photo error.
+    setPhotosSynced: (photosSyncedAt) => save(photosSyncedAt != null && get().autoBackupError.startsWith('photos:') ? { photosSyncedAt, autoBackupError: '' } : { photosSyncedAt }),
     setAutoBackupResult: (at, error) => save(error ? { autoBackupTryAt: at, autoBackupError: error } : { autoBackupAt: at, autoBackupTryAt: at, autoBackupError: '', lastBackupAt: at }),
   };
 });

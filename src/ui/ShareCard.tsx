@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { View } from 'react-native';
+import { Image, View } from 'react-native';
 import { Contours } from './Contours';
 import { F } from './fonts';
 import { Text } from './Text';
@@ -20,6 +20,8 @@ export type ShareCardData = {
   /** Coordinates already formatted; null when left out. */
   place: { coords: string; approx: boolean } | null;
   approxLabel: string;
+  /** A photo of the ascent to show on the card (a file address), or null. */
+  photoUri: string | null;
 };
 
 export const CARD_RATIO = 1.25;
@@ -29,7 +31,7 @@ const BRAND = 'Cruxlog'; // the app's name is not translated
  * The picture sent to a friend. Always on paper, in the app's own look, whatever the phone's theme.
  * Sized by `width` (dp) so the preview and the saved image look the same.
  */
-export function ShareCard({ data, width }: { data: ShareCardData; width: number }) {
+export function ShareCard({ data, width, onPhotoLoaded }: { data: ShareCardData; width: number; onPhotoLoaded?: (uri: string) => void }) {
   const u = width / 360;
   return (
     <View collapsable={false} style={{ width, height: width * CARD_RATIO, backgroundColor: c.bg, overflow: 'hidden' }}>
@@ -66,7 +68,13 @@ export function ShareCard({ data, width }: { data: ShareCardData; width: number 
           </View>
         ) : null}
 
-        <View style={{ flex: 1 }} />
+        {data.photoUri ? (
+          // The photo takes whatever room is left between the text and the footer, cropped to fit.
+          <View style={{ flex: 1, minHeight: 60 * u, marginVertical: 14 * u, borderRadius: 10 * u, overflow: 'hidden', backgroundColor: c.soft }}>
+            <Image source={{ uri: data.photoUri }} resizeMode="cover" style={{ width: '100%', height: '100%' }}
+              onLoad={() => onPhotoLoaded?.(data.photoUri!)} onError={() => onPhotoLoaded?.(data.photoUri!)} />
+          </View>
+        ) : <View style={{ flex: 1 }} />}
         <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12 * u }}>
           {data.place ? (
             <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6 * u }}>

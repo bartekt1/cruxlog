@@ -1,0 +1,67 @@
+import { Directory, File, Paths } from 'expo-file-system';
+import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
+import * as ImagePicker from 'expo-image-picker';
+import type { SQLiteDatabase } from 'expo-sqlite';
+import { activePhotos } from '../db/repo';
+import { newId } from '../db/ids';
+import { orphanFiles, photoFileName, PHOTO_QUALITY, scaleTo } from '../domain/photos';
+
+/** A photo that was chosen and shrunk but is not saved yet: its file is still in the cache. */
+export type PreparedPhoto = { id: string; uri: string; width: number; height: number; bytes: number };
+
+/** Where the app keeps its photos: files named <photo id>.jpg. */
+export function photosDir(): Directory {
+  const dir = new Directory(Paths.document, 'photos');
+  if (!dir.exists) dir.create({ intermediates: true });
+  return dir;
+}
+
+export const photoFile = (id: string): File => new File(photosDir(), photoFileName(id));
+
+/** The picture's address if the file is there, else null (e.g. after restoring only the database). */
+export function photoUri(id: string): string | null {
+  const file = photoFile(id);
+  return file.exists ? file.uri : null;
+}
+
+/** The system gallery picker. Needs no permission: the system hands over only what was chosen. Cancelled = []. */
+export async function pickPhotos(limit: number): Promise<ImagePicker.ImagePickerAsset[]> {
+  if (limit <= 0) return [];
+  const res = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ['images'], allowsMultipleSelection: true, selectionLimit: limit, quality: 1, exif: false,
+  });
+  return res.canceled ? [] : res.assets.slice(0, limit);
+}
+
+/** Shrinks a chosen picture (longer side 1600 px, JPEG) into a new cache file. The result carries no location data from the original. */
+export async function preparePhoto(asset: ImagePicker.ImagePickerAsset): Promise<PreparedPhoto> {
+  let width = asset.width;
+  let height = asset.height;
+  if (!(width > 0 && height > 0)) { // the system did not say how big it is: load it once to find out
+    const probe = await ImageManipulator.manipulate(asset.uri).renderAsync();
+    ({ width, height } = probe);
+  }
+  let context = ImageManipulator.manipulate(asset.uri);
+  const size = scaleTo(width, height);
+  if (size) context = context.resize(size);
+  const out = await (await context.renderAsync()).saveAsync({ format: SaveFormat.JPEG, compress: PHOTO_QUALITY });
+  return { id: newId(), uri: out.uri, width: out.width, height: out.height, bytes: new File(out.uri).size ?? 0 };
+}
+
+/** Moves a prepared photo from the cache into the photos folder. */
+export function storePhoto(photo: PreparedPhoto): void {
+  new File(photo.uri).move(photoFile(photo.id));
+}
+
+/** Deletes picture files that no photo needs: removed photos, and photos of deleted ascents. Runs when the app opens; never throws. */
+export async function cleanOrphanPhotos(db: SQLiteDatabase): Promise<void> {
+  try {
+    const dir = photosDir();
+    const active = (await activePhotos(db)).map((p) => p.id);
+    const files = dir.list().filter((x): x is File => x instanceof File);
+    const gone = new Set(orphanFiles(files.map((f) => f.name), active));
+    for (const f of files) if (gone.has(f.name)) { try { f.delete(); } catch { /* it will be tried again next time */ } }
+  } catch {
+    // Tidying up is not important enough to disturb anything.
+  }
+}
