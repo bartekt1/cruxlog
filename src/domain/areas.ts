@@ -93,3 +93,13 @@ export function descendantIds(areas: Area[], id: string): Set<string> {
   }
   return inside;
 }
+
+export type AreaNames = { region: string; area: string; group: string };
+
+/** Region, area and the group levels ("Dolina Sanki › Zimny Dół" is two groups) as one list, top down. */
+export function areaChain(names: AreaNames): string[] {
+  const region = names.region.trim();
+  if (!region) return [];
+  const area = names.area.trim();
+  return area ? [region, area, ...splitPath(names.group)] : [region];
+}

@@ -1,7 +1,7 @@
 // One-file import: one row per route with the whole path (region, area, group, crag, sector).
-// Builds the same ImportPlan as the three-file CSV import, so applyImport stays the single writer.
+// Builds an ImportPlan, so applyImport stays the single writer.
 import Papa from 'papaparse';
-import type { ImportPlan } from './csvImport';
+import { emptyPlan, type ImportPlan } from './importPlan';
 import { parseGrade, systemsFor, type GradeSystem, type RouteType } from './grades';
 import { fold, sameName } from './text';
 
@@ -28,7 +28,7 @@ const TYPE_ALIASES: Record<string, RouteType> = {
 
 /** Builds an import plan; problems are reported per data line (header = line 1). */
 export function planFromFlatRows(rows: FlatRow[]): ImportPlan {
-  const plan: ImportPlan = { crags: [], sectors: [], routes: [], pitches: [], errors: [] };
+  const plan = emptyPlan();
   const crags = new Map<string, ImportPlan['crags'][number]>();
   const sectors = new Map<string, ImportPlan['sectors'][number]>();
   const routeKeys = new Set<string>();

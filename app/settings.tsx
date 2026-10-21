@@ -15,10 +15,8 @@ import { formatBytes } from '../src/domain/photos';
 import { pickBackupFolder, testBackupFolder } from '../src/ui/backupFolder';
 import { activePhotos, applyCragPositions, applyImport, importedUsage, listAscents, removeImported } from '../src/db/repo';
 import { backupStatus } from '../src/domain/history';
-import { buildImportPlan, type ImportPlan } from '../src/domain/csvImport';
-import { detectFormat, parseFlatCsv, parsePositionsCsv, planFromFlatRows, type FlatRow } from '../src/domain/flatImport';
-import { guidebookRows } from '../src/domain/guidebookCsv';
-import { theCragRows } from '../src/domain/thecragCsv';
+import { detectFormat, parsePositionsCsv } from '../src/domain/flatImport';
+import { planFromFiles, UnknownFileError } from '../src/domain/importPlan';
 import { ROUTE_SYSTEMS } from '../src/domain/grades';
 import type { Lang } from '../src/domain/settings';
 import i18n from '../src/i18n';
@@ -149,39 +147,6 @@ export default function Settings() {
     return t('settings.importDone', { count: n }) + (photos ? `\n\n${t('photos.restored', { count: photos })}` : '');
   });
 
-  // Older three-file format (crags.csv + routes.csv, optional sectors.csv and pitches.csv).
-  function legacyPlan(texts: Record<string, string>) {
-    if (!texts['crags.csv'] || !texts['routes.csv']) {
-      throw new UserError(t('settings.csvMissing', { files: Object.keys(texts).join(', ') }));
-    }
-    return buildImportPlan({ crags: texts['crags.csv'], sectors: texts['sectors.csv'], routes: texts['routes.csv'], pitches: texts['pitches.csv'] });
-  }
-
-  // One file per route list: the guidebook export, a theCrag export or the simple table. Several files are merged.
-  function oneFilePlan(texts: Record<string, string>): { plan: ImportPlan; skipped: number } {
-    const rows: FlatRow[] = [];
-    const errors: ImportPlan['errors'] = [];
-    let skipped = 0;
-    let only: ImportPlan | null = null;
-    const files = Object.entries(texts);
-    for (const [name, text] of files) {
-      const format = detectFormat(text);
-      if (!format) throw new UserError(t('settings.csvUnknown', { file: name }));
-      let fileRows: FlatRow[];
-      if (format === 'thecrag') {
-        const res = theCragRows(text);
-        fileRows = res.rows;
-        skipped += Object.values(res.skipped).reduce((a, b) => a + b, 0);
-      } else fileRows = format === 'guidebook' ? guidebookRows(text) : parseFlatCsv(text);
-      const plan = planFromFlatRows(fileRows);
-      errors.push(...plan.errors.map((e) => ({ ...e, file: name })));
-      rows.push(...fileRows);
-      if (files.length === 1) only = plan;
-    }
-    if (errors.length) return { plan: { ...planFromFlatRows([]), errors }, skipped };
-    return { plan: only ?? planFromFlatRows(rows), skipped };
-  }
-
   const doCsv = () => run(async () => {
     // Some Android file managers report CSV files as Excel or plain binary, so accept those too.
     const res = await DocumentPicker.getDocumentAsync({
@@ -193,7 +158,14 @@ export default function Settings() {
     for (const a of res.assets) texts[a.name.toLowerCase()] = await new File(a.uri).text();
     const only = Object.values(texts);
     if (only.length === 1 && detectFormat(only[0]) === 'positions') return importPositions(only[0]);
-    const { plan, skipped } = texts['crags.csv'] || texts['routes.csv'] ? { plan: legacyPlan(texts), skipped: 0 } : oneFilePlan(texts);
+    let built;
+    try {
+      built = planFromFiles(texts);
+    } catch (e) {
+      if (e instanceof UnknownFileError) throw new UserError(t('settings.csvUnknown', { file: e.file }));
+      throw e;
+    }
+    const { plan, skipped } = built;
     if (plan.errors.length) {
       const first = plan.errors.slice(0, 8).map((e) => `${e.file}, ${t('settings.csvLine', { line: e.line })}: ${e.message}`).join('\n');
       throw new UserError(`${t('settings.csvErrors', { count: plan.errors.length })}\n\n${first}`);

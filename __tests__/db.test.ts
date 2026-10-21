@@ -1,6 +1,4 @@
 /// <reference types="node" />
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { BACKUP_VERSION, exportBackup, importBackup, latestChange } from '../src/db/backup';
 import { packBackup, unpackBackup } from '../src/domain/autoBackup';
@@ -12,7 +10,6 @@ import {
   listCragChoices, listPartners, applyCragPositions, addRouteGoal, routeGoalKinds, addPhotos, listPhotos, listPhotosOf, removePhotos, activePhotos, latestPhotoChange, getPhoto, listTopoLines, topoRoutes, saveTopoLine, deleteTopoLine, routeTopos, setCragLocation, listRouteAscents, recentRoutes, listSectors, addSector, createRoute, importedUsage, removeImported, findRoutes, getGoal, updateGoal, routeGoals,
 } from '../src/db/repo';
 import { descendantIds } from '../src/domain/areas';
-import { buildImportPlan } from '../src/domain/csvImport';
 import { detectFormat, parseFlatCsv, parsePositionsCsv, planFromFlatRows, type FlatRow } from '../src/domain/flatImport';
 import { parseGrade } from '../src/domain/grades';
 import { openTestDb } from './helpers/sqlite';
@@ -36,10 +33,11 @@ const ascent = (routeId: string, over: Partial<Parameters<typeof addAscent>[1]> 
 
 const count = async (db: SQLiteDatabase, table: string) => (await db.getFirstAsync<{ n: number }>(`SELECT COUNT(*) AS n FROM ${table}`))!.n;
 
-const samples = () => {
-  const read = (f: string) => readFileSync(join(__dirname, '..', 'samples', f), 'utf8');
-  return buildImportPlan({ crags: read('crags.csv'), sectors: read('sectors.csv'), routes: read('routes.csv'), pitches: read('pitches.csv') });
-};
+// A small one-file import: one crag with a sector and a sport and a multipitch route.
+const samples = () => planFromFlatRows(parseFlatCsv(
+  'region;area;crag;sector;name;type;grade;lat;lng\n'
+  + 'Example region;Example area;Example crag;Example sector;Example sport route;sport;VI.3;50.0;19.9\n'
+  + 'Example region;Example area;Example crag;Example sector;Example multipitch;multipitch;V+;;\n'));
 
 describe('migrate', () => {
   it('creates the schema on a fresh database and records the version', async () => {
@@ -149,7 +147,7 @@ describe('repo', () => {
     await deleteGoal(db, first.id);
     expect((await listGoals(db)).map((g) => g.title)).toEqual(['Second']);
   });
-  it('imports the sample CSV files idempotently', async () => {
+  it('imports the sample file idempotently', async () => {
     const db = await freshDb();
     const plan = samples();
     expect(plan.errors).toEqual([]);
@@ -157,7 +155,7 @@ describe('repo', () => {
     await applyImport(db, plan);
     expect(await count(db, 'crag')).toBe(first.crags);
     expect(await count(db, 'route')).toBe(first.routes);
-    expect(await count(db, 'pitch')).toBe(first.pitches);
+    expect(first).toEqual({ crags: 1, sectors: 1, routes: 2 });
   });
 });
 
@@ -296,8 +294,11 @@ describe('editing own crags, sectors, routes and regions', () => {
     const db = await freshDb();
     await applyImport(db, samples());
     const [c] = await listCrags(db);
-    expect(c).toMatchObject({ source: 'import', region_name: 'Example region' });
-    expect((await listAreas(db))[0]).toMatchObject({ name: 'Example region', source: 'import', level: 'region' });
+    expect(c).toMatchObject({ source: 'import', region_name: 'Example area' });
+    expect(await listAreas(db)).toEqual([
+      expect.objectContaining({ name: 'Example area', source: 'import', level: 'area' }),
+      expect.objectContaining({ name: 'Example region', source: 'import', level: 'region' }),
+    ]);
   });
 });
 
@@ -359,13 +360,13 @@ describe('nested areas', () => {
     // Old layout: wall as its own crag in a flat region.
     await applyImport(db, { crags: [crag('k-krowia', 'Krowia', 'Kamieniec'), crag('k-krowia-w', 'Krowia (ściana zachodnia)', 'Kamieniec')],
       sectors: [sec('k-krowia-s', 'k-krowia', 'Krowia'), sec('k-krowia-w-s', 'k-krowia-w', 'Krowia (ściana zachodnia)')],
-      routes: [r('a', 'k-krowia-s'), r('b', 'k-krowia-w-s')], pitches: [], errors: [] });
+      routes: [r('a', 'k-krowia-s'), r('b', 'k-krowia-w-s')], errors: [] });
     const [b] = await searchRoutes(db, 'b');
     await addAscent(db, ascent(b.id));
     // New layout: one crag with a wall sector, nested areas.
     await applyImport(db, { crags: [crag('k-krowia', 'Krowia', 'Czarnorzeki', 'Kamieniec', 'Krowia Turnia')],
       sectors: [sec('k-krowia-s', 'k-krowia', 'Krowia'), sec('k-krowia-west', 'k-krowia', 'Ściana zachodnia')],
-      routes: [r('a', 'k-krowia-s'), r('b', 'k-krowia-west')], pitches: [], errors: [] });
+      routes: [r('a', 'k-krowia-s'), r('b', 'k-krowia-west')], errors: [] });
     expect((await listCrags(db)).map((c) => c.name)).toEqual(['Krowia']);
     expect((await getRoute(db, b.id))).toMatchObject({ crag_name: 'Krowia', sector_name: 'Ściana zachodnia' });
     expect((await listAscents(db)).map((x) => x.route_name)).toEqual(['b']);
@@ -825,7 +826,9 @@ describe('backup', () => {
     backup.tables.region = backup.tables.region.map(({ source: _s, ...rest }: Record<string, unknown>) => rest);
     const target = await freshDb();
     await importBackup(target, backup);
-    expect((await listAreas(target)).every((g) => g.source === 'import' && g.level === 'region')).toBe(true);
+    const areas = await listAreas(target);
+    expect(areas.length).toBeGreaterThan(0);
+    expect(areas.every((g) => g.source === 'import')).toBe(true);
   });
   it('rejects files that are not a backup or come from a newer version', async () => {
     const db = await freshDb();
