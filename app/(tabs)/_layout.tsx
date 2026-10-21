@@ -52,7 +52,7 @@ export default function TabsLayout() {
                 style={({ pressed }) => ({
                   top: -18, width: 62, height: 62, borderRadius: 18, alignItems: 'center', justifyContent: 'center',
                   backgroundColor: th.cta, borderWidth: 4, borderColor: th.surface,
-                  elevation: 8, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 6, shadowOffset: { width: 0, height: 3 },
+                  elevation: 8, shadowColor: th.ink, shadowOpacity: 0.3, shadowRadius: 6, shadowOffset: { width: 0, height: 3 },
                   transform: [{ scale: pressed ? 0.94 : 1 }],
                 })}
               >

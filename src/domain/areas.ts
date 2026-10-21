@@ -3,8 +3,6 @@
 // Jura › Jura Południowa › Garb Tenczyński › Dolina Sanki › Zimny Dół keep all their levels.
 
 export type AreaLevel = 'region' | 'area' | 'group';
-export const AREA_LEVELS: AreaLevel[] = ['region', 'area', 'group'];
-
 export type Area = { id: string; name: string; level: AreaLevel; parent_id: string | null };
 
 /** Separates group levels in one text, e.g. "Dolina Sanki › Zimny Dół". */

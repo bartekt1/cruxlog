@@ -16,13 +16,16 @@ export type AscentRow = {
   photos: number;
 };
 
+// The columns of AscentRow (getAscent adds the weather), shared by the ascent lists.
+const ASCENT_SELECT = `SELECT a.id, a.date, a.style, a.attempts, a.rating, a.notes, a.felt_grade_index, a.weather, r.id AS route_id, r.name AS route_name,
+    r.type, r.grade_index, r.grade_label, r.grade_system, c.name AS crag_name, p.name AS partner_name,
+    (SELECT COUNT(*) FROM photo ph WHERE ph.owner_type = 'ascent' AND ph.owner_id = a.id AND ph.deleted_at IS NULL) AS photos
+  FROM ascent a JOIN route r ON r.id = a.route_id JOIN sector s ON s.id = r.sector_id JOIN crag c ON c.id = s.crag_id
+  LEFT JOIN partner p ON p.id = a.partner_id`;
+
 export async function listAscents(db: SQLiteDatabase): Promise<AscentRow[]> {
   return db.getAllAsync<AscentRow>(
-    `SELECT a.id, a.date, a.style, a.attempts, a.rating, a.notes, a.felt_grade_index, r.id AS route_id, r.name AS route_name, r.type,
-            r.grade_index, r.grade_label, r.grade_system, c.name AS crag_name, p.name AS partner_name,
-            (SELECT COUNT(*) FROM photo ph WHERE ph.owner_type = 'ascent' AND ph.owner_id = a.id AND ph.deleted_at IS NULL) AS photos
-     FROM ascent a JOIN route r ON r.id = a.route_id JOIN sector s ON s.id = r.sector_id JOIN crag c ON c.id = s.crag_id
-     LEFT JOIN partner p ON p.id = a.partner_id
+    `${ASCENT_SELECT}
      WHERE a.deleted_at IS NULL ORDER BY a.date DESC, a.created_at DESC`,
   );
 }
@@ -38,14 +41,15 @@ export async function listPartners(db: SQLiteDatabase): Promise<string[]> {
 /** All of the user's ascents of one route, newest first. */
 export async function listRouteAscents(db: SQLiteDatabase, routeId: string): Promise<AscentRow[]> {
   return db.getAllAsync<AscentRow>(
-    `SELECT a.id, a.date, a.style, a.attempts, a.rating, a.notes, a.felt_grade_index, r.id AS route_id, r.name AS route_name, r.type,
-            r.grade_index, r.grade_label, r.grade_system, c.name AS crag_name, p.name AS partner_name,
-            (SELECT COUNT(*) FROM photo ph WHERE ph.owner_type = 'ascent' AND ph.owner_id = a.id AND ph.deleted_at IS NULL) AS photos
-     FROM ascent a JOIN route r ON r.id = a.route_id JOIN sector s ON s.id = r.sector_id JOIN crag c ON c.id = s.crag_id
-     LEFT JOIN partner p ON p.id = a.partner_id
+    `${ASCENT_SELECT}
      WHERE a.route_id = ? AND a.deleted_at IS NULL ORDER BY a.date DESC, a.created_at DESC`,
     [routeId],
   );
+}
+
+/** Whether there is any ascent (for the backup reminder). */
+export async function hasAscents(db: SQLiteDatabase): Promise<boolean> {
+  return (await db.getFirstAsync<{ x: number }>('SELECT 1 AS x FROM ascent WHERE deleted_at IS NULL LIMIT 1')) != null;
 }
 
 export type NewAscent = {
@@ -138,11 +142,7 @@ export type AscentDetail = AscentRow & { weather: string; route: RouteRow };
 
 export async function getAscent(db: SQLiteDatabase, id: string): Promise<AscentDetail | null> {
   const a = await db.getFirstAsync<AscentRow & { weather: string }>(
-    `SELECT a.id, a.date, a.style, a.attempts, a.rating, a.notes, a.felt_grade_index, a.weather, r.id AS route_id, r.name AS route_name, r.type,
-            r.grade_index, r.grade_label, r.grade_system, c.name AS crag_name, p.name AS partner_name,
-            (SELECT COUNT(*) FROM photo ph WHERE ph.owner_type = 'ascent' AND ph.owner_id = a.id AND ph.deleted_at IS NULL) AS photos
-     FROM ascent a JOIN route r ON r.id = a.route_id JOIN sector s ON s.id = r.sector_id JOIN crag c ON c.id = s.crag_id
-     LEFT JOIN partner p ON p.id = a.partner_id
+    `${ASCENT_SELECT}
      WHERE a.id = ? AND a.deleted_at IS NULL`,
     [id],
   );

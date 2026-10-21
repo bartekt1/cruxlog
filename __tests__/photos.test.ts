@@ -1,8 +1,8 @@
-import { formatBytes, missingIds, MAX_PHOTOS, orphanFiles, PHOTO_EDGE, PHOTO_LIMIT, photoFileName, photoIdFromFile, scaleTo, slotsLeft } from '../src/domain/photos';
+import { formatBytes, missingIds, orphanFiles, PHOTO_EDGE, PHOTO_LIMIT, photoFileName, photoIdFromFile, scaleTo, slotsLeft } from '../src/domain/photos';
 
 describe('photos', () => {
   it('counts the slots left of five', () => {
-    expect(MAX_PHOTOS).toBe(5);
+    expect(PHOTO_LIMIT.ascent).toBe(5);
     expect(slotsLeft(0)).toBe(5);
     expect(slotsLeft(3)).toBe(2);
     expect(slotsLeft(7)).toBe(0);

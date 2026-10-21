@@ -42,9 +42,11 @@ export default function CragScreen() {
   const [sectorPhotos, setSectorPhotos] = useState<Map<string, PhotoRow[]>>(new Map());
   const [photoBusy, setPhotoBusy] = useState<string | null>(null);
 
-  const loadPhotos = useCallback(async () => {
-    setCragPhotos(await listPhotos(db, 'crag', id));
+  // The sectors are read here too, so their photos and the sector list always match.
+  const loadSectorsAndPhotos = useCallback(async () => {
     const sectors = await listSectors(db, id);
+    setSectorRows(sectors);
+    setCragPhotos(await listPhotos(db, 'crag', id));
     setSectorPhotos(await listPhotosOf(db, 'sector', sectors.map((s) => s.id)));
   }, [db, id]);
 
@@ -52,7 +54,7 @@ export default function CragScreen() {
     setPhotoBusy(`${owner}:${ownerId}`);
     try {
       await addPhotosFromGallery(db, owner, ownerId, have);
-      await loadPhotos();
+      await loadSectorsAndPhotos();
     } catch (e) {
       Alert.alert(t('photos.title'), t('photos.failed', { message: errorMessage(e) }));
     } finally {
@@ -68,11 +70,10 @@ export default function CragScreen() {
       setCrag(c);
     });
     listCragRoutes(db, id).then(setRoutes);
-    listSectors(db, id).then(setSectorRows);
     listAreas(db).then(setAreas);
     routeGoalKinds(db).then(setGoalKinds);
-    loadPhotos();
-  }, [db, id, router, loadPhotos]));
+    loadSectorsAndPhotos();
+  }, [db, id, router, loadSectorsAndPhotos]));
 
   // Every sector, also empty ones, so a sector added without routes shows up; while searching, only sectors with hits.
   const sections = useMemo(() => {

@@ -15,7 +15,7 @@ import { AppError } from '../src/domain/errors';
 import { errorMessage, showError } from '../src/ui/errors';
 import { formatBytes } from '../src/domain/photos';
 import { pickBackupFolder, testBackupFolder } from '../src/ui/backupFolder';
-import { activePhotos, applyCragPositions, applyImport, importedUsage, listAscents, removeImported } from '../src/db/repo';
+import { activePhotos, applyCragPositions, applyImport, importedUsage, hasAscents, removeImported } from '../src/db/repo';
 import { backupStatus } from '../src/domain/history';
 import { detectFormat, parsePositionsCsv } from '../src/domain/flatImport';
 import { planFromFiles, UnknownFileError } from '../src/domain/importPlan';
@@ -44,7 +44,7 @@ export default function Settings() {
   const [photoStats, setPhotoStats] = useState({ count: 0, bytes: 0 });
   const [showManual, setShowManual] = useState(false);
   const [copies, setCopies] = useState<FolderBackup[] | null>(null); // the copies in the folder, once "show" was tapped
-  useEffect(() => { listAscents(db).then((a) => setHasData(a.length > 0)); }, [db]);
+  useEffect(() => { hasAscents(db).then(setHasData); }, [db]);
   useEffect(() => { activePhotos(db).then((p) => setPhotoStats({ count: p.length, bytes: p.reduce((sum, x) => sum + x.bytes, 0) })); }, [db]);
   const backup = backupStatus(s.lastBackupAt, Date.now(), hasData);
 

@@ -45,10 +45,14 @@ export default function RouteScreen() {
   }, [db, id, router]));
 
   // Wall photos (of its sector, then of its crag) where the route could be drawn when it has no topo yet.
+  const sectorId = route?.sector_id;
+  const cragId = route?.crag_id;
   useFocusEffect(useCallback(() => {
-    if (!route) return;
-    Promise.all([listPhotos(db, 'sector', route.sector_id), listPhotos(db, 'crag', route.crag_id)]).then(([a, b]) => setWallPhotos([...a, ...b]));
-  }, [db, route]));
+    if (!sectorId || !cragId) return;
+    let live = true;
+    Promise.all([listPhotos(db, 'sector', sectorId), listPhotos(db, 'crag', cragId)]).then(([a, b]) => { if (live) setWallPhotos([...a, ...b]); });
+    return () => { live = false; };
+  }, [db, sectorId, cragId]));
 
   // Project or wish, picked in a small dialog; the badge then replaces the button.
   const addToGoals = () =>

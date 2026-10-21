@@ -1,4 +1,4 @@
-import { type AscentStyle, type RouteType, isSend } from './grades';
+import { type AscentStyle, type RouteType, isSend, LEAD_STYLES } from './grades';
 
 export type StatAscent = {
   date: string; // YYYY-MM-DD
@@ -14,7 +14,7 @@ export type StatAscent = {
 
 /** Sends that count for goals and "hardest": led, not top-rope. */
 export function isLeadSend(style: AscentStyle): boolean {
-  return style === 'os' || style === 'flash' || style === 'rp' || style === 'pp';
+  return LEAD_STYLES.includes(style);
 }
 
 export type YearStats = {

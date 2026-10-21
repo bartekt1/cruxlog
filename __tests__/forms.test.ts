@@ -1,4 +1,4 @@
-import { isFirstTry, validateAscentDraft, validateCragDraft, validateGoalDraft, type GoalDraft, validateName, validateRouteDraft, type RouteDraft } from '../src/domain/forms';
+import { isFirstTry, validateAreas, validateAscentDraft, validateOptionalNumber, validateCragDraft, validateGoalDraft, type GoalDraft, validateName, validateRouteDraft, type RouteDraft } from '../src/domain/forms';
 import { parseGrade } from '../src/domain/grades';
 
 const route: RouteDraft = { crag: ' Test Crag ', sector: '', name: 'Route 1', type: 'sport', system: 'kr', grade: 'VI.3' };
@@ -72,5 +72,24 @@ describe('crag and name drafts', () => {
     expect(validateCragDraft({ name: 'Okiennik', areas: at('Jura', ''), description: '', approach: '' })).toEqual({ ok: false, error: 'edit.errors.area' });
     expect(validateCragDraft({ name: ' Okiennik ', areas: at(' Jura ', ' Rzędkowice ', ' '), description: ' opis ', approach: '', sectors: [' Lewy ', '', 'lewy', 'Prawy'] }))
       .toEqual({ ok: true, value: { name: 'Okiennik', areas: at('Jura', 'Rzędkowice'), description: 'opis', approach: '', sectorNames: ['Lewy', 'Prawy'] } });
+  });
+});
+
+describe('validateOptionalNumber', () => {
+  it('accepts empty, decimals with a comma, and rejects letters, negatives and fractions where whole numbers are needed', () => {
+    expect(validateOptionalNumber(' ', false)).toEqual({ ok: true, value: null });
+    expect(validateOptionalNumber('18,5', false)).toEqual({ ok: true, value: 18.5 });
+    expect(validateOptionalNumber('6', true)).toEqual({ ok: true, value: 6 });
+    for (const [text, integer] of [['abc', false], ['-1', false], ['6.5', true], ['9000', false]] as const) {
+      expect(validateOptionalNumber(text, integer)).toEqual({ ok: false, error: 'edit.errors.number' });
+    }
+  });
+});
+
+describe('validateAreas', () => {
+  it('needs a region and an area, the group is optional', () => {
+    expect(validateAreas({ region: ' Jura ', area: ' Sokoliki ', group: '' })).toEqual({ ok: true, value: { region: 'Jura', area: 'Sokoliki', group: '' } });
+    expect(validateAreas({ region: '', area: 'Sokoliki', group: '' })).toEqual({ ok: false, error: 'edit.errors.region' });
+    expect(validateAreas({ region: 'Jura', area: ' ', group: 'G' })).toEqual({ ok: false, error: 'edit.errors.area' });
   });
 });

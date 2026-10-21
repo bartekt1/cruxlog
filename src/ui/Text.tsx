@@ -1,5 +1,5 @@
 import { StyleSheet, Text as RNText, type TextProps } from 'react-native';
-import { F, familyFor } from './fonts';
+import { familyFor } from './fonts';
 
 /**
  * Text in the app's fonts: Barlow by default, the matching weight family for fontWeight,
@@ -11,4 +11,3 @@ export function Text(props: TextProps) {
   return <RNText {...props} style={[props.style, { fontFamily, fontWeight: 'normal' }]} />;
 }
 
-export { F };

@@ -1,5 +1,5 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
-import { type GradeSystem, type RouteType } from '../domain/grades';
+import { LEAD_STYLES, type GradeSystem, type RouteType } from '../domain/grades';
 import { newId, now } from './ids';
 import { AppError } from '../domain/errors';
 
@@ -71,7 +71,7 @@ export async function completeRouteGoals(db: SQLiteDatabase, t: number): Promise
     `UPDATE goal SET done_at = ?, updated_at = ?
      WHERE deleted_at IS NULL AND done_at IS NULL AND route_id IS NOT NULL AND kind IN ('project', 'wishlist')
        AND EXISTS (SELECT 1 FROM ascent a WHERE a.route_id = goal.route_id AND a.deleted_at IS NULL
-         AND a.style IN ('os', 'flash', 'rp', 'pp') AND a.date >= date(goal.created_at / 1000, 'unixepoch', 'localtime'))`,
+         AND a.style IN (${LEAD_STYLES.map((s) => `'${s}'`).join(', ')}) AND a.date >= date(goal.created_at / 1000, 'unixepoch', 'localtime'))`,
     [t, t]);
 }
 

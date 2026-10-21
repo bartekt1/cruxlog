@@ -39,10 +39,6 @@ export function systemsFor(_type: RouteType): GradeSystem[] {
   return ROUTE_SYSTEMS;
 }
 
-export function ladderLength(_type: RouteType): number {
-  return ROUTE_LADDER.length;
-}
-
 const norm = (s: string) => s.trim().replace(/\s+/g, '').toUpperCase();
 
 function exactIndex(wanted: string, system: GradeSystem): number | null {
@@ -94,6 +90,8 @@ export function routeGrade(r: GradedRoute, system: GradeSystem): string {
 /** Styles that count as a completed climb in stats. */
 export type AscentStyle = 'os' | 'flash' | 'rp' | 'pp' | 'tr' | 'attempt';
 export const ASCENT_STYLES: AscentStyle[] = ['os', 'flash', 'rp', 'pp', 'tr', 'attempt'];
+/** Led sends (not top-rope): they count for goals and the hardest climbs. */
+export const LEAD_STYLES: AscentStyle[] = ['os', 'flash', 'rp', 'pp'];
 export function isSend(style: AscentStyle): boolean {
   return style !== 'attempt';
 }

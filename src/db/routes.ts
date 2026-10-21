@@ -59,8 +59,17 @@ export async function findRoutes(db: SQLiteDatabase, f: RouteFilter, limit = 200
     where.push(`c.region_id IN (${f.areaIds.map(() => '?').join(',')})`);
     params.push(...f.areaIds);
   }
-  const status = f.status === 'todo' ? 'WHERE ascents = 0' : f.status === 'tried' ? 'WHERE ascents > 0 AND sends = 0' : f.status === 'sent' ? 'WHERE sends > 0' : '';
   const words = fold(f.query).split(' ').filter(Boolean);
+  if (words.length) {
+    // A name is matched on the in-memory index (folded once, not on every keystroke); the ids go to SQLite as one JSON list.
+    const index = await searchIndex(db);
+    const ids: string[] = [];
+    for (let i = 0; i < index.rows.length; i++) if (words.every((w) => index.hay[i].includes(w))) ids.push(index.rows[i].id);
+    if (!ids.length) return { total: 0, rows: [] };
+    where.push('r.id IN (SELECT value FROM json_each(?))');
+    params.push(JSON.stringify(ids));
+  }
+  const status = f.status === 'todo' ? 'WHERE ascents = 0' : f.status === 'tried' ? 'WHERE ascents > 0 AND sends = 0' : f.status === 'sent' ? 'WHERE sends > 0' : '';
   const sql = (select: string, tail: string) => `SELECT ${select} FROM (
        SELECT ${ROUTE_COLS}, c.region_id, COALESCE(x.ascents, 0) AS ascents, COALESCE(x.sends, 0) AS sends
        FROM route r JOIN sector s ON s.id = r.sector_id JOIN crag c ON c.id = s.crag_id
@@ -68,15 +77,9 @@ export async function findRoutes(db: SQLiteDatabase, f: RouteFilter, limit = 200
          ON x.route_id = r.id
        WHERE ${where.join(' AND ')}
      ) ${status} ${tail}`;
-  // Without a name the database does the limiting; a name is matched in JS (ignoring case and Polish letters).
-  if (!words.length) {
-    const total = await db.getFirstAsync<{ n: number }>(sql('COUNT(*) AS n', ''), params);
-    const rows = await db.getAllAsync<FoundRoute>(sql('*', 'ORDER BY grade_index, name LIMIT ?'), [...params, limit]);
-    return { total: total?.n ?? 0, rows };
-  }
-  const all = await db.getAllAsync<FoundRoute>(sql('*', 'ORDER BY grade_index, name'), params);
-  const hits = all.filter((r) => { const hay = fold(`${r.name} ${r.sector_name} ${r.crag_name}`); return words.every((w) => hay.includes(w)); });
-  return { total: hits.length, rows: hits.slice(0, limit) };
+  const total = await db.getFirstAsync<{ n: number }>(sql('COUNT(*) AS n', ''), params);
+  const rows = await db.getAllAsync<FoundRoute>(sql('*', 'ORDER BY grade_index, name LIMIT ?'), [...params, limit]);
+  return { total: total?.n ?? 0, rows };
 }
 
 /** Builds the search index ahead of the first keystroke (call when a screen with route search opens). */
@@ -172,9 +175,9 @@ export async function createRoute(db: SQLiteDatabase, cragId: string, r: RouteIn
     if (!crag) throw new AppError('errors.notFound');
     const sectorId = await sectorIdFor(db, cragId, r.sectorName.trim() || crag.name, t);
     await db.runAsync(
-      `INSERT INTO route (id, sector_id, name, type, grade_label, grade_system, grade_index, created_at, updated_at)
-       VALUES (?,?,?,?,?,?,?,?,?)`,
-      [id, sectorId, r.name, r.type, r.gradeLabel, r.gradeSystem, r.gradeIndex, t, t],
+      `INSERT INTO route (id, sector_id, name, type, grade_label, grade_system, grade_index, length_m, bolts, created_at, updated_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+      [id, sectorId, r.name, r.type, r.gradeLabel, r.gradeSystem, r.gradeIndex, r.lengthM ?? null, r.bolts ?? null, t, t],
     );
   });
   return id;
