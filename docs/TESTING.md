@@ -133,7 +133,7 @@ Write down the result of every step (OK / problem). Report problems with: step n
 5. Make 7 copies (change something small between them, tap "Back up now" each time). Expected: only the 5 newest files remain in the folder.
 6. Automatic: after 7 days and with something changed since the last copy, open the app. Expected: within a few seconds the status line shows a new "Last automatic copy"; with nothing changed no copy is made. (To try sooner: change the phone date a week ahead, then back.)
 7. Remove the folder on Drive (or its access), tap "Back up now". Expected: a clear error; the status line is red and says the last try failed; the Journal reminder appears as before. Choosing a folder again fixes it. "Turn off automatic backup" forgets the folder.
-8. Manual "Export backup" and "Import backup" still work as before.
+8. The manual "Export backup" and "Import backup" are folded under "Other ways to back up (one file, no photos)" at the bottom of Settings; tapping it shows them with a short explanation. They work as before.
 
 ## 6b. Photos on an ascent
 1. New ascent › the "Photos" section › "Add photos". Expected: the system gallery picker opens without any permission question; you can tick several photos at once, at most 5 in all ("Photos: 3 of 5"). A short "Preparing the photos…" while they are shrunk. Each shows as a tile with a cross.

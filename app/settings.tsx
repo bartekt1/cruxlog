@@ -4,7 +4,9 @@ import * as Sharing from 'expo-sharing';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Alert, ScrollView, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { ActivityIndicator, Alert, Pressable, ScrollView, View } from 'react-native';
+import { F } from '../src/ui/fonts';
 import { Text } from '../src/ui/Text';
 import { exportBackup, importBackup } from '../src/db/backup';
 import { devicePath, folderKind, unpackBackup } from '../src/domain/autoBackup';
@@ -42,6 +44,7 @@ export default function Settings() {
   const [busy, setBusy] = useState(false);
   const [hasData, setHasData] = useState(false);
   const [photoStats, setPhotoStats] = useState({ count: 0, bytes: 0 });
+  const [showManual, setShowManual] = useState(false);
   const [copies, setCopies] = useState<FolderBackup[] | null>(null); // the copies in the folder, once "show" was tapped
   useEffect(() => { listAscents(db).then((a) => setHasData(a.length > 0)); }, [db]);
   useEffect(() => { activePhotos(db).then((p) => setPhotoStats({ count: p.length, bytes: p.reduce((sum, x) => sum + x.bytes, 0) })); }, [db]);
@@ -251,7 +254,6 @@ export default function Settings() {
       <Text style={{ color: th.muted, marginTop: 8 }}>{t('settings.removeImportedHelp')}</Text>
       <Button label={t('settings.removeImported')} onPress={doRemoveImported} disabled={busy} variant="plain" />
       <Label>{t('settings.backup')}</Label>
-      <Text style={{ color: th.muted }}>{t('settings.backupHelp')}</Text>
       <Text style={{ color: backup.due ? th.warn : th.ink, marginTop: 8, fontWeight: '600' }}>
         {backup.days == null ? t('settings.lastBackupNever') : backup.days === 0 ? t('settings.lastBackupToday') : t('settings.lastBackupDays', { n: backup.days })}
       </Text>
@@ -281,8 +283,19 @@ export default function Settings() {
       ) : (
         <Button label={t('settings.pickFolder')} onPress={doPickFolder} variant="plain" disabled={busy} />
       )}
-      <Button label={t('settings.export')} onPress={doExport} variant="plain" disabled={busy} />
-      <Button label={t('settings.import')} onPress={doImport} variant="plain" disabled={busy} />
+      {/* The manual copy (one file, without photos) stays available but folded away: the automatic one is the main way. */}
+      <Pressable onPress={() => setShowManual(!showManual)} accessibilityRole="button" accessibilityState={{ expanded: showManual }}
+        style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 20, minHeight: 44 }}>
+        <Ionicons name={showManual ? 'chevron-down' : 'chevron-forward'} size={18} color={th.muted} />
+        <Text style={{ color: th.ink, fontFamily: F.semi }}>{t('settings.manualBackup')}</Text>
+      </Pressable>
+      {showManual ? (
+        <>
+          <Text style={{ color: th.muted }}>{t('settings.backupHelp')}</Text>
+          <Button label={t('settings.export')} onPress={doExport} variant="plain" disabled={busy} />
+          <Button label={t('settings.import')} onPress={doImport} variant="plain" disabled={busy} />
+        </>
+      ) : null}
       {busy ? <ActivityIndicator color={th.accent} style={{ marginTop: 16 }} /> : null}
     </ScrollView>
   );
