@@ -15,3 +15,11 @@ export function confirmDelete(t: TFunction, name: string, usage: Usage | null, o
     { text: t('common.delete'), style: 'destructive', onPress: () => { void runOrAlert(onConfirm); } },
   ]);
 }
+
+/** Yes/no question as a promise; dismissing it counts as no. */
+export const ask = (title: string, message: string, yes: string, no: string) =>
+  new Promise<boolean>((resolve) =>
+    Alert.alert(title, message, [
+      { text: no, style: 'cancel', onPress: () => resolve(false) },
+      { text: yes, onPress: () => resolve(true) },
+    ], { cancelable: true, onDismiss: () => resolve(false) }));

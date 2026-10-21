@@ -1,4 +1,4 @@
-import { isFirstTry, validateAreas, validateAscentDraft, validateOptionalNumber, validateCragDraft, validateGoalDraft, type GoalDraft, validateName, validateRouteDraft, type RouteDraft } from '../src/domain/forms';
+import { isFirstTry, validateAreas, validateNewRoute, validateAscentDraft, validateOptionalNumber, validateCragDraft, validateGoalDraft, type GoalDraft, validateName, validateRouteDraft, type RouteDraft } from '../src/domain/forms';
 import { parseGrade } from '../src/domain/grades';
 
 const route: RouteDraft = { crag: ' Test Crag ', sector: '', name: 'Route 1', type: 'sport', system: 'kr', grade: 'VI.3' };
@@ -91,5 +91,15 @@ describe('validateAreas', () => {
     expect(validateAreas({ region: ' Jura ', area: ' Sokoliki ', group: '' })).toEqual({ ok: true, value: { region: 'Jura', area: 'Sokoliki', group: '' } });
     expect(validateAreas({ region: '', area: 'Sokoliki', group: '' })).toEqual({ ok: false, error: 'edit.errors.region' });
     expect(validateAreas({ region: 'Jura', area: ' ', group: 'G' })).toEqual({ ok: false, error: 'edit.errors.area' });
+  });
+});
+
+describe('validateNewRoute', () => {
+  const draft = { crag: 'Krowia', sector: '', name: 'Rysa', type: 'sport' as const, system: 'kr' as const, grade: 'VI.1' };
+  it('needs a region and an area unless the crag already has one', () => {
+    expect(validateNewRoute({ ...draft, areas: { region: '', area: '', group: '' }, cragHasArea: false })).toEqual({ ok: false, error: 'ascent.errors.region' });
+    expect(validateNewRoute({ ...draft, areas: { region: '', area: '', group: '' }, cragHasArea: true }).ok).toBe(true);
+    expect(validateNewRoute({ ...draft, areas: { region: 'Czarnorzeki', area: 'Kamieniec', group: '' }, cragHasArea: false }).ok).toBe(true);
+    expect(validateNewRoute({ ...draft, name: '', areas: { region: '', area: '', group: '' }, cragHasArea: false })).toEqual({ ok: false, error: 'ascent.errors.name' });
   });
 });

@@ -1,5 +1,5 @@
 import {
-  clampZoom, commit, FIT, hitPoint, MAX_ZOOM, numberLines, parsePoints, redo, simplify, smoothPath, startHistory, stringifyPoints, toPhoto, undo, zoomAt,
+  clampZoom, commit, FIT, fingerDistance, fingerMidpoint, hitPoint, pinchZoom, MAX_ZOOM, numberLines, parsePoints, redo, simplify, smoothPath, startHistory, stringifyPoints, toPhoto, undo, zoomAt,
 } from '../src/domain/topo';
 
 describe('topo points', () => {
@@ -83,5 +83,28 @@ describe('zoom', () => {
     expect(zoomAt(FIT, 100, { x: 0, y: 0 }, W, H).scale).toBe(MAX_ZOOM);
     expect(clampZoom({ scale: 1, tx: 50, ty: -50 }, W, H)).toEqual({ scale: 1, tx: 0, ty: 0 });
     expect(clampZoom({ scale: 2, tx: 1000, ty: -1000 }, W, H)).toEqual({ scale: 2, tx: 150, ty: -200 });
+  });
+});
+
+describe('two-finger zoom', () => {
+  const W = 400;
+  const H = 300;
+  it('measures the fingers', () => {
+    expect(fingerDistance([{ x: 0, y: 0 }, { x: 30, y: 40 }])).toBe(50);
+    expect(fingerDistance([{ x: 5, y: 5 }, { x: 5, y: 5 }])).toBe(1); // never zero
+    expect(fingerMidpoint([{ x: 0, y: 0 }, { x: 30, y: 40 }])).toEqual({ x: 15, y: 20 });
+  });
+  it('zooms by how far the fingers spread and never past the limit', () => {
+    const start = { zoom: FIT, dist: 100, mid: { x: 0, y: 0 } };
+    expect(pinchZoom(start, [{ x: -100, y: 0 }, { x: 100, y: 0 }], W, H).scale).toBeCloseTo(2);
+    expect(pinchZoom(start, [{ x: -5000, y: 0 }, { x: 5000, y: 0 }], W, H).scale).toBe(MAX_ZOOM);
+    expect(pinchZoom(start, [{ x: -10, y: 0 }, { x: 10, y: 0 }], W, H).scale).toBe(1);
+  });
+  it('moves the photo with the fingers when zoomed in', () => {
+    const start = { zoom: { scale: 2, tx: 0, ty: 0 }, dist: 100, mid: { x: 0, y: 0 } };
+    const z = pinchZoom(start, [{ x: -30, y: 20 }, { x: 70, y: 20 }], W, H);
+    expect(z.scale).toBeCloseTo(2);
+    expect(z.tx).toBeCloseTo(20);
+    expect(z.ty).toBeCloseTo(20);
   });
 });
