@@ -1,4 +1,4 @@
-import { formatDay, isValidIsoDate, isoDate, relativeDay, shiftDay } from '../src/domain/dates';
+import { formatDay, isValidIsoDate, isoDate, relativeDay, shiftDay, formatDateTime } from '../src/domain/dates';
 
 describe('dates', () => {
   it('formats a local date as ISO', () => {
@@ -25,5 +25,14 @@ describe('dates', () => {
     expect(formatDay('2026-05-01', 'en', '2026-10-10')).not.toMatch(/2026/);
     expect(formatDay('2025-05-01', 'en', '2026-10-10')).toMatch(/2025/);
     expect(formatDay('garbage', 'en', '2026-10-10')).toBe('garbage');
+  });
+});
+
+describe('formatDateTime', () => {
+  it('shows the day with the year and the time', () => {
+    const text = formatDateTime(new Date(2026, 9, 21, 8, 12).getTime(), 'en');
+    expect(text).toContain('2026');
+    expect(text).toContain('October');
+    expect(text).toMatch(/08:12|8:12/);
   });
 });

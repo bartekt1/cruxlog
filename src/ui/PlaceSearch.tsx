@@ -2,16 +2,16 @@ import { useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 import { findRoutes, type CragRow, type FoundRoute } from '../db/repo';
 import { routeGrade } from '../domain/grades';
-import { suggest } from '../domain/text';
-import { F } from './fonts';
-import { EmptyState, GradeBadge } from './kit';
-import { NavRow, SectionTitle } from './NavRow';
+import { sectorLine, suggest } from '../domain/text';
+import { EmptyState, Label } from './kit';
+import { NavRow } from './NavRow';
 import { useSettings } from './settingsStore';
 import { Text } from './Text';
 import { useTheme } from './theme';
+import { RouteCard } from './rows';
 
 const ROUTE_LIMIT = 40;
 
@@ -44,21 +44,12 @@ export function PlaceSearch({ query, crags, areaIds, path, onOpenCrag }: {
 
   return (
     <View>
-      {hits.length ? <SectionTitle>{t('areas.cragsHeader')}</SectionTitle> : null}
+      {hits.length ? <Label>{t('areas.cragsHeader')}</Label> : null}
       {hits.map((c) => <NavRow key={c.id} title={c.name} subtitle={[path(c), t('crags.routes', { count: c.routes })].filter(Boolean).join(' · ')} onPress={() => onOpenCrag(c)} />)}
-      {routes.total ? <SectionTitle>{t('areas.routesHeader')}</SectionTitle> : null}
+      {routes.total ? <Label>{t('areas.routesHeader')}</Label> : null}
       {routes.rows.map((r) => (
-        <Pressable key={r.id} onPress={() => router.push(`/route/${r.id}`)} accessibilityRole="button"
-          style={({ pressed }) => ({
-            flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 8, padding: 10,
-            backgroundColor: th.surface, borderWidth: 1, borderColor: th.line, borderRadius: 14, opacity: pressed ? 0.6 : 1,
-          })}>
-          <GradeBadge text={routeGrade(r, routeSystem)} />
-          <View style={{ flex: 1 }}>
-            <Text style={{ color: th.ink, fontFamily: F.semi, fontSize: 16 }}>{r.name}</Text>
-            <Text style={{ color: th.muted, fontSize: 13 }} numberOfLines={1}>{r.crag_name} › {r.sector_name}</Text>
-          </View>
-        </Pressable>
+        <RouteCard key={r.id} grade={routeGrade(r, routeSystem)} name={r.name} subtitle={sectorLine(r.crag_name, r.sector_name)}
+          onPress={() => router.push(`/route/${r.id}`)} />
       ))}
       {routes.total > routes.rows.length ? (
         <Text style={{ color: th.muted, fontSize: 13, marginTop: 8 }}>{t('areas.moreRoutes', { shown: routes.rows.length, total: routes.total })}</Text>

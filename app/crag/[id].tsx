@@ -10,7 +10,7 @@ import { routeGrade } from '../../src/domain/grades';
 import { IconButton } from '../../src/ui/icons';
 import { Contours } from '../../src/ui/Contours';
 import { F } from '../../src/ui/fonts';
-import { Button, EmptyState, Field, GradeBadge, LinkButton, Screen } from '../../src/ui/kit';
+import { Button, EmptyState, Field, GradeBadge, LinkButton, Screen, Label } from '../../src/ui/kit';
 import { matches } from '../../src/domain/text';
 import { useLocation } from '../../src/ui/useLocation';
 import { distanceM, formatDistance, isLatLng } from '../../src/domain/geo';
@@ -21,6 +21,7 @@ import { addPhotosFromGallery } from '../../src/ui/photos';
 import { useSettings } from '../../src/ui/settingsStore';
 import { useTheme } from '../../src/ui/theme';
 import { errorMessage } from '../../src/ui/errors';
+import { GroupedRow, routeStatus } from '../../src/ui/rows';
 
 export default function CragScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -85,8 +86,7 @@ export default function CragScreen() {
       .filter((sec) => !query.trim() || sec.data.length);
   }, [routes, sectorRows, sectorPhotos, query]);
 
-  const status = (r: CragRouteRow) =>
-    r.sends > 0 ? `✓ ${t('crags.sends', { count: r.sends })}` : r.ascents > 0 ? t('crags.tried', { count: r.ascents }) : '';
+  const status = (r: CragRouteRow) => routeStatus(t, r);
 
   return (
     <Screen>
@@ -127,7 +127,7 @@ export default function CragScreen() {
               )}
               {crag.description ? <Text style={{ color: th.ink }}>{crag.description}</Text> : null}
               {crag.approach ? <Text style={{ color: th.muted }}>{t('crags.approach')}: {crag.approach}</Text> : null}
-              <Text accessibilityRole="header" style={{ color: th.muted, fontSize: 12, fontFamily: F.semi, textTransform: 'uppercase', letterSpacing: 1.5, marginTop: 8 }}>{t('photos.cragTitle')}</Text>
+              <Label style={{ marginTop: 8, marginBottom: 0 }}>{t('photos.cragTitle')}</Label>
               <PhotoSection owner="crag" ids={cragPhotos.map((p) => p.id)} busy={photoBusy === `crag:${crag.id}`}
                 onAdd={() => addPhotoTo('crag', crag.id, cragPhotos.length)} onOpen={(i) => openPhotos('crag', crag.id, i)} />
               <Text style={{ color: th.muted, fontSize: 12, marginTop: 4 }}>{t('crags.tapRoute')}</Text>
@@ -149,9 +149,7 @@ export default function CragScreen() {
         renderSectionHeader={({ section }) => (
           <View style={{ paddingTop: 16, paddingBottom: 2, paddingLeft: 4, backgroundColor: th.bg }}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Text accessibilityRole="header" style={{ flex: 1, color: th.muted, fontSize: 12, fontFamily: F.semi, textTransform: 'uppercase', letterSpacing: 1.5 }}>
-              {section.sector}
-            </Text>
+            <Label style={{ flex: 1, marginTop: 0, marginBottom: 0 }}>{section.sector}</Label>
             {section.photos.length < PHOTO_LIMIT.sector ? (
               <IconButton name={photoBusy === `sector:${section.sectorId}` ? 'hourglass-outline' : 'camera-outline'} size={22} label={t('photos.addWall', { sector: section.sector })}
                 onPress={() => addPhotoTo('sector', section.sectorId, section.photos.length)} />
@@ -168,20 +166,8 @@ export default function CragScreen() {
         }
         // Routes of a sector share one card, like the days in the journal.
         renderItem={({ item, index, section }) => (
-          <Pressable
-            onPress={() => router.push(`/route/${item.id}`)}
-            accessibilityRole="button"
-            accessibilityHint={t('crags.logHint')}
-            style={({ pressed }) => ({
-              flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8, paddingLeft: 12, paddingRight: 4,
-              backgroundColor: th.surface, borderColor: th.line, borderLeftWidth: 1, borderRightWidth: 1,
-              borderTopWidth: index === 0 ? 1 : 0, borderBottomWidth: index === section.data.length - 1 ? 1 : 0,
-              borderTopLeftRadius: index === 0 ? 14 : 0, borderTopRightRadius: index === 0 ? 14 : 0,
-              borderBottomLeftRadius: index === section.data.length - 1 ? 14 : 0, borderBottomRightRadius: index === section.data.length - 1 ? 14 : 0,
-              opacity: pressed ? 0.6 : 1,
-            })}
-          >
-            {index === 0 ? null : <View style={{ position: 'absolute', top: 0, left: 12, right: 12, height: 1, backgroundColor: th.line }} />}
+          <GroupedRow first={index === 0} last={index === section.data.length - 1} onPress={() => router.push(`/route/${item.id}`)}
+            accessibilityHint={t('crags.logHint')} style={{ paddingVertical: 8, paddingRight: 4 }}>
             <GradeBadge text={routeGrade(item, routeSystem)} />
             <View style={{ flex: 1 }}>
               <Text style={{ color: th.ink, fontFamily: F.semi, fontSize: 16 }}>{item.name}</Text>
@@ -196,7 +182,7 @@ export default function CragScreen() {
               ) : null}
             </View>
             <IconButton name="create-outline" size={20} label={t('edit.routeTitleNamed', { name: item.name })} onPress={() => router.push({ pathname: '/route/edit', params: { id: item.id } })} />
-          </Pressable>
+          </GroupedRow>
         )}
       />
     </Screen>

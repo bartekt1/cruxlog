@@ -39,6 +39,12 @@ export function systemsFor(_type: RouteType): GradeSystem[] {
   return ROUTE_SYSTEMS;
 }
 
+/** The grade system after the route type changed: the chosen one if it fits the new type, else the user's usual one (or the first that fits). */
+export function systemAfterTypeChange(next: RouteType, current: GradeSystem, usual: GradeSystem): GradeSystem {
+  const fits = systemsFor(next);
+  return fits.includes(current) ? current : fits.includes(usual) ? usual : fits[0];
+}
+
 const norm = (s: string) => s.trim().replace(/\s+/g, '').toUpperCase();
 
 function exactIndex(wanted: string, system: GradeSystem): number | null {

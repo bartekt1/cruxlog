@@ -3,7 +3,7 @@ import * as Sharing from 'expo-sharing';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Pressable, ScrollView, Share, Switch, useWindowDimensions, View } from 'react-native';
+import { Alert, ScrollView, Share, useWindowDimensions, View } from 'react-native';
 import { captureRef } from 'react-native-view-shot';
 import { Text } from '../src/ui/Text';
 import { getAscent, getCrag, getRoute, listAreas, listCragRoutes, listPhotos, listTopoLines, drawnPhotoIds, type PhotoRow, type TopoLineRow, type CragDetail, type RouteRow } from '../src/db/repo';
@@ -19,6 +19,7 @@ import { photoUri } from '../src/ui/photos';
 import { CARD_RATIO, ShareCard, type ShareCardData } from '../src/ui/ShareCard';
 import { useSettings } from '../src/ui/settingsStore';
 import { useTheme } from '../src/ui/theme';
+import { SwitchRow } from '../src/ui/rows';
 
 type Kind = 'ascent' | 'route' | 'crag';
 /** What the card and the text say, before the user's message and the position switch are applied. */
@@ -183,21 +184,13 @@ export default function ShareScreen() {
 
       {photoIds.length ? (
         <>
-          <Pressable onPress={() => setWithPhoto(!withPhoto)} accessibilityRole="switch" accessibilityState={{ checked: withPhoto }}
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 14, minHeight: 44 }}>
-            <Switch value={withPhoto} onValueChange={setWithPhoto} trackColor={{ false: th.line, true: th.accent }} thumbColor={th.surface} importantForAccessibility="no" />
-            <Text style={{ color: th.ink, flex: 1 }}>{t('photos.useOnCard')}</Text>
-          </Pressable>
+          <SwitchRow label={t('photos.useOnCard')} value={withPhoto} onChange={setWithPhoto} marginTop={14} />
           <Text style={{ color: th.muted, fontSize: 13 }}>{t('photos.cardHint')}</Text>
           {withPhoto && photoIds.length > 1 ? (
             <ChipRow>{photoIds.map((pid, i) => <Chip key={pid} label={String(i + 1)} on={photoIndex === i} onPress={() => setPhotoIndex(i)} />)}</ChipRow>
           ) : null}
           {withPhoto && photoLines.length ? (
-            <Pressable onPress={() => setWithTopo(!withTopo)} accessibilityRole="switch" accessibilityState={{ checked: withTopo }}
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6, minHeight: 44 }}>
-              <Switch value={withTopo} onValueChange={setWithTopo} trackColor={{ false: th.line, true: th.accent }} thumbColor={th.surface} importantForAccessibility="no" />
-              <Text style={{ color: th.ink, flex: 1 }}>{t('topo.onCard')}</Text>
-            </Pressable>
+            <SwitchRow label={t('topo.onCard')} value={withTopo} onChange={setWithTopo} marginTop={6} />
           ) : null}
         </>
       ) : null}
@@ -207,11 +200,7 @@ export default function ShareScreen() {
 
       {content.place ? (
         <>
-          <Pressable onPress={() => setWithPlace(!withPlace)} accessibilityRole="switch" accessibilityState={{ checked: withPlace }}
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10, minHeight: 44 }}>
-            <Switch value={withPlace} onValueChange={setWithPlace} trackColor={{ false: th.line, true: th.accent }} thumbColor={th.surface} importantForAccessibility="no" />
-            <Text style={{ color: th.ink, flex: 1 }}>{t('share.withPlace')}</Text>
-          </Pressable>
+          <SwitchRow label={t('share.withPlace')} value={withPlace} onChange={setWithPlace} />
           <Text style={{ color: th.muted, fontSize: 13 }}>{content.place.approx ? t('share.approxHint') : t('share.placeHint')}</Text>
         </>
       ) : (

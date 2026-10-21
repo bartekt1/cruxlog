@@ -12,6 +12,7 @@ import { PhotoStrip } from '../../src/ui/PhotoViews';
 import { useSettings } from '../../src/ui/settingsStore';
 import { useTheme } from '../../src/ui/theme';
 import { runOrAlert } from '../../src/ui/errors';
+import { sectorLine } from '../../src/domain/text';
 
 export default function AscentScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -57,7 +58,7 @@ export default function AscentScreen() {
         </Pressable>
         <GradeBadge text={routeGrade(a, routeSystem)} size="lg" />
       </View>
-      <Text style={{ color: th.muted, marginTop: 4 }}>{a.crag_name} · {a.route.sector_name} · {t(`types.${a.type}`)}</Text>
+      <Text style={{ color: th.muted, marginTop: 4 }}>{sectorLine(a.crag_name, a.route.sector_name)} · {t(`types.${a.type}`)}</Text>
 
       {row(t('ascent.date'), formatDay(a.date, i18n.language, isoDate(new Date())))}
       {row(t('ascent.style'), t(`styles.${a.style}`))}

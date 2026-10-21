@@ -13,6 +13,7 @@ import { devicePath, folderKind, unpackBackup } from '../src/domain/autoBackup';
 import { backupNow, listBackups, restorePhotos, restoreBackup, scanFolder, withBackupLock, type FolderBackup } from '../src/ui/autoBackup';
 import { AppError } from '../src/domain/errors';
 import { errorMessage, showError } from '../src/ui/errors';
+import { formatDateTime } from '../src/domain/dates';
 import { formatBytes } from '../src/domain/photos';
 import { pickBackupFolder, testBackupFolder } from '../src/ui/backupFolder';
 import { activePhotos, applyCragPositions, applyImport, importedUsage, hasAscents, removeImported } from '../src/db/repo';
@@ -89,7 +90,7 @@ export default function Settings() {
     return t('settings.folderOk', { name: dir.name });
   });
 
-  const when = (at: number) => new Date(at).toLocaleString(i18n.language, { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const when = (at: number) => formatDateTime(at, i18n.language);
   const folderText = !s.backupDir ? t('settings.folderNone')
     : folderKind(s.backupDir) === 'drive' ? t('settings.folderDrive')
     : folderKind(s.backupDir) === 'device' ? t('settings.folderDevice', { path: devicePath(s.backupDir) || s.backupDirName })

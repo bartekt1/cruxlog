@@ -2,7 +2,7 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Pressable, ScrollView, Switch, View } from 'react-native';
+import { Alert, Pressable, ScrollView, View } from 'react-native';
 import { Text } from '../../src/ui/Text';
 import {
   getAscent, listPhotos, getRoute, saveAscent, listCragChoices, listCragRoutes, listAreas, listPartners, listSectorNames, recentRoutes, routeGoals, searchRoutes, warmSearch,
@@ -13,10 +13,10 @@ import { slotsLeft } from '../../src/domain/photos';
 import { editorPhoto, PhotoEditor, type EditorPhoto } from '../../src/ui/PhotoViews';
 import { photoUri, pickPhotos, preparePhoto, storePhoto, type PreparedPhoto } from '../../src/ui/photos';
 import { isFirstTry, validateAscentDraft, validateRouteDraft } from '../../src/domain/forms';
-import { ASCENT_STYLES, feltGrade, formatGrade, gradeExample, nearbyGrades, parseGrade, routeGrade, systemsFor, type AscentStyle, type GradeSystem, type RouteType } from '../../src/domain/grades';
+import { ASCENT_STYLES, feltGrade, formatGrade, gradeExample, nearbyGrades, parseGrade, routeGrade, type AscentStyle, type GradeSystem, type RouteType } from '../../src/domain/grades';
 import { DateField } from '../../src/ui/DateField';
 import { pathLabel, pathLabels, pathNames } from '../../src/domain/areas';
-import { sameName, suggest } from '../../src/domain/text';
+import { sameName, sectorLine, suggest } from '../../src/domain/text';
 import { AreaPicker } from '../../src/ui/AreaPicker';
 import { Button, Chip, ChipRow, ErrorText, Field, HIT, Label, LinkButton, Suggestions, type SuggestionItem } from '../../src/ui/kit';
 import { useLocation } from '../../src/ui/useLocation';
@@ -24,6 +24,8 @@ import { formatDistance, nearest } from '../../src/domain/geo';
 import { useSettings } from '../../src/ui/settingsStore';
 import { useTheme } from '../../src/ui/theme';
 import { errorMessage } from '../../src/ui/errors';
+import { SwitchRow } from '../../src/ui/rows';
+import { GradeFields } from '../../src/ui/GradeFields';
 
 type FieldName = 'route' | 'crag' | 'name' | 'grade' | 'date' | 'attempts' | 'region';
 const FIELD_OF: Record<string, FieldName> = {
@@ -133,7 +135,7 @@ export default function NewAscent() {
   const duplicate = name.trim() ? cragRoutes.find((r) => sameName(r.name, name)) ?? null : null;
 
   const routeItem = (r: RouteRow): SuggestionItem => ({
-    key: r.id, title: r.name, subtitle: `${r.crag_name} · ${r.sector_name}`, badge: routeGrade(r, r.grade_system),
+    key: r.id, title: r.name, subtitle: sectorLine(r.crag_name, r.sector_name), badge: routeGrade(r, r.grade_system),
   });
   const pickRoute = (rows: RouteRow[]) => (key: string) => {
     const r = rows.find((x) => x.id === key);
@@ -141,11 +143,6 @@ export default function NewAscent() {
   };
   const nameItems = (names: string[], typed: string, limit = 5): SuggestionItem[] =>
     suggest(names, typed, (x) => x, () => [], limit).filter((x) => !sameName(x, typed)).map((x) => ({ key: x, title: x }));
-
-  function pickType(next: RouteType) {
-    setType(next);
-    setSystem(systemsFor(next).includes(system) ? system : settings.routeSystem);
-  }
 
   function pickStyle(next: AscentStyle) {
     setStyle(next);
@@ -291,7 +288,7 @@ export default function NewAscent() {
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, padding: 12, borderRadius: 14, backgroundColor: th.surface, borderWidth: 1, borderColor: th.line }}>
           <View style={{ flex: 1 }}>
             <Text style={{ color: th.ink, fontWeight: '600' }}>{route.name}</Text>
-            <Text style={{ color: th.muted, fontSize: 12 }}>{route.crag_name} · {route.sector_name} · {routeGrade(route, route.grade_system)}</Text>
+            <Text style={{ color: th.muted, fontSize: 12 }}>{sectorLine(route.crag_name, route.sector_name)} · {routeGrade(route, route.grade_system)}</Text>
           </View>
           <LinkButton label={t('common.change')} onPress={() => setRoute(null)} />
         </View>
@@ -351,19 +348,8 @@ export default function NewAscent() {
               <LinkButton label={t('ascent.useExisting')} onPress={pickDuplicate} />
             </View>
           ) : null}
-          <Text style={sub}>{t('ascent.type')}</Text>
-          <ChipRow>
-            {(['sport', 'multipitch'] as RouteType[]).map((x) => <Chip key={x} label={t(`types.${x}`)} on={type === x} onPress={() => pickType(x)} />)}
-          </ChipRow>
-          <Text style={sub}>{t('ascent.gradeSystem')}</Text>
-          <ChipRow>
-            {systemsFor(type).map((s) => <Chip key={s} label={s.toUpperCase()} on={system === s} onPress={() => setSystem(s)} />)}
-          </ChipRow>
-          <Text style={sub}>{t('ascent.grade')}</Text>
-          <Field
-            value={grade} onChangeText={setGrade} invalid={bad('grade')} autoCapitalize="characters" autoCorrect={false}
-            placeholder={t('ascent.gradeExample', { example: gradeExample(system, type) })} accessibilityLabel={t('ascent.grade')}
-          />
+          <GradeFields value={{ type, system, grade }} onChange={(v) => { setType(v.type); setSystem(v.system); setGrade(v.grade); }}
+            invalid={bad('grade')} heading={(text) => <Text style={sub}>{text}</Text>} />
           <LinkButton label={t('common.cancel')} onPress={() => setCreating(false)} />
         </View>
       ) : (
@@ -426,11 +412,7 @@ export default function NewAscent() {
         isProject ? (
           <Text style={{ color: th.muted, marginTop: 10 }}>{t('goals.isProject')}</Text>
         ) : (
-          <Pressable onPress={() => setAsProject(!asProject)} accessibilityRole="switch" accessibilityState={{ checked: asProject }}
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10, minHeight: 44 }}>
-            <Switch value={asProject} onValueChange={setAsProject} trackColor={{ false: th.line, true: th.accent }} thumbColor={th.surface} importantForAccessibility="no" />
-            <Text style={{ color: th.ink, flex: 1 }}>{t('goals.asProject')}</Text>
-          </Pressable>
+          <SwitchRow label={t('goals.asProject')} value={asProject} onChange={setAsProject} />
         )
       ) : null}
 

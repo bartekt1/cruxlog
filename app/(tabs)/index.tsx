@@ -13,9 +13,10 @@ import { PhotoBadge } from '../../src/ui/PhotoViews';
 import { yearStats } from '../../src/domain/stats';
 import { Contours } from '../../src/ui/Contours';
 import { F } from '../../src/ui/fonts';
-import { EmptyState, GradeBadge, Screen, StatTile } from '../../src/ui/kit';
+import { EmptyState, GradeBadge, Screen, StatTile, Label } from '../../src/ui/kit';
 import { useSettings } from '../../src/ui/settingsStore';
 import { useTheme } from '../../src/ui/theme';
+import { GroupedRow } from '../../src/ui/rows';
 
 export default function Journal() {
   const db = useSQLiteContext();
@@ -82,28 +83,16 @@ export default function Journal() {
         ListEmptyComponent={<EmptyState title={t('journal.empty')} hint={t('journal.emptyHint')} />}
         stickySectionHeadersEnabled={false}
         renderSectionHeader={({ section }) => (
-          <Text accessibilityRole="header" style={{ color: th.muted, fontSize: 12, fontFamily: F.semi, letterSpacing: 1.5, textTransform: 'uppercase', paddingTop: 18, paddingBottom: 6, paddingHorizontal: 4 }}>
+          <Label style={{ paddingHorizontal: 4 }}>
             {dayTitle(section.day)}{section.data.length > 1 ? ` · ${t('journal.dayCount', { count: section.data.length })}` : ''}
-          </Text>
+          </Label>
         )}
         // One card per day: the rows of a day share the card's border, separated by thin lines.
         renderItem={({ item, index, section }) => {
           const first = index === 0;
           const last = index === section.data.length - 1;
           return (
-            <Pressable
-              onPress={() => router.push(`/ascent/${item.id}`)}
-              accessibilityRole="button"
-              style={({ pressed }) => ({
-                flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, paddingHorizontal: 12,
-                backgroundColor: th.surface, borderColor: th.line, borderLeftWidth: 1, borderRightWidth: 1,
-                borderTopWidth: first ? 1 : 0, borderBottomWidth: last ? 1 : 0,
-                borderTopLeftRadius: first ? 14 : 0, borderTopRightRadius: first ? 14 : 0,
-                borderBottomLeftRadius: last ? 14 : 0, borderBottomRightRadius: last ? 14 : 0,
-                opacity: pressed ? 0.6 : 1,
-              })}
-            >
-              {first ? null : <View style={{ position: 'absolute', top: 0, left: 12, right: 12, height: 1, backgroundColor: th.line }} />}
+            <GroupedRow first={first} last={last} onPress={() => router.push(`/ascent/${item.id}`)}>
               <GradeBadge text={routeGrade(item, routeSystem)} />
               <View style={{ flex: 1 }}>
                 <Text style={{ color: th.ink, fontFamily: F.semi, fontSize: 16 }}>{item.route_name}</Text>
@@ -113,7 +102,7 @@ export default function Journal() {
               </View>
               {item.photos ? <PhotoBadge count={item.photos} /> : null}
               <Text style={{ color: item.style === 'attempt' ? th.muted : th.accent, fontFamily: F.cond, fontSize: 17, minWidth: 44, textAlign: 'right' }}>{t(`styles.${item.style as AscentStyle}`)}</Text>
-            </Pressable>
+            </GroupedRow>
           );
         }}
       />

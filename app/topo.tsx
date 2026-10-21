@@ -2,7 +2,7 @@ import { Stack, useLocalSearchParams, useNavigation, useRouter } from 'expo-rout
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, FlatList, Image, PanResponder, Pressable, View, type GestureResponderEvent, type LayoutChangeEvent } from 'react-native';
+import { Alert, FlatList, Image, PanResponder, View, type GestureResponderEvent, type LayoutChangeEvent } from 'react-native';
 import {
   deleteTopoLine, getPhoto, listTopoLines, saveTopoLine, topoRoutes, type PhotoRow, type RouteRow, type TopoLineRow,
 } from '../src/db/repo';
@@ -19,6 +19,7 @@ import { Text } from '../src/ui/Text';
 import { useTheme } from '../src/ui/theme';
 import { fitRect, TopoLines } from '../src/ui/TopoLines';
 import { runOrAlert } from '../src/ui/errors';
+import { CtaButton, RouteCard } from '../src/ui/rows';
 
 const HIT_RADIUS = 24; // px: how near a finger must be to grab a point
 const TAP_SLOP = 8; // px: a touch that moves less than this is a tap
@@ -184,17 +185,11 @@ export default function TopoEditor() {
         <FlatList
           data={routes}
           keyExtractor={(r) => r.id}
-          contentContainerStyle={{ padding: 16, gap: 8 }}
+          contentContainerStyle={{ padding: 16, paddingTop: 8 }}
           ListEmptyComponent={<EmptyState title={t('topo.noRoutes')} />}
           renderItem={({ item }) => (
-            <Pressable onPress={() => setRouteId(item.id)} accessibilityRole="button"
-              style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10, borderRadius: 14, borderWidth: 1, borderColor: th.line, backgroundColor: th.surface, opacity: pressed ? 0.6 : 1 })}>
-              <GradeBadge text={routeGrade(item, routeSystem)} />
-              <View style={{ flex: 1 }}>
-                <Text style={{ color: th.ink, fontFamily: F.semi, fontSize: 16 }}>{item.name}</Text>
-                {drawn.has(item.id) ? <Text style={{ color: th.accent, fontSize: 13 }}>{t('topo.hasLine')}</Text> : null}
-              </View>
-            </Pressable>
+            <RouteCard grade={routeGrade(item, routeSystem)} name={item.name} note={drawn.has(item.id) ? t('topo.hasLine') : undefined} noteAccent
+              onPress={() => setRouteId(item.id)} />
           )}
         />
       </View>
@@ -281,10 +276,7 @@ export default function TopoEditor() {
         {tool('close-circle-outline', t('topo.deletePoint'), () => { step(points.filter((_, i) => i !== selected), -1); }, selected < 0 || mode === 'free')}
         {tool('refresh-outline', t('topo.clear'), () => step([], -1), !points.length)}
       </View>
-      <Pressable onPress={save} disabled={saving} accessibilityRole="button" accessibilityState={{ disabled: saving }}
-        style={({ pressed }) => ({ margin: 16, marginTop: 8, minHeight: 50, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: th.cta, opacity: pressed ? 0.85 : 1 })}>
-        <Text style={{ color: th.onCta, fontFamily: F.display, fontSize: 20, letterSpacing: 0.8, textTransform: 'uppercase' }}>{t('topo.save')}</Text>
-      </Pressable>
+      <CtaButton label={t('topo.save')} onPress={save} disabled={saving} style={{ margin: 16, marginTop: 8 }} />
     </View>
   );
 }

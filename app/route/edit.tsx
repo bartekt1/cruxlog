@@ -6,11 +6,12 @@ import { ScrollView } from 'react-native';
 import { Text } from '../../src/ui/Text';
 import { deleteRoute, getRoute, listSectorNames, routeUsage, updateRoute, type RouteRow } from '../../src/db/repo';
 import { validateOptionalNumber, validateRouteDraft } from '../../src/domain/forms';
-import { formatGrade, gradeExample, systemsFor, type GradeSystem, type RouteType } from '../../src/domain/grades';
+import { formatGrade, gradeExample, type GradeSystem, type RouteType } from '../../src/domain/grades';
 import { confirmDelete } from '../../src/ui/confirm';
 import { Button, Chip, ChipRow, ErrorText, Field, Label } from '../../src/ui/kit';
 import { useTheme } from '../../src/ui/theme';
 import { errorMessage } from '../../src/ui/errors';
+import { GradeFields } from '../../src/ui/GradeFields';
 
 /** /route/edit?id=<route> edits one of the user's own routes. */
 export default function EditRoute() {
@@ -41,10 +42,6 @@ export default function EditRoute() {
     });
   }, [db, id]);
 
-  function pickType(next: RouteType) {
-    setType(next);
-    if (!systemsFor(next).includes(system)) setSystem(systemsFor(next)[0]);
-  }
 
   async function save() {
     if (!route) return;
@@ -83,15 +80,7 @@ export default function EditRoute() {
       {sectors.length > 1 ? (
         <ChipRow>{sectors.map((s) => <Chip key={s} label={s} on={sector.trim() === s} onPress={() => setSector(s)} />)}</ChipRow>
       ) : null}
-      <Label>{t('ascent.type')}</Label>
-      <ChipRow>
-        {(['sport', 'multipitch'] as RouteType[]).map((x) => <Chip key={x} label={t(`types.${x}`)} on={type === x} onPress={() => pickType(x)} />)}
-      </ChipRow>
-      <Label>{t('ascent.gradeSystem')}</Label>
-      <ChipRow>{systemsFor(type).map((s) => <Chip key={s} label={s.toUpperCase()} on={system === s} onPress={() => setSystem(s)} />)}</ChipRow>
-      <Label>{t('ascent.grade')}</Label>
-      <Field value={grade} onChangeText={setGrade} accessibilityLabel={t('ascent.grade')} autoCapitalize="characters" autoCorrect={false}
-        placeholder={t('ascent.gradeExample', { example: gradeExample(system, type) })} />
+      <GradeFields value={{ type, system, grade }} onChange={(v) => { setType(v.type); setSystem(v.system); setGrade(v.grade); }} />
       <Label>{t('route.lengthLabel')}</Label>
       <Field value={length} onChangeText={setLength} accessibilityLabel={t('route.lengthLabel')} keyboardType="decimal-pad" placeholder={t('common.optional')} />
       <Label>{t('route.boltsLabel')}</Label>

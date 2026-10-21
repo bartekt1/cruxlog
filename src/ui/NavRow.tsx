@@ -20,12 +20,3 @@ export function NavRow({ title, subtitle, onPress }: { title: string; subtitle?:
     </Pressable>
   );
 }
-
-export function SectionTitle({ children }: { children: string }) {
-  const th = useTheme();
-  return (
-    <Text accessibilityRole="header" style={{ color: th.muted, fontSize: 12, fontFamily: F.semi, textTransform: 'uppercase', letterSpacing: 1.5, marginTop: 20 }}>
-      {children}
-    </Text>
-  );
-}

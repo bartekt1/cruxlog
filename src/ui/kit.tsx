@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react';
-import { Pressable, TextInput, type TextInputProps, View, type ViewStyle } from 'react-native';
+import { Pressable, TextInput, type TextInputProps, type TextStyle, View, type ViewStyle } from 'react-native';
 import { F } from './fonts';
 import { Text } from './Text';
 import { useTheme } from './theme';
@@ -12,9 +12,15 @@ export function Screen({ children }: { children: ReactNode }) {
   return <View style={{ flex: 1, backgroundColor: t.bg, paddingHorizontal: 16 }}>{children}</View>;
 }
 
-export function Label({ children }: { children: ReactNode }) {
+/** A small upper-case heading over a section or a field. `style` changes the spacing (or adds e.g. flex: 1 in a row). */
+export function Label({ children, style, live }: { children: ReactNode; style?: TextStyle; live?: boolean }) {
   const t = useTheme();
-  return <Text accessibilityRole="header" style={{ color: t.muted, fontFamily: F.semi, fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase', marginTop: 18, marginBottom: 6 }}>{children}</Text>;
+  return (
+    <Text accessibilityRole="header" accessibilityLiveRegion={live ? 'polite' : undefined}
+      style={[{ color: t.muted, fontFamily: F.semi, fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase', marginTop: 18, marginBottom: 6 }, style]}>
+      {children}
+    </Text>
+  );
 }
 
 /** A big condensed heading, e.g. a route name on its screen. */

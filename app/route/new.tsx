@@ -6,12 +6,13 @@ import { Keyboard, ScrollView } from 'react-native';
 import { Text } from '../../src/ui/Text';
 import { createRoute, getCrag, listCragRoutes, listSectors, type CragDetail, type CragRouteRow, type SectorRow } from '../../src/db/repo';
 import { validateRouteDraft } from '../../src/domain/forms';
-import { formatGrade, gradeExample, systemsFor, type GradeSystem, type RouteType } from '../../src/domain/grades';
+import { formatGrade, gradeExample, type GradeSystem, type RouteType } from '../../src/domain/grades';
 import { sameName } from '../../src/domain/text';
 import { Button, Chip, ChipRow, ErrorText, Field, Label } from '../../src/ui/kit';
 import { useSettings } from '../../src/ui/settingsStore';
 import { useTheme } from '../../src/ui/theme';
 import { errorMessage } from '../../src/ui/errors';
+import { GradeFields } from '../../src/ui/GradeFields';
 
 /** /route/new?cragId=<crag>[&sector=<name>]: add one or more routes to a crag, without an ascent. */
 export default function NewRoutes() {
@@ -41,11 +42,6 @@ export default function NewRoutes() {
     getCrag(db, cragId).then(setCrag);
     reload();
   }, [db, cragId]);
-
-  function pickType(next: RouteType) {
-    setType(next);
-    setSystem(systemsFor(next).includes(system) ? system : settings.routeSystem);
-  }
 
   const duplicate = name.trim() ? existing.find((r) => sameName(r.name, name)) ?? null : null;
 
@@ -90,15 +86,7 @@ export default function NewRoutes() {
       <Field value={name} onChangeText={setName} accessibilityLabel={t('ascent.name')} invalid={!!duplicate} />
       {duplicate ? <Text style={{ color: th.warn, marginTop: 4 }}>{t('edit.routeExists', { name: duplicate.name, sector: duplicate.sector_name })}</Text> : null}
 
-      <Label>{t('ascent.type')}</Label>
-      <ChipRow>
-        {(['sport', 'multipitch'] as RouteType[]).map((x) => <Chip key={x} label={t(`types.${x}`)} on={type === x} onPress={() => pickType(x)} />)}
-      </ChipRow>
-      <Label>{t('ascent.gradeSystem')}</Label>
-      <ChipRow>{systemsFor(type).map((s) => <Chip key={s} label={s.toUpperCase()} on={system === s} onPress={() => setSystem(s)} />)}</ChipRow>
-      <Label>{t('ascent.grade')}</Label>
-      <Field value={grade} onChangeText={setGrade} accessibilityLabel={t('ascent.grade')} autoCapitalize="characters" autoCorrect={false}
-        placeholder={t('ascent.gradeExample', { example: gradeExample(system, type) })} />
+      <GradeFields value={{ type, system, grade }} onChange={(v) => { setType(v.type); setSystem(v.system); setGrade(v.grade); }} />
 
       {error ? <ErrorText>{error}</ErrorText> : null}
       <Button label={t('edit.saveAndNext')} onPress={() => save(true)} disabled={saving || !crag} />

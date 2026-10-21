@@ -1,4 +1,4 @@
-import { feltGrade, formatGrade, gradeExample, nearbyGrades, parseGrade, ROUTE_LADDER, routeGrade } from '../src/domain/grades';
+import { feltGrade, formatGrade, gradeExample, nearbyGrades, parseGrade, ROUTE_LADDER, routeGrade, systemAfterTypeChange } from '../src/domain/grades';
 
 describe('grades', () => {
   it('parses and converts route grades', () => {
@@ -70,5 +70,12 @@ describe('own grade', () => {
     expect(feltGrade(null, 5)).toBeNull();
     expect(feltGrade(5, 5)).toBeNull();
     expect(feltGrade(7, 5)).toBe(7);
+  });
+});
+
+describe('systemAfterTypeChange', () => {
+  it('keeps the chosen system when it fits the new type', () => {
+    expect(systemAfterTypeChange('multipitch', 'uiaa', 'kr')).toBe('uiaa');
+    expect(systemAfterTypeChange('sport', 'fr', 'kr')).toBe('fr');
   });
 });
