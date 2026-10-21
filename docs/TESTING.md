@@ -48,7 +48,7 @@ Write down the result of every step (OK / problem). Report problems with: step n
 
 ## 2d. Backup reminder
 1. With at least one ascent and no backup made: the Journal shows a red-bordered box "You have never made a backup"; tapping it opens Settings, which shows "No backup yet."
-2. Export a backup. Expected: the box disappears; Settings shows "Last backup: today."
+2. Make a backup ("Back up now" in Automatic backup, or the export under "Other ways to back up"). Expected: the box disappears; Settings shows "Last backup: today."
 3. Install the new APK over the old one (without uninstalling). Expected: the app updates and all data is still there.
 
 ## 2e. Building a crag ("+" where the new thing goes)
@@ -124,6 +124,54 @@ Write down the result of every step (OK / problem). Report problems with: step n
 7. A crag without a position: no switch, a note that there is no map to include, and no coordinates on the card or in the text.
 8. Your own position is never in the card or the text.
 
+## 4. Crags and goals
+1. Crags tab. Expected: "Test Crag" with the number of routes. Tap it. Expected: the crag screen with routes grouped by sector; "Test Route 1" shows "✓ sends: 1" (rust) or "tried: N". Tap the route. Expected: the route screen (§2c).
+1a. Editing (your own and imported crags, sectors, routes and regions; re-importing a file undoes changes to imported ones, see §5b):
+   - Crags tab: a search field, then "Regions" (each with its number of crags) and "No region" for crags without one. Typing "krowia" lists matching crags with their path and matching routes (§3f).
+   - Tap a region: its areas (rejony); tap an area: its groups and crags; tap a group: its crags. Each level has "+ Add area/group" and "Add a crag"; "+ Add region" is on the Crags tab.
+   - Pencil at the top right of a region, area or group: rename it; delete it. Expected: its crags and sub-areas move one level up (deleting group "Krowia Turnia" puts crag Krowia directly in Kamieniec).
+   - On a crag screen: pencil at the top right edits name, region, description, approach; "Delete crag" asks first and lists how many sectors, routes and your ascents go with it.
+   - Pencil next to a sector header: rename or delete (lists routes and ascents that go with it).
+   - Pencil next to a route: change name, sector (moves the route), type, grade; "Delete route" lists your ascents of it. After deleting, those ascents are gone from the Journal and Progress.
+2. Goals: see §3d and §3f.
+
+## 5. CSV import
+1. Settings -> Import crags from CSV. Select all four sample files at once. Expected: an alert with counts (1 crag, 1 sector, 2 routes, 3 pitches). Buttons are disabled with a spinner while it runs.
+2. Crags tab shows "Example crag". In a new ascent, searching "Example" finds the sport route and the multipitch route.
+3. Import the same files again. Expected: same message, and no duplicates in the Crags list or in the search.
+4. Error handling: edit a copy of routes.csv on the phone (or on a computer) so that one grade is wrong (for example `9z`) and one `sector_key` does not exist. Import. Expected: "problems found, nothing was imported" with file and line numbers, and no data changed.
+5. Select only routes.csv and crags.csv without sectors.csv. Expected: errors about unknown `sector_key`, nothing imported.
+5a. Select only sectors.csv. Expected: "crags.csv and routes.csv are required. Selected: sectors.csv".
+6. File names must be exactly `crags.csv`, `sectors.csv`, `routes.csv`, `pitches.csv`. A different name is ignored (note what happens).
+
+## 5a. One-file import
+1. Settings -> Import crags from a CSV file. Pick one file with the headers `Region;Rejon;Grupa;Skała;Sektor;Nazwa;Typ;Wycena` (English headers and commas work too). Expected: the question "Import?", then the crags appear under region › area › group.
+2. A row without region or area, or with a wrong grade, shows "<file>, line N: …" and nothing is imported.
+3. A file with other headers shows "File … was not recognised".
+
+## 5b. Guidebook import and editing imported data
+1. Import the guidebook export itself (one file, e.g. `drogi_i_bouldery_Kamieniec.csv`). Expected: Czarnorzeki › Kamieniec with groups Grupa Słonecznej Turni, Kursowe Skałki, Krowia Turnia; Strzelnica, Sokoli Grzbiet, Przełom Marcinka and Smoczy Grzbiet as areas without groups; crag Krowia with sector "Ściana zachodnia". If the older three files were imported before, the ascents stay and no old crags are left over. Expected: a question "Import?" with the numbers of crags and routes and a warning that re-importing overwrites changes; Cancel imports nothing.
+2. After Import: the Crags tab shows the regions; drilling down reaches the crags. Boulders, routes named "(bez nazwy)" and routes marked "zakaz wspinania" are not imported (Leśna Turnia is missing); routes and crags have no notes, styles, guidebook numbers or wall heights.
+2a. Re-import a file with one route removed: the route disappears unless you logged an ascent on it; routes you added yourself stay.
+3. Grades from the guidebook are shown as written (VI+, VI.4/4+, VI.5?) when the display system is KR; in FR they show the nearest grade. They count in Progress as the nearest lower step.
+4. Imported crags, sectors, routes and regions have pencils like your own: rename a crag, move a route to a new sector, delete a route. Import the same files again: the changes are undone and deleted routes come back; ascents stay.
+
+## 5c. theCrag export (big file)
+1. Settings -> Import crags from a CSV file -> pick a theCrag export (headers `Region;Sektor;Nazwa;Trudność;…;Długość (m);Przeloty;…;Link`). Expected: the question shows the numbers of crags and routes and "Rows left out: N (boulders, ice, …)". The import may take some seconds.
+2. Crags tab: regions from the file (e.g. Jura, Pogórze Dynowskie, Slovenský raj). Tap down through every level, e.g. Jura -> Jura Południowa -> Garb Tenczyński -> Dolina Sanki -> Zimny Dół -> Grupa Labiryntu -> a crag. Each level shows how many crags are below it.
+3. Search "zimny" or a crag name in the Crags tab, and a route name in a new ascent. Expected: results appear without a noticeable delay after the first letter.
+4. Open a route with length and bolts: under the crag line it says e.g. "18 m · bolts: 6". Edit the route: Length and Bolts fields; letters there show an error.
+5. Slovak routes show their grade converted (e.g. "7-" as VII- in UIAA, VI.2 in KR). Grades above VI.7 (VI.7+, VI.8, VI.8+) are accepted.
+6. Settings -> "Remove imported crags and routes": the question names the numbers; after it, imported crags are gone except those with your ascents; routes you added yourself stay.
+7. Add a crag from a deep group ("Add a crag" on its screen): the form shows Region, Area and the Group field with all lower levels, e.g. "Garb Tenczyński › Dolina Sanki › Zimny Dół". Group chips go one level deeper after each pick.
+
+## 6. Backup (one file, by hand)
+Since the automatic backup (§6a) these buttons are under Settings › "Other ways to back up (one file, no photos)".
+1. Settings -> Export backup. Expected: the system share sheet opens; save the JSON file (for example to Drive or send to yourself).
+2. Add one more ascent, then import the backup file. Expected: confirmation message; the data is still there with no duplicates.
+3. Clear the app data (Android settings -> Apps -> Cruxlog -> Storage -> Clear data), open the app (empty), import the backup. Expected: all ascents, routes, goals come back and the Progress numbers match what you had.
+4. Try importing a file that is not a backup (for example routes.csv renamed to .json or a random JSON). Expected: "This file is not a Cruxlog backup.", no crash.
+
 ## 6a. Automatic backup to a folder (Google Drive)
 1. Settings › Automatic backup › "Choose folder", pick a folder on Google Drive. Expected: after a moment "Writing to the folder … works"; the label says "Folder: on Google Drive". Nothing is left in the folder (the test file is removed at once).
 2. Close the app completely and open it again. Expected: Settings still shows the folder.
@@ -174,54 +222,6 @@ Write down the result of every step (OK / problem). Report problems with: step n
 14. Route screen: a "Topo" section with the wall photo, this route in full and the others dimmed; tap it to open the photo full screen at that photo. A route without a line on a wall that has photos shows "Draw this route on the wall photo", which opens the editor with the route already chosen.
 15. Share a route: "Include a photo" offers the photo with its line first; "Show the topo line on the photo" (on by default) draws its line on the card, placed right on the cropped picture. Sharing a crag draws all lines of the photo with their numbers.
 
-
-## 4. Crags and goals
-1. Crags tab. Expected: "Test Crag" with the number of routes. Tap it. Expected: the crag screen with routes grouped by sector; "Test Route 1" shows "✓ sends: 1" (rust) or "tried: N". Tap the route. Expected: the route screen (§2c).
-1a. Editing (your own and imported crags, sectors, routes and regions; re-importing a file undoes changes to imported ones, see §5b):
-   - Crags tab: a search field, then "Regions" (each with its number of crags) and "No region" for crags without one. Typing "krowia" lists matching crags with their path and matching routes (§3f).
-   - Tap a region: its areas (rejony); tap an area: its groups and crags; tap a group: its crags. Each level has "+ Add area/group" and "Add a crag"; "+ Add region" is on the Crags tab.
-   - Pencil at the top right of a region, area or group: rename it; delete it. Expected: its crags and sub-areas move one level up (deleting group "Krowia Turnia" puts crag Krowia directly in Kamieniec).
-   - On a crag screen: pencil at the top right edits name, region, description, approach; "Delete crag" asks first and lists how many sectors, routes and your ascents go with it.
-   - Pencil next to a sector header: rename or delete (lists routes and ascents that go with it).
-   - Pencil next to a route: change name, sector (moves the route), type, grade; "Delete route" lists your ascents of it. After deleting, those ascents are gone from the Journal and Progress.
-2. Goals: see §3d and §3f.
-
-## 5. CSV import
-1. Settings -> Import crags from CSV. Select all four sample files at once. Expected: an alert with counts (1 crag, 1 sector, 2 routes, 3 pitches). Buttons are disabled with a spinner while it runs.
-2. Crags tab shows "Example crag". In a new ascent, searching "Example" finds the sport route and the multipitch route.
-3. Import the same files again. Expected: same message, and no duplicates in the Crags list or in the search.
-4. Error handling: edit a copy of routes.csv on the phone (or on a computer) so that one grade is wrong (for example `9z`) and one `sector_key` does not exist. Import. Expected: "problems found, nothing was imported" with file and line numbers, and no data changed.
-5. Select only routes.csv and crags.csv without sectors.csv. Expected: errors about unknown `sector_key`, nothing imported.
-5a. Select only sectors.csv. Expected: "crags.csv and routes.csv are required. Selected: sectors.csv".
-6. File names must be exactly `crags.csv`, `sectors.csv`, `routes.csv`, `pitches.csv`. A different name is ignored (note what happens).
-
-## 5a. One-file import
-1. Settings -> Import crags from a CSV file. Pick one file with the headers `Region;Rejon;Grupa;Skała;Sektor;Nazwa;Typ;Wycena` (English headers and commas work too). Expected: the question "Import?", then the crags appear under region › area › group.
-2. A row without region or area, or with a wrong grade, shows "<file>, line N: …" and nothing is imported.
-3. A file with other headers shows "File … was not recognised".
-
-## 5b. Guidebook import and editing imported data
-1. Import the guidebook export itself (one file, e.g. `drogi_i_bouldery_Kamieniec.csv`). Expected: Czarnorzeki › Kamieniec with groups Grupa Słonecznej Turni, Kursowe Skałki, Krowia Turnia; Strzelnica, Sokoli Grzbiet, Przełom Marcinka and Smoczy Grzbiet as areas without groups; crag Krowia with sector "Ściana zachodnia". If the older three files were imported before, the ascents stay and no old crags are left over. Expected: a question "Import?" with the numbers of crags and routes and a warning that re-importing overwrites changes; Cancel imports nothing.
-2. After Import: the Crags tab shows the regions; drilling down reaches the crags. Boulders, routes named "(bez nazwy)" and routes marked "zakaz wspinania" are not imported (Leśna Turnia is missing); routes and crags have no notes, styles, guidebook numbers or wall heights.
-2a. Re-import a file with one route removed: the route disappears unless you logged an ascent on it; routes you added yourself stay.
-3. Grades from the guidebook are shown as written (VI+, VI.4/4+, VI.5?) when the display system is KR; in FR they show the nearest grade. They count in Progress as the nearest lower step.
-4. Imported crags, sectors, routes and regions have pencils like your own: rename a crag, move a route to a new sector, delete a route. Import the same files again: the changes are undone and deleted routes come back; ascents stay.
-
-## 5c. theCrag export (big file)
-1. Settings -> Import crags from a CSV file -> pick a theCrag export (headers `Region;Sektor;Nazwa;Trudność;…;Długość (m);Przeloty;…;Link`). Expected: the question shows the numbers of crags and routes and "Rows left out: N (boulders, ice, …)". The import may take some seconds.
-2. Crags tab: regions from the file (e.g. Jura, Pogórze Dynowskie, Slovenský raj). Tap down through every level, e.g. Jura -> Jura Południowa -> Garb Tenczyński -> Dolina Sanki -> Zimny Dół -> Grupa Labiryntu -> a crag. Each level shows how many crags are below it.
-3. Search "zimny" or a crag name in the Crags tab, and a route name in a new ascent. Expected: results appear without a noticeable delay after the first letter.
-4. Open a route with length and bolts: under the crag line it says e.g. "18 m · bolts: 6". Edit the route: Length and Bolts fields; letters there show an error.
-5. Slovak routes show their grade converted (e.g. "7-" as VII- in UIAA, VI.2 in KR). Grades above VI.7 (VI.7+, VI.8, VI.8+) are accepted.
-6. Settings -> "Remove imported crags and routes": the question names the numbers; after it, imported crags are gone except those with your ascents; routes you added yourself stay.
-7. Add a crag from a deep group ("Add a crag" on its screen): the form shows Region, Area and the Group field with all lower levels, e.g. "Garb Tenczyński › Dolina Sanki › Zimny Dół". Group chips go one level deeper after each pick.
-
-## 6. Backup
-1. Settings -> Export backup. Expected: the system share sheet opens; save the JSON file (for example to Drive or send to yourself).
-2. Add one more ascent, then import the backup file. Expected: confirmation message; the data is still there with no duplicates.
-3. Clear the app data (Android settings -> Apps -> Cruxlog -> Storage -> Clear data), open the app (empty), import the backup. Expected: all ascents, routes, goals come back and the Progress numbers match what you had.
-4. Try importing a file that is not a backup (for example routes.csv renamed to .json or a random JSON). Expected: "This file is not a Cruxlog backup.", no crash.
-
 ## 7. Robustness
 1. Change the language and the route grade system, close the app completely (swipe away) and reopen it. Expected: all data is still there, and the language and grade system are the ones you chose.
 2. Rotate the phone, switch to dark mode and back. Expected: readable text and no layout breaks.
@@ -237,7 +237,8 @@ Write down the result of every step (OK / problem). Report problems with: step n
 - The map needs internet for its tiles; no offline download yet.
 - No multipitch pitch form (data model only).
 - Some crags have no position or only an approximate one until you set it (no GPS tracks are ever recorded).
-- Backup is manual (Settings › Export backup), with a reminder.
+- The automatic backup runs only when the app is opened (Android does not let it run in the background without extra services).
+- Old duplicate `zdjecia` folders made by earlier test builds on Drive are not removed by the app; delete them by hand.
 - Grade conversions between systems are approximate.
 
 ## Report template

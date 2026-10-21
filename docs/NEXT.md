@@ -1,17 +1,20 @@
 # Next steps
 
-Status (2026-10-20): the app runs on the owner's phone (APK from GitHub Actions). Done:
+Status (2026-10-21): the app runs on the owner's phone (APK from GitHub Actions). Done:
 - journal, ascent form with own grade, route history;
 - crags tree (region › area › group › crag › sector) with editing, and imports (theCrag, guidebook, one-file CSV, positions file);
 - route finder with filters, and search on every level of the Crags tab;
 - goals (count, grade, project, wishlist), added from a route or an attempt too;
 - progress for any year;
 - map with crag pins (exact and approximate), the user's position and nearby crags;
-- JSON backup with a reminder, light and dark look, pl/en.
+- sharing a route, an ascent or a crag (picture card and text with a map link);
+- photos of ascents (5), crags and walls (10 each), topo lines drawn on wall photos;
+- automatic gzipped backup to a chosen folder (Google Drive or the phone) with photos, restore from a list;
+- light and dark look, pl/en.
 
 ## Ideas under discussion (April list)
 
-- **Sharing** (card + map link): done, see `docs/TESTING.md` §3g. A photo on the card comes with photos.
+- **Sharing** (card + map link): done, see `docs/TESTING.md` §3g; photo and topo on the card §6b, §6d.
 - **Export to theCrag** (plan approved in principle 2026-10-20, postponed; Cruxlog is the main logbook, theCrag gets a copy, one way only):
   - Why a file: no write API for individuals (the full API is closed to non-commercial use, the personal key is read-only), and no password in the app. theCrag has its own logbook import from CSV (matches crag + route + country, the user confirms the matches there).
   - Screen "Export to theCrag" (Settings and Journal): list of ascents with check boxes. Default: only sends (OS, flash, RP, PP) not yet exported. Attempts, top-rope and projects are unchecked but can be checked. Ascents on the user's own routes are unchecked (they do not exist on theCrag). Year filter, "check all new", a counter.
@@ -21,7 +24,7 @@ Status (2026-10-20): the app runs on the owner's phone (APK from GitHub Actions)
   - Remember what was sent: after the export ask "Did you upload the file?" and only then mark the ascents (new column on `ascent`, migration, bump `BACKUP_VERSION`, old backups still import). A small label "sent to theCrag <date>" on the ascent, undoable.
   - Not planned: password login, direct upload, importing from theCrag back.
   - Sources: help pages on theCrag (API, "import logbook", "export logbook"), read through search summaries only because thecrag.com was not reachable from the sandbox; verify on the real site.
-- **Photos**: stage 1 done (up to 5 photos per ascent, from the gallery, shrunk to 1600 px, no thumbnails; copied once each to `zdjecia/` in the backup folder). Stage 2 done too: photos of a crag and of a wall (sector), up to 10 each, 2000 px, delete in the full-screen view, optional on the share card of a crag or route. Stage 3, first delivery done: the topo editor (bolts mode, zoom by two fingers and buttons, drag/select/delete points, undo/redo) and lines with numbers on the full-screen photo. Second delivery done: drawing by finger ("free" mode), a "Topo" section on the route screen with the route highlighted, tapping a number opens the route, topo on the share card. Next ideas: inserting a point between two bolts, a magnifier under the finger, if the owner finds tapping imprecise.
+- **Photos and topo** (done, `docs/TESTING.md` §6b–6d): stage 1 (up to 5 photos per ascent, from the gallery, shrunk to 1600 px, no thumbnails; copied once each to `zdjecia/` in the backup folder). Stage 2 done too: photos of a crag and of a wall (sector), up to 10 each, 2000 px, delete in the full-screen view, optional on the share card of a crag or route. Stage 3, first delivery done: the topo editor (bolts mode, zoom by two fingers and buttons, drag/select/delete points, undo/redo) and lines with numbers on the full-screen photo. Second delivery done: drawing by finger ("free" mode), a "Topo" section on the route screen with the route highlighted, tapping a number opens the route, topo on the share card. Next ideas: inserting a point between two bolts, a magnifier under the finger, if the owner finds tapping imprecise.
 
 ## To do, in the owner's order
 
@@ -29,10 +32,11 @@ Status (2026-10-20): the app runs on the owner's phone (APK from GitHub Actions)
 2. **Multipitch in the ascent form.** Pitch list, who led each pitch (self, partner, swing), and the style per pitch. The data model already has `pitch` and `ascent_pitch`.
 3. **Crags without a position.** 40 crags have none and 288 have an approximate one. These are improved on site with "Improve". The OSM matching scripts are kept outside the repo, so a new run can be repeated on request.
 4. **Device checks.** TalkBack, the largest font size, dark mode on every screen, the calendar picker and the keyboard in forms (see `docs/TESTING.md` §8).
-5. ~~Automatic backup~~ Done (2026-10): a folder chosen once (Google Drive through the system folder picker); a gzipped copy when the app opens and 7 days passed with changes, the 5 latest kept, restore from the list in Settings. Photos will add a `zdjecia/` subfolder with only the missing files (each photo is sent once).
+5. ~~Automatic backup~~ Done (2026-10): a folder chosen once (Google Drive through the system folder picker, or a phone folder); a gzipped copy when the app opens and 7 days passed with changes, the 5 latest kept, restore from the list in Settings. A `zdjecia/` subfolder gets each photo once. The one-file manual export/import stays folded under "Other ways to back up".
+6. **theCrag export** when the owner says go (plan above; notes off and partner on by default).
 
 ## Later, before a store release
 
 - Final app name check in the store and the domain, a privacy policy, and the project license.
 - Legal review of catalog data before shipping any to other users. A theCrag export the user imports for themselves is fine.
-- iOS build, social features with moderation of proposed routes, topo images.
+- iOS build, social features with moderation of proposed routes.

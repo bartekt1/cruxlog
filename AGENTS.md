@@ -9,7 +9,8 @@ Expo ships breaking changes every SDK release. Before writing code that touches 
 ```bash
 npm run typecheck   # tsc --noEmit
 npm test            # jest: domain, i18n, db (node:sqlite fake)
-npx expo start      # dev server
+npx expo start      # dev server (needs a development build: MapLibre is native)
+CI=1 EXPO_OFFLINE=1 npx expo export --platform android --output-dir "$(mktemp -d)"   # bundle check, catches import errors tsc misses
 ```
 
 `npx expo install` cannot reach the Expo API from the cloud sandbox. Add Expo packages with `npm install <pkg>@<version>`, taking the version from `node_modules/expo/bundledNativeModules.json`.
@@ -17,7 +18,7 @@ npx expo start      # dev server
 ## Layout
 
 - Routes live in `app/` (not `src/app/`). Every file there is a screen, `_layout.tsx` files define navigators. Import `Link`, `router`, `useLocalSearchParams` from `expo-router`.
-- `src/domain/`: pure logic with tests in `__tests__/`. `src/db/`: SQLite schema, queries, backup. `src/ui/`: shared components (`kit.tsx`), theme, stores. `src/i18n/`: `pl.json` and `en.json`.
+- `src/domain/`: pure logic with tests in `__tests__/`. `src/db/`: SQLite schema, queries, backup. `src/ui/`: shared components (`kit.tsx`), theme, stores, map, photos, topo, share card, automatic backup. `src/i18n/`: `pl.json` and `en.json`.
 
 ## Rules
 

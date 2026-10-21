@@ -14,13 +14,15 @@ npx expo start           # needs a development build: the map (MapLibre) is a na
 
 ## Layout
 
-- `app/` expo-router screens (tabs: Journal, Progress, Crags with a map, Goals; modal: new ascent; settings)
-- `src/ui/` shared components, theme and fonts, the map (`CragMap.tsx`, `mapStyles.ts`) and location (`useLocation.ts`)
-- `src/db/` SQLite schema and migrations (`PRAGMA user_version`), queries, JSON backup
-- `src/domain/` pure logic with tests: grade ladder and conversions, CSV import validation, statistics, goals, distances
+- `app/` expo-router screens: tabs (Journal, Progress, Crags with a list and a map, Goals), new ascent, settings, the share card (`share.tsx`), the full-screen photo (`photo.tsx`) and the topo editor (`topo.tsx`)
+- `src/ui/` shared components (`kit.tsx`), theme and fonts, the map (`CragMap.tsx`, `mapStyles.ts`), location (`useLocation.ts`), photo files (`photos.ts`, `PhotoViews.tsx`), topo drawing (`TopoLines.tsx`), the share card (`ShareCard.tsx`), the automatic backup (`autoBackup.ts`, `AutoBackup.tsx`, `backupFolder.ts`)
+- `src/db/` SQLite schema and migrations (`PRAGMA user_version`), queries (`repo.ts`), JSON backup (`backup.ts`)
+- `src/domain/` pure logic with tests: grade ladder and conversions, CSV imports, statistics, goals, distances, backup rotation and index, photo sizes, topo geometry (smoothing, zoom, undo), share text
 - `src/i18n/` `pl.json` and `en.json`
-- `samples/` fictional CSV files showing the import format
-- `docs/` next steps, manual test procedure, UX audit
+- `samples/` fictional CSV files in the old three-file import format (used by the DB tests)
+- `docs/` next steps (`NEXT.md`), manual test procedure (`TESTING.md`), UX audit (`UX_AUDIT.md`), design document (`design.html`, Polish)
+
+Main libraries: expo-router, expo-sqlite, Zustand, i18next, MapLibre, react-native-svg, expo-image-picker and expo-image-manipulator (photos), react-native-view-shot and expo-sharing (share card), fflate (gzipped backups).
 
 The APK is built by GitHub Actions on every push (artifact `cruxlog-apk`).
 
@@ -32,4 +34,6 @@ The APK is built by GitHub Actions on every push (artifact `cruxlog-apk`).
 - CSV import ids are `imp:<kind>:<key>`, so importing again updates instead of duplicating.
 - Bundled or imported guidebook data must not copy protected text or topo drawings. Keep to facts: name, grade, length, location.
 - Crag positions record where they came from (`crag.pos_source`: user, file, approx). A file never overwrites a position the user set on the phone.
+- Photos are files `photos/<id>.jpg` in the app's folder plus a `photo` row (ascent, crag or sector). The app never reads or writes the gallery; picked photos are shrunk and stripped of location. Topo lines (`topo_line`) store points normalised to the photo (0..1).
+- Backup: a folder chosen once (Google Drive or the phone) gets a gzipped JSON copy every 7 days with changes, the 5 newest kept, and a `zdjecia/` subfolder with each photo once. Restore from the list in Settings.
 - Location stays on the device: no GPS tracks, nothing sent anywhere. Never commit user data (exports, backups) to this public repo.

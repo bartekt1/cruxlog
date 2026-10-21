@@ -24,7 +24,7 @@ description: Run Cruxlog's checks (typecheck, tests incl. i18n and DB tests) and
 What the tests already cover, so you do not need to check it by hand:
 - `__tests__/i18n.test.ts`: `pl.json` and `en.json` have the same keys, every `t('...')` key used in `app/` and `src/` exists, no hard-coded user-visible text in JSX.
 - `__tests__/db.test.ts`: migrations, repo queries and backup round-trip on a real SQLite (`node:sqlite`).
-- Domain tests: grades, stats, CSV import, form validation.
+- Domain tests: grades, stats, CSV imports, form validation, geo, backup rotation and index, photos, topo geometry, share text.
 
 There is no ESLint config yet, so `npm run lint` is not part of the checks.
 
