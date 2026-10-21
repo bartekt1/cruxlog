@@ -23,7 +23,8 @@ export default function PhotoViewer() {
   const db = useSQLiteContext();
   const { t } = useTranslation();
   const th = useTheme();
-  const { width, height } = useWindowDimensions();
+  const { width } = useWindowDimensions();
+  const [area, setArea] = useState(0); // the height left for the photo under the header (measured)
   const [photos, setPhotos] = useState<PhotoRow[]>([]);
   const [start, setStart] = useState(Math.max(0, Number(index) || 0));
   const [current, setCurrent] = useState(start);
@@ -64,7 +65,7 @@ export default function PhotoViewer() {
   if (!photos.length) return <View style={{ flex: 1, backgroundColor: th.bg }} />;
 
   return (
-    <View style={{ flex: 1, backgroundColor: th.bg }}>
+    <View style={{ flex: 1, backgroundColor: th.bg }} onLayout={(e) => setArea(e.nativeEvent.layout.height)}>
       <Stack.Screen options={{
         title: photos.length ? t('photos.viewerTitle', { n: current + 1, total: photos.length }) : '',
         headerRight: () => (
@@ -83,11 +84,11 @@ export default function PhotoViewer() {
         renderItem={({ item }) => {
           const uri = photoUri(item.id);
           const own = lines[item.id] ?? [];
-          const rect = fitRect(item.width, item.height, width, height - 120);
+          const rect = fitRect(item.width, item.height, width, area);
           const numbers = numberLines(own.map((l) => ({ routeId: l.route_id, points: l.points })));
           return (
-            <View style={{ width, height: height - 120, alignItems: 'center', justifyContent: 'center' }}>
-              {uri ? <Image source={{ uri }} style={{ width, height: height - 120 }} resizeMode="contain" />
+            <View style={{ width, height: area, alignItems: 'center', justifyContent: 'center' }}>
+              {uri ? <Image source={{ uri }} style={{ width, height: area }} resizeMode="contain" />
                 : <Text style={{ color: th.ink }}>{t('photos.missing')}</Text>}
               {uri && own.length ? (
                 <View pointerEvents="box-none" style={{ position: 'absolute', left: rect.left, top: rect.top, width: rect.width, height: rect.height }}>

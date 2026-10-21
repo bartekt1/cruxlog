@@ -224,6 +224,7 @@ Severity: **H** blocks a task or loses/corrupts data, **M** slows a task or conf
 | # | Issue | Sev | Status |
 |---|---|---|---|
 | T4 | The app closed when zooming the topo editor to the maximum | H | On Android the line drawing keeps its whole surface as one picture in memory; at 8× that was hundreds of MB. The lines are now drawn on the visible canvas only |
+| L1 | "Save line" (and the buttons at the bottom of the crag position screen) sat under Android's navigation bar | H | Every stacked screen keeps the strip of the navigation bar free (safe-area inset); the photo viewer sizes its photos by its own area |
 | B2 | Restoring an automatic copy was hard to find | M | "Restore from a copy in the folder…" with a Restore button on each row; "Import backup" also reads the automatic `.json.gz` copies; help text says what to do on a new phone |
 
 ## Open items
