@@ -4,6 +4,7 @@ import type { ImportPlan } from '../domain/csvImport';
 import { childLevel, levelAt, splitPath, type Area, type AreaLevel } from '../domain/areas';
 import { fold, sameName, suggest } from '../domain/text';
 import { newId, now } from './ids';
+import { parsePoints, stringifyPoints, type Pt, type TopoMode } from '../domain/topo';
 
 export type RouteRow = {
   id: string; name: string; type: RouteType; grade_label: string; grade_system: GradeSystem; grade_index: number;
@@ -846,7 +847,9 @@ export async function addPhotos(db: SQLiteDatabase, ownerType: PhotoOwner, owner
 export async function removePhotos(db: SQLiteDatabase, ids: string[]): Promise<void> {
   if (!ids.length) return;
   const t = now();
-  await db.runAsync(`UPDATE photo SET deleted_at = ?, updated_at = ? WHERE deleted_at IS NULL AND id IN (${ids.map(() => '?').join(',')})`, [t, t, ...ids]);
+  const marks = ids.map(() => '?').join(',');
+  await db.runAsync(`UPDATE photo SET deleted_at = ?, updated_at = ? WHERE deleted_at IS NULL AND id IN (${marks})`, [t, t, ...ids]);
+  await db.runAsync(`UPDATE topo_line SET deleted_at = ?, updated_at = ? WHERE deleted_at IS NULL AND photo_id IN (${marks})`, [t, t, ...ids]); // lines drawn on them go too
 }
 
 /** Photos that count: not deleted, and their ascent is not deleted either (a route, sector or crag delete removes ascents). */
@@ -876,4 +879,57 @@ export async function listPhotosOf(db: SQLiteDatabase, ownerType: PhotoOwner, ow
 export async function latestPhotoChange(db: SQLiteDatabase): Promise<number | null> {
   const row = await db.getFirstAsync<{ m: number | null }>('SELECT MAX(updated_at) AS m FROM photo');
   return row?.m ?? null;
+}
+
+/** One photo, if it is not deleted. */
+export async function getPhoto(db: SQLiteDatabase, id: string): Promise<PhotoRow | null> {
+  return db.getFirstAsync<PhotoRow>('SELECT id, owner_type, owner_id, width, height, bytes, position FROM photo WHERE id = ? AND deleted_at IS NULL', [id]);
+}
+
+// ---- Topo lines -----------------------------------------------------------------------------------------------------
+
+export type TopoLineRow = {
+  id: string; photo_id: string; route_id: string; mode: TopoMode; points: Pt[];
+  route_name: string; grade_index: number; grade_label: string; grade_system: GradeSystem; type: RouteType;
+};
+
+/** The lines drawn on one photo, with their routes; lines of deleted routes are left out. */
+export async function listTopoLines(db: SQLiteDatabase, photoId: string): Promise<TopoLineRow[]> {
+  const rows = await db.getAllAsync<Omit<TopoLineRow, 'points'> & { points: string }>(
+    `SELECT t.id, t.photo_id, t.route_id, t.mode, t.points, r.name AS route_name, r.grade_index, r.grade_label, r.grade_system, r.type
+     FROM topo_line t JOIN route r ON r.id = t.route_id
+     WHERE t.photo_id = ? AND t.deleted_at IS NULL AND r.deleted_at IS NULL`,
+    [photoId]);
+  return rows.map((r) => ({ ...r, points: parsePoints(r.points) }));
+}
+
+/** The routes that can be drawn on a photo: those of its wall (sector), or of the whole crag for a crag photo. */
+export async function topoRoutes(db: SQLiteDatabase, photo: PhotoRow): Promise<RouteRow[]> {
+  if (photo.owner_type === 'sector') {
+    const sector = await db.getFirstAsync<{ crag_id: string }>('SELECT crag_id FROM sector WHERE id = ?', [photo.owner_id]);
+    return sector ? (await listCragRoutes(db, sector.crag_id)).filter((r) => r.sector_id === photo.owner_id) : [];
+  }
+  if (photo.owner_type === 'crag') return listCragRoutes(db, photo.owner_id);
+  return [];
+}
+
+/** Saves the line of a route on a photo: one line per route and photo, so saving again replaces it. */
+export async function saveTopoLine(db: SQLiteDatabase, line: { photoId: string; routeId: string; mode: TopoMode; points: Pt[] }): Promise<string> {
+  const t = now();
+  const points = stringifyPoints(line.points);
+  const existing = await db.getFirstAsync<{ id: string }>(
+    'SELECT id FROM topo_line WHERE photo_id = ? AND route_id = ? AND deleted_at IS NULL', [line.photoId, line.routeId]);
+  if (existing) {
+    await db.runAsync('UPDATE topo_line SET mode = ?, points = ?, updated_at = ? WHERE id = ?', [line.mode, points, t, existing.id]);
+    return existing.id;
+  }
+  const id = newId();
+  await db.runAsync('INSERT INTO topo_line (id, photo_id, route_id, mode, points, created_at, updated_at) VALUES (?,?,?,?,?,?,?)',
+    [id, line.photoId, line.routeId, line.mode, points, t, t]);
+  return id;
+}
+
+export async function deleteTopoLine(db: SQLiteDatabase, id: string): Promise<void> {
+  const t = now();
+  await db.runAsync('UPDATE topo_line SET deleted_at = ?, updated_at = ? WHERE id = ?', [t, t, id]);
 }

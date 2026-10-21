@@ -156,6 +156,19 @@ Write down the result of every step (OK / problem). Report problems with: step n
 6. Backup: open the app after adding (or "Back up now"): the photos of crags and walls are copied into the folder's photo subfolder like the others, once each, and the subfolder is the same one every time (no new folder per backup, no repeated copies). Restore brings them back.
 7. Delete a sector or the crag: its photos are gone after the next start of the app.
 
+## 6d. Drawing topo lines (first delivery)
+1. Crag screen › a photo of a wall (or of the crag) › full screen › the brush icon "Draw topo". Expected: a list of the routes of that wall ("already has a line" on those drawn); a crag photo lists all routes of the crag.
+2. Pick a route. Expected: the photo fills the screen; a hint says what to tap.
+3. Tap the start at the bottom, then 3–4 bolts going up, then the anchor. Expected: a red line with a white edge appears after the second point and goes as a smooth curve exactly through every point; the start shows a red disc with the route number, bolts small rings, the anchor a double ring.
+4. Zoom: two fingers apart and together (the point between the fingers stays put), two fingers move the photo; the − / whole photo / + buttons do the same; one finger on an empty spot moves a zoomed photo. Expected: the line stays exactly on the rock at every zoom; markers keep their size.
+5. Drag a point: it follows the finger. Tap a point: a dashed ring marks it; "Delete the selected point" removes it.
+6. Undo / Redo step through every action (point added, moved, deleted, clear). "Clear the line" empties it (undo brings it back).
+7. Save with one point: "A line needs at least two points". Save with more: back on the full-screen photo the line shows with its number.
+8. Draw a second route on the same photo. Expected: while drawing, the other lines are dimmed; numbers go 1, 2… from left to right by where the lines start.
+9. Open a drawn route again: its line is loaded for editing; the bin at the top right deletes it (asks first).
+10. Leave the editor with unsaved changes (back button or "Change route"): "Discard changes?"; Cancel keeps you there.
+11. Backup and restore: lines come back with the photos. Deleting a photo removes its lines.
+
 ## 4. Crags and goals
 1. Crags tab. Expected: "Test Crag" with the number of routes. Tap it. Expected: the crag screen with routes grouped by sector; "Test Route 1" shows "✓ sends: 1" (rust) or "tried: N". Tap the route. Expected: the route screen (§2c).
 1a. Editing (your own and imported crags, sectors, routes and regions; re-importing a file undoes changes to imported ones, see §5b):

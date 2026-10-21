@@ -120,6 +120,18 @@
     "backupFailed": "The database copy is saved, but the photos could not be copied: {{message}}",
     "useOnCard": "Include a photo", "cardHint": "Photos often show other people. A photo is sent only when you turn it on here."
   },
+  "topo": {
+    "title": "Topo", "draw": "Draw topo", "pickRoute": "Which route are you drawing?", "hasLine": "already has a line on this photo",
+    "noRoutes": "This wall has no routes yet. Add them on the crag screen.", "changeRoute": "Change route",
+    "hint": "Tap the start of the route, then the bolts from the bottom up, and the anchor last. Two fingers zoom and move the photo.",
+    "points": "Points: {{count}}. Drag a point to move it; tap it to select it.",
+    "zoomIn": "Zoom in", "zoomOut": "Zoom out", "fit": "Whole photo", "undo": "Undo", "redo": "Redo",
+    "deletePoint": "Delete the selected point", "clear": "Clear the line", "save": "Save line",
+    "needTwo": "A line needs at least two points: the start and the anchor.",
+    "deleteLine": "Delete line", "deleteLineTitle": "Delete the line?", "deleteLineQuestion": "The line of “{{name}}” disappears from this photo.",
+    "discardTitle": "Discard changes?", "discardQuestion": "The line will not be saved.", "discard": "Discard",
+    "canvasA11y": "Photo of the wall. Tap to add a point of the line."
+  },
   "settings": {
     "title": "Settings", "language": "Language", "theme": "Appearance", "themes": { "system": "Like the phone", "light": "Light", "dark": "Dark" }, "routeGrades": "Route grades",
     "backup": "Backup", "autoBackup": "Automatic backup", "autoBackupHelp": "Choose a folder, e.g. on Google Drive. When the app opens and 7 days have passed since the last copy and something changed, it saves a copy there by itself. The 5 latest stay. First I check that the folder can be written to.",

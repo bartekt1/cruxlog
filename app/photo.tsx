@@ -1,15 +1,20 @@
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, FlatList, Image, useWindowDimensions, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
-import { listPhotos, removePhotos, type PhotoOwner, type PhotoRow } from '../src/db/repo';
+import { listPhotos, listTopoLines, removePhotos, type PhotoOwner, type PhotoRow, type TopoLineRow } from '../src/db/repo';
+import { numberLines } from '../src/domain/topo';
 import { IconButton } from '../src/ui/icons';
 import { photoUri } from '../src/ui/photos';
 import { Text } from '../src/ui/Text';
 import { useTheme } from '../src/ui/theme';
+import { fitRect, TopoLines } from '../src/ui/TopoLines';
 
-/** /photo?ownerType=<ascent|crag|sector>&ownerId=<id>&index=<n>: the photos of an ascent, crag or wall full screen, swiping sideways; the bin deletes the one shown. */
+/**
+ * /photo?ownerType=<ascent|crag|sector>&ownerId=<id>&index=<n>: the photos of an ascent, crag or wall full screen, swiping
+ * sideways; the bin deletes the one shown. Photos of a crag or wall show their topo lines and can be drawn on.
+ */
 export default function PhotoViewer() {
   const { ownerType, ownerId, index } = useLocalSearchParams<{ ownerType?: PhotoOwner; ownerId: string; index?: string }>();
   const owner: PhotoOwner = ownerType ?? 'ascent';
@@ -24,6 +29,13 @@ export default function PhotoViewer() {
   const list = useRef<FlatList<PhotoRow>>(null);
 
   useEffect(() => { listPhotos(db, owner, ownerId).then(setPhotos); }, [db, owner, ownerId]);
+  // Topo lines per photo, read again when coming back from the editor.
+  const drawable = owner !== 'ascent';
+  const [lines, setLines] = useState<Record<string, TopoLineRow[]>>({});
+  useFocusEffect(useCallback(() => {
+    if (!drawable || !photos.length) return;
+    Promise.all(photos.map(async (p) => [p.id, await listTopoLines(db, p.id)] as const)).then((all) => setLines(Object.fromEntries(all)));
+  }, [db, drawable, photos]));
   const onEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => setCurrent(Math.round(e.nativeEvent.contentOffset.x / width));
 
   const askDelete = () => {
@@ -45,18 +57,33 @@ export default function PhotoViewer() {
     <View style={{ flex: 1, backgroundColor: th.bg }}>
       <Stack.Screen options={{
         title: photos.length ? t('photos.viewerTitle', { n: current + 1, total: photos.length }) : '',
-        headerRight: () => <IconButton name="trash-outline" size={24} label={t('photos.delete')} onPress={askDelete} />,
+        headerRight: () => (
+          <View style={{ flexDirection: 'row' }}>
+            {drawable && photos[current] ? (
+              <IconButton name="brush-outline" size={24} label={t('topo.draw')} onPress={() => router.push({ pathname: '/topo', params: { photoId: photos[current].id } })} />
+            ) : null}
+            <IconButton name="trash-outline" size={24} label={t('photos.delete')} onPress={askDelete} />
+          </View>
+        ),
       }} />
       <FlatList
         ref={list} data={photos} keyExtractor={(p) => p.id} horizontal pagingEnabled showsHorizontalScrollIndicator={false}
         initialScrollIndex={photos.length > start ? start : undefined} getItemLayout={(_, i) => ({ length: width, offset: width * i, index: i })}
-        onMomentumScrollEnd={onEnd}
+        onMomentumScrollEnd={onEnd} extraData={lines}
         renderItem={({ item }) => {
           const uri = photoUri(item.id);
+          const own = lines[item.id] ?? [];
+          const rect = fitRect(item.width, item.height, width, height - 120);
+          const numbers = numberLines(own.map((l) => ({ routeId: l.route_id, points: l.points })));
           return (
             <View style={{ width, height: height - 120, alignItems: 'center', justifyContent: 'center' }}>
               {uri ? <Image source={{ uri }} style={{ width, height: height - 120 }} resizeMode="contain" />
                 : <Text style={{ color: th.ink }}>{t('photos.missing')}</Text>}
+              {uri && own.length ? (
+                <View pointerEvents="none" style={{ position: 'absolute', left: rect.left, top: rect.top, width: rect.width, height: rect.height }}>
+                  <TopoLines lines={own.map((l) => ({ routeId: l.route_id, mode: l.mode, points: l.points, number: numbers.get(l.route_id) }))} width={rect.width} height={rect.height} />
+                </View>
+              ) : null}
             </View>
           );
         }}

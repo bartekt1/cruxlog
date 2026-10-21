@@ -3,9 +3,9 @@ import { HIDE_BOULDERS } from './migrate';
 
 // 2: region.source added. Version 1 backups still import (their regions came from CSV).
 // 3: region.parent_id and region.level (nested areas). Older backups import as top-level regions.
-// 5: the photo table. Older backups simply have no photos.
-export const BACKUP_VERSION = 5; // 4: crag.pos_source
-const TABLES = ['region', 'crag', 'sector', 'route', 'pitch', 'partner', 'ascent', 'ascent_pitch', 'goal', 'photo'] as const;
+// 5: the photo table. Older backups simply have no photos. 6: the topo_line table.
+export const BACKUP_VERSION = 6; // 4: crag.pos_source
+const TABLES = ['region', 'crag', 'sector', 'route', 'pitch', 'partner', 'ascent', 'ascent_pitch', 'goal', 'photo', 'topo_line'] as const;
 
 /** When anything in the backed-up tables last changed (also deletions); null for an empty database. */
 export async function latestChange(db: SQLiteDatabase): Promise<number | null> {

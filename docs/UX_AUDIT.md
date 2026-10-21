@@ -206,6 +206,12 @@ Severity: **H** blocks a task or loses/corrupts data, **M** slows a task or conf
 | F3 | The photo on the share card was a thin strip | M | With a photo the card puts it first: it fills the upper half, the grade and style sit on it like a label, the text is below |
 | F4 | Backups on Google Drive: a new photo folder and all photos again on every copy; old copies never removed | H | Drive gives no readable file names, so the app now remembers the addresses of what it wrote, recognises its own files by their content (backups) and by an id written in the photo (photos), and removes old copies by address |
 
+## Round 18 (topo lines, first delivery)
+
+| # | Issue | Sev | Status |
+|---|---|---|---|
+| T1 | No way to show where a route goes | M | Topo editor on a wall or crag photo: tap the start, the bolts and the anchor, the app draws a smooth curve through them; zoom with two fingers or buttons; drag, select and delete points; undo/redo; one line per route and photo; lines with numbers (left to right) on the full-screen photo |
+
 ## Open items
 
 1. Device checks: localized dates on Hermes, calendar picker, keyboard behavior, large font sizes, TalkBack labels.

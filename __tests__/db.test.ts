@@ -9,7 +9,7 @@ import {
   addAscent, addGoal, addUserRoute, applyImport, cragUsage, deleteAscent, deleteCrag, deleteGoal, deleteArea, deleteRoute, deleteSector,
   getAscent, getCrag, getArea, getRoute, getSector, listAscents, listCragRoutes, listCrags, listGoals, listAreas, listSectorNames, addArea, areaIdFor,
   renameArea, renameSector, routeUsage, saveCrag, searchRoutes, sectorUsage, setGoalDone, updateAscent, updateRoute, type NewRoute, type RouteFilter,
-  listCragChoices, listPartners, applyCragPositions, addRouteGoal, routeGoalKinds, addPhotos, listPhotos, listPhotosOf, removePhotos, activePhotos, latestPhotoChange, setCragLocation, listRouteAscents, recentRoutes, listSectors, addSector, createRoute, importedUsage, removeImported, findRoutes, getGoal, updateGoal, routeGoals,
+  listCragChoices, listPartners, applyCragPositions, addRouteGoal, routeGoalKinds, addPhotos, listPhotos, listPhotosOf, removePhotos, activePhotos, latestPhotoChange, getPhoto, listTopoLines, topoRoutes, saveTopoLine, deleteTopoLine, setCragLocation, listRouteAscents, recentRoutes, listSectors, addSector, createRoute, importedUsage, removeImported, findRoutes, getGoal, updateGoal, routeGoals,
 } from '../src/db/repo';
 import { descendantIds } from '../src/domain/areas';
 import { buildImportPlan } from '../src/domain/csvImport';
@@ -682,6 +682,59 @@ describe('photos', () => {
     await migrate(db);
     expect(await getCrag(db, 'c')).toMatchObject({ name: 'C' });
     expect(await count(db, 'photo')).toBe(0);
+  });
+});
+
+describe('topo lines', () => {
+  const pic = (id: string) => ({ id, width: 2000, height: 1500, bytes: 400_000 });
+  it('offers the routes of the wall, keeps one line per route and photo, and goes with the photo', async () => {
+    const db = await freshDb();
+    const r1 = await addUserRoute(db, route({ sectorName: 'Lewa' }));
+    const r2 = await addUserRoute(db, route({ name: 'Test Route 2', sectorName: 'Lewa' }));
+    const r3 = await addUserRoute(db, route({ name: 'Test Route 3', sectorName: 'Prawa' }));
+    const crag = (await getRoute(db, r1))!.crag_id;
+    const lewa = (await getRoute(db, r1))!.sector_id;
+    await addPhotos(db, 'sector', lewa, [pic('wall')]);
+    await addPhotos(db, 'crag', crag, [pic('whole')]);
+    const wall = (await getPhoto(db, 'wall'))!;
+    expect((await topoRoutes(db, wall)).map((r) => r.id).sort()).toEqual([r1, r2].sort());
+    expect((await topoRoutes(db, (await getPhoto(db, 'whole'))!)).map((r) => r.id).sort()).toEqual([r1, r2, r3].sort());
+
+    const pts = [{ x: 0.3, y: 0.95 }, { x: 0.32, y: 0.6 }, { x: 0.35, y: 0.1 }];
+    const id = await saveTopoLine(db, { photoId: 'wall', routeId: r1, mode: 'bolts', points: pts });
+    expect(await saveTopoLine(db, { photoId: 'wall', routeId: r1, mode: 'bolts', points: pts.slice(0, 2) })).toBe(id); // replaced, not added
+    await saveTopoLine(db, { photoId: 'wall', routeId: r2, mode: 'free', points: pts });
+    const lines = await listTopoLines(db, 'wall');
+    expect(lines.map((l) => [l.route_id, l.points.length]).sort()).toEqual([[r1, 2], [r2, 3]].sort());
+    expect(lines.find((l) => l.route_id === r2)).toMatchObject({ mode: 'free', route_name: 'Test Route 2' });
+
+    await deleteTopoLine(db, id);
+    expect((await listTopoLines(db, 'wall')).map((l) => l.route_id)).toEqual([r2]);
+    await deleteRoute(db, r2);
+    expect(await listTopoLines(db, 'wall')).toEqual([]); // a deleted route's line is not shown
+    await saveTopoLine(db, { photoId: 'wall', routeId: r1, mode: 'bolts', points: pts });
+    await removePhotos(db, ['wall']);
+    expect(await listTopoLines(db, 'wall')).toEqual([]);
+    expect(await getPhoto(db, 'wall')).toBeNull();
+  });
+  it('is part of the backup, and migrates from version 6', async () => {
+    const db = await freshDb();
+    const r = await addUserRoute(db, route());
+    const sector = (await getRoute(db, r))!.sector_id;
+    await addPhotos(db, 'sector', sector, [pic('w')]);
+    await saveTopoLine(db, { photoId: 'w', routeId: r, mode: 'bolts', points: [{ x: 0.5, y: 1 }, { x: 0.5, y: 0 }] });
+    const backup = await exportBackup(db);
+    expect(backup.tables.topo_line).toHaveLength(1);
+    const other = await freshDb();
+    await importBackup(other, backup);
+    expect((await listTopoLines(other, 'w'))[0].points).toEqual([{ x: 0.5, y: 1 }, { x: 0.5, y: 0 }]);
+
+    const old = openTestDb();
+    await old.execAsync(MIGRATIONS.slice(0, 6).join('\n') + 'PRAGMA user_version = 6;');
+    await old.execAsync("INSERT INTO crag (id, name, created_at, updated_at) VALUES ('c', 'C', 1, 1);");
+    await migrate(old);
+    expect(await getCrag(old, 'c')).toMatchObject({ name: 'C' });
+    expect(await count(old, 'topo_line')).toBe(0);
   });
 });
 

@@ -78,6 +78,14 @@ export const MIGRATIONS: string[] = [
     width INTEGER NOT NULL, height INTEGER NOT NULL, bytes INTEGER NOT NULL, position INTEGER NOT NULL DEFAULT 0, ${COMMON});
   CREATE INDEX idx_photo_owner ON photo(owner_type, owner_id);
   `,
+  // 7: topo lines: one route drawn on one wall or crag photo. points is JSON [[x,y],…] relative to the photo (0..1);
+  // mode 'bolts' = start, bolts, anchor (drawn as a smooth curve), 'free' = drawn by finger.
+  `
+  CREATE TABLE topo_line (
+    id TEXT PRIMARY KEY, photo_id TEXT NOT NULL, route_id TEXT NOT NULL, mode TEXT NOT NULL DEFAULT 'bolts', points TEXT NOT NULL, ${COMMON});
+  CREATE INDEX idx_topo_photo ON topo_line(photo_id);
+  CREATE INDEX idx_topo_route ON topo_line(route_id);
+  `,
 ];
 
 export async function migrate(db: SQLiteDatabase): Promise<void> {

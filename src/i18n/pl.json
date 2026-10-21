@@ -120,6 +120,18 @@
     "backupFailed": "Kopia bazy zapisana, ale zdjęć nie udało się skopiować: {{message}}",
     "useOnCard": "Dołącz zdjęcie", "cardHint": "Na zdjęciach często są inni ludzie. Zdjęcie wysyłasz tylko wtedy, gdy je tu włączysz."
   },
+  "topo": {
+    "title": "Topo", "draw": "Rysuj topo", "pickRoute": "Którą drogę rysujesz?", "hasLine": "ma już linię na tym zdjęciu",
+    "noRoutes": "Ta ściana nie ma jeszcze dróg. Dodaj je na ekranie skały.", "changeRoute": "Zmień drogę",
+    "hint": "Dotknij startu drogi, potem kolejnych ringów od dołu, na końcu stanowiska. Dwoma palcami powiększasz i przesuwasz zdjęcie.",
+    "points": "Punkty: {{count}}. Przeciągnij punkt, żeby go przesunąć; dotknij, żeby go zaznaczyć.",
+    "zoomIn": "Powiększ", "zoomOut": "Pomniejsz", "fit": "Całe zdjęcie", "undo": "Cofnij", "redo": "Ponów",
+    "deletePoint": "Usuń zaznaczony punkt", "clear": "Wyczyść linię", "save": "Zapisz linię",
+    "needTwo": "Linia potrzebuje co najmniej dwóch punktów: startu i stanowiska.",
+    "deleteLine": "Usuń linię", "deleteLineTitle": "Usunąć linię?", "deleteLineQuestion": "Linia drogi „{{name}}” zniknie z tego zdjęcia.",
+    "discardTitle": "Odrzucić zmiany?", "discardQuestion": "Linia nie zostanie zapisana.", "discard": "Odrzuć",
+    "canvasA11y": "Zdjęcie ściany. Dotknij, aby dodać punkt linii."
+  },
   "settings": {
     "title": "Ustawienia", "language": "Język", "theme": "Wygląd", "themes": { "system": "Jak w telefonie", "light": "Jasny", "dark": "Ciemny" }, "routeGrades": "Wyceny dróg",
     "backup": "Kopia zapasowa", "autoBackup": "Kopia automatyczna", "autoBackupHelp": "Wybierz folder, np. na Dysku Google. Po otwarciu aplikacji, gdy od ostatniej kopii minęło 7 dni i coś się zmieniło, sama zapisze tam kopię. Zostaje 5 ostatnich. Najpierw sprawdzę, czy da się do tego folderu zapisać.",
