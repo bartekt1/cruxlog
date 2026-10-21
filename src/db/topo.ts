@@ -2,7 +2,7 @@ import type { SQLiteDatabase } from 'expo-sqlite';
 import { type GradeSystem, type RouteType } from '../domain/grades';
 import { parsePoints, stringifyPoints, type Pt, type TopoMode } from '../domain/topo';
 import { newId, now } from './ids';
-import { getPhoto, type PhotoRow } from './photos';
+import type { PhotoRow } from './photos';
 import { listCragRoutes } from './routes';
 import type { RouteRow } from './shared';
 
@@ -13,12 +13,20 @@ export type TopoLineRow = {
 
 /** The lines drawn on one photo, with their routes; lines of deleted routes are left out. */
 export async function listTopoLines(db: SQLiteDatabase, photoId: string): Promise<TopoLineRow[]> {
+  return (await listTopoLinesOf(db, [photoId])).get(photoId) ?? [];
+}
+
+/** The lines of several photos in one query, by photo id. */
+export async function listTopoLinesOf(db: SQLiteDatabase, photoIds: string[]): Promise<Map<string, TopoLineRow[]>> {
+  const byPhoto = new Map<string, TopoLineRow[]>();
+  if (!photoIds.length) return byPhoto;
   const rows = await db.getAllAsync<Omit<TopoLineRow, 'points'> & { points: string }>(
     `SELECT t.id, t.photo_id, t.route_id, t.mode, t.points, r.name AS route_name, r.grade_index, r.grade_label, r.grade_system, r.type
      FROM topo_line t JOIN route r ON r.id = t.route_id
-     WHERE t.photo_id = ? AND t.deleted_at IS NULL AND r.deleted_at IS NULL`,
-    [photoId]);
-  return rows.map((r) => ({ ...r, points: parsePoints(r.points) }));
+     WHERE t.photo_id IN (${photoIds.map(() => '?').join(',')}) AND t.deleted_at IS NULL AND r.deleted_at IS NULL`,
+    photoIds);
+  for (const r of rows) byPhoto.set(r.photo_id, [...(byPhoto.get(r.photo_id) ?? []), { ...r, points: parsePoints(r.points) }]);
+  return byPhoto;
 }
 
 /** The routes that can be drawn on a photo: those of its wall (sector), or of the whole crag for a crag photo. */
@@ -52,15 +60,21 @@ export async function deleteTopoLine(db: SQLiteDatabase, id: string): Promise<vo
   await db.runAsync('UPDATE topo_line SET deleted_at = ?, updated_at = ? WHERE id = ?', [t, t, id]);
 }
 
-/** The photos a route is drawn on, each with all its lines (so the route can be shown among its neighbours). */
-export async function routeTopos(db: SQLiteDatabase, routeId: string): Promise<{ photo: PhotoRow; lines: TopoLineRow[] }[]> {
+/** The photos a route is drawn on, oldest first. */
+export async function drawnPhotoIds(db: SQLiteDatabase, routeId: string): Promise<string[]> {
   const rows = await db.getAllAsync<{ photo_id: string }>(
-    `SELECT DISTINCT t.photo_id FROM topo_line t JOIN photo p ON p.id = t.photo_id
-     WHERE t.route_id = ? AND t.deleted_at IS NULL AND p.deleted_at IS NULL ORDER BY p.created_at`, [routeId]);
-  const out: { photo: PhotoRow; lines: TopoLineRow[] }[] = [];
-  for (const r of rows) {
-    const photo = await getPhoto(db, r.photo_id);
-    if (photo) out.push({ photo, lines: await listTopoLines(db, photo.id) });
-  }
-  return out;
+    `SELECT t.photo_id FROM topo_line t JOIN photo p ON p.id = t.photo_id
+     WHERE t.route_id = ? AND t.deleted_at IS NULL AND p.deleted_at IS NULL GROUP BY t.photo_id ORDER BY MIN(p.created_at)`, [routeId]);
+  return rows.map((r) => r.photo_id);
+}
+
+/** The photos a route is drawn on, each with all its lines (so the route can be shown among its neighbours). Two queries. */
+export async function routeTopos(db: SQLiteDatabase, routeId: string): Promise<{ photo: PhotoRow; lines: TopoLineRow[] }[]> {
+  const ids = await drawnPhotoIds(db, routeId);
+  if (!ids.length) return [];
+  const lines = await listTopoLinesOf(db, ids);
+  const photos = await db.getAllAsync<PhotoRow>(
+    `SELECT id, owner_type, owner_id, width, height, bytes, position FROM photo WHERE id IN (${ids.map(() => '?').join(',')})`, ids);
+  const byId = new Map(photos.map((p) => [p.id, p]));
+  return ids.flatMap((pid) => { const photo = byId.get(pid); return photo ? [{ photo, lines: lines.get(pid) ?? [] }] : []; });
 }

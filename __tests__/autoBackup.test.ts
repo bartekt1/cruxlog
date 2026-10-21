@@ -1,4 +1,4 @@
-import { backupDue, backupFileName, devicePath, folderKind, packBackup, RETRY_AFTER_MS, unpackBackup } from '../src/domain/autoBackup';
+import { backupDue, photosDue, backupFileName, devicePath, folderKind, packBackup, RETRY_AFTER_MS, unpackBackup } from '../src/domain/autoBackup';
 
 const DAY = 86_400_000;
 
@@ -44,5 +44,21 @@ describe('backup file contents', () => {
     expect(unpackBackup(packed)).toEqual(JSON.parse(json));
     expect(unpackBackup(new TextEncoder().encode(json))).toEqual(JSON.parse(json));
     expect(() => unpackBackup(new TextEncoder().encode('not json'))).toThrow();
+  });
+});
+
+describe('photosDue', () => {
+  const now = 1_800_000_000_000;
+  const base = { now, changedAt: now - 1000, syncedAt: null, failed: false, lastTryAt: null };
+  it('copies new photos soon after they appear, not once a week', () => {
+    expect(photosDue(base)).toBe(true);
+    expect(photosDue({ ...base, syncedAt: now - 500 })).toBe(false);
+    expect(photosDue({ ...base, syncedAt: now - 5000 })).toBe(true);
+    expect(photosDue({ ...base, changedAt: null })).toBe(false);
+  });
+  it('waits an hour after a failed try', () => {
+    expect(photosDue({ ...base, failed: true, lastTryAt: now - 60_000 })).toBe(false);
+    expect(photosDue({ ...base, failed: true, lastTryAt: now - RETRY_AFTER_MS - 1 })).toBe(true);
+    expect(photosDue({ ...base, failed: false, lastTryAt: now - 60_000 })).toBe(true);
   });
 });

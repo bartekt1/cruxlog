@@ -5,8 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, ScrollView, Switch, View } from 'react-native';
 import { Text } from '../../src/ui/Text';
 import {
-  addAscent, addPhotos, addRouteGoal, addUserRoute, getAscent, listPhotos, removePhotos, getRoute, listCragChoices, listCragRoutes, listAreas, listPartners, listSectorNames, recentRoutes, routeGoals, searchRoutes, warmSearch,
-  updateAscent, type AreaNames, type AreaRow, type CragChoice, type CragRouteRow, type RouteRow,
+  getAscent, listPhotos, getRoute, saveAscent, listCragChoices, listCragRoutes, listAreas, listPartners, listSectorNames, recentRoutes, routeGoals, searchRoutes, warmSearch,
+  type AreaNames, type AreaRow, type CragChoice, type CragRouteRow, type RouteRow,
 } from '../../src/db/repo';
 import { isoDate, shiftDay } from '../../src/domain/dates';
 import { slotsLeft } from '../../src/domain/photos';
@@ -23,6 +23,7 @@ import { useLocation } from '../../src/ui/useLocation';
 import { formatDistance, nearest } from '../../src/domain/geo';
 import { useSettings } from '../../src/ui/settingsStore';
 import { useTheme } from '../../src/ui/theme';
+import { errorMessage } from '../../src/ui/errors';
 
 type FieldName = 'route' | 'crag' | 'name' | 'grade' | 'date' | 'attempts' | 'region';
 const FIELD_OF: Record<string, FieldName> = {
@@ -115,15 +116,19 @@ export default function NewAscent() {
 
   useEffect(() => {
     if (!route) { setIsProject(false); return; }
-    routeGoals(db, route.id).then((g) => setIsProject(g.some((x) => x.kind === 'project')));
+    let live = true;
+    routeGoals(db, route.id).then((g) => { if (live) setIsProject(g.some((x) => x.kind === 'project')); });
+    return () => { live = false; };
   }, [db, route?.id]);
 
   // The crag typed in the new-route form, if it already exists (ignoring case and Polish letters).
   const existingCrag = crags.find((c) => sameName(c.name, crag)) ?? null;
   useEffect(() => {
     if (!existingCrag) { setSectorNames([]); setCragRoutes([]); return; }
-    listSectorNames(db, existingCrag.id).then(setSectorNames);
-    listCragRoutes(db, existingCrag.id).then(setCragRoutes);
+    let live = true; // typing another crag before these arrive must not show the first one's sectors and routes
+    listSectorNames(db, existingCrag.id).then((x) => { if (live) setSectorNames(x); });
+    listCragRoutes(db, existingCrag.id).then((x) => { if (live) setCragRoutes(x); });
+    return () => { live = false; };
   }, [db, existingCrag?.id]);
   const duplicate = name.trim() ? cragRoutes.find((r) => sameName(r.name, name)) ?? null : null;
 
@@ -164,7 +169,9 @@ export default function NewAscent() {
   const near = useMemo(() => (loc.position ? nearest(crags, loc.position, 4, 3_000) : []), [crags, loc.position]);
   useEffect(() => {
     if (!nearCrag) { setNearRoutes([]); return; }
-    listCragRoutes(db, nearCrag).then(setNearRoutes);
+    let live = true;
+    listCragRoutes(db, nearCrag).then((x) => { if (live) setNearRoutes(x); });
+    return () => { live = false; };
   }, [db, nearCrag]);
   const cragHits = query.trim() ? suggest(crags, query, (c) => c.name, (c) => [cragPath(c)], 3) : [];
 
@@ -215,19 +222,10 @@ export default function NewAscent() {
         setPhotos((all) => [...all, editorPhoto(p)]);
       }
     } catch (e) {
-      Alert.alert(t('photos.title'), t('photos.failed', { message: (e as Error).message }));
+      Alert.alert(t('photos.title'), t('photos.failed', { message: errorMessage(e) }));
     } finally {
       setPhotoBusy(false);
     }
-  }
-
-  // Applies the photo changes to a saved ascent: removed ones are marked deleted, new ones are moved into place and recorded.
-  async function savePhotos(ascentId: string) {
-    const keep = new Set(photos.filter((p) => !p.added).map((p) => p.id));
-    await removePhotos(db, originalPhotoIds.filter((pid) => !keep.has(pid)));
-    const fresh = photos.filter((p) => p.added).map((p) => prepared[p.id]).filter(Boolean);
-    for (const p of fresh) storePhoto(p);
-    await addPhotos(db, 'ascent', ascentId, fresh.map((p) => ({ id: p.id, width: p.width, height: p.height, bytes: p.bytes })));
   }
 
   async function save() {
@@ -246,19 +244,26 @@ export default function NewAscent() {
 
     setSaving(true);
     try {
-      const rid = route?.id ?? await addUserRoute(db, { ...newRoute!, cragName: existingCrag?.name ?? newRoute!.cragName, type, gradeSystem: system, areas });
-      const values = {
-        routeId: rid, date: draft.value.date, style, attempts: draft.value.attempts, rating, notes: notes.trim(), partnerName: partner, weather: weather.trim(),
-        feltGradeIndex: baseGrade == null ? null : feltGrade(felt, baseGrade),
-      };
-      let ascentId = id;
-      if (id) await updateAscent(db, id, values);
-      else ascentId = await addAscent(db, values);
-      await savePhotos(ascentId!);
-      if (!id && style === 'attempt' && asProject && !isProject) await addRouteGoal(db, rid, 'project');
+      // The new picture files go into place first (a failed save leaves them for the startup tidy-up), then one transaction
+      // writes the route, the ascent, the photo rows and the project goal, so Save after an error never makes a second ascent.
+      const keep = new Set(photos.filter((p) => !p.added).map((p) => p.id));
+      const fresh = photos.filter((p) => p.added).map((p) => prepared[p.id]).filter(Boolean);
+      for (const p of fresh) storePhoto(p);
+      await saveAscent(db, {
+        id: id ?? null,
+        routeId: route?.id,
+        newRoute: route ? undefined : { ...newRoute!, cragName: existingCrag?.name ?? newRoute!.cragName, type, gradeSystem: system, areas },
+        ascent: {
+          date: draft.value.date, style, attempts: draft.value.attempts, rating, notes: notes.trim(), partnerName: partner, weather: weather.trim(),
+          feltGradeIndex: baseGrade == null ? null : feltGrade(felt, baseGrade),
+        },
+        removePhotoIds: originalPhotoIds.filter((pid) => !keep.has(pid)),
+        addPhotos: fresh.map((p) => ({ id: p.id, width: p.width, height: p.height, bytes: p.bytes })),
+        asProject: !id && style === 'attempt' && asProject && !isProject,
+      });
       router.back();
     } catch (e) {
-      setError({ key: 'common.failed', message: (e as Error).message });
+      setError({ key: 'common.failedText', message: errorMessage(e) });
       setSaving(false);
     }
   }

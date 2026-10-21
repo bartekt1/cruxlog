@@ -1,8 +1,9 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { type AscentStyle, type GradeSystem, type RouteType } from '../domain/grades';
-import { completeRouteGoals } from './goals';
+import { addRouteGoal, completeRouteGoals } from './goals';
+import { deletePhotoRows, insertPhotoRows, type NewPhoto } from './photos';
 import { newId, now } from './ids';
-import { getRoute } from './routes';
+import { getRoute, insertUserRoute, type NewRoute } from './routes';
 import { findByName, type RouteRow } from './shared';
 
 export type AscentRow = {
@@ -65,38 +66,72 @@ async function partnerId(db: SQLiteDatabase, partnerName: string, t: number): Pr
 }
 
 export async function addAscent(db: SQLiteDatabase, a: NewAscent): Promise<string> {
-  const id = newId();
-  const t = now();
-  await db.withTransactionAsync(async () => {
-    const pid = await partnerId(db, a.partnerName, t);
-    await db.runAsync(
-      `INSERT INTO ascent (id, route_id, date, style, attempts, rating, felt_grade_index, notes, partner_id, weather, created_at, updated_at)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
-      [id, a.routeId, a.date, a.style, a.attempts, a.rating, a.feltGradeIndex ?? null, a.notes, pid, a.weather, t, t],
-    );
-    await completeRouteGoals(db, t);
-  });
-  return id;
+  return (await saveAscent(db, { id: null, routeId: a.routeId, ascent: a })).ascentId;
 }
 
 export async function updateAscent(db: SQLiteDatabase, id: string, a: NewAscent): Promise<void> {
-  const t = now();
-  await db.withTransactionAsync(async () => {
-    const pid = await partnerId(db, a.partnerName, t);
+  await saveAscent(db, { id, routeId: a.routeId, ascent: a });
+}
+
+/** Inserts (no id) or updates an ascent; runs inside the caller's transaction. */
+async function writeAscent(db: SQLiteDatabase, id: string | null, a: NewAscent, t: number): Promise<string> {
+  const pid = await partnerId(db, a.partnerName, t);
+  if (id) {
     await db.runAsync(
       `UPDATE ascent SET route_id = ?, date = ?, style = ?, attempts = ?, rating = ?, felt_grade_index = ?, notes = ?, partner_id = ?, weather = ?,
          updated_at = ? WHERE id = ?`,
       [a.routeId, a.date, a.style, a.attempts, a.rating, a.feltGradeIndex ?? null, a.notes, pid, a.weather, t, id],
     );
+    return id;
+  }
+  const newOne = newId();
+  await db.runAsync(
+    `INSERT INTO ascent (id, route_id, date, style, attempts, rating, felt_grade_index, notes, partner_id, weather, created_at, updated_at)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
+    [newOne, a.routeId, a.date, a.style, a.attempts, a.rating, a.feltGradeIndex ?? null, a.notes, pid, a.weather, t, t],
+  );
+  return newOne;
+}
+
+export type AscentSave = {
+  /** null = a new ascent. */
+  id: string | null;
+  /** The chosen route, or `newRoute` to create one with the ascent. */
+  routeId?: string; newRoute?: NewRoute;
+  ascent: Omit<NewAscent, 'routeId'>;
+  /** Photo rows to remove and to add (the files are already in place). */
+  removePhotoIds?: string[]; addPhotos?: NewPhoto[];
+  /** Also make the route a project (an attempt on a new ascent). */
+  asProject?: boolean;
+};
+
+/**
+ * Saves an ascent with everything that goes with it (a new route, photo rows, the project goal) in one transaction:
+ * either all of it is written or nothing, so pressing Save again after an error never makes a second ascent.
+ */
+export async function saveAscent(db: SQLiteDatabase, s: AscentSave): Promise<{ ascentId: string; routeId: string }> {
+  const t = now();
+  let out = { ascentId: '', routeId: '' };
+  await db.withTransactionAsync(async () => {
+    const routeId = s.routeId ?? (s.newRoute ? await insertUserRoute(db, s.newRoute, t) : null);
+    if (!routeId) throw new Error('No route');
+    const ascentId = await writeAscent(db, s.id, { ...s.ascent, routeId }, t);
+    await deletePhotoRows(db, s.removePhotoIds ?? [], t);
+    await insertPhotoRows(db, 'ascent', ascentId, s.addPhotos ?? [], t);
+    if (s.asProject) await addRouteGoal(db, routeId, 'project');
     await completeRouteGoals(db, t);
+    out = { ascentId, routeId };
   });
+  return out;
 }
 
 /** Soft delete: the row stays (with deleted_at) so backups and a later sync carry the deletion. */
 export async function deleteAscent(db: SQLiteDatabase, id: string): Promise<void> {
   const t = now();
-  await db.runAsync('UPDATE ascent SET deleted_at = ?, updated_at = ? WHERE id = ?', [t, t, id]);
-  await db.runAsync("UPDATE photo SET deleted_at = ?, updated_at = ? WHERE owner_type = 'ascent' AND owner_id = ? AND deleted_at IS NULL", [t, t, id]);
+  await db.withTransactionAsync(async () => {
+    await db.runAsync('UPDATE ascent SET deleted_at = ?, updated_at = ? WHERE id = ?', [t, t, id]);
+    await db.runAsync("UPDATE photo SET deleted_at = ?, updated_at = ? WHERE owner_type = 'ascent' AND owner_id = ? AND deleted_at IS NULL", [t, t, id]);
+  });
 }
 
 export type AscentDetail = AscentRow & { weather: string; route: RouteRow };

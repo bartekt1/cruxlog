@@ -70,9 +70,11 @@ export async function addPhotosFromGallery(db: SQLiteDatabase, owner: PhotoOwner
   return done.length;
 }
 
-/** Moves a prepared photo from the cache into the photos folder. */
+/** Moves a prepared photo from the cache into the photos folder; a photo already moved (a save tried again) is left as it is. */
 export function storePhoto(photo: PreparedPhoto): void {
-  new File(photo.uri).move(photoFile(photo.id));
+  const target = photoFile(photo.id);
+  if (target.exists) return;
+  new File(photo.uri).move(target);
 }
 
 /** Deletes picture files that no photo needs: removed photos, and photos of deleted ascents. Runs when the app opens; never throws. */

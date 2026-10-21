@@ -9,6 +9,7 @@ import { childLevel, type AreaLevel } from '../../src/domain/areas';
 import { validateName } from '../../src/domain/forms';
 import { Button, ErrorText, Field, Label } from '../../src/ui/kit';
 import { useTheme } from '../../src/ui/theme';
+import { errorMessage } from '../../src/ui/errors';
 
 /** /area/new?parentId=<area>: add a region (no parent), a rejon (in a region) or a group (in a rejon). */
 export default function NewArea() {
@@ -36,7 +37,7 @@ export default function NewArea() {
       const id = await addArea(db, parentId ?? null, v.value);
       router.replace(`/area/${id}`);
     } catch (e) {
-      setError(t('common.failed', { message: (e as Error).message }));
+      setError(errorMessage(e));
       setSaving(false);
     }
   }

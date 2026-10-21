@@ -3,13 +3,14 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, FlatList, Image, Pressable, useWindowDimensions, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
-import { listPhotos, listTopoLines, removePhotos, type PhotoOwner, type PhotoRow, type TopoLineRow } from '../src/db/repo';
+import { listPhotos, listTopoLinesOf, removePhotos, type PhotoOwner, type PhotoRow, type TopoLineRow } from '../src/db/repo';
 import { numberLines } from '../src/domain/topo';
 import { IconButton } from '../src/ui/icons';
 import { photoUri } from '../src/ui/photos';
 import { Text } from '../src/ui/Text';
 import { useTheme } from '../src/ui/theme';
 import { fitRect, TopoLines } from '../src/ui/TopoLines';
+import { runOrAlert } from '../src/ui/errors';
 
 /**
  * /photo?ownerType=<ascent|crag|sector>&ownerId=<id>&index=<n> (or &photoId=<photo> to start at that photo): the photos of an
@@ -42,7 +43,9 @@ export default function PhotoViewer() {
   const [lines, setLines] = useState<Record<string, TopoLineRow[]>>({});
   useFocusEffect(useCallback(() => {
     if (!drawable || !photos.length) return;
-    Promise.all(photos.map(async (p) => [p.id, await listTopoLines(db, p.id)] as const)).then((all) => setLines(Object.fromEntries(all)));
+    let live = true;
+    listTopoLinesOf(db, photos.map((p) => p.id)).then((all) => { if (live) setLines(Object.fromEntries(all)); });
+    return () => { live = false; };
   }, [db, drawable, photos]));
   const onEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => setCurrent(Math.round(e.nativeEvent.contentOffset.x / width));
 
@@ -51,13 +54,13 @@ export default function PhotoViewer() {
     if (!photo) return;
     Alert.alert(t('photos.deleteTitle'), t('photos.deleteQuestion'), [
       { text: t('common.cancel'), style: 'cancel' },
-      { text: t('common.delete'), style: 'destructive', onPress: async () => {
+      { text: t('common.delete'), style: 'destructive', onPress: () => runOrAlert(async () => {
         await removePhotos(db, [photo.id]);
         const rest = photos.filter((p) => p.id !== photo.id);
         if (!rest.length) { router.back(); return; }
         setPhotos(rest);
         setCurrent(Math.min(current, rest.length - 1));
-      } },
+      }) },
     ]);
   };
 

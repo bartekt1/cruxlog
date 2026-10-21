@@ -8,6 +8,7 @@ import type { GoalKind } from '../../src/domain/forms';
 import { GoalForm, type GoalFormValue } from '../../src/ui/GoalForm';
 import { Button } from '../../src/ui/kit';
 import { useTheme } from '../../src/ui/theme';
+import { runOrAlert } from '../../src/ui/errors';
 
 const toForm = (g: GoalRow): GoalFormValue => ({
   kind: g.kind as GoalKind,
@@ -36,7 +37,7 @@ export default function EditGoal() {
   const remove = () =>
     Alert.alert(t('goals.deleteTitle'), t('goals.deleteQuestion', { title: goal.title }), [
       { text: t('common.cancel'), style: 'cancel' },
-      { text: t('common.delete'), style: 'destructive', onPress: () => deleteGoal(db, goal.id).then(() => router.back()) },
+      { text: t('common.delete'), style: 'destructive', onPress: () => runOrAlert(async () => { await deleteGoal(db, goal.id); router.back(); }) },
     ]);
 
   return (
@@ -48,7 +49,7 @@ export default function EditGoal() {
         onSubmit={async (kind, v) => { await updateGoal(db, goal.id, { kind, ...v }); }}
         onSaved={() => router.back()}
       />
-      <Button label={done ? t('goals.reopen') : t('goals.markDone')} variant="plain" onPress={() => setGoalDone(db, goal.id, !done).then(() => router.back())} />
+      <Button label={done ? t('goals.reopen') : t('goals.markDone')} variant="plain" onPress={() => runOrAlert(async () => { await setGoalDone(db, goal.id, !done); router.back(); })} />
       <Button label={t('common.delete')} variant="danger" onPress={remove} />
     </ScrollView>
   );

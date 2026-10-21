@@ -1,6 +1,7 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { areaChain, childLevel, levelAt, type Area, type AreaLevel, type AreaNames } from '../domain/areas';
 import { fold } from '../domain/text';
+import { AppError } from '../domain/errors';
 import { newId, now } from './ids';
 import { findByName, type NamedRow } from './shared';
 
@@ -50,7 +51,11 @@ export async function addArea(db: SQLiteDatabase, parentId: string | null, name:
   return childAreaId(db, parentId, level, name, now(), 'user');
 }
 
+/** Renames an area; a name another area at the same place already has is refused (names are how areas are found). */
 export async function renameArea(db: SQLiteDatabase, id: string, name: string): Promise<void> {
+  const same = await findByName(db,
+    'SELECT id, name FROM region WHERE deleted_at IS NULL AND id <> ? AND parent_id IS (SELECT parent_id FROM region WHERE id = ?)', [id, id], name);
+  if (same) throw new AppError('errors.nameTaken', { name: name.trim() });
   await db.runAsync('UPDATE region SET name = ?, updated_at = ? WHERE id = ?', [name, now(), id]);
 }
 

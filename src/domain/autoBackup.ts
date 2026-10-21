@@ -24,6 +24,15 @@ export function backupDue(x: { now: number; lastAt: number | null; changedAt: nu
   return x.now - x.lastAt >= BACKUP_INTERVAL_DAYS * 86_400_000 && x.changedAt != null && x.changedAt > x.lastAt;
 }
 
+/**
+ * Whether new photos should be copied now: they changed since the last copy (photos go soon after they appear,
+ * not once a week), unless the last try failed less than RETRY_AFTER_MS ago.
+ */
+export function photosDue(x: { now: number; changedAt: number | null; syncedAt: number | null; failed: boolean; lastTryAt: number | null }): boolean {
+  const failedRecently = x.failed && x.lastTryAt != null && x.now - x.lastTryAt < RETRY_AFTER_MS;
+  return x.changedAt != null && (x.syncedAt == null || x.changedAt > x.syncedAt) && !failedRecently;
+}
+
 /** What a stored folder address points to, for a readable label: Google Drive, the phone's own storage or something else. */
 export function folderKind(uri: string): 'drive' | 'device' | 'other' {
   if (uri.includes('com.google.android.apps.docs')) return 'drive';

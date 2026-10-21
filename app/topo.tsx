@@ -18,6 +18,7 @@ import { useSettings } from '../src/ui/settingsStore';
 import { Text } from '../src/ui/Text';
 import { useTheme } from '../src/ui/theme';
 import { fitRect, TopoLines } from '../src/ui/TopoLines';
+import { runOrAlert } from '../src/ui/errors';
 
 const HIT_RADIUS = 24; // px: how near a finger must be to grab a point
 const TAP_SLOP = 8; // px: a touch that moves less than this is a tap
@@ -55,6 +56,7 @@ export default function TopoEditor() {
   const [canvas, setCanvas] = useState({ w: 0, h: 0 });
   const [dirty, setDirty] = useState(false);
   const [mode, setMode] = useState<TopoMode>('bolts');
+  const [saving, setSaving] = useState(false);
   const leaving = useRef(false); // set once the line is saved or deleted, so the unsaved-changes question is skipped
 
   useEffect(() => {
@@ -209,8 +211,11 @@ export default function TopoEditor() {
 
   const zoomBy = (f: number) => setZoom((z) => zoomAt(z, f, { x: 0, y: 0 }, box.width, box.height));
   const save = async () => {
+    if (saving) return; // a second tap while saving would save twice and go back two screens
     if (points.length < 2) { Alert.alert(t('topo.title'), t('topo.needTwo')); return; }
-    await saveTopoLine(db, { photoId: photo.id, routeId: route.id, mode, points });
+    setSaving(true);
+    const ok = await runOrAlert(() => saveTopoLine(db, { photoId: photo.id, routeId: route.id, mode, points }));
+    if (!ok) { setSaving(false); return; }
     leaving.current = true;
     router.back();
   };
@@ -218,7 +223,7 @@ export default function TopoEditor() {
     if (!existing) return;
     Alert.alert(t('topo.deleteLineTitle'), t('topo.deleteLineQuestion', { name: route.name }), [
       { text: t('common.cancel'), style: 'cancel' },
-      { text: t('common.delete'), style: 'destructive', onPress: async () => { await deleteTopoLine(db, existing.id); leaving.current = true; router.back(); } },
+      { text: t('common.delete'), style: 'destructive', onPress: () => runOrAlert(async () => { await deleteTopoLine(db, existing.id); leaving.current = true; router.back(); }) },
     ]);
   };
 
@@ -276,7 +281,7 @@ export default function TopoEditor() {
         {tool('close-circle-outline', t('topo.deletePoint'), () => { step(points.filter((_, i) => i !== selected), -1); }, selected < 0 || mode === 'free')}
         {tool('refresh-outline', t('topo.clear'), () => step([], -1), !points.length)}
       </View>
-      <Pressable onPress={save} accessibilityRole="button"
+      <Pressable onPress={save} disabled={saving} accessibilityRole="button" accessibilityState={{ disabled: saving }}
         style={({ pressed }) => ({ margin: 16, marginTop: 8, minHeight: 50, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: th.cta, opacity: pressed ? 0.85 : 1 })}>
         <Text style={{ color: th.onCta, fontFamily: F.display, fontSize: 20, letterSpacing: 0.8, textTransform: 'uppercase' }}>{t('topo.save')}</Text>
       </Pressable>

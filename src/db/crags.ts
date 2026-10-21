@@ -1,8 +1,9 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { sameName } from '../domain/text';
 import { areaIdFor, type AreaNames } from './areas';
+import { AppError } from '../domain/errors';
 import { newId, now } from './ids';
-import { count, sectorIdFor, type NamedRow, type PosSource } from './shared';
+import { count, findByName, sectorIdFor, type NamedRow, type PosSource } from './shared';
 
 export type CragChoice = { id: string; name: string; region_id: string | null; region_name: string | null; routes: number; lat: number | null; lng: number | null; pos_source: PosSource };
 
@@ -162,7 +163,10 @@ export async function getSector(db: SQLiteDatabase, id: string): Promise<NamedRo
   return db.getFirstAsync<NamedRow>('SELECT id, name, source, crag_id AS parent_id FROM sector WHERE id = ? AND deleted_at IS NULL', [id]);
 }
 
+/** Renames a sector; a name another sector of the same crag already has is refused (names are how sectors are found). */
 export async function renameSector(db: SQLiteDatabase, id: string, name: string): Promise<void> {
+  const same = await findByName(db, 'SELECT id, name FROM sector WHERE deleted_at IS NULL AND id <> ? AND crag_id = (SELECT crag_id FROM sector WHERE id = ?)', [id, id], name);
+  if (same) throw new AppError('errors.nameTaken', { name: name.trim() });
   await db.runAsync('UPDATE sector SET name = ?, updated_at = ? WHERE id = ?', [name, now(), id]);
 }
 

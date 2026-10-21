@@ -8,6 +8,7 @@ import { RoutePicker, type PickedRoute } from './RoutePicker';
 import { useSettings } from './settingsStore';
 import { Text } from './Text';
 import { useTheme } from './theme';
+import { errorMessage } from './errors';
 
 export type GoalFormValue = { kind: GoalKind; title: string; target: string; gradeIndex: number | null; route: PickedRoute | null };
 export const EMPTY_GOAL: GoalFormValue = { kind: 'count', title: '', target: '', gradeIndex: null, route: null };
@@ -42,7 +43,7 @@ export function GoalForm({ initial, submitLabel, onSubmit, onSaved }: {
       await onSubmit(v.kind, draft.value);
       onSaved?.(() => setV({ ...EMPTY_GOAL, kind: v.kind }));
     } catch (e) {
-      setError(t('common.failed', { message: (e as Error).message }));
+      setError(errorMessage(e));
     } finally {
       setSaving(false);
     }

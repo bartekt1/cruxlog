@@ -11,6 +11,7 @@ import { sameName } from '../../src/domain/text';
 import { Button, Chip, ChipRow, ErrorText, Field, Label } from '../../src/ui/kit';
 import { useSettings } from '../../src/ui/settingsStore';
 import { useTheme } from '../../src/ui/theme';
+import { errorMessage } from '../../src/ui/errors';
 
 /** /route/new?cragId=<crag>[&sector=<name>]: add one or more routes to a crag, without an ascent. */
 export default function NewRoutes() {
@@ -65,7 +66,7 @@ export default function NewRoutes() {
       Keyboard.dismiss();
       reload();
     } catch (e) {
-      setError(t('common.failed', { message: (e as Error).message }));
+      setError(errorMessage(e));
     } finally {
       setSaving(false);
     }

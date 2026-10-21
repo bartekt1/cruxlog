@@ -6,14 +6,14 @@ import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, ScrollView, Share, Switch, useWindowDimensions, View } from 'react-native';
 import { captureRef } from 'react-native-view-shot';
 import { Text } from '../src/ui/Text';
-import { getAscent, getCrag, getRoute, listAreas, listCragRoutes, listPhotos, listTopoLines, routeTopos, type PhotoRow, type TopoLineRow, type CragDetail, type RouteRow } from '../src/db/repo';
+import { getAscent, getCrag, getRoute, listAreas, listCragRoutes, listPhotos, listTopoLines, drawnPhotoIds, type PhotoRow, type TopoLineRow, type CragDetail, type RouteRow } from '../src/db/repo';
 import { pathLabel } from '../src/domain/areas';
 import { formatDay, isoDate } from '../src/domain/dates';
 import { isLatLng } from '../src/domain/geo';
 import { routeGrade } from '../src/domain/grades';
 import { coordsLabel, shareMessage, type SharePlace } from '../src/domain/share';
 import { numberLines } from '../src/domain/topo';
-import { sameName } from '../src/domain/text';
+import { sectorLine } from '../src/domain/text';
 import { Button, Chip, ChipRow, EmptyState, Field, Label } from '../src/ui/kit';
 import { photoUri } from '../src/ui/photos';
 import { CARD_RATIO, ShareCard, type ShareCardData } from '../src/ui/ShareCard';
@@ -63,7 +63,7 @@ export default function ShareScreen() {
         const r = await getRoute(db, id);
         if (r) {
           // Photos the route is drawn on come first, so the default photo shows its line.
-          const drawn = new Set((await routeTopos(db, id)).map((x) => x.photo.id));
+          const drawn = new Set(await drawnPhotoIds(db, id));
           const all = [...(await listPhotos(db, 'sector', r.sector_id)), ...(await listPhotos(db, 'crag', r.crag_id))];
           rows = [...all.filter((p) => drawn.has(p.id)), ...all.filter((p) => !drawn.has(p.id))];
         }
@@ -76,7 +76,9 @@ export default function ShareScreen() {
   const chosenPhoto = withPhoto && photoRows.length ? photoRows[Math.min(photoIndex, photoRows.length - 1)] : null;
   useEffect(() => {
     if (!chosenPhoto || chosenPhoto.owner_type === 'ascent') { setPhotoLines([]); return; }
-    listTopoLines(db, chosenPhoto.id).then((all) => setPhotoLines(kind === 'route' ? all.filter((l) => l.route_id === id) : all));
+    let live = true;
+    listTopoLines(db, chosenPhoto.id).then((all) => { if (live) setPhotoLines(kind === 'route' ? all.filter((l) => l.route_id === id) : all); });
+    return () => { live = false; };
   }, [db, chosenPhoto?.id, chosenPhoto?.owner_type, kind, id]);
 
   useEffect(() => {
@@ -86,8 +88,6 @@ export default function ShareScreen() {
       const placeOf = (c: CragDetail | null): SharePlace | null =>
         c && isLatLng(c.lat, c.lng) ? { lat: c.lat!, lng: c.lng!, approx: c.pos_source === 'approx' } : null;
       const pathOf = (c: CragDetail) => (c.region_id ? pathLabel(areas, c.region_id) : c.region ?? '');
-      // A crag's only sector is often named like the crag; then the name is said once.
-      const sectorLine = (r: RouteRow) => (sameName(r.crag_name, r.sector_name) ? r.crag_name : [r.crag_name, r.sector_name].filter(Boolean).join(' › '));
       const routeFacts = (r: RouteRow) => [
         t(`types.${r.type}`), r.length_m != null ? t('route.length', { m: r.length_m }) : '', r.bolts != null ? t('route.bolts', { count: r.bolts }) : '',
       ].filter(Boolean);
@@ -101,7 +101,7 @@ export default function ShareScreen() {
           const date = formatDay(a.date, i18n.language, isoDate(new Date()));
           out = {
             tag: t('share.tagAscent'), title: a.route.name, grade, style, rating: a.rating || null,
-            line: sectorLine(a.route), path: pathOf(crag), facts: [t(`types.${a.route.type}`)], date,
+            line: sectorLine(a.route.crag_name, a.route.sector_name), path: pathOf(crag), facts: [t(`types.${a.route.type}`)], date,
             headline: `${a.route.name} ${grade} – ${style}`, place: placeOf(crag),
           };
         }
@@ -112,7 +112,7 @@ export default function ShareScreen() {
           const grade = routeGrade(r, routeSystem);
           out = {
             tag: t('share.tagRoute'), title: r.name, grade, style: null, rating: null,
-            line: sectorLine(r), path: pathOf(crag), facts: routeFacts(r), date: null,
+            line: sectorLine(r.crag_name, r.sector_name), path: pathOf(crag), facts: routeFacts(r), date: null,
             headline: `${r.name} ${grade}`, place: placeOf(crag),
           };
         }

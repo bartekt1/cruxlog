@@ -4,7 +4,7 @@ import { BACKUP_VERSION, exportBackup, importBackup, latestChange } from '../src
 import { packBackup, unpackBackup } from '../src/domain/autoBackup';
 import { MIGRATIONS, migrate } from '../src/db/migrate';
 import {
-  addAscent, addGoal, addUserRoute, applyImport, cragUsage, deleteAscent, deleteCrag, deleteGoal, deleteArea, deleteRoute, deleteSector,
+  addAscent, addGoal, addUserRoute, saveAscent, applyImport, cragUsage, deleteAscent, deleteCrag, deleteGoal, deleteArea, deleteRoute, deleteSector,
   getAscent, getCrag, getArea, getRoute, getSector, listAscents, listCragRoutes, listCrags, listGoals, listAreas, listSectorNames, addArea, areaIdFor,
   renameArea, renameSector, routeUsage, saveCrag, searchRoutes, sectorUsage, setGoalDone, updateAscent, updateRoute, type NewRoute, type RouteFilter,
   listCragChoices, listPartners, applyCragPositions, addRouteGoal, routeGoalKinds, addPhotos, listPhotos, listPhotosOf, removePhotos, activePhotos, latestPhotoChange, getPhoto, listTopoLines, topoRoutes, saveTopoLine, deleteTopoLine, routeTopos, setCragLocation, listRouteAscents, recentRoutes, listSectors, addSector, createRoute, importedUsage, removeImported, findRoutes, getGoal, updateGoal, routeGoals,
@@ -81,6 +81,35 @@ describe('repo', () => {
     await expect(addAscent(db, ascent('missing-route'))).rejects.toThrow();
     expect(await count(db, 'ascent')).toBe(0);
     expect(await count(db, 'partner')).toBe(0);
+  });
+  it('saves a new route, an ascent, its photos and the project goal together, or nothing at all', async () => {
+    const db = await freshDb();
+    const photo = { id: 'p1', width: 10, height: 10, bytes: 100 };
+    const { ascentId, routeId } = await saveAscent(db, {
+      id: null, newRoute: route(), ascent: { ...ascent(''), style: 'attempt' }, addPhotos: [photo], asProject: true,
+    });
+    expect(await getRoute(db, routeId)).toMatchObject({ name: 'Test Route 1' });
+    expect((await listPhotos(db, 'ascent', ascentId)).map((p) => p.id)).toEqual(['p1']);
+    expect((await listGoals(db)).map((g) => [g.kind, g.route_id])).toEqual([['project', routeId]]);
+    // The photo id is taken, so this save fails at the end: the new route and the ascent must not stay behind.
+    await expect(saveAscent(db, { id: null, newRoute: route({ name: 'Second' }), ascent: ascent(''), addPhotos: [photo] })).rejects.toThrow();
+    expect(await count(db, 'route')).toBe(1);
+    expect(await count(db, 'ascent')).toBe(1);
+    // Editing: one photo goes, another comes.
+    await saveAscent(db, { id: ascentId, routeId, ascent: ascent(''), removePhotoIds: ['p1'], addPhotos: [{ ...photo, id: 'p2' }] });
+    expect((await listPhotos(db, 'ascent', ascentId)).map((p) => p.id)).toEqual(['p2']);
+    expect(await count(db, 'ascent')).toBe(1);
+  });
+  it('refuses to rename a sector or an area to a name its neighbour has', async () => {
+    const db = await freshDb();
+    const crag = await saveCrag(db, null, { name: 'Krowia', areas: A('Czarnorzeki', 'Kamieniec'), description: '', approach: '', sectorNames: ['Zachód', 'Wschód'] });
+    const [east, west] = await listSectors(db, crag);
+    await expect(renameSector(db, east.id, 'zachod')).rejects.toMatchObject({ key: 'errors.nameTaken' });
+    await renameSector(db, east.id, 'Wschód główny');
+    await renameSector(db, east.id, 'WSCHÓD GŁÓWNY'); // its own name, other letters: fine
+    expect((await listSectors(db, crag)).map((x) => x.name)).toEqual(['WSCHÓD GŁÓWNY', west.name]);
+    const other = await addArea(db, null, 'Jura');
+    await expect(renameArea(db, other, 'czarnorzeki')).rejects.toMatchObject({ key: 'errors.nameTaken' });
   });
   it('searches by route, sector and crag name and hides deleted routes', async () => {
     const db = await freshDb();

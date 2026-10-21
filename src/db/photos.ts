@@ -4,7 +4,7 @@ import { now } from './ids';
 export type PhotoOwner = 'ascent' | 'crag' | 'sector';
 export type PhotoRow = { id: string; owner_type: PhotoOwner; owner_id: string; width: number; height: number; bytes: number; position: number };
 
-/** The photos of one ascent, in the order they were added. */
+/** The photos of one ascent, crag or sector, in the order they were added. */
 export async function listPhotos(db: SQLiteDatabase, ownerType: PhotoOwner, ownerId: string): Promise<PhotoRow[]> {
   return db.getAllAsync<PhotoRow>(
     'SELECT id, owner_type, owner_id, width, height, bytes, position FROM photo WHERE owner_type = ? AND owner_id = ? AND deleted_at IS NULL ORDER BY position, created_at',
@@ -16,25 +16,33 @@ export type NewPhoto = { id: string; width: number; height: number; bytes: numbe
 /** Adds photos after the ones already there. The picture files are saved by the caller, under the same ids. */
 export async function addPhotos(db: SQLiteDatabase, ownerType: PhotoOwner, ownerId: string, photos: NewPhoto[]): Promise<void> {
   if (!photos.length) return;
-  const t = now();
+  await db.withTransactionAsync(() => insertPhotoRows(db, ownerType, ownerId, photos, now()));
+}
+
+/** addPhotos inside the caller's transaction. */
+export async function insertPhotoRows(db: SQLiteDatabase, ownerType: PhotoOwner, ownerId: string, photos: NewPhoto[], t: number): Promise<void> {
+  if (!photos.length) return;
   const last = await db.getFirstAsync<{ p: number | null }>(
     'SELECT MAX(position) AS p FROM photo WHERE owner_type = ? AND owner_id = ? AND deleted_at IS NULL', [ownerType, ownerId]);
   let position = (last?.p ?? -1) + 1;
-  await db.withTransactionAsync(async () => {
-    for (const p of photos) {
-      await db.runAsync('INSERT INTO photo (id, owner_type, owner_id, width, height, bytes, position, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?)',
-        [p.id, ownerType, ownerId, p.width, p.height, p.bytes, position++, t, t]);
-    }
-  });
+  for (const p of photos) {
+    await db.runAsync('INSERT INTO photo (id, owner_type, owner_id, width, height, bytes, position, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?)',
+      [p.id, ownerType, ownerId, p.width, p.height, p.bytes, position++, t, t]);
+  }
 }
 
-/** Soft delete. The files go when the app next tidies up (see cleanOrphanPhotos). */
+/** Soft delete, with the topo lines drawn on them. The files go when the app next tidies up (see cleanOrphanPhotos). */
 export async function removePhotos(db: SQLiteDatabase, ids: string[]): Promise<void> {
   if (!ids.length) return;
-  const t = now();
+  await db.withTransactionAsync(() => deletePhotoRows(db, ids, now()));
+}
+
+/** removePhotos inside the caller's transaction. */
+export async function deletePhotoRows(db: SQLiteDatabase, ids: string[], t: number): Promise<void> {
+  if (!ids.length) return;
   const marks = ids.map(() => '?').join(',');
   await db.runAsync(`UPDATE photo SET deleted_at = ?, updated_at = ? WHERE deleted_at IS NULL AND id IN (${marks})`, [t, t, ...ids]);
-  await db.runAsync(`UPDATE topo_line SET deleted_at = ?, updated_at = ? WHERE deleted_at IS NULL AND photo_id IN (${marks})`, [t, t, ...ids]); // lines drawn on them go too
+  await db.runAsync(`UPDATE topo_line SET deleted_at = ?, updated_at = ? WHERE deleted_at IS NULL AND photo_id IN (${marks})`, [t, t, ...ids]);
 }
 
 /** Photos that count: not deleted, and their ascent is not deleted either (a route, sector or crag delete removes ascents). */

@@ -10,7 +10,9 @@ import { F } from '../src/ui/fonts';
 import { Text } from '../src/ui/Text';
 import { exportBackup, importBackup } from '../src/db/backup';
 import { devicePath, folderKind, unpackBackup } from '../src/domain/autoBackup';
-import { listBackups, restorePhotos, restoreBackup, scanFolder, syncPhotos, writeBackup, type FolderBackup } from '../src/ui/autoBackup';
+import { backupNow, listBackups, restorePhotos, restoreBackup, scanFolder, withBackupLock, type FolderBackup } from '../src/ui/autoBackup';
+import { AppError } from '../src/domain/errors';
+import { errorMessage, showError } from '../src/ui/errors';
 import { formatBytes } from '../src/domain/photos';
 import { pickBackupFolder, testBackupFolder } from '../src/ui/backupFolder';
 import { activePhotos, applyCragPositions, applyImport, importedUsage, listAscents, removeImported } from '../src/db/repo';
@@ -23,8 +25,6 @@ import i18n from '../src/i18n';
 import { Button, Chip, ChipRow, Label, LinkButton } from '../src/ui/kit';
 import { useSettings } from '../src/ui/settingsStore';
 import { useTheme } from '../src/ui/theme';
-
-class UserError extends Error {}
 
 /** Yes/no question as a promise. */
 const ask = (title: string, message: string, yes: string, no: string) =>
@@ -55,7 +55,7 @@ export default function Settings() {
       const msg = await fn();
       if (msg) Alert.alert(t('settings.done'), msg);
     } catch (e) {
-      Alert.alert(t('settings.problem'), e instanceof UserError ? e.message : t('common.failed', { message: (e as Error).message }));
+      showError(e);
     } finally {
       setBusy(false);
     }
@@ -81,10 +81,11 @@ export default function Settings() {
     try {
       testBackupFolder(dir);
     } catch (e) {
-      throw new UserError(t('settings.folderFailed', { message: (e as Error).message }));
+      throw new AppError('settings.folderFailed', { message: errorMessage(e) });
     }
     s.setBackupDir(dir.uri, dir.name);
-    try { await scanFolder(dir.uri); } catch { /* the folder is looked through again when needed */ } // so copies and photos already there are recognised
+    // So copies and photos already there are recognised; the folder is looked through again when needed.
+    await withBackupLock(() => scanFolder(dir.uri)).catch(() => {});
     return t('settings.folderOk', { name: dir.name });
   });
 
@@ -95,36 +96,25 @@ export default function Settings() {
     : t('settings.folderIs', { name: s.backupDirName || s.backupDir });
 
   const doBackupNow = () => run(async () => {
-    try {
-      const r = await writeBackup(db, s.backupDir!);
-      s.setAutoBackupResult(Date.now(), '');
-      setCopies(null);
-      const done = t('settings.backupNowDone', { name: r.name, kb: Math.max(1, Math.round(r.bytes / 1024)), count: r.count });
-      try {
-        const n = await syncPhotos(db, s.backupDir!);
-        s.setPhotosSynced(Date.now());
-        return n ? `${done}\n\n${t('settings.photosCopied', { count: n })}` : done;
-      } catch (e) {
-        s.setAutoBackupResult(Date.now(), `photos:${(e as Error).message}`);
-        return `${done}\n\n${t('photos.backupFailed', { message: (e as Error).message })}`;
-      }
-    } catch (e) {
-      s.setAutoBackupResult(Date.now(), (e as Error).message);
-      throw e;
-    }
+    const { copy, photos } = await backupNow(db, s.backupDir!);
+    setCopies(null);
+    const done = t('settings.backupNowDone', { name: copy.name, kb: Math.max(1, Math.round(copy.bytes / 1024)), count: copy.count });
+    if (photos instanceof Error) return `${done}\n\n${t('photos.backupFailed', { message: errorMessage(photos) })}`;
+    return photos ? `${done}\n\n${t('settings.photosCopied', { count: photos })}` : done;
   });
 
   // The list is looked up in the folder (a short wait on Google Drive), so it shows a spinner.
   const showCopies = () => run(async () => {
     if (copies) { setCopies(null); return; }
-    setCopies(await listBackups(s.backupDir!));
+    setCopies(await withBackupLock(() => listBackups(s.backupDir!)));
   });
 
   const doRestore = (b: FolderBackup) => run(async () => {
     const ok = await ask(t('settings.restoreTitle'), t('settings.restoreQuestion', { when: when(b.at) }), t('settings.restoreYes'), t('common.cancel'));
     if (!ok) return;
-    const records = await restoreBackup(db, b);
-    const photos = await restorePhotos(db, s.backupDir!);
+    const { records, photos } = await withBackupLock(async () => ({
+      records: await restoreBackup(db, b), photos: await restorePhotos(db, s.backupDir!),
+    }));
     return t('settings.importDone', { count: records }) + (photos ? `\n\n${t('photos.restored', { count: photos })}` : '');
   });
 
@@ -138,12 +128,12 @@ export default function Settings() {
     try {
       data = unpackBackup(new Uint8Array(await new File(res.assets[0].uri).arrayBuffer()));
     } catch {
-      throw new UserError(t('settings.notBackup'));
+      throw new AppError('settings.notBackup');
     }
-    if (!data || typeof data !== 'object' || (data as { app?: unknown }).app !== 'cruxlog') throw new UserError(t('settings.notBackup'));
     const n = await importBackup(db, data);
     // The pictures come from the backup folder, if one is chosen.
-    const photos = s.backupDir ? await restorePhotos(db, s.backupDir).catch(() => 0) : 0;
+    const dir = s.backupDir;
+    const photos = dir ? await withBackupLock(() => restorePhotos(db, dir)).catch(() => 0) : 0;
     return t('settings.importDone', { count: n }) + (photos ? `\n\n${t('photos.restored', { count: photos })}` : '');
   });
 
@@ -162,13 +152,13 @@ export default function Settings() {
     try {
       built = planFromFiles(texts);
     } catch (e) {
-      if (e instanceof UnknownFileError) throw new UserError(t('settings.csvUnknown', { file: e.file }));
+      if (e instanceof UnknownFileError) throw new AppError('settings.csvUnknown', { file: e.file });
       throw e;
     }
     const { plan, skipped } = built;
     if (plan.errors.length) {
       const first = plan.errors.slice(0, 8).map((e) => `${e.file}, ${t('settings.csvLine', { line: e.line })}: ${e.message}`).join('\n');
-      throw new UserError(`${t('settings.csvErrors', { count: plan.errors.length })}\n\n${first}`);
+      throw new AppError('settings.csvErrorList', { count: plan.errors.length, list: first });
     }
     const ok = await ask(
       t('settings.csvConfirmTitle'),
@@ -183,7 +173,7 @@ export default function Settings() {
   // A file with crag positions only (crag or key, lat, lng): fills in the map pins of crags already in the app.
   async function importPositions(text: string) {
     const rows = parsePositionsCsv(text);
-    if (!rows.length) throw new UserError(t('settings.positionsNone'));
+    if (!rows.length) throw new AppError('settings.positionsNone');
     const approx = rows.filter((r) => r.approx).length;
     const ok = await ask(t('settings.csvConfirmTitle'),
       t('settings.positionsConfirm', { count: rows.length }) + (approx ? `\n\n${t('settings.positionsApprox', { count: approx })}` : ''),

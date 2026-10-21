@@ -17,6 +17,7 @@ import { TopoPreview } from '../../src/ui/TopoLines';
 import { PhotoBadge } from '../../src/ui/PhotoViews';
 import { useSettings } from '../../src/ui/settingsStore';
 import { useTheme } from '../../src/ui/theme';
+import { runOrAlert } from '../../src/ui/errors';
 
 /** One route: the user's whole history on it and a quick way to log another go. */
 export default function RouteScreen() {
@@ -55,7 +56,7 @@ export default function RouteScreen() {
       { text: t('common.cancel'), style: 'cancel' },
       ...(['wishlist', 'project'] as const).map((kind) => ({
         text: t(`goals.${kind}`),
-        onPress: async () => { await addRouteGoal(db, id, kind); setGoals(await routeGoals(db, id)); },
+        onPress: () => runOrAlert(async () => { await addRouteGoal(db, id, kind); setGoals(await routeGoals(db, id)); }),
       })),
     ]);
 

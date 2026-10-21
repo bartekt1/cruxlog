@@ -4,6 +4,7 @@ import { fold } from '../domain/text';
 import { areaIdFor, type AreaNames } from './areas';
 import { newId, now } from './ids';
 import { findByName, ROUTE_COLS, sectorIdFor, type RouteRow } from './shared';
+import { AppError } from '../domain/errors';
 
 /** Type-ahead route search over route, sector and crag names, ignoring case and Polish letters. */
 type SearchIndex = { key: number; rows: RouteRow[]; names: string[]; hay: string[] };
@@ -127,28 +128,32 @@ export type NewRoute = {
 
 /** A user-created route: private by default, ready to be proposed to the catalog later. */
 export async function addUserRoute(db: SQLiteDatabase, r: NewRoute): Promise<string> {
-  const t = now();
+  let routeId = '';
+  await db.withTransactionAsync(async () => { routeId = await insertUserRoute(db, r, now()); });
+  return routeId;
+}
+
+/** addUserRoute inside a transaction the caller runs (see saveAscent). */
+export async function insertUserRoute(db: SQLiteDatabase, r: NewRoute, t: number): Promise<string> {
   const routeId = newId();
-  await db.withTransactionAsync(async () => {
-    let crag = await findByName(db, 'SELECT id, name FROM crag WHERE deleted_at IS NULL', [], r.cragName);
-    if (!crag) {
-      crag = { id: newId() };
-      const regionId = r.areas ? await areaIdFor(db, r.areas, t) : null;
-      await db.runAsync('INSERT INTO crag (id, region_id, name, created_at, updated_at) VALUES (?,?,?,?,?)', [crag.id, regionId, r.cragName, t, t]);
-    } else if (r.areas?.region.trim()) {
-      // An existing crag without an area gets the one typed with the route; an existing area is never changed here.
-      const cur = await db.getFirstAsync<{ region_id: string | null }>('SELECT region_id FROM crag WHERE id = ?', [crag.id]);
-      if (cur && !cur.region_id) {
-        await db.runAsync('UPDATE crag SET region_id = ?, updated_at = ? WHERE id = ?', [await areaIdFor(db, r.areas, t), t, crag.id]);
-      }
+  let crag = await findByName(db, 'SELECT id, name FROM crag WHERE deleted_at IS NULL', [], r.cragName);
+  if (!crag) {
+    crag = { id: newId() };
+    const regionId = r.areas ? await areaIdFor(db, r.areas, t) : null;
+    await db.runAsync('INSERT INTO crag (id, region_id, name, created_at, updated_at) VALUES (?,?,?,?,?)', [crag.id, regionId, r.cragName, t, t]);
+  } else if (r.areas?.region.trim()) {
+    // An existing crag without an area gets the one typed with the route; an existing area is never changed here.
+    const cur = await db.getFirstAsync<{ region_id: string | null }>('SELECT region_id FROM crag WHERE id = ?', [crag.id]);
+    if (cur && !cur.region_id) {
+      await db.runAsync('UPDATE crag SET region_id = ?, updated_at = ? WHERE id = ?', [await areaIdFor(db, r.areas, t), t, crag.id]);
     }
-    const sectorId = await sectorIdFor(db, crag.id, r.sectorName, t);
-    await db.runAsync(
-      `INSERT INTO route (id, sector_id, name, type, grade_label, grade_system, grade_index, created_at, updated_at)
-       VALUES (?,?,?,?,?,?,?,?,?)`,
-      [routeId, sectorId, r.name, r.type, r.gradeLabel, r.gradeSystem, r.gradeIndex, t, t],
-    );
-  });
+  }
+  const sectorId = await sectorIdFor(db, crag.id, r.sectorName, t);
+  await db.runAsync(
+    `INSERT INTO route (id, sector_id, name, type, grade_label, grade_system, grade_index, created_at, updated_at)
+     VALUES (?,?,?,?,?,?,?,?,?)`,
+    [routeId, sectorId, r.name, r.type, r.gradeLabel, r.gradeSystem, r.gradeIndex, t, t],
+  );
   return routeId;
 }
 
@@ -164,7 +169,7 @@ export async function createRoute(db: SQLiteDatabase, cragId: string, r: RouteIn
   const id = newId();
   await db.withTransactionAsync(async () => {
     const crag = await db.getFirstAsync<{ name: string }>('SELECT name FROM crag WHERE id = ? AND deleted_at IS NULL', [cragId]);
-    if (!crag) throw new Error('Crag not found');
+    if (!crag) throw new AppError('errors.notFound');
     const sectorId = await sectorIdFor(db, cragId, r.sectorName.trim() || crag.name, t);
     await db.runAsync(
       `INSERT INTO route (id, sector_id, name, type, grade_label, grade_system, grade_index, created_at, updated_at)
@@ -180,7 +185,7 @@ export async function updateRoute(db: SQLiteDatabase, id: string, r: RouteInput)
   const t = now();
   await db.withTransactionAsync(async () => {
     const cur = await db.getFirstAsync<{ crag_id: string }>('SELECT s.crag_id FROM route r JOIN sector s ON s.id = r.sector_id WHERE r.id = ?', [id]);
-    if (!cur) throw new Error('Route not found');
+    if (!cur) throw new AppError('errors.notFound');
     const sectorId = await sectorIdFor(db, cur.crag_id, r.sectorName, t);
     await db.runAsync(
       'UPDATE route SET sector_id = ?, name = ?, type = ?, grade_label = ?, grade_system = ?, grade_index = ?, updated_at = ? WHERE id = ?',

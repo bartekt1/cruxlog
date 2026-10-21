@@ -86,6 +86,11 @@ export const MIGRATIONS: string[] = [
   CREATE INDEX idx_topo_photo ON topo_line(photo_id);
   CREATE INDEX idx_topo_route ON topo_line(route_id);
   `,
+  // 8: indexes for the per-route ascent counts (crag screen, route finder, goals) and for crags of an area.
+  `
+  CREATE INDEX idx_ascent_route ON ascent(route_id);
+  CREATE INDEX idx_crag_region ON crag(region_id);
+  `,
 ];
 
 export async function migrate(db: SQLiteDatabase): Promise<void> {

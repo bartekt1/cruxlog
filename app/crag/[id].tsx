@@ -20,6 +20,7 @@ import { PhotoSection, PhotoStrip } from '../../src/ui/PhotoViews';
 import { addPhotosFromGallery } from '../../src/ui/photos';
 import { useSettings } from '../../src/ui/settingsStore';
 import { useTheme } from '../../src/ui/theme';
+import { errorMessage } from '../../src/ui/errors';
 
 export default function CragScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -53,7 +54,7 @@ export default function CragScreen() {
       await addPhotosFromGallery(db, owner, ownerId, have);
       await loadPhotos();
     } catch (e) {
-      Alert.alert(t('photos.title'), t('photos.failed', { message: (e as Error).message }));
+      Alert.alert(t('photos.title'), t('photos.failed', { message: errorMessage(e) }));
     } finally {
       setPhotoBusy(null);
     }

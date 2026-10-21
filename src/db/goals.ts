@@ -1,6 +1,7 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { type GradeSystem, type RouteType } from '../domain/grades';
 import { newId, now } from './ids';
+import { AppError } from '../domain/errors';
 
 export type GoalRow = {
   id: string; kind: string; title: string; target: number | null; grade_index: number | null; done_at: number | null; created_at: number;
@@ -42,7 +43,7 @@ export async function addRouteGoal(db: SQLiteDatabase, routeId: string, kind: 'p
     'SELECT id FROM goal WHERE route_id = ? AND kind = ? AND deleted_at IS NULL AND done_at IS NULL', [routeId, kind]);
   if (open) return open.id;
   const r = await db.getFirstAsync<{ name: string }>('SELECT name FROM route WHERE id = ?', [routeId]);
-  if (!r) throw new Error('Route not found');
+  if (!r) throw new AppError('errors.notFound');
   return addGoal(db, { kind, title: r.name, target: null, gradeIndex: null, routeId });
 }
 

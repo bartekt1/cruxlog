@@ -3,7 +3,16 @@
   "common": {
     "optional": "Optional",
     "save": "Save", "saving": "Saving…", "edit": "Edit", "delete": "Delete", "cancel": "Cancel", "add": "Add", "change": "Change",
-    "today": "Today", "yesterday": "Yesterday", "failed": "Something went wrong: {{message}}"
+    "today": "Today", "yesterday": "Yesterday", "failed": "Something went wrong: {{message}}", "failedText": "{{message}}"
+  },
+  "errors": {
+    "folderGone": "The backup folder is gone or the app lost access to it. Choose it again.",
+    "partialCopy": "The copy was written only in part. Check the free space and try again.",
+    "partialPhoto": "A photo was written only in part. Check the free space and try again.",
+    "readBack": "The file in the folder read back differently than it was written.",
+    "notFound": "This is no longer there (it was deleted).",
+    "newerBackup": "This copy comes from a newer version of the app. Update Cruxlog first.",
+    "nameTaken": "The name “{{name}}” is already used here."
   },
   "styles": { "os": "OS", "flash": "Flash", "rp": "RP", "pp": "PP", "tr": "TR", "attempt": "Attempt" },
   "types": { "sport": "Sport", "multipitch": "Multipitch" },
@@ -149,7 +158,7 @@
     "removeImportedDone": "Removed {{routes}} routes and {{crags}} crags.", "removeImportedNone": "There is no imported data to remove.",
     "csvLine": "line {{line}}", "csvUnknown": "File {{file}} was not recognised. The first row should hold headers, e.g. Region;Area;Crag;Name;Grade.",
     "importDone": "Imported {{count}} records.", "csvDone": "Imported {{crags}} crags, {{sectors}} sectors, {{routes}} routes.",
-    "csvErrors": "{{count}} problems found. Nothing was imported.",
+    "csvErrorList": "{{count}} problems found. Nothing was imported.\n\n{{list}}",
     "notBackup": "This file is not a Cruxlog backup.", "lastBackupNever": "No backup yet.", "lastBackupToday": "Last backup: today.", "lastBackupDays": "Last backup: {{n}} days ago.",
     "done": "Done", "problem": "Problem",
     "positionsConfirm": "The file has crag positions: {{count}}. They will be saved on crags with the same name or key. Routes and ascents will not change.",

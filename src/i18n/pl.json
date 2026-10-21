@@ -3,7 +3,16 @@
   "common": {
     "optional": "Opcjonalnie",
     "save": "Zapisz", "saving": "Zapisywanie…", "edit": "Edytuj", "delete": "Usuń", "cancel": "Anuluj", "add": "Dodaj", "change": "Zmień",
-    "today": "Dziś", "yesterday": "Wczoraj", "failed": "Coś poszło nie tak: {{message}}"
+    "today": "Dziś", "yesterday": "Wczoraj", "failed": "Coś poszło nie tak: {{message}}", "failedText": "{{message}}"
+  },
+  "errors": {
+    "folderGone": "Folderu kopii już nie ma albo aplikacja straciła do niego dostęp. Wybierz go jeszcze raz.",
+    "partialCopy": "Kopia zapisała się tylko częściowo. Sprawdź wolne miejsce i spróbuj jeszcze raz.",
+    "partialPhoto": "Zdjęcie zapisało się tylko częściowo. Sprawdź wolne miejsce i spróbuj jeszcze raz.",
+    "readBack": "Plik w folderze odczytał się inaczej, niż został zapisany.",
+    "notFound": "Tego już nie ma (zostało usunięte).",
+    "newerBackup": "Ta kopia pochodzi z nowszej wersji aplikacji. Najpierw zaktualizuj Cruxlog.",
+    "nameTaken": "Nazwa „{{name}}” jest już zajęta w tym miejscu."
   },
   "styles": { "os": "OS", "flash": "Flash", "rp": "RP", "pp": "PP", "tr": "TR", "attempt": "Próba" },
   "types": { "sport": "Sport", "multipitch": "Wielowyciąg" },
@@ -149,7 +158,7 @@
     "removeImportedDone": "Usunięto dróg: {{routes}}, skał: {{crags}}.", "removeImportedNone": "Nie ma zaimportowanych danych do usunięcia.",
     "csvLine": "wiersz {{line}}", "csvUnknown": "Nie rozpoznano pliku {{file}}. Pierwszy wiersz powinien zawierać nagłówki, np. Region;Rejon;Skała;Nazwa;Wycena.",
     "importDone": "Zaimportowano rekordów: {{count}}.", "csvDone": "Zaimportowano: skały {{crags}}, sektory {{sectors}}, drogi {{routes}}.",
-    "csvErrors": "Znaleziono problemów: {{count}}. Nic nie zaimportowano.",
+    "csvErrorList": "Znaleziono problemów: {{count}}. Nic nie zaimportowano.\n\n{{list}}",
     "notBackup": "Ten plik nie jest kopią zapasową Cruxlog.", "lastBackupNever": "Nie masz jeszcze kopii.", "lastBackupToday": "Ostatnia kopia: dziś.", "lastBackupDays": "Ostatnia kopia: {{n}} dni temu.",
     "done": "Gotowe", "problem": "Problem",
     "positionsConfirm": "Plik zawiera położenia skał: {{count}}. Zostaną zapisane przy skałach o tej samej nazwie lub kluczu. Drogi i przejścia się nie zmienią.",

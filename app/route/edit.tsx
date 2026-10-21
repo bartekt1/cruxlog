@@ -10,6 +10,7 @@ import { formatGrade, gradeExample, systemsFor, type GradeSystem, type RouteType
 import { confirmDelete } from '../../src/ui/confirm';
 import { Button, Chip, ChipRow, ErrorText, Field, Label } from '../../src/ui/kit';
 import { useTheme } from '../../src/ui/theme';
+import { errorMessage } from '../../src/ui/errors';
 
 /** /route/edit?id=<route> edits one of the user's own routes. */
 export default function EditRoute() {
@@ -59,7 +60,7 @@ export default function EditRoute() {
         lengthM: lengthM.value, bolts: boltCount.value });
       router.back();
     } catch (e) {
-      setError(t('common.failed', { message: (e as Error).message }));
+      setError(errorMessage(e));
       setSaving(false);
     }
   }

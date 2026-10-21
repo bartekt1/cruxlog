@@ -14,6 +14,7 @@ import { useSettings } from '../../src/ui/settingsStore';
 import { Text } from '../../src/ui/Text';
 import { useTheme } from '../../src/ui/theme';
 import { currentPosition, useLocation } from '../../src/ui/useLocation';
+import { showError } from '../../src/ui/errors';
 
 /** /crag/locate?id=<crag>: set where a crag is, from the phone's GPS or by moving the map under the pin. */
 export default function LocateCrag() {
@@ -46,6 +47,8 @@ export default function LocateCrag() {
     try {
       await setCragLocation(db, id, at);
       router.back();
+    } catch (e) {
+      showError(e);
     } finally {
       setSaving(false);
     }

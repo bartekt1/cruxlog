@@ -11,6 +11,7 @@ import { Button, EmptyState, GradeBadge, Label, Title } from '../../src/ui/kit';
 import { PhotoStrip } from '../../src/ui/PhotoViews';
 import { useSettings } from '../../src/ui/settingsStore';
 import { useTheme } from '../../src/ui/theme';
+import { runOrAlert } from '../../src/ui/errors';
 
 export default function AscentScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -37,7 +38,7 @@ export default function AscentScreen() {
   const confirmDelete = () =>
     Alert.alert(t('ascent.deleteTitle'), t('ascent.deleteQuestion', { name: a.route_name }), [
       { text: t('common.cancel'), style: 'cancel' },
-      { text: t('common.delete'), style: 'destructive', onPress: async () => { await deleteAscent(db, a.id); router.back(); } },
+      { text: t('common.delete'), style: 'destructive', onPress: () => runOrAlert(async () => { await deleteAscent(db, a.id); router.back(); }) },
     ]);
 
   const row = (label: string, value: string | null | undefined) =>
@@ -77,7 +78,7 @@ export default function AscentScreen() {
         isProject ? (
           <Text style={{ color: th.muted, marginTop: 16 }}>{t('goals.isProject')}</Text>
         ) : (
-          <Button label={t('goals.addAsProject')} variant="plain" onPress={async () => { await addRouteGoal(db, a.route_id, 'project'); setIsProject(true); }} />
+          <Button label={t('goals.addAsProject')} variant="plain" onPress={() => runOrAlert(async () => { await addRouteGoal(db, a.route_id, 'project'); setIsProject(true); })} />
         )
       ) : null}
       <Button label={t('share.brag')} variant="plain" onPress={() => router.push({ pathname: '/share', params: { kind: 'ascent', id: a.id } })} />
