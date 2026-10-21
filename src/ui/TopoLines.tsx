@@ -12,14 +12,22 @@ export type DrawnLine = { routeId: string; mode: TopoMode; points: Pt[]; number?
  * Topo lines over a photo shown in a box `width`×`height` (the photo fills the box exactly). Each line: a red curve with a
  * white edge, small rings on the bolts, a double ring on the anchor and the route number in a red disc at the start.
  * `selected` marks a point of the line being edited.
+ *
+ * `frame` draws on a smaller surface than the box: only the visible part (e.g. the screen while zoomed in), with the box at
+ * `left`/`top` in it. On Android the drawing surface is kept as one picture in memory, so a box enlarged 8× would need
+ * hundreds of MB and crash the app.
  */
-export function TopoLines({ lines, width, height, selected }: {
+export function TopoLines({ lines, width, height, selected, frame }: {
   lines: DrawnLine[]; width: number; height: number; selected?: { routeId: string; index: number } | null;
+  frame?: { width: number; height: number; left: number; top: number };
 }) {
   const th = useTheme();
   if (!width || !height) return null;
+  const f = frame ?? { width, height, left: 0, top: 0 };
+  if (!f.width || !f.height) return null;
   return (
-    <Svg width={width} height={height} style={{ position: 'absolute', left: 0, top: 0 }} pointerEvents="none">
+    <Svg width={f.width} height={f.height} style={{ position: 'absolute', left: 0, top: 0 }} pointerEvents="none">
+     <G transform={`translate(${f.left.toFixed(1)},${f.top.toFixed(1)})`}>
       {lines.map((l) => {
         if (!l.points.length) return null;
         const d = smoothPath(l.points, width, height);
@@ -53,6 +61,7 @@ export function TopoLines({ lines, width, height, selected }: {
           </G>
         );
       })}
+     </G>
     </Svg>
   );
 }

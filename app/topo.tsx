@@ -249,8 +249,10 @@ export default function TopoEditor() {
       <View style={{ flex: 1, overflow: 'hidden', backgroundColor: th.soft }} onLayout={(e: LayoutChangeEvent) => setCanvas({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}>
         <View style={{ position: 'absolute', left: canvas.w / 2 - scaledW / 2 + zoom.tx, top: canvas.h / 2 - scaledH / 2 + zoom.ty, width: scaledW, height: scaledH }}>
           {uri ? <Image source={{ uri }} style={{ width: scaledW, height: scaledH }} resizeMode="stretch" /> : null}
-          <TopoLines lines={shown} width={scaledW} height={scaledH} selected={selected >= 0 ? { routeId: route.id, index: selected } : null} />
         </View>
+        {/* The lines are drawn on the visible canvas only, not on the whole enlarged photo (see TopoLines). */}
+        <TopoLines lines={shown} width={scaledW} height={scaledH} selected={selected >= 0 ? { routeId: route.id, index: selected } : null}
+          frame={{ width: canvas.w, height: canvas.h, left: canvas.w / 2 - scaledW / 2 + zoom.tx, top: canvas.h / 2 - scaledH / 2 + zoom.ty }} />
         {/* On top of everything: catches the fingers. */}
         <View style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} {...responder.panHandlers}
           accessible accessibilityLabel={t('topo.canvasA11y')} />

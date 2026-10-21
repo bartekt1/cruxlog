@@ -219,6 +219,13 @@ Severity: **H** blocks a task or loses/corrupts data, **M** slows a task or conf
 | T2 | Routes without bolts, or with a winding line, could not be drawn | M | "By hand" mode: draw with a finger, in pieces, smoothed; undo per piece |
 | T3 | A drawn line was only visible on the photo | M | Route screen "Topo" section (this route in full, the others dimmed), route numbers on the photo open the route, "Draw this route" from the route screen, the line on the share card |
 
+## Round 20 (owner's test of topo and backup)
+
+| # | Issue | Sev | Status |
+|---|---|---|---|
+| T4 | The app closed when zooming the topo editor to the maximum | H | On Android the line drawing keeps its whole surface as one picture in memory; at 8× that was hundreds of MB. The lines are now drawn on the visible canvas only |
+| B2 | Restoring an automatic copy was hard to find | M | "Restore from a copy in the folder…" with a Restore button on each row; "Import backup" also reads the automatic `.json.gz` copies; help text says what to do on a new phone |
+
 ## Open items
 
 1. Device checks: localized dates on Hermes, calendar picker, keyboard behavior, large font sizes, TalkBack labels.

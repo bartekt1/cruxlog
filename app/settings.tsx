@@ -4,10 +4,10 @@ import * as Sharing from 'expo-sharing';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Alert, ScrollView } from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, View } from 'react-native';
 import { Text } from '../src/ui/Text';
 import { exportBackup, importBackup } from '../src/db/backup';
-import { devicePath, folderKind } from '../src/domain/autoBackup';
+import { devicePath, folderKind, unpackBackup } from '../src/domain/autoBackup';
 import { listBackups, restorePhotos, restoreBackup, scanFolder, syncPhotos, writeBackup, type FolderBackup } from '../src/ui/autoBackup';
 import { formatBytes } from '../src/domain/photos';
 import { pickBackupFolder, testBackupFolder } from '../src/ui/backupFolder';
@@ -128,17 +128,22 @@ export default function Settings() {
   });
 
   const doImport = () => run(async () => {
-    const res = await DocumentPicker.getDocumentAsync({ type: 'application/json', copyToCacheDirectory: true });
+    // A manual export (.json) or an automatic copy (.json.gz) picked anywhere, e.g. on Drive in the system file picker.
+    const res = await DocumentPicker.getDocumentAsync({
+      type: ['application/json', 'application/gzip', 'application/x-gzip', 'application/octet-stream'], copyToCacheDirectory: true,
+    });
     if (res.canceled) return;
     let data: unknown;
     try {
-      data = JSON.parse(await new File(res.assets[0].uri).text());
+      data = unpackBackup(new Uint8Array(await new File(res.assets[0].uri).arrayBuffer()));
     } catch {
       throw new UserError(t('settings.notBackup'));
     }
     if (!data || typeof data !== 'object' || (data as { app?: unknown }).app !== 'cruxlog') throw new UserError(t('settings.notBackup'));
     const n = await importBackup(db, data);
-    return t('settings.importDone', { count: n });
+    // The pictures come from the backup folder, if one is chosen.
+    const photos = s.backupDir ? await restorePhotos(db, s.backupDir).catch(() => 0) : 0;
+    return t('settings.importDone', { count: n }) + (photos ? `\n\n${t('photos.restored', { count: photos })}` : '');
   });
 
   // Older three-file format (crags.csv + routes.csv, optional sectors.csv and pitches.csv).
@@ -264,12 +269,12 @@ export default function Settings() {
           <Button label={copies ? t('settings.hideCopies') : t('settings.showCopies')} onPress={showCopies} variant="plain" disabled={busy} />
           {copies ? (
             copies.length ? copies.map((b) => (
-              <Text key={b.uri} style={{ color: th.ink, marginTop: 6 }} accessibilityLabel={`${when(b.at)}, ${Math.max(1, Math.round(b.size / 1024))} KB`}>
-                {when(b.at)} · {Math.max(1, Math.round(b.size / 1024))} KB
-              </Text>
+              <View key={b.uri} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4, paddingVertical: 4, borderBottomWidth: 1, borderColor: th.line }}>
+                <Text style={{ flex: 1, color: th.ink }}>{when(b.at)} · {Math.max(1, Math.round(b.size / 1024))} KB</Text>
+                <LinkButton label={t('settings.restoreYes')} onPress={() => doRestore(b)} />
+              </View>
             )) : <Text style={{ color: th.muted, marginTop: 6 }}>{t('settings.noCopies')}</Text>
           ) : null}
-          {copies?.map((b) => <LinkButton key={`r-${b.uri}`} label={t('settings.restoreOne', { when: when(b.at) })} onPress={() => doRestore(b)} />)}
           <Button label={t('settings.changeFolder')} onPress={doPickFolder} variant="plain" disabled={busy} />
           <LinkButton label={t('settings.autoOff')} onPress={() => { s.setBackupDir(null); setCopies(null); }} />
         </>
