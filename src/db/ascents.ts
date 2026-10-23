@@ -23,6 +23,11 @@ const ASCENT_SELECT = `SELECT a.id, a.date, a.style, a.attempts, a.rating, a.not
   FROM ascent a JOIN route r ON r.id = a.route_id JOIN sector s ON s.id = r.sector_id JOIN crag c ON c.id = s.crag_id
   LEFT JOIN partner p ON p.id = a.partner_id`;
 
+/** Ascents from `from` to `to` (ISO days, both included), oldest first: what was climbed during a trip. */
+export async function listAscentsBetween(db: SQLiteDatabase, from: string, to: string): Promise<AscentRow[]> {
+  return db.getAllAsync<AscentRow>(`${ASCENT_SELECT} WHERE a.deleted_at IS NULL AND a.date >= ? AND a.date <= ? ORDER BY a.date, a.created_at`, [from, to]);
+}
+
 export async function listAscents(db: SQLiteDatabase): Promise<AscentRow[]> {
   return db.getAllAsync<AscentRow>(
     `${ASCENT_SELECT}

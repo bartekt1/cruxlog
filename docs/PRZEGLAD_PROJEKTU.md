@@ -25,7 +25,7 @@ Dolny pasek ma 4 zakładki i środkowy przycisk „+”:
 | **Postępy** | Statystyki dowolnego roku: przejścia, dni na skale, najtrudniejsza droga, piramida trudności, najtrudniejsze w miesiącu i w roku, style przejść, kalendarz aktywności, najczęstsze skały i partnerzy. |
 | **+** | Nowe przejście. |
 | **Skały** | Drzewo miejsc: region › rejon › grupa (dowolnie głęboko) › skała › sektor › droga. Wyszukiwarka na każdym poziomie. Widok listy i mapy, skały w pobliżu. |
-| **Cele** | Cztery rodzaje: liczba przejść w roku, liczba dróg od danej wyceny, projekt (konkretna droga), lista życzeń. |
+| **Cele** | Wyprawy (plan i podsumowanie) oraz cele w czterech rodzajach: liczba przejść w roku, liczba dróg od danej wyceny, projekt (konkretna droga), lista życzeń. |
 
 Najważniejsze ekrany poza zakładkami:
 - **Nowe przejście / edycja:**
@@ -40,6 +40,7 @@ Najważniejsze ekrany poza zakładkami:
   - tryb „Ringi”: stuka się start, kolejne przeloty i stanowisko, a linia sama prowadzi się płynną krzywą;
   - tryb „Ręcznie”: rysuje się palcem;
   - powiększanie dwoma palcami i przyciskami (do 8×), przesuwanie i usuwanie punktów, cofnij i ponów.
+- **Wyprawa:** nazwa, dni (od–do), skały, lista proponowanych dróg w ustalonej kolejności i wiadomość. Przed wyjazdem: karta-zaproszenie do WhatsAppa i tekst z linkiem do mapy. W dniach wyprawy jej drogi są podpowiadane jako pierwsze przy dodawaniu przejścia. Po wyjeździe podsumowanie (przejścia, dni, najtrudniejsza droga, ile z planu zrobione) i karta „Pochwal się”.
 - **Udostępnianie** (droga, przejście, skała): obrazek-karta do wysłania np. przez WhatsApp oraz tekst z linkiem do Map Google. Pozycja skały jest domyślnie włączona; zdjęcie z linią topo jest opcjonalne, domyślnie wyłączone, bo na zdjęciach bywają inne osoby.
 - **Ustawienia:** język, motyw, domyślna skala wycen, import CSV, usuwanie importowanych danych, automatyczna kopia (wybór folderu, „Zrób kopię teraz”, lista kopii z przyciskiem „Przywróć”), schowana ręczna kopia jednym plikiem.
 - **Wyszukiwarka dróg:** filtry wyceny od–do, miejsca, statusu (jeszcze nie próbowane, tylko próby, przejście zaliczone) i typu.
@@ -96,6 +97,7 @@ Tabele:
 | `partner` | Partnerzy wspinaczkowi (po nazwie). |
 | `ascent` | Przejście: droga, data, styl, próby, ocena, własna wycena, partner, warunki, notatka. |
 | `goal` | Cel: rodzaj, nazwa, liczba docelowa, wycena, droga, data wykonania. |
+| `trip`, `trip_crag`, `trip_route` | Wyprawa: nazwa, dni, wiadomość; jej skały i proponowane drogi z kolejnością. |
 | `photo` | Zdjęcie: do czego należy (`ascent`, `crag`, `sector`), wymiary, rozmiar, kolejność. |
 | `topo_line` | Linia drogi na zdjęciu: punkty zapisane względnie (0..1 szerokości i wysokości zdjęcia, JSON), tryb `bolts`/`free`. |
 
@@ -103,7 +105,7 @@ Zasady:
 - **Identyfikatory i daty.** Każdy wiersz ma tekstowy identyfikator oraz `created_at`, `updated_at` i `deleted_at` (milisekundy). Usuwanie tylko ustawia `deleted_at`.
 - **Własne drogi.** Drogi dodane przez użytkownika mają `source='user'` i `status='private'`. Przygotowanie pod przyszłe „zaproponuj do katalogu”.
 - **Wycena** jest zapisana jako pozycja na wspólnej drabinie trudności (`grade_index`) plus oryginalny zapis i skala. Skale: kręgowa (VI.1+), UIAA (VII-) i francuska (6a+), przeliczane w przybliżeniu. Na ekranie pokazuje się oryginał, gdy skala się zgadza.
-- **Migracje** tylko się dopisuje (obecnie 9), starych nigdy się nie zmienia. Przy zmianie formatu kopii podbija się `BACKUP_VERSION` (obecnie 7), a starsze kopie dalej się wczytują.
+- **Migracje** tylko się dopisuje (obecnie 10), starych nigdy się nie zmienia. Przy zmianie formatu kopii podbija się `BACKUP_VERSION` (obecnie 8), a starsze kopie dalej się wczytują.
 - **Transakcje.** Zapis, który dotyka kilku tabel, idzie w jednej transakcji: nowe przejście z nową drogą, zdjęciami i projektem zapisuje się w całości albo wcale.
 
 ### Zdjęcia

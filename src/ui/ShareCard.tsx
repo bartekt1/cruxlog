@@ -32,16 +32,16 @@ export const CARD_RATIO = 1.25;
 const BRAND = 'Cruxlog'; // the app's name is not translated
 
 
-/** Coordinates (with "approximate" when they are) on the left, the app's name on the right. */
-function Footer({ data, u }: { data: ShareCardData; u: number }) {
+/** Coordinates (with "approximate" when they are) on the left, the app's name on the right. Also used by the trip card. */
+export function CardFooter({ place, approxLabel, u }: { place: ShareCardData['place']; approxLabel: string; u: number }) {
   return (
   <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12 * u }}>
-    {data.place ? (
+    {place ? (
       <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6 * u }}>
-        <Ionicons name={data.place.approx ? 'location-outline' : 'location'} size={18 * u} color={c.accent} />
+        <Ionicons name={place.approx ? 'location-outline' : 'location'} size={18 * u} color={c.accent} />
         <View style={{ flexShrink: 1 }}>
-          <Text style={{ color: c.ink, fontFamily: F.semi, fontSize: 13 * u }}>{data.place.coords}</Text>
-          {data.place.approx ? <Text style={{ color: c.muted, fontSize: 12 * u }}>{data.approxLabel}</Text> : null}
+          <Text style={{ color: c.ink, fontFamily: F.semi, fontSize: 13 * u }}>{place.coords}</Text>
+          {place.approx ? <Text style={{ color: c.muted, fontSize: 12 * u }}>{approxLabel}</Text> : null}
         </View>
       </View>
     ) : <View style={{ flex: 1 }} />}
@@ -49,6 +49,8 @@ function Footer({ data, u }: { data: ShareCardData; u: number }) {
   </View>
   );
 }
+
+const Footer = ({ data, u }: { data: ShareCardData; u: number }) => <CardFooter place={data.place} approxLabel={data.approxLabel} u={u} />;
 
 /** With a photo the picture comes first: it fills the top of the card, the grade sits on it like a label, the text is below. */
 function PhotoCard({ data, width, onPhotoLoaded }: { data: ShareCardData; width: number; onPhotoLoaded?: (uri: string) => void }) {

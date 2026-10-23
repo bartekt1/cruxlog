@@ -4,7 +4,7 @@ import { BACKUP_VERSION, exportBackup, importBackup, latestChange } from '../src
 import { packBackup, unpackBackup } from '../src/domain/autoBackup';
 import { MIGRATIONS, migrate } from '../src/db/migrate';
 import {
-  addAscent, addGoal, addUserRoute, saveAscent, applyImport, cragUsage, deleteAscent, deleteCrag, deleteGoal, deleteArea, deleteRoute, deleteSector,
+  addAscent, addGoal, addUserRoute, saveAscent, saveTrip, getTrip, listTrips, deleteTrip, tripRoutesOn, listAscentsBetween, applyImport, cragUsage, deleteAscent, deleteCrag, deleteGoal, deleteArea, deleteRoute, deleteSector,
   getAscent, getCrag, getArea, getRoute, getSector, listAscents, listCragRoutes, listCrags, listGoals, listAreas, listSectorNames, addArea, areaIdFor,
   renameArea, renameSector, routeUsage, saveCrag, searchRoutes, sectorUsage, setGoalDone, updateAscent, updateRoute, type NewRoute, type RouteFilter,
   listCragChoices, listPartners, applyCragPositions, addRouteGoal, routeGoalKinds, addPhotos, listPhotos, listPhotosOf, removePhotos, activePhotos, latestPhotoChange, getPhoto, listTopoLines, topoRoutes, saveTopoLine, deleteTopoLine, routeTopos, setCragLocation, listRouteAscents, recentRoutes, listSectors, addSector, createRoute, importedUsage, removeImported, findRoutes, getGoal, updateGoal, routeGoals,
@@ -509,6 +509,49 @@ describe('a hand-made file takes over existing data', () => {
     const db = await freshDb();
     await applyImport(db, planFromFlatRows(parseFlatCsv('Region;Rejon;Skała;Nazwa;Wycena;Lat;Lng;Przybliżone\nJura;Sokoliki;Baszta;Komin;V;50.1;19.2;tak\n')));
     expect((await listCrags(db))[0]).toMatchObject({ lat: 50.1, lng: 19.2, pos_source: 'approx' });
+  });
+});
+
+describe('trips', () => {
+  it('saves a trip with its crags and routes in order, edits it, finds its routes by day and deletes it', async () => {
+    const db = await freshDb();
+    const r1 = await addUserRoute(db, route({ cragName: 'Krowia', name: 'Rysa' }));
+    const r2 = await addUserRoute(db, route({ cragName: 'Krowia', name: 'Filar' }));
+    const r3 = await addUserRoute(db, route({ cragName: 'Okap', name: 'Komin' }));
+    const [krowia, okap] = (await listCrags(db)).sort((a, b) => a.name.localeCompare(b.name));
+    const id = await saveTrip(db, null, { name: 'Majówka', startDate: '2026-05-01', endDate: '2026-05-03', message: 'Zbiórka 8:00', cragIds: [okap.id, krowia.id], routeIds: [r2, r3, r1] });
+    const t = await getTrip(db, id);
+    expect(t).toMatchObject({ name: 'Majówka', start_date: '2026-05-01', end_date: '2026-05-03', message: 'Zbiórka 8:00' });
+    expect(t!.crags.map((c) => c.name)).toEqual(['Okap', 'Krowia']);
+    expect(t!.routes.map((r) => r.name)).toEqual(['Filar', 'Komin', 'Rysa']);
+    expect(await listTrips(db)).toEqual([expect.objectContaining({ id, crags: 'Okap, Krowia', routes: 3 })]);
+
+    await saveTrip(db, id, { name: 'Majówka 2', startDate: '2026-05-02', endDate: '2026-05-02', message: '', cragIds: [krowia.id], routeIds: [r1] });
+    expect((await getTrip(db, id))!.routes.map((r) => r.name)).toEqual(['Rysa']);
+    expect((await tripRoutesOn(db, '2026-05-02'))).toMatchObject({ trip: 'Majówka 2', routes: [{ id: r1 }] });
+    expect(await tripRoutesOn(db, '2026-05-03')).toBeNull();
+
+    // A deleted route drops out of the trip; the trip itself stays.
+    await deleteRoute(db, r1);
+    expect((await getTrip(db, id))!.routes).toEqual([]);
+    await deleteTrip(db, id);
+    expect(await getTrip(db, id)).toBeNull();
+    expect(await listTrips(db)).toEqual([]);
+  });
+  it('lists the ascents of the trip days', async () => {
+    const db = await freshDb();
+    const r = await addUserRoute(db, route());
+    for (const date of ['2026-04-30', '2026-05-01', '2026-05-03', '2026-05-04']) await addAscent(db, ascent(r, { date }));
+    expect((await listAscentsBetween(db, '2026-05-01', '2026-05-03')).map((a) => a.date)).toEqual(['2026-05-01', '2026-05-03']);
+  });
+  it('goes into the backup and comes back', async () => {
+    const db = await freshDb();
+    const r = await addUserRoute(db, route());
+    const [c] = await listCrags(db);
+    await saveTrip(db, null, { name: 'Wyjazd', startDate: '2026-06-01', endDate: '2026-06-01', message: '', cragIds: [c.id], routeIds: [r] });
+    const target = await freshDb();
+    await importBackup(target, JSON.parse(JSON.stringify(await exportBackup(db))));
+    expect(await listTrips(target)).toEqual(await listTrips(db));
   });
 });
 

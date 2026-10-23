@@ -15,8 +15,10 @@ import { useLocation } from '../useLocation';
  * Choosing the route of a new ascent: search by name (routes, and crags to add a route on), or without a query the crags
  * nearby (when the phone already allowed the position) and the routes climbed lately; or a new route.
  */
-export function RouteChooser({ crags, cragPath, invalid, onPick, onNewRoute, onCragHit }: {
+export function RouteChooser({ crags, cragPath, invalid, onPick, onNewRoute, onCragHit, trip }: {
   crags: CragChoice[]; cragPath: (c: CragChoice) => string; invalid?: boolean;
+  /** The routes proposed for a trip on the ascent's day, offered first. */
+  trip?: { trip: string; routes: RouteRow[] } | null;
   onPick: (r: RouteRow) => void; onNewRoute: (name: string) => void; onCragHit: (c: CragChoice) => void;
 }) {
   const db = useSQLiteContext();
@@ -84,6 +86,7 @@ export function RouteChooser({ crags, cragPath, invalid, onPick, onNewRoute, onC
               </ScrollView>
             </>
           ) : null}
+          {trip && !nearCrag ? <Suggestions title={t('trip.fromTrip', { name: trip.trip })} items={trip.routes.map(routeItem)} onPick={pickFrom(trip.routes)} /> : null}
           {nearCrag ? (
             <Suggestions title={near.find((c) => c.id === nearCrag)?.name} items={nearRoutes.map(routeItem)} onPick={pickFrom(nearRoutes)} />
           ) : (

@@ -5,9 +5,10 @@ import { AppError } from '../domain/errors';
 // Backup versions; every older one still imports:
 // 1 the first; 2 region.source (version 1 regions came from CSV); 3 region.parent_id and level (older ones import as
 // top-level regions); 4 crag.pos_source; 5 the photo table (older backups have no photos); 6 the topo_line table;
-// 7 import_key on crag, sector and route (older backups have none; the next import matches those rows by name).
-export const BACKUP_VERSION = 7;
-const TABLES = ['region', 'crag', 'sector', 'route', 'pitch', 'partner', 'ascent', 'ascent_pitch', 'goal', 'photo', 'topo_line'] as const;
+// 7 import_key on crag, sector and route (older backups have none; the next import matches those rows by name);
+// 8 the trip, trip_crag and trip_route tables (older backups have no trips).
+export const BACKUP_VERSION = 8;
+const TABLES = ['region', 'crag', 'sector', 'route', 'pitch', 'partner', 'ascent', 'ascent_pitch', 'goal', 'photo', 'topo_line', 'trip', 'trip_crag', 'trip_route'] as const;
 
 /** When anything in the backed-up tables last changed (also deletions); null for an empty database. */
 export async function latestChange(db: SQLiteDatabase): Promise<number | null> {

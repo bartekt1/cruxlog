@@ -3,7 +3,7 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, View } from 'react-native';
-import { getAscent, getRoute, listAreas, listCragChoices, listPartners, routeGoals, saveAscent, type AreaRow, type CragChoice, type RouteRow } from '../../src/db/repo';
+import { getAscent, getRoute, listAreas, listCragChoices, listPartners, routeGoals, saveAscent, tripRoutesOn, type AreaRow, type CragChoice, type RouteRow } from '../../src/db/repo';
 import { pathLabels, pathNames } from '../../src/domain/areas';
 import { isoDate, shiftDay } from '../../src/domain/dates';
 import { isFirstTry, validateAscentDraft, validateNewRoute } from '../../src/domain/forms';
@@ -83,6 +83,14 @@ export default function NewAscent() {
     listAreas(db).then(setAreaRows);
     listPartners(db).then(setPartners);
   }, [db]);
+
+  // A trip on the ascent's day puts its proposed routes first in the route search.
+  const [tripRoutes, setTripRoutes] = useState<{ trip: string; routes: RouteRow[] } | null>(null);
+  useEffect(() => {
+    let live = true;
+    tripRoutesOn(db, date).then((x) => { if (live) setTripRoutes(x); });
+    return () => { live = false; };
+  }, [db, date]);
 
   useEffect(() => {
     if (!route) { setIsProject(false); return; }
@@ -183,7 +191,7 @@ export default function NewAscent() {
           bad={bad} onUseExisting={pickRoute} onCancel={() => setCreating(false)}
           scrollTo={(y) => scrollRef.current?.scrollTo({ y, animated: true })} />
       ) : (
-        <RouteChooser crags={crags} cragPath={cragPath} invalid={bad('route')} onPick={pickRoute} onNewRoute={startCreating} onCragHit={startOnCrag} />
+        <RouteChooser crags={crags} cragPath={cragPath} invalid={bad('route')} trip={tripRoutes} onPick={pickRoute} onNewRoute={startCreating} onCragHit={startOnCrag} />
       )}
 
       <Label>{t('ascent.date')}</Label>

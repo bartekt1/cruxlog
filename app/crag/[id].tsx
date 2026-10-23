@@ -96,6 +96,7 @@ export default function CragScreen() {
             title: crag.name,
             headerRight: () => (
               <View style={{ flexDirection: 'row' }}>
+                <IconButton name="calendar-outline" size={26} label={t('trip.planHere')} onPress={() => router.push({ pathname: '/trip/edit', params: { cragId: crag.id } })} />
                 <IconButton name="share-social-outline" size={26} label={t('share.title')} onPress={() => router.push({ pathname: '/share', params: { kind: 'crag', id: crag.id } })} />
                 <IconButton name="create-outline" size={26} label={t('edit.cragTitle')} onPress={() => router.push({ pathname: '/crag/edit', params: { id: crag.id } })} />
               </View>

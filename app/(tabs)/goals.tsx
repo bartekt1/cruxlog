@@ -3,16 +3,17 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, Keyboard, Pressable, View } from 'react-native';
-import { addGoal, listAreas, listAscents, listGoals, type GoalRow } from '../../src/db/repo';
+import { addGoal, listAreas, listAscents, listGoals, listTrips, type GoalRow, type TripRow } from '../../src/db/repo';
 import { pathLabels } from '../../src/domain/areas';
 import { formatDay, isoDate } from '../../src/domain/dates';
 import type { GoalKind } from '../../src/domain/forms';
 import { formatGrade, routeGrade } from '../../src/domain/grades';
+import { formatTripDates, tripStatus } from '../../src/domain/trips';
 import { countGoalProgress, gradeGoalProgress, projectProgress, yearStats, type StatAscent } from '../../src/domain/stats';
 import { F } from '../../src/ui/fonts';
 import { EMPTY_GOAL, GoalForm } from '../../src/ui/GoalForm';
 import { ProgressBar, toStat } from '../../src/ui/progress';
-import { EmptyState, GradeBadge, Label, Screen } from '../../src/ui/kit';
+import { Button, EmptyState, GradeBadge, Label, Screen } from '../../src/ui/kit';
 import { useSettings } from '../../src/ui/settingsStore';
 import { Text } from '../../src/ui/Text';
 import { useTheme } from '../../src/ui/theme';
@@ -27,10 +28,12 @@ export default function Goals() {
   const [ascents, setAscents] = useState<StatAscent[]>([]);
   const [labels, setLabels] = useState<Map<string, string>>(new Map());
   const [adding, setAdding] = useState(false);
+  const [trips, setTrips] = useState<TripRow[]>([]);
   const year = new Date().getFullYear();
 
   const load = useCallback(() => {
     listGoals(db).then(setRows);
+    listTrips(db).then(setTrips);
     listAscents(db).then((a) => setAscents(a.map(toStat)));
     listAreas(db).then((a) => setLabels(pathLabels(a)));
   }, [db]);
@@ -80,6 +83,25 @@ export default function Goals() {
         contentContainerStyle={{ paddingBottom: 32 }}
         ListHeaderComponent={
           <View style={{ paddingBottom: 8 }}>
+            {/* Trips first: planned and ongoing ones are what matters this week. */}
+            <Label>{t('trip.list')}</Label>
+            {trips.map((tr) => {
+              const st = tripStatus(tr, today);
+              return (
+                <Pressable key={tr.id} onPress={() => router.push(`/trip/${tr.id}`)} accessibilityRole="button"
+                  style={({ pressed }) => ({ marginTop: 8, padding: 14, backgroundColor: th.surface, borderWidth: 1, borderColor: st === 'done' ? th.line : th.accent, borderRadius: 14, opacity: pressed ? 0.7 : 1 })}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <Text style={{ flex: 1, color: th.ink, fontFamily: F.semi, fontSize: 16 }} numberOfLines={1}>{tr.name}</Text>
+                    <Text style={{ color: st === 'done' ? th.muted : th.accent, fontFamily: F.semi, fontSize: 11, letterSpacing: 1, textTransform: 'uppercase' }}>{t(`trip.status.${st}`)}</Text>
+                  </View>
+                  <Text style={{ color: th.muted, fontSize: 13 }} numberOfLines={1}>
+                    {[formatTripDates(tr.start_date, tr.end_date, i18n.language), tr.crags, tr.routes ? t('trip.routesCount', { count: tr.routes }) : ''].filter(Boolean).join(' · ')}
+                  </Text>
+                </Pressable>
+              );
+            })}
+            <Button label={t('trip.new')} variant="plain" onPress={() => router.push('/trip/edit')} />
+            <Label>{t('tabs.goals')}</Label>
             {adding ? (
               <GoalForm
                 initial={EMPTY_GOAL}
@@ -93,7 +115,6 @@ export default function Goals() {
                 <Text style={{ color: th.onAccent, fontFamily: F.display, fontSize: 19, letterSpacing: 0.8, textTransform: 'uppercase' }}>{t('goals.add')}</Text>
               </Pressable>
             )}
-            {rows.length ? <Label>{t('goals.yours')}</Label> : null}
           </View>
         }
         ListEmptyComponent={adding ? null : <EmptyState title={t('goals.empty')} hint={t('goals.emptyHint')} />}

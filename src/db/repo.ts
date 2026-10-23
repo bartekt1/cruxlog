@@ -8,3 +8,4 @@ export * from './photos';
 export * from './routes';
 export type { NamedRow, PosSource, RouteRow } from './shared';
 export * from './topo';
+export * from './trips';

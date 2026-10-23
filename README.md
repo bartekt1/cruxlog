@@ -14,7 +14,7 @@ npx expo start           # needs a development build: the map (MapLibre) is a na
 
 ## Layout
 
-- `app/` expo-router screens: tabs (Journal, Progress, Crags with a list and a map, Goals), new ascent, settings, the share card (`share.tsx`), the full-screen photo (`photo.tsx`) and the topo editor (`topo.tsx`)
+- `app/` expo-router screens: tabs (Journal, Progress, Crags with a list and a map, Goals with trips), new ascent, settings, the share card (`share.tsx`), trips (`trip/`: edit, detail, share card), the full-screen photo (`photo.tsx`) and the topo editor (`topo.tsx`)
 - `src/ui/` shared components (`kit.tsx`, `rows.tsx`, `GradeFields.tsx`), error alerts (`errors.ts`), parts of big screens (`ascent/`, `settings/`, `useTopoGestures.ts`), theme and fonts, the map (`CragMap.tsx`, `mapStyles.ts`), location (`useLocation.ts`), photo files (`photos.ts`, `PhotoViews.tsx`), topo drawing (`TopoLines.tsx`), the share card (`ShareCard.tsx`), the automatic backup (`autoBackup.ts`, `AutoBackup.tsx`, `backupFolder.ts`)
 - `src/db/` SQLite schema and migrations (`PRAGMA user_version`), queries by topic (`routes.ts`, `ascents.ts`, `crags.ts`, `areas.ts`, `goals.ts`, `imports.ts`, `photos.ts`, `topo.ts`; screens import them through `repo.ts`), JSON backup (`backup.ts`)
 - `src/domain/` pure logic with tests: grade ladder and conversions, CSV imports, statistics, goals, distances, backup rotation and index, photo sizes, topo geometry (smoothing, zoom, undo), share text

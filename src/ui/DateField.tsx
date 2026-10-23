@@ -12,8 +12,8 @@ const toDate = (iso: string) => {
   return new Date(y, m - 1, d);
 };
 
-/** Shows the chosen day; tapping opens the system calendar. Future days cannot be picked. */
-export function DateField({ value, onChange, label }: { value: string; onChange: (iso: string) => void; label: string }) {
+/** Shows the chosen day; tapping opens the system calendar. Future days cannot be picked unless `allowFuture` (a planned trip). */
+export function DateField({ value, onChange, label, allowFuture }: { value: string; onChange: (iso: string) => void; label: string; allowFuture?: boolean }) {
   const th = useTheme();
   const { t, i18n } = useTranslation();
   const [iosOpen, setIosOpen] = useState(false);
@@ -21,9 +21,10 @@ export function DateField({ value, onChange, label }: { value: string; onChange:
   const rel = relativeDay(value, today);
   const text = `${rel ? `${t(`common.${rel}`)}, ` : ''}${formatDay(value, i18n.language, today)}`;
 
+  const maximumDate = allowFuture ? undefined : new Date();
   const open = () => {
     if (Platform.OS === 'android') {
-      DateTimePickerAndroid.open({ value: toDate(value), mode: 'date', maximumDate: new Date(), onValueChange: (_e, d) => onChange(isoDate(d)) });
+      DateTimePickerAndroid.open({ value: toDate(value), mode: 'date', maximumDate, onValueChange: (_e, d) => onChange(isoDate(d)) });
     } else {
       setIosOpen((o) => !o);
     }
@@ -42,7 +43,7 @@ export function DateField({ value, onChange, label }: { value: string; onChange:
         <Text style={{ color: th.accent, fontWeight: '600' }}>{t('common.change')}</Text>
       </Pressable>
       {Platform.OS === 'ios' && iosOpen ? (
-        <DateTimePicker value={toDate(value)} mode="date" display="inline" maximumDate={new Date()} onValueChange={(_e, d) => onChange(isoDate(d))} />
+        <DateTimePicker value={toDate(value)} mode="date" display="inline" maximumDate={maximumDate} onValueChange={(_e, d) => onChange(isoDate(d))} />
       ) : null}
     </View>
   );

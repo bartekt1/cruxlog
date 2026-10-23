@@ -124,6 +124,16 @@ Write down the result of every step (OK / problem). Report problems with: step n
 7. A crag without a position: no switch, a note that there is no map to include, and no coordinates on the card or in the text.
 8. Your own position is never in the card or the text.
 
+## 3h. Trips: invitation and summary
+1. Goals tab › "Trips" › "+ New trip" (or the calendar icon on a crag screen, which fills that crag in). Fill the name, From and To (future days can be picked), add a crag by typing its name, then tap routes in the list below to add them. Arrows move a route up or down, the cross removes it; removing a crag removes its routes.
+2. Save without a name, with the end before the start, or with no crag. Expected: a clear message, nothing saved.
+3. Save. Expected: the trip screen: "Planned", the days (e.g. "1–3 May 2026"), the crags as chips, the message, the proposed routes.
+4. "Invite to the trip": a tall paper card with "Join me on a trip", the name, days, crags, area, the routes with grades (up to 10, then "and more routes: N"), the message and the crag's coordinates. "Send picture" opens the share sheet (WhatsApp); "Send text with a map link" sends the same as text with a Google Maps link. The position switch works like on other cards.
+5. On a trip day log an ascent: the route search (empty field) shows "From the trip: <name>" with the proposed routes first.
+6. After the first day: the trip screen shows "On now" or "Done", the tiles Sends / Days / Hardest, "Done from the plan: x of y", ticks on the proposed routes you sent. "Show off the trip" makes the summary card: the tiles, the routes sent (hardest first, with the style), the line about the plan.
+7. Edit a trip (pencil): change the days and routes, save. Delete it: "Delete the trip?"; your ascents stay.
+8. Backup: make a backup, clear the app, restore: the trips come back.
+
 ## 4. Crags and goals
 1. Crags tab. Expected: "Test Crag" with the number of routes. Tap it. Expected: the crag screen with routes grouped by sector; "Test Route 1" shows "✓ sends: 1" (rust) or "tried: N". Tap the route. Expected: the route screen (§2c).
 1a. Editing (your own and imported crags, sectors, routes and regions; re-importing a file undoes changes to imported ones, see §5b):
