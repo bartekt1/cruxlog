@@ -110,6 +110,13 @@ export const MIGRATIONS: string[] = [
   CREATE INDEX idx_trip_crag_trip ON trip_crag(trip_id);
   CREATE INDEX idx_trip_route_trip ON trip_route(trip_id);
   `,
+  // 11: crag packs downloaded from the packs repository: which packs are installed (id, name, version), and which pack
+  // brought each crag, so a pack can be updated or removed on its own.
+  `
+  CREATE TABLE pack (id TEXT PRIMARY KEY, name TEXT NOT NULL, version INTEGER NOT NULL, ${COMMON});
+  ALTER TABLE crag ADD COLUMN pack_id TEXT;
+  CREATE INDEX idx_crag_pack ON crag(pack_id);
+  `,
 ];
 
 export async function migrate(db: SQLiteDatabase): Promise<void> {

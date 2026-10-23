@@ -156,6 +156,14 @@ Write down the result of every step (OK / problem). Report problems with: step n
 8. Settings -> "Remove imported crags and routes": the question names the numbers; afterwards imported crags are gone except those with your ascents; routes you added yourself stay.
 9. A file with other headers (not the template) is not recognised: "File … was not recognised".
 
+## 5d. Crag packs (internet needed)
+1. Settings › Crag packs › "Choose crag packs". Expected: the list from the packs repository by region › area, each pack with crags, routes, size and "Not downloaded".
+2. "Download" one pack. Expected: a message with the counts; the pack says "Downloaded (version N)"; its crags are in the Crags tab under the right region, area and group. "Get the whole area" downloads the rest of that area at once.
+3. Packs that hold crags you already have (from a file or a backup with the same ID_skały / ID_drogi): nothing is doubled, your ascents stay on their routes.
+4. After the owner changes the base on GitHub (and "Zbuduj paczki" turns green): open the list again. Expected: "Update available"; "Update" keeps your ascents, renamed routes are renamed, not doubled.
+5. "Remove" (asks first): the pack's crags and routes go, except routes with your ascents and routes you added on the phone; the area disappears when nothing is left in it.
+6. Airplane mode: the list says there is no internet and offers "Try again"; nothing changes.
+
 ## 6. Backup (one file, by hand)
 Since the automatic backup (§6a) these buttons are under Settings › "Other ways to back up (one file, no photos)".
 1. Settings -> Export backup. Expected: the system share sheet opens; save the JSON file (for example to Drive or send to yourself).

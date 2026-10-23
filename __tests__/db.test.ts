@@ -4,7 +4,7 @@ import { BACKUP_VERSION, exportBackup, importBackup, latestChange } from '../src
 import { packBackup, unpackBackup } from '../src/domain/autoBackup';
 import { MIGRATIONS, migrate } from '../src/db/migrate';
 import {
-  addAscent, addGoal, addUserRoute, saveAscent, saveTrip, getTrip, listTrips, deleteTrip, tripRoutesOn, listAscentsBetween, applyImport, cragUsage, deleteAscent, deleteCrag, deleteGoal, deleteArea, deleteRoute, deleteSector,
+  addAscent, addGoal, addUserRoute, saveAscent, installPack, listInstalledPacks, removePack, saveTrip, getTrip, listTrips, deleteTrip, tripRoutesOn, listAscentsBetween, applyImport, cragUsage, deleteAscent, deleteCrag, deleteGoal, deleteArea, deleteRoute, deleteSector,
   getAscent, getCrag, getArea, getRoute, getSector, listAscents, listCragRoutes, listCrags, listGoals, listAreas, listSectorNames, addArea, areaIdFor,
   renameArea, renameSector, routeUsage, saveCrag, searchRoutes, sectorUsage, setGoalDone, updateAscent, updateRoute, type NewRoute, type RouteFilter,
   listCragChoices, listPartners, applyCragPositions, addRouteGoal, routeGoalKinds, addPhotos, listPhotos, listPhotosOf, removePhotos, activePhotos, latestPhotoChange, getPhoto, listTopoLines, topoRoutes, saveTopoLine, deleteTopoLine, routeTopos, setCragLocation, listRouteAscents, recentRoutes, listSectors, addSector, createRoute, importedUsage, removeImported, findRoutes, getGoal, updateGoal, routeGoals,
@@ -552,6 +552,42 @@ describe('trips', () => {
     const target = await freshDb();
     await importBackup(target, JSON.parse(JSON.stringify(await exportBackup(db))));
     expect(await listTrips(target)).toEqual(await listTrips(db));
+  });
+});
+
+describe('packs', () => {
+  const pack = (rows: string) => planFromFlatRows(parseFlatCsv(`Region;Rejon;Grupa;Skała;Nazwa;Wycena;ID_skały;ID_drogi\n${rows}`));
+  const kamieniec = 'Czarnorzeki;Skałki;Kamieniec;Krowia;Rysa;VI.1;sk-1;dr-1\nCzarnorzeki;Skałki;Kamieniec;Krowia;Filar;VI.2;sk-1;dr-2\n';
+  const strzelnica = 'Czarnorzeki;Skałki;Strzelnica;Okap;Komin;V;sk-2;dr-3\n';
+  it('installs, updates and removes packs one by one', async () => {
+    const db = await freshDb();
+    await installPack(db, { id: 'kamieniec', name: 'Kamieniec', version: 1 }, pack(kamieniec));
+    await installPack(db, { id: 'strzelnica', name: 'Strzelnica', version: 1 }, pack(strzelnica));
+    expect(await listInstalledPacks(db)).toEqual([{ id: 'kamieniec', name: 'Kamieniec', version: 1 }, { id: 'strzelnica', name: 'Strzelnica', version: 1 }]);
+    const krowia = (await listCrags(db)).find((c) => c.name === 'Krowia')!;
+    const [rysa, filar] = (await listCragRoutes(db, krowia.id)).sort((a, b) => b.name.localeCompare(a.name));
+    await addAscent(db, ascent(rysa.id));
+    const own = await createRoute(db, krowia.id, { sectorName: '', name: 'Moja droga', type: 'sport', gradeLabel: 'V', gradeSystem: 'kr', gradeIndex: parseGrade('V', 'kr')! });
+
+    // Version 2 of Kamieniec renames Rysa; the route and its ascent stay the same.
+    await installPack(db, { id: 'kamieniec', name: 'Kamieniec', version: 2 }, pack(kamieniec.replace('Rysa', 'Rysa Główna')));
+    expect((await listInstalledPacks(db))[0].version).toBe(2);
+    expect(await getRoute(db, rysa.id)).toMatchObject({ name: 'Rysa Główna' });
+
+    await removePack(db, 'kamieniec');
+    expect((await listInstalledPacks(db)).map((p) => p.id)).toEqual(['strzelnica']);
+    // Kept: the route with an ascent and the one added on the phone, so the crag stays; the rest of the pack is gone.
+    expect((await listCragRoutes(db, krowia.id)).map((r) => r.name).sort()).toEqual(['Moja droga', 'Rysa Główna']);
+    expect(await getRoute(db, filar.id)).toBeNull();
+    expect(await getRoute(db, own)).not.toBeNull();
+    expect((await listCrags(db)).map((c) => c.name).sort()).toEqual(['Krowia', 'Okap']);
+
+    await removePack(db, 'strzelnica');
+    expect((await listCrags(db)).map((c) => c.name)).toEqual(['Krowia']);
+    expect((await listAreas(db)).map((a) => a.name).sort()).toEqual(['Czarnorzeki', 'Kamieniec', 'Skałki']); // Strzelnica's group is gone
+    // Installing again takes the kept rows back.
+    await installPack(db, { id: 'kamieniec', name: 'Kamieniec', version: 2 }, pack(kamieniec));
+    expect((await listCrags(db)).filter((c) => c.name === 'Krowia')).toHaveLength(1);
   });
 });
 

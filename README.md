@@ -30,6 +30,7 @@ The APK is built by GitHub Actions on every push (artifact `cruxlog-apk`).
 - Every table has a text UUID id, `created_at`, `updated_at`, `deleted_at`. Never hard-delete, so sync can be added later.
 - Grades are stored as `grade_index` on a shared ladder plus the original label and system. Conversions are approximate.
 - User-created crags, sectors and routes are `source='user'`, `status='private'`. Proposing them to a shared catalog comes with the social features.
+- Crag packs: `src/domain/packs.ts` reads `index.json` of the `bartekt1/cruxlog-paczki` repository; each pack is a template CSV of one group of crags, installed with `installPack` (crags remember their `pack_id`), removed with `removePack`.
 - One import format: the Cruxlog CSV template (`docs/IMPORT.md`, `docs/cruxlog-wzor.csv`), columns found by name in any order. Import ids are `imp:<kind>:<key>`, and rows taken over by name remember the file's key (`import_key`), so importing again updates instead of duplicating.
 - Bundled or imported guidebook data must not copy protected text or topo drawings. Keep to facts: name, grade, length, location.
 - Crag positions record where they came from (`crag.pos_source`: user, file, approx). A file never overwrites a position the user set on the phone.

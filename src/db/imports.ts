@@ -34,6 +34,11 @@ async function removeEmptyImports(db: SQLiteDatabase, kept: Kept, t: number): Pr
      AND NOT EXISTS (SELECT 1 FROM sector s WHERE s.crag_id = c.id AND s.deleted_at IS NULL)`)) {
     if (!kept.crags.has(c.id)) await db.runAsync('UPDATE crag SET deleted_at = ?, updated_at = ? WHERE id = ?', [t, t, c.id]);
   }
+  await removeEmptyAreas(db, t);
+}
+
+/** Imported areas left without crags and sub-areas are deleted, from the bottom up. */
+async function removeEmptyAreas(db: SQLiteDatabase, t: number): Promise<void> {
   for (let removed = true; removed;) {
     const empty = await db.getAllAsync<{ id: string }>(
       `SELECT id FROM region g WHERE g.deleted_at IS NULL AND g.source = 'import'
@@ -157,10 +162,11 @@ async function runMany(db: SQLiteDatabase, sql: string, rows: (string | number |
 
 /**
  * Writes a validated import plan. Re-importing the same keys updates existing rows; see resolveIds for rows taken over by name.
+ * With `packId` the crags are marked as brought by that pack (a plain file import keeps the mark a crag already has).
  * An empty optional field in the file keeps what the row already has (a description, length, bolts…), and a position set on
  * the phone is never replaced.
  */
-export async function applyImport(db: SQLiteDatabase, plan: ImportPlan): Promise<{ crags: number; sectors: number; routes: number; taken: number }> {
+export async function applyImport(db: SQLiteDatabase, plan: ImportPlan, packId: string | null = null): Promise<{ crags: number; sectors: number; routes: number; taken: number }> {
   if (plan.errors.length) throw new Error('Import plan has errors');
   const t = now();
   const memo = new Map<string, string>();
@@ -172,12 +178,13 @@ export async function applyImport(db: SQLiteDatabase, plan: ImportPlan): Promise
     for (const c of plan.crags) {
       const regionId = await areaIdFor(db, { region: c.region, area: c.area, group: c.group }, t, 'import', memo);
       const pos = c.lat != null && c.lng != null ? (c.approx ? 'approx' : 'file') : '';
-      crags.push([ids.crag.get(c.key)!, regionId, c.name, c.lat, c.lng, c.description, c.approach, t, t, pos, c.key]);
+      crags.push([ids.crag.get(c.key)!, regionId, c.name, c.lat, c.lng, c.description, c.approach, t, t, pos, c.key, packId]);
     }
     await runMany(db,
-      `INSERT INTO crag (id, region_id, name, lat, lng, description, approach, source, status, created_at, updated_at, pos_source, import_key)
-       VALUES (?,?,?,?,?,?,?,'import','private',?,?,?,?)
+      `INSERT INTO crag (id, region_id, name, lat, lng, description, approach, source, status, created_at, updated_at, pos_source, import_key, pack_id)
+       VALUES (?,?,?,?,?,?,?,'import','private',?,?,?,?,?)
        ON CONFLICT(id) DO UPDATE SET region_id=excluded.region_id, name=excluded.name, import_key=excluded.import_key,
+         pack_id=COALESCE(excluded.pack_id, crag.pack_id),
          lat=CASE WHEN crag.pos_source = 'user' OR excluded.lat IS NULL THEN crag.lat ELSE excluded.lat END,
          lng=CASE WHEN crag.pos_source = 'user' OR excluded.lat IS NULL THEN crag.lng ELSE excluded.lng END,
          pos_source=CASE WHEN crag.pos_source = 'user' OR excluded.lat IS NULL THEN crag.pos_source ELSE excluded.pos_source END,
@@ -205,4 +212,54 @@ export async function applyImport(db: SQLiteDatabase, plan: ImportPlan): Promise
     await removeEmptyImports(db, { crags: new Set(ids.crag.values()), sectors: new Set(ids.sector.values()), routes: new Set(ids.route.values()) }, t);
   });
   return { crags: plan.crags.length, sectors: plan.sectors.length, routes: plan.routes.length, taken };
+}
+
+// ---- Packs ---------------------------------------------------------------------------------------------------------
+
+export type InstalledPack = { id: string; name: string; version: number };
+
+export async function listInstalledPacks(db: SQLiteDatabase): Promise<InstalledPack[]> {
+  return db.getAllAsync<InstalledPack>('SELECT id, name, version FROM pack WHERE deleted_at IS NULL ORDER BY name');
+}
+
+/** Writes a downloaded pack (a validated plan of its file) and records it as installed in that version. */
+export async function installPack(db: SQLiteDatabase, pack: InstalledPack, plan: ImportPlan) {
+  const done = await applyImport(db, plan, pack.id);
+  const t = now();
+  await db.runAsync(
+    `INSERT INTO pack (id, name, version, created_at, updated_at) VALUES (?,?,?,?,?)
+     ON CONFLICT(id) DO UPDATE SET name=excluded.name, version=excluded.version, updated_at=excluded.updated_at, deleted_at=NULL`,
+    [pack.id, pack.name, pack.version, t, t]);
+  return done;
+}
+
+// Rows the import wrote (an imp: id or a key from a file); what the user added on the phone has neither and is never removed.
+const FROM_FILE = (alias: string) => `(${alias}.id LIKE 'imp:%' OR ${alias}.import_key IS NOT NULL)`;
+
+/**
+ * Removes a pack: its routes, sectors and crags that came from files, except routes with the user's ascents (with their crags),
+ * and sectors or crags with photos. What stays loses the pack mark. Areas left empty go too.
+ */
+export async function removePack(db: SQLiteDatabase, packId: string): Promise<void> {
+  const t = now();
+  await db.withTransactionAsync(async () => {
+    await db.runAsync(
+      `UPDATE route SET deleted_at = ?, updated_at = ? WHERE id IN (
+         SELECT r.id FROM route r JOIN sector s ON s.id = r.sector_id JOIN crag c ON c.id = s.crag_id
+         WHERE c.pack_id = ? AND r.deleted_at IS NULL AND ${FROM_FILE('r')}
+           AND NOT EXISTS (SELECT 1 FROM ascent a WHERE a.route_id = r.id AND a.deleted_at IS NULL))`, [t, t, packId]);
+    await db.runAsync(
+      `UPDATE sector SET deleted_at = ?, updated_at = ? WHERE id IN (
+         SELECT s.id FROM sector s JOIN crag c ON c.id = s.crag_id
+         WHERE c.pack_id = ? AND s.deleted_at IS NULL AND ${FROM_FILE('s')}
+           AND NOT EXISTS (SELECT 1 FROM route r WHERE r.sector_id = s.id AND r.deleted_at IS NULL)
+           AND NOT EXISTS (SELECT 1 FROM photo p WHERE p.owner_type = 'sector' AND p.owner_id = s.id AND p.deleted_at IS NULL))`, [t, t, packId]);
+    await db.runAsync(
+      `UPDATE crag SET deleted_at = ?, updated_at = ? WHERE pack_id = ? AND deleted_at IS NULL AND ${FROM_FILE('crag')}
+         AND NOT EXISTS (SELECT 1 FROM sector s WHERE s.crag_id = crag.id AND s.deleted_at IS NULL)
+         AND NOT EXISTS (SELECT 1 FROM photo p WHERE p.owner_type = 'crag' AND p.owner_id = crag.id AND p.deleted_at IS NULL)`, [t, t, packId]);
+    await db.runAsync('UPDATE crag SET pack_id = NULL, updated_at = ? WHERE pack_id = ? AND deleted_at IS NULL', [t, packId]);
+    await db.runAsync('UPDATE pack SET deleted_at = ?, updated_at = ? WHERE id = ?', [t, t, packId]);
+    await removeEmptyAreas(db, t);
+  });
 }

@@ -10,6 +10,7 @@ Status (2026-10-21): the app runs on the owner's phone (APK from GitHub Actions)
 - sharing a route, an ascent or a crag (picture card and text with a map link);
 - photos of ascents (5), crags and walls (10 each), topo lines drawn on wall photos;
 - automatic gzipped backup to a chosen folder (Google Drive or the phone) with photos, restore from a list;
+- crag packs: Settings › Crag packs downloads groups of crags from the `bartekt1/cruxlog-paczki` repository (one pack per group, built from the owner's base by its "Zbuduj paczki" workflow); update and remove one by one;
 - trips: a plan with days, crags and proposed routes, shared as an invitation card and afterwards as a summary of what was climbed;
 - light and dark look, pl/en.
 

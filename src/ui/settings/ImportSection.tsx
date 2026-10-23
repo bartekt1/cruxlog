@@ -1,5 +1,6 @@
 import * as DocumentPicker from 'expo-document-picker';
 import { File } from 'expo-file-system';
+import { useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useTranslation } from 'react-i18next';
 import { applyCragPositions, applyImport, importedUsage, removeImported } from '../../db/repo';
@@ -15,6 +16,7 @@ import type { Run } from './run';
 /** Settings › importing crags and routes from CSV files (route lists or crag positions), and removing imported ones. */
 export function ImportSection({ run, busy }: { run: Run; busy: boolean }) {
   const db = useSQLiteContext();
+  const router = useRouter();
   const { t } = useTranslation();
   const th = useTheme();
 
@@ -78,6 +80,9 @@ export function ImportSection({ run, busy }: { run: Run; busy: boolean }) {
 
   return (
     <>
+      <Label>{t('packs.title')}</Label>
+      <Text style={{ color: th.muted }}>{t('packs.settingsHelp')}</Text>
+      <Button label={t('packs.open')} onPress={() => router.push('/packs')} disabled={busy} />
       <Label>{t('settings.csv')}</Label>
       <Text style={{ color: th.muted }}>{t('settings.csvHelp')}</Text>
       <Button label={t('settings.csv')} onPress={doCsv} disabled={busy} />

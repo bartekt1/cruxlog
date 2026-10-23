@@ -50,6 +50,7 @@ export default function RootLayout() {
         <Stack.Screen name="trip/edit" options={{ title: t('trip.newTitle') }} />
         <Stack.Screen name="trip/share" options={{ title: t('share.title'), presentation: 'modal' }} />
         <Stack.Screen name="settings" options={{ title: t('settings.title') }} />
+        <Stack.Screen name="packs" options={{ title: t('packs.title') }} />
       </Stack>
     </SQLiteProvider>
   );

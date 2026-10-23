@@ -97,6 +97,7 @@ Tabele:
 | `partner` | Partnerzy wspinaczkowi (po nazwie). |
 | `ascent` | Przejście: droga, data, styl, próby, ocena, własna wycena, partner, warunki, notatka. |
 | `goal` | Cel: rodzaj, nazwa, liczba docelowa, wycena, droga, data wykonania. |
+| `pack` | Pobrane paczki skał: identyfikator, nazwa, wersja. Skała ma `pack_id` paczki, z której pochodzi. |
 | `trip`, `trip_crag`, `trip_route` | Wyprawa: nazwa, dni, wiadomość; jej skały i proponowane drogi z kolejnością. |
 | `photo` | Zdjęcie: do czego należy (`ascent`, `crag`, `sector`), wymiary, rozmiar, kolejność. |
 | `topo_line` | Linia drogi na zdjęciu: punkty zapisane względnie (0..1 szerokości i wysokości zdjęcia, JSON), tryb `bolts`/`free`. |
@@ -105,7 +106,7 @@ Zasady:
 - **Identyfikatory i daty.** Każdy wiersz ma tekstowy identyfikator oraz `created_at`, `updated_at` i `deleted_at` (milisekundy). Usuwanie tylko ustawia `deleted_at`.
 - **Własne drogi.** Drogi dodane przez użytkownika mają `source='user'` i `status='private'`. Przygotowanie pod przyszłe „zaproponuj do katalogu”.
 - **Wycena** jest zapisana jako pozycja na wspólnej drabinie trudności (`grade_index`) plus oryginalny zapis i skala. Skale: kręgowa (VI.1+), UIAA (VII-) i francuska (6a+), przeliczane w przybliżeniu. Na ekranie pokazuje się oryginał, gdy skala się zgadza.
-- **Migracje** tylko się dopisuje (obecnie 10), starych nigdy się nie zmienia. Przy zmianie formatu kopii podbija się `BACKUP_VERSION` (obecnie 8), a starsze kopie dalej się wczytują.
+- **Migracje** tylko się dopisuje (obecnie 11), starych nigdy się nie zmienia. Przy zmianie formatu kopii podbija się `BACKUP_VERSION` (obecnie 9), a starsze kopie dalej się wczytują.
 - **Transakcje.** Zapis, który dotyka kilku tabel, idzie w jednej transakcji: nowe przejście z nową drogą, zdjęciami i projektem zapisuje się w całości albo wcale.
 
 ### Zdjęcia
@@ -153,6 +154,12 @@ Zasady importu:
 - **Pozycje.** Pozycja ustawiona ręcznie na telefonie nigdy nie jest nadpisywana plikiem.
 - Przycisk **„Usuń importowane skały i drogi”** zostawia drogi, na których użytkownik ma przejścia.
 - **Obecna baza we wzorze.** Właściciel ma obecną bazę z telefonu jako plik we wzorze, z własnymi numerami (`sk-0001`, `dr-00001`), do dalszej pracy. Plik nie trafia do repozytorium. Wgrany do aplikacji przejmuje istniejące skały i drogi po nazwie, z przejściami.
+
+### Paczki skał z internetu
+
+- Osobne, publiczne repozytorium `bartekt1/cruxlog-paczki`. Właściciel wrzuca bazę (CSV we wzorze) do `baza/`, a automat na GitHubie („Zbuduj paczki”) dzieli ją na paczki: **jedna paczka = jedna grupa skał** (pierwszy poziom kolumny Grupa; skały bez grupy trafiają do „<Rejon> – pozostałe skały”). Automat zapisuje `paczki/<id>.csv` i spis `index.json` (nazwa, region, rejon, liczba skał i dróg, wersja, rozmiar, obszar na mapie). Wersja rośnie, gdy zmieni się zawartość paczki.
+- W aplikacji: Ustawienia › Paczki skał. Lista pogrupowana Region › Rejon. Każdą paczkę można pobrać, zaktualizować albo usunąć; jest też „Pobierz cały rejon”. Paczka wgrywa się jak zwykły import (te same zasady przejmowania i ID), a skały pamiętają, z której paczki są (`crag.pack_id`, tabela `pack`, migracja 11). Usunięcie paczki zostawia drogi z przejściami i drogi dodane w telefonie.
+- Dalsze etapy: topo w paczkach, mapy offline dla obszaru paczki.
 
 ## 7. Eksport i udostępnianie
 
