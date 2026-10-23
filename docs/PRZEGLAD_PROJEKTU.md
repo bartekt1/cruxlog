@@ -157,7 +157,7 @@ Zasady importu:
 
 ### Paczki skał z internetu
 
-- Osobne, publiczne repozytorium `bartekt1/cruxlog-paczki`. Właściciel wrzuca bazę (CSV we wzorze) do `baza/`, a automat na GitHubie („Zbuduj paczki”) dzieli ją na paczki: **jedna paczka = jedna grupa skał** (pierwszy poziom kolumny Grupa; skały bez grupy trafiają do „<Rejon> – pozostałe skały”). Automat zapisuje `paczki/<id>.csv` i spis `index.json` (nazwa, region, rejon, liczba skał i dróg, wersja, rozmiar, obszar na mapie). Wersja rośnie, gdy zmieni się zawartość paczki.
+- Osobne, publiczne repozytorium `bartekt1/cruxlog-paczki`. Cała baza jest w jednym pliku `baza/baza.csv` (CSV we wzorze, kolumny w dowolnej kolejności). Właściciel dopisuje nowe drogi z pustymi ID; automat na GitHubie („Zbuduj paczki”) nadaje brakujące numery (`sk-…`, `dr-…`, kolejne w całej bazie, pamięć numerów w `narzedzia/numery.json`), wpisuje je do pliku, pilnuje, by numery się nie powtarzały, i dzieli bazę na paczki: **jedna paczka = jedna grupa skał** (pierwszy poziom kolumny Grupa; skały bez grupy trafiają do „<Rejon> – pozostałe skały”). Automat zapisuje `paczki/<id>.csv` i spis `index.json` (nazwa, region, rejon, liczba skał i dróg, wersja, rozmiar, obszar na mapie). Wersja rośnie, gdy zmieni się zawartość paczki.
 - W aplikacji: Ustawienia › Paczki skał. Lista pogrupowana Region › Rejon. Każdą paczkę można pobrać, zaktualizować albo usunąć; jest też „Pobierz cały rejon”. Paczka wgrywa się jak zwykły import (te same zasady przejmowania i ID), a skały pamiętają, z której paczki są (`crag.pack_id`, tabela `pack`, migracja 11). Usunięcie paczki zostawia drogi z przejściami i drogi dodane w telefonie.
 - Dalsze etapy: topo w paczkach, mapy offline dla obszaru paczki.
 
