@@ -2,7 +2,7 @@
 
 Status (2026-10-21): the app runs on the owner's phone (APK from GitHub Actions). Code clean-up after an audit done the same day (see `docs/TESTING.md` §6e). Done:
 - journal, ascent form with own grade, route history;
-- crags tree (region › area › group › crag › sector) with editing, and one import format, the Cruxlog template (`docs/IMPORT.md`; the owner builds his own base, free of third-party data; theCrag, guidebook and three-file formats were removed), and a positions file;
+- crags tree (region › area › group › crag › sector) with editing, and one import format, the Cruxlog template (`docs/IMPORT.md`; the owner builds his own base, free of third-party data), and a positions file;
 - route finder with filters, and search on every level of the Crags tab;
 - goals (count, grade, project, wishlist), added from a route or an attempt too;
 - progress for any year;
@@ -15,15 +15,6 @@ Status (2026-10-21): the app runs on the owner's phone (APK from GitHub Actions)
 ## Ideas under discussion (April list)
 
 - **Sharing** (card + map link): done, see `docs/TESTING.md` §3g; photo and topo on the card §6b, §6d.
-- **Export to theCrag** (plan approved in principle 2026-10-20, postponed; Cruxlog is the main logbook, theCrag gets a copy, one way only):
-  - Why a file: no write API for individuals (the full API is closed to non-commercial use, the personal key is read-only), and no password in the app. theCrag has its own logbook import from CSV (matches crag + route + country, the user confirms the matches there).
-  - Screen "Export to theCrag" (Settings and Journal): list of ascents with check boxes. Default: only sends (OS, flash, RP, PP) not yet exported. Attempts, top-rope and projects are unchecked but can be checked. Ascents on the user's own routes are unchecked (they do not exist on theCrag). Year filter, "check all new", a counter.
-  - Country: theCrag needs it. Ask once per region of the checked ascents, default "Polska", remember the answer in settings.
-  - File: UTF-8 CSV, columns Country, Crag, Route, Date, Grade, Style, Notes, Partner, Stars; shared with the Android share sheet. Notes behind a switch, off by default; partner on by default.
-  - Styles (a guess, to verify): OS Onsight, Flash Flash, RP Redpoint, PP Pinkpoint, TR Top rope, Attempt Attempt. First build a 3-row test file for the owner to try in theCrag's import and fix names, date format and columns from the result.
-  - Remember what was sent: after the export ask "Did you upload the file?" and only then mark the ascents (new column on `ascent`, migration, bump `BACKUP_VERSION`, old backups still import). A small label "sent to theCrag <date>" on the ascent, undoable.
-  - Not planned: password login, direct upload, importing from theCrag back.
-  - Sources: help pages on theCrag (API, "import logbook", "export logbook"), read through search summaries only because thecrag.com was not reachable from the sandbox; verify on the real site.
 - **Photos and topo** (done, `docs/TESTING.md` §6b–6d): stage 1 (up to 5 photos per ascent, from the gallery, shrunk to 1600 px, no thumbnails; copied once each to `zdjecia/` in the backup folder). Stage 2 done too: photos of a crag and of a wall (sector), up to 10 each, 2000 px, delete in the full-screen view, optional on the share card of a crag or route. Stage 3, first delivery done: the topo editor (bolts mode, zoom by two fingers and buttons, drag/select/delete points, undo/redo) and lines with numbers on the full-screen photo. Second delivery done: drawing by finger ("free" mode), a "Topo" section on the route screen with the route highlighted, tapping a number opens the route, topo on the share card. Next ideas: inserting a point between two bolts, a magnifier under the finger, if the owner finds tapping imprecise.
 
 ## To do, in the owner's order
@@ -33,7 +24,6 @@ Status (2026-10-21): the app runs on the owner's phone (APK from GitHub Actions)
 3. **Crags without a position.** 40 crags have none and 288 have an approximate one. These are improved on site with "Improve". The OSM matching scripts are kept outside the repo, so a new run can be repeated on request.
 4. **Device checks.** TalkBack, the largest font size, dark mode on every screen, the calendar picker and the keyboard in forms (see `docs/TESTING.md` §8).
 5. ~~Automatic backup~~ Done (2026-10): a folder chosen once (Google Drive through the system folder picker, or a phone folder); a gzipped copy when the app opens and 7 days passed with changes, the 5 latest kept, restore from the list in Settings. A `zdjecia/` subfolder gets each photo once. The one-file manual export/import stays folded under "Other ways to back up".
-6. **theCrag export** when the owner says go (plan above; notes off and partner on by default).
 
 ## Later, before a store release
 

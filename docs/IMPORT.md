@@ -52,4 +52,4 @@ Jeden plik CSV (UTF-8, separator średnik), **jeden wiersz = jedna droga**. Kole
 
 ## Prawa autorskie
 
-Baza zrobiona samemu w terenie (nazwy, wyceny, długości, przeloty, położenie, własne opisy) jest Twoja. Nie przepisuj opisów, schematów ani całych list dróg z przewodników i serwisów (np. theCrag): poza prawem autorskim do tekstu w UE chroni się też same bazy danych, gdy ktoś przejmie ich znaczną część. Przed udostępnianiem bazy innym warto to potwierdzić z prawnikiem.
+Baza zrobiona samemu w terenie (nazwy, wyceny, długości, przeloty, położenie, własne opisy) jest Twoja. Nie przepisuj opisów, schematów ani całych list dróg z przewodników i serwisów wspinaczkowych: poza prawem autorskim do tekstu w UE chroni się też same bazy danych, gdy ktoś przejmie ich znaczną część. Przed udostępnianiem bazy innym warto to potwierdzić z prawnikiem.

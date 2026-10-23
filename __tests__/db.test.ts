@@ -444,8 +444,8 @@ describe('a hand-made file takes over existing data', () => {
   it('keeps the ascents, photos and positions of routes and crags with the same names', async () => {
     const db = await freshDb();
     // What an earlier import left: a crag with a sector, two routes, an ascent, a wall photo and a position set on the phone.
-    await applyImport(db, planFromFlatRows([{ region: 'Czarnorzeki', area: 'Kamieniec', group: '', crag: 'Krowia', sector: 'Zachód', name: 'Rysa', type: '', grade: 'VI.1', gradeSystem: '', cragKey: 'tc-krowia', routeKey: 'tc-1' },
-      { region: 'Czarnorzeki', area: 'Kamieniec', group: '', crag: 'Krowia', sector: 'Zachód', name: 'Filar', type: '', grade: 'VI.2', gradeSystem: '', cragKey: 'tc-krowia', routeKey: 'tc-2' }]));
+    await applyImport(db, planFromFlatRows([{ region: 'Czarnorzeki', area: 'Kamieniec', group: '', crag: 'Krowia', sector: 'Zachód', name: 'Rysa', type: '', grade: 'VI.1', gradeSystem: '', cragKey: 'sk-krowia', routeKey: 'dr-1' },
+      { region: 'Czarnorzeki', area: 'Kamieniec', group: '', crag: 'Krowia', sector: 'Zachód', name: 'Filar', type: '', grade: 'VI.2', gradeSystem: '', cragKey: 'sk-krowia', routeKey: 'dr-2' }]));
     const [old] = await listCrags(db);
     await setCragLocation(db, old.id, { lat: 49.74, lng: 21.78 });
     const [rysa, filar] = (await listCragRoutes(db, old.id)).sort((a, b) => a.name.localeCompare(b.name)).reverse();
@@ -481,12 +481,29 @@ describe('a hand-made file takes over existing data', () => {
     expect(await listRouteAscents(db, routeId)).toHaveLength(1);
     expect(await count(db, 'route')).toBe(1);
   });
-  it('does not guess when two crags share a name', async () => {
+  it('tells crags of one name apart by their place, and does not guess when two are at the same place', async () => {
     const db = await freshDb();
-    await addUserRoute(db, route({ cragName: 'Baszta', name: 'Komin', areas: A('Jura', 'Sokoliki') }));
+    const komin = await addUserRoute(db, route({ cragName: 'Baszta', sectorName: 'Baszta', name: 'Komin', areas: A('Jura', 'Sokoliki') }));
     await saveCrag(db, null, { name: 'Baszta', areas: A('Tatry', 'Dolina'), description: '', approach: '' });
-    await applyImport(db, file('Jura;Sokoliki;Baszta;;Komin;V\n'));
-    expect((await listCrags(db)).filter((c) => c.name === 'Baszta')).toHaveLength(3);
+    expect((await applyImport(db, file('Jura;Sokoliki;Baszta;;Komin;V\n'))).taken).toBe(1);
+    expect((await listCrags(db)).filter((c) => c.name === 'Baszta')).toHaveLength(2);
+    expect(await getRoute(db, komin)).toMatchObject({ name: 'Komin' });
+
+    const twins = await freshDb();
+    await saveCrag(twins, null, { name: 'Ostaniec', areas: A('Jura', 'Sokoliki'), description: '', approach: '' });
+    await saveCrag(twins, null, { name: 'Ostaniec', areas: A('Jura', 'Sokoliki'), description: 'drugi', approach: '' });
+    await applyImport(twins, file('Jura;Sokoliki;Ostaniec;;Rysa;V\n'));
+    expect((await listCrags(twins)).filter((c) => c.name === 'Ostaniec')).toHaveLength(3);
+  });
+  it('tells routes of one name on one wall apart by their grade', async () => {
+    const db = await freshDb();
+    const a = await addUserRoute(db, route({ cragName: 'Okap', sectorName: 'Okap', name: 'Bez nazwy', gradeLabel: 'V', gradeIndex: parseGrade('V', 'kr')!, areas: A('Jura', 'Sokoliki') }));
+    const b = await addUserRoute(db, route({ cragName: 'Okap', sectorName: 'Okap', name: 'Bez nazwy', gradeLabel: 'VI.2', gradeIndex: parseGrade('VI.2', 'kr')! }));
+    const done = await applyImport(db, file('Jura;Sokoliki;Okap;;Bez nazwy;VI.2\nJura;Sokoliki;Okap;;Bez nazwy;V\n'));
+    expect(done.taken).toBe(2);
+    expect(await getRoute(db, a)).toMatchObject({ grade_label: 'V' });
+    expect(await getRoute(db, b)).toMatchObject({ grade_label: 'VI.2' });
+    expect(await count(db, 'route')).toBe(2);
   });
   it('marks an approximate position from the file', async () => {
     const db = await freshDb();

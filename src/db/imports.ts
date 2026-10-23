@@ -1,7 +1,8 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 import type { ImportPlan } from '../domain/importPlan';
 import { fold } from '../domain/text';
-import { areaIdFor } from './areas';
+import { pathNames } from '../domain/areas';
+import { areaIdFor, listAreas } from './areas';
 import { now } from './ids';
 
 type Kept = { crags: Set<string>; sectors: Set<string>; routes: Set<string> };
@@ -47,17 +48,19 @@ type Ids = { crag: Map<string, string>; sector: Map<string, string>; route: Map<
 
 /**
  * Which rows the plan's crags, sectors and routes write to. A key already imported keeps its row (imp:<kind>:<key>).
- * A new key takes over a crag the app already has under the same name (only when exactly one crag has it), and in such
- * a crag the sector and the route of the same name, so a file made by hand replaces earlier data and keeps the ascents,
+ * A new key takes over a crag the app already has under the same name (when several have it, the one at the same place),
+ * and in such a crag the sector and the route of the same name (routes of one name told apart by the grade), so a file made by hand replaces earlier data and keeps the ascents,
  * photos and topo lines on it. Everything else gets a new imp: row. `taken` counts routes taken over this way.
  */
 async function resolveIds(db: SQLiteDatabase, plan: ImportPlan): Promise<Ids> {
   const imp = (kind: string, key: string) => `imp:${kind}:${key}`;
-  const crags = await db.getAllAsync<{ id: string; name: string; import_key: string | null }>('SELECT id, name, import_key FROM crag WHERE deleted_at IS NULL');
+  const crags = await db.getAllAsync<{ id: string; name: string; region_id: string | null; import_key: string | null }>(
+    'SELECT id, name, region_id, import_key FROM crag WHERE deleted_at IS NULL');
+  const areas = await listAreas(db);
   const sectors = await db.getAllAsync<{ id: string; crag_id: string; name: string; import_key: string | null }>(
     'SELECT id, crag_id, name, import_key FROM sector WHERE deleted_at IS NULL');
-  const routes = await db.getAllAsync<{ id: string; sector_id: string; crag_id: string; name: string; import_key: string | null }>(
-    'SELECT r.id, r.sector_id, s.crag_id, r.name, r.import_key FROM route r JOIN sector s ON s.id = r.sector_id WHERE r.deleted_at IS NULL AND s.deleted_at IS NULL');
+  const routes = await db.getAllAsync<{ id: string; sector_id: string; crag_id: string; name: string; grade_label: string; import_key: string | null }>(
+    'SELECT r.id, r.sector_id, s.crag_id, r.name, r.grade_label, r.import_key FROM route r JOIN sector s ON s.id = r.sector_id WHERE r.deleted_at IS NULL AND s.deleted_at IS NULL');
   const live = new Set([...crags, ...sectors, ...routes].map((x) => x.id));
   // Rows that carry a key of the file already (taken over by an earlier import), by kind.
   const keyed = (rows: { id: string; import_key: string | null }[]) => new Map(rows.filter((x) => x.import_key).map((x) => [x.import_key!, x.id]));
@@ -73,7 +76,22 @@ async function resolveIds(db: SQLiteDatabase, plan: ImportPlan): Promise<Ids> {
   const sectorsByName = byFold(sectors, (x) => x.crag_id);
   const routesBySector = byFold(routes, (x) => x.sector_id);
   const routesByCrag = byFold(routes, (x) => x.crag_id);
-  const one = <T extends { id: string }>(rows: T[] | undefined) => (rows?.length === 1 ? rows[0].id : null);
+  const free = <T extends { id: string }>(rows: T[] | undefined) => (rows ?? []).filter((x) => !takenOver.has(x.id));
+  const one = <T extends { id: string }>(rows: T[]) => (rows.length === 1 ? rows[0].id : null);
+  const pathOf = (regionId: string | null) => { const p = pathNames(areas, regionId); return fold([p.region, p.area, p.group].join('|')); };
+  /** A crag by name; when several share it, the one at the same place (region, area, groups). Two at the same place: no guess. */
+  const cragByName = (c: ImportPlan['crags'][number]) => {
+    const same = free(cragsByName.get(`|${fold(c.name)}`));
+    if (same.length <= 1) return one(same);
+    const where = fold([c.region, c.area, c.group].join('|'));
+    return one(same.filter((x) => pathOf(x.region_id) === where));
+  };
+  /** A route by name; routes of the same name on one wall are told apart by their grade. */
+  const routeByName = (rows: typeof routes | undefined, grade: string) => {
+    const same = free(rows);
+    if (same.length <= 1) return one(same);
+    return same.find((x) => fold(x.grade_label) === fold(grade))?.id ?? null;
+  };
 
   const ids: Ids = { crag: new Map(), sector: new Map(), route: new Map(), taken: 0 };
   const takenOver = new Set<string>(); // an existing row is taken by one plan row at most
@@ -87,13 +105,13 @@ async function resolveIds(db: SQLiteDatabase, plan: ImportPlan): Promise<Ids> {
     }
     for (const x of items) if (!out.has(x.key)) out.set(x.key, claim(byName(x)) ?? imp(kind, x.key));
   }
-  assign(plan.crags, 'crag', cragByKey, ids.crag, (c) => one(cragsByName.get(`|${fold(c.name)}`)));
-  assign(plan.sectors, 'sector', sectorByKey, ids.sector, (x) => one(sectorsByName.get(`${ids.crag.get(x.cragKey)}|${fold(x.name)}`)));
+  assign(plan.crags, 'crag', cragByKey, ids.crag, cragByName);
+  assign(plan.sectors, 'sector', sectorByKey, ids.sector, (x) => one(free(sectorsByName.get(`${ids.crag.get(x.cragKey)}|${fold(x.name)}`))));
   const cragOfSector = new Map(plan.sectors.map((x) => [x.key, x.cragKey]));
   assign(plan.routes, 'route', routeByKey, ids.route, (r) => {
     // Same sector first; a route that moved to another wall of the same crag is still found by its name in the crag.
-    const found = one(routesBySector.get(`${ids.sector.get(r.sectorKey)}|${fold(r.name)}`))
-      ?? one(routesByCrag.get(`${ids.crag.get(cragOfSector.get(r.sectorKey)!)}|${fold(r.name)}`));
+    const found = routeByName(routesBySector.get(`${ids.sector.get(r.sectorKey)}|${fold(r.name)}`), r.gradeLabel)
+      ?? routeByName(routesByCrag.get(`${ids.crag.get(cragOfSector.get(r.sectorKey)!)}|${fold(r.name)}`), r.gradeLabel);
     if (found && !takenOver.has(found)) ids.taken++;
     return found;
   });

@@ -282,7 +282,7 @@ ul{margin:0 0 12px;padding-left:20px} li{margin-bottom:5px;max-width:68ch}
   <p>Pozycja jest pokazywana na mapie i służy do podpowiadania pobliskich skał przy dodawaniu wpisu. Używamy jej tylko na urządzeniu, za zgodą systemu i bez wysyłania na serwer. Polityka prywatności musi to opisywać, bo sklepy tego wymagają.</p>
   <h3>Import CSV</h3>
   <p>Jeden format, wzór Cruxlog (<span class="mono">docs/IMPORT.md</span>): jeden plik, jeden wiersz na drogę, kolumny wyszukiwane po nagłówkach w dowolnej kolejności. Obowiązkowe: Region, Rejon, Skała, Nazwa, Wycena; opcjonalne: Grupa, Sektor, Typ, Skala_wycen, Długość, Przeloty, Autor, Rok, Opis, Lat, Lng, Przybliżone, Opis_skały, Dojście, ID_skały, ID_drogi. Osobny plik samych położeń (Skała, Lat, Lng) ustawia pinezki. Przed zapisem aplikacja pokazuje liczby i raport błędów z numerami wierszy; ponowny import aktualizuje dane, a skała i droga o tej samej nazwie są przejmowane razem z przejściami.</p>
-  <p class="note">Bazę skał właściciel tworzy sam, bez danych stron trzecich. Formaty theCrag i przewodnika oraz dawny import z trzech plików usunięto w październiku 2026.</p>
+  <p class="note">Bazę skał właściciel tworzy sam, bez danych stron trzecich.</p>
   <h3>Style przejścia</h3>
   <p>OS, flash, RP, PP, TR i próba (nieudana). Boulder dodatkowo używa „flash” i „RP”. Do piramidy trudności liczą się tylko style zaliczające drogę.</p>
 </section>
@@ -303,7 +303,7 @@ ul{margin:0 0 12px;padding-left:20px} li{margin-bottom:5px;max-width:68ch}
   <h3 style="margin-top:22px">Ryzyka, które trzeba rozstrzygnąć</h3>
   <ul>
     <li><b>Kafelki OSM offline.</b> Serwery <span class="mono">tile.openstreetmap.org</span> zabraniają masowego pobierania. Potrzebny jest własny lub zewnętrzny dostawca (np. wektorowe pliki PMTiles z wycinkami regionów).</li>
-    <li><b>Źródło danych o drogach.</b> Dane z OpenStreetMap są na licencji ODbL. Przewodniki i bazy takie jak thecrag, 8a czy słowackie serwisy mają własne warunki i nie wolno ich po prostu kopiować.</li>
+    <li><b>Źródło danych o drogach.</b> Dane z OpenStreetMap są na licencji ODbL. Przewodniki i serwisy wspinaczkowe mają własne warunki i nie wolno ich po prostu kopiować; bazę skał właściciel tworzy sam.</li>
     <li><b>Przeliczanie wycen.</b> Skale nie przeliczają się jednoznacznie, szczególnie UIAA i kręgowa.</li>
   </ul>
 </section>
@@ -313,7 +313,7 @@ ul{margin:0 0 12px;padding-left:20px} li{margin-bottom:5px;max-width:68ch}
   <div class="road">
     <div class="phase"><div class="eyebrow">Etap 1 · MVP</div><h3>Dziennik</h3><ul><li>Szkielet Expo, baza, nawigacja</li><li>Ręczne dodawanie skał, sektorów i dróg</li><li>Wpisy przejść ze stylem, oceną, partnerem i warunkami</li><li>Eksport i import pliku</li></ul></div>
     <div class="phase"><div class="eyebrow">Etap 2</div><h3>Postępy i cele</h3><ul><li>Statystyki, piramida, kalendarz</li><li>Cele i projekty</li><li>Wybór skal wycen</li></ul></div>
-    <div class="phase"><div class="eyebrow">Etap 3</div><h3>Przewodnik i mapa</h3><ul><li>Mapa OSM z pozycją skał (zrobione; pakiety offline jeszcze nie)</li><li>Import przewodnika i theCrag (zrobione)</li><li>Zdjęcia, linie topo, udostępnianie, automatyczna kopia (zrobione)</li></ul></div>
+    <div class="phase"><div class="eyebrow">Etap 3</div><h3>Przewodnik i mapa</h3><ul><li>Mapa OSM z pozycją skał (zrobione; pakiety offline jeszcze nie)</li><li>Import skał z pliku we wzorze Cruxlog (zrobione)</li><li>Zdjęcia, linie topo, udostępnianie, automatyczna kopia (zrobione)</li></ul></div>
     <div class="phase later"><div class="eyebrow">Etap 4</div><h3>iOS</h3><ul><li>Build na iOS, testy</li><li>Publikacja w obu sklepach</li></ul></div>
     <div class="phase far"><div class="eyebrow">Później</div><h3>Social i topo</h3><ul><li>Konta, synchronizacja, kanał aktywności jak w Stravie</li><li>Wspólne topo dla innych użytkowników</li></ul></div>
   </div>

@@ -133,7 +133,7 @@ Język, motyw, skala wycen, podkład mapy oraz stan kopii (folder, data ostatnie
 
 ## 6. Import danych
 
-Jeden format: **wzór Cruxlog** (`docs/IMPORT.md`, przykład `docs/cruxlog-wzor.csv`). Właściciel buduje własną bazę skał we wzorze, wolną od danych stron trzecich. Formaty theCrag i przewodnika usunięto 23 października 2026, a dawny import z trzech plików 21 października 2026.
+Jeden format: **wzór Cruxlog** (`docs/IMPORT.md`, przykład `docs/cruxlog-wzor.csv`). Właściciel buduje własną bazę skał we wzorze, wolną od danych stron trzecich. Inne formaty plików nie są obsługiwane.
 
 - Plik CSV (UTF-8; separator średnik, przecinek albo tabulator), jeden wiersz to jedna droga. Kolumny są wyszukiwane po nazwach nagłówków, w dowolnej kolejności, a nieznane kolumny aplikacja pomija. Nazwy są po polsku lub angielsku; wielkość liter i polskie znaki nie mają znaczenia.
 - **Obowiązkowe:** Region, Rejon, Skała, Nazwa, Wycena. Gdy którejś brakuje, aplikacja wypisuje, której.
@@ -150,7 +150,7 @@ Zasady importu:
 - **Puste komórki.** Pusta komórka opcjonalnej kolumny zostawia istniejącą wartość.
 - **Pozycje.** Pozycja ustawiona ręcznie na telefonie nigdy nie jest nadpisywana plikiem.
 - Przycisk **„Usuń importowane skały i drogi”** zostawia drogi, na których użytkownik ma przejścia.
-- **Obecna baza we wzorze.** Dane z theCrag i dopasowania położeń z OpenStreetMap właściciel dostał jako plik we wzorze (tylko do własnego użytku, nie trafia do repozytorium). Klucze w nim (ID) zgadzają się z tymi w telefonie.
+- **Obecna baza we wzorze.** Właściciel ma obecną bazę z telefonu jako plik we wzorze, z własnymi numerami (`sk-0001`, `dr-00001`), do dalszej pracy. Plik nie trafia do repozytorium. Wgrany do aplikacji przejmuje istniejące skały i drogi po nazwie, z przejściami.
 
 ## 7. Eksport i udostępnianie
 
@@ -160,19 +160,13 @@ Zasady importu:
   - wiadomość tekstowa z linkiem do Map Google.
 
   Pozycji telefonu nigdy nie ma w udostępnianych danych.
-- **Eksport do theCrag (zaplanowany, czeka na zgodę właściciela):**
-  - plik CSV do zaimportowania samemu na stronie theCrag, w jedną stronę, bez logowania i hasła w aplikacji (theCrag nie ma publicznego API do zapisu dla osób prywatnych);
-  - lista przejść z zaznaczaniem; domyślnie tylko przejścia zaliczające, jeszcze nie wysłane;
-  - kraj zapisany raz dla regionu, notatki domyślnie wyłączone, partner domyślnie włączony;
-  - po wysłaniu znacznik „wysłane do theCrag”; wymaga nowej kolumny w bazie;
-  - najpierw testowy plik z 3 wierszami do sprawdzenia nazw kolumn i stylów.
 
 ## 8. Jakość i sposób pracy
 
 - **Przed każdym wysłaniem kodu:** sprawdzenie typów (`npm run typecheck`), testy (`npm test`) i próbne zbudowanie paczki aplikacji (`expo export`).
 - **Testy na telefonie** według `docs/TESTING.md`. Właściciel sprawdza na swoim telefonie i zgłasza uwagi ze zrzutami ekranu.
 - **Akceptacja przed pracą.** Właściciel nie jest programistą: zmiany są najpierw przedstawiane prostym językiem i zaczynane dopiero po akceptacji.
-- **Repozytorium jest publiczne.** Nie wolno do niego wrzucać danych użytkownika: plików z przewodników i theCrag, kopii zapasowych, wyników dopasowań położeń. Folder `import-kamieniec/` jest wyłączony z repozytorium.
+- **Repozytorium jest publiczne.** Nie wolno do niego wrzucać danych użytkownika: plików z bazą skał, kopii zapasowych, wyników dopasowań położeń. Folder `import-kamieniec/` jest wyłączony z repozytorium.
 - **Audyt (21.10.2026).** Naprawiono ciche błędy, podwójne zapisy i równoległe kopie. Przyspieszono wyszukiwanie. Podzielono duże pliki i wspólne elementy interfejsu wydzielono do jednego miejsca.
 
 ## 9. Co dalej (kolejność właściciela)
@@ -181,8 +175,7 @@ Zasady importu:
 2. Multipitch w formularzu przejścia: wyciągi, kto prowadził, styl na wyciąg.
 3. Skały bez pozycji: poprawianie na miejscu, ewentualnie ponowne dopasowanie z OSM.
 4. Sprawdzenia na urządzeniu: TalkBack, największa czcionka, tryb ciemny na każdym ekranie.
-5. Eksport do theCrag (plan w punkcie 7).
-6. Pomysły do topo: wstawianie punktu między przelotami, lupa pod palcem.
+5. Pomysły do topo: wstawianie punktu między przelotami, lupa pod palcem.
 
 Przed publikacją w sklepie: sprawdzenie nazwy i domeny, polityka prywatności, licencja, opinia prawna o danych z przewodników, wersja na iOS. Potem funkcje społecznościowe z moderacją proponowanych dróg.
 

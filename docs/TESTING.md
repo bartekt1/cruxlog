@@ -144,7 +144,7 @@ Write down the result of every step (OK / problem). Report problems with: step n
 6. Rename that route in the file (keep its ID_drogi) and import again. Expected: the route is renamed, not doubled, and "taken over" is not mentioned again.
 7. Positions only: a file with Skała;Lat;Lng;Przybliżone sets the map pins (approximate ones say "about").
 8. Settings -> "Remove imported crags and routes": the question names the numbers; afterwards imported crags are gone except those with your ascents; routes you added yourself stay.
-9. Files from theCrag or the guidebook are no longer recognised: "File … was not recognised".
+9. A file with other headers (not the template) is not recognised: "File … was not recognised".
 
 ## 6. Backup (one file, by hand)
 Since the automatic backup (§6a) these buttons are under Settings › "Other ways to back up (one file, no photos)".
