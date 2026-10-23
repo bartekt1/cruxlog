@@ -184,7 +184,7 @@ describe('repo', () => {
     await applyImport(db, plan);
     expect(await count(db, 'crag')).toBe(first.crags);
     expect(await count(db, 'route')).toBe(first.routes);
-    expect(first).toEqual({ crags: 1, sectors: 1, routes: 2 });
+    expect(first).toEqual({ crags: 1, sectors: 1, routes: 2, taken: 0 });
   });
 });
 
@@ -436,6 +436,62 @@ describe('no boulders, and the file decides which imported routes a crag has', (
     await applyImport(db, planFromFlatRows(parseFlatCsv(file('Krowia'))));
     await applyImport(db, planFromFlatRows(parseFlatCsv(file('Krowia Turnia'))));
     expect((await listCrags(db)).map((c) => [c.id, c.name])).toEqual([['imp:crag:krowia', 'Krowia Turnia']]);
+  });
+});
+
+describe('a hand-made file takes over existing data', () => {
+  const file = (rows: string) => planFromFlatRows(parseFlatCsv(`Region;Rejon;Skała;Sektor;Nazwa;Wycena;Opis_skały\n${rows}`));
+  it('keeps the ascents, photos and positions of routes and crags with the same names', async () => {
+    const db = await freshDb();
+    // What an earlier import left: a crag with a sector, two routes, an ascent, a wall photo and a position set on the phone.
+    await applyImport(db, planFromFlatRows([{ region: 'Czarnorzeki', area: 'Kamieniec', group: '', crag: 'Krowia', sector: 'Zachód', name: 'Rysa', type: '', grade: 'VI.1', gradeSystem: '', cragKey: 'tc-krowia', routeKey: 'tc-1' },
+      { region: 'Czarnorzeki', area: 'Kamieniec', group: '', crag: 'Krowia', sector: 'Zachód', name: 'Filar', type: '', grade: 'VI.2', gradeSystem: '', cragKey: 'tc-krowia', routeKey: 'tc-2' }]));
+    const [old] = await listCrags(db);
+    await setCragLocation(db, old.id, { lat: 49.74, lng: 21.78 });
+    const [rysa, filar] = (await listCragRoutes(db, old.id)).sort((a, b) => a.name.localeCompare(b.name)).reverse();
+    await addAscent(db, ascent(rysa.id));
+    await addPhotos(db, 'sector', rysa.sector_id, [{ id: 'p1', width: 1, height: 1, bytes: 1 }]);
+
+    // The new file has its own keys, other letters in the names and a description; Filar is gone from it.
+    const done = await applyImport(db, file('Czarnorzeki;Kamieniec;KROWIA;zachod;rysa;VI.1+;Lita ściana\n'));
+    expect(done.taken).toBe(1);
+    const crags = await listCrags(db);
+    expect(crags).toHaveLength(1);
+    expect(crags[0]).toMatchObject({ id: old.id, name: 'KROWIA', lat: 49.74, pos_source: 'user' });
+    expect((await getCrag(db, old.id))?.description).toBe('Lita ściana');
+    const routes = await listCragRoutes(db, old.id);
+    expect(routes.map((r) => [r.id, r.name, r.grade_label, r.ascents])).toEqual([[rysa.id, 'rysa', 'VI.1+', 1]]);
+    expect(await getRoute(db, filar.id)).toBeNull(); // the file decides which routes the crag has
+    expect((await listPhotos(db, 'sector', rysa.sector_id)).map((p) => p.id)).toEqual(['p1']);
+
+    // Importing the new file again changes nothing and takes nothing over twice.
+    expect((await applyImport(db, file('Czarnorzeki;Kamieniec;KROWIA;zachod;rysa;VI.1+;\n'))).taken).toBe(0);
+    expect((await getCrag(db, old.id))?.description).toBe('Lita ściana'); // an empty cell keeps what is there
+    expect(await count(db, 'route')).toBe(2); // no new row was made, also not a deleted one
+  });
+  it('follows the ID columns after a takeover, also when a name changes in the file', async () => {
+    const db = await freshDb();
+    const routeId = await addUserRoute(db, route({ cragName: 'Baszta', sectorName: 'Baszta', name: 'Komin', areas: A('Jura', 'Sokoliki') }));
+    await addAscent(db, ascent(routeId));
+    const head = 'Region;Rejon;Skała;Nazwa;Wycena;ID_skały;ID_drogi\n';
+    expect((await applyImport(db, planFromFlatRows(parseFlatCsv(`${head}Jura;Sokoliki;Baszta;Komin;V;sk-1;dr-1\n`)))).taken).toBe(1);
+    // Renamed in the file: the ID still finds the same route, with its ascent.
+    expect((await applyImport(db, planFromFlatRows(parseFlatCsv(`${head}Jura;Sokoliki;Baszta Wielka;Komin Główny;V;sk-1;dr-1\n`)))).taken).toBe(0);
+    expect(await getRoute(db, routeId)).toMatchObject({ name: 'Komin Główny', crag_name: 'Baszta Wielka' });
+    expect(await listRouteAscents(db, routeId)).toHaveLength(1);
+    expect(await count(db, 'route')).toBe(1);
+  });
+  it('does not guess when two crags share a name', async () => {
+    const db = await freshDb();
+    await addUserRoute(db, route({ cragName: 'Baszta', name: 'Komin', areas: A('Jura', 'Sokoliki') }));
+    await saveCrag(db, null, { name: 'Baszta', areas: A('Tatry', 'Dolina'), description: '', approach: '' });
+    await applyImport(db, file('Jura;Sokoliki;Baszta;;Komin;V\n'));
+    expect((await listCrags(db)).filter((c) => c.name === 'Baszta')).toHaveLength(3);
+  });
+  it('marks an approximate position from the file', async () => {
+    const db = await freshDb();
+    await applyImport(db, planFromFlatRows(parseFlatCsv('Region;Rejon;Skała;Nazwa;Wycena;Lat;Lng;Przybliżone\nJura;Sokoliki;Baszta;Komin;V;50.1;19.2;tak\n')));
+    expect((await listCrags(db))[0]).toMatchObject({ lat: 50.1, lng: 19.2, pos_source: 'approx' });
   });
 });
 

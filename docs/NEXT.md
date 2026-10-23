@@ -2,7 +2,7 @@
 
 Status (2026-10-21): the app runs on the owner's phone (APK from GitHub Actions). Code clean-up after an audit done the same day (see `docs/TESTING.md` §6e). Done:
 - journal, ascent form with own grade, route history;
-- crags tree (region › area › group › crag › sector) with editing, and imports (theCrag, guidebook, one-file CSV, positions file; the old three-file CSV import was removed);
+- crags tree (region › area › group › crag › sector) with editing, and one import format, the Cruxlog template (`docs/IMPORT.md`; the owner builds his own base, free of third-party data; theCrag, guidebook and three-file formats were removed), and a positions file;
 - route finder with filters, and search on every level of the Crags tab;
 - goals (count, grade, project, wishlist), added from a route or an attempt too;
 - progress for any year;
@@ -38,5 +38,5 @@ Status (2026-10-21): the app runs on the owner's phone (APK from GitHub Actions)
 ## Later, before a store release
 
 - Final app name check in the store and the domain, a privacy policy, and the project license.
-- Legal review of catalog data before shipping any to other users. A theCrag export the user imports for themselves is fine.
+- Legal review of catalog data before shipping any to other users. The owner is building his own base in the template, so it carries no third-party data.
 - iOS build, social features with moderation of proposed routes.

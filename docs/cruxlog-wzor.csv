@@ -1,0 +1,6 @@
+﻿Region;Rejon;Grupa;Skała;Sektor;Nazwa;Typ;Wycena;Skala_wycen;Długość;Przeloty;Autor;Rok;Opis;Lat;Lng;Przybliżone;Opis_skały;Dojście;ID_skały;ID_drogi
+Przykładowy region;Przykładowy rejon;Grupa Północna;Skała Pierwsza;Ściana zachodnia;Rysa przy drzewie;droga;VI.1;kr;18;6;Jan Kowalski;2019;Rysą do ringu, dalej płytą;49.74440;21.78330;;Skała przy szlaku, lita ściana;10 min od parkingu, ścieżką w lewo;sk-001;dr-0001
+Przykładowy region;Przykładowy rejon;Grupa Północna;Skała Pierwsza;Ściana zachodnia;Filar;droga;VI.2+;kr;20;7;;;;;;;;;sk-001;dr-0002
+Przykładowy region;Przykładowy rejon;Grupa Północna;Skała Pierwsza;Ściana południowa;Okap;droga;7a;fr;15;5;;;;;;;;;sk-001;dr-0003
+Przykładowy region;Przykładowy rejon;;Skała Druga;;Długa grań;wielowyciąg;V+;kr;90;;;;Trzy wyciągi, zjazd z ringów;49.75000;21.79000;tak;;;sk-002;dr-0004
+Przykładowy region;Inny rejon;Dolina › Zachodnie zbocze;Skała Trzecia;;Komin;droga;VII-;uiaa;12;4;;;;;;;;;sk-003;dr-0005

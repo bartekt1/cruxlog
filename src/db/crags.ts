@@ -39,21 +39,23 @@ export async function setCragLocation(db: SQLiteDatabase, id: string, at: { lat:
 export type CragPosition = { key: string; name: string; lat: number; lng: number; approx?: boolean };
 
 /**
- * Sets crag positions from a file: by crag key (imported crags) or else by name when exactly one crag has it.
+ * Sets crag positions from a file: by crag key (ID_skały of an imported crag) or else by name when exactly one crag has it.
  * A position the user set on the phone is kept. Returns how many crags got a position, how many were kept,
  * and the rows that matched none (or more than one) crag.
  */
 export async function applyCragPositions(db: SQLiteDatabase, rows: CragPosition[]): Promise<{ updated: number; kept: number; unmatched: CragPosition[] }> {
   const t = now();
-  const crags = await db.getAllAsync<{ id: string; name: string; pos_source: PosSource }>('SELECT id, name, pos_source FROM crag WHERE deleted_at IS NULL');
+  const crags = await db.getAllAsync<{ id: string; name: string; pos_source: PosSource; import_key: string | null }>(
+    'SELECT id, name, pos_source, import_key FROM crag WHERE deleted_at IS NULL');
   const byId = new Set(crags.map((c) => c.id));
+  const byKey = new Map(crags.filter((c) => c.import_key).map((c) => [c.import_key!, c.id]));
   const own = new Set(crags.filter((c) => c.pos_source === 'user').map((c) => c.id));
   let updated = 0;
   let kept = 0;
   const unmatched: CragPosition[] = [];
   await db.withTransactionAsync(async () => {
     for (const r of rows) {
-      let id: string | null = r.key && byId.has(`imp:crag:${r.key}`) ? `imp:crag:${r.key}` : null;
+      let id: string | null = !r.key ? null : byId.has(`imp:crag:${r.key}`) ? `imp:crag:${r.key}` : byKey.get(r.key) ?? null;
       if (!id) {
         const same = crags.filter((c) => sameName(c.name, r.name));
         id = same.length === 1 ? same[0].id : null;

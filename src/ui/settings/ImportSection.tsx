@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { applyCragPositions, applyImport, importedUsage, removeImported } from '../../db/repo';
 import { AppError } from '../../domain/errors';
 import { detectFormat, parsePositionsCsv } from '../../domain/flatImport';
-import { planFromFiles, UnknownFileError } from '../../domain/importPlan';
+import { MissingColumnsError, planFromFiles, UnknownFileError } from '../../domain/importPlan';
 import { ask } from '../confirm';
 import { Button, Label } from '../kit';
 import { Text } from '../Text';
@@ -29,26 +29,26 @@ export function ImportSection({ run, busy }: { run: Run; busy: boolean }) {
     for (const a of res.assets) texts[a.name.toLowerCase()] = await new File(a.uri).text();
     const only = Object.values(texts);
     if (only.length === 1 && detectFormat(only[0]) === 'positions') return importPositions(only[0]);
-    let built;
+    let plan;
     try {
-      built = planFromFiles(texts);
+      plan = planFromFiles(texts);
     } catch (e) {
       if (e instanceof UnknownFileError) throw new AppError('settings.csvUnknown', { file: e.file });
+      if (e instanceof MissingColumnsError) throw new AppError('settings.csvMissingColumns', { file: e.file, columns: e.columns.join(', ') });
       throw e;
     }
-    const { plan, skipped } = built;
     if (plan.errors.length) {
       const first = plan.errors.slice(0, 8).map((e) => `${e.file}, ${t('settings.csvLine', { line: e.line })}: ${e.message}`).join('\n');
       throw new AppError('settings.csvErrorList', { count: plan.errors.length, list: first });
     }
     const ok = await ask(
       t('settings.csvConfirmTitle'),
-      t('settings.csvConfirm', { crags: plan.crags.length, routes: plan.routes.length })
-        + (skipped ? `\n\n${t('settings.csvSkipped', { count: skipped })}` : ''),
+      t('settings.csvConfirm', { crags: plan.crags.length, routes: plan.routes.length }),
       t('settings.csvConfirmYes'), t('common.cancel'),
     );
     if (!ok) return;
-    return t('settings.csvDone', await applyImport(db, plan));
+    const done = await applyImport(db, plan);
+    return t('settings.csvDone', done) + (done.taken ? `\n\n${t('settings.csvTaken', { count: done.taken })}` : '');
   });
 
   // A file with crag positions only (crag or key, lat, lng): fills in the map pins of crags already in the app.

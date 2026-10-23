@@ -5,7 +5,7 @@ Write down the result of every step (OK / problem). Report problems with: step n
 
 ## 0. Preparation
 1. Uninstall any older Cruxlog, install the new APK, open it. Expected: the Journal tab opens with the text "No ascents yet..." (or Polish equivalent).
-2. Put a one-file route list on the phone (Downloads), e.g. the guidebook export or a theCrag export (§5a–5c).
+2. Put a route list in the Cruxlog template on the phone (Downloads), e.g. `docs/cruxlog-wzor.csv` (§5).
 3. Note the phone language (Polish or English). The app should start in that language (other languages fall back to English).
 
 ## 1. Navigation and language
@@ -135,26 +135,16 @@ Write down the result of every step (OK / problem). Report problems with: step n
    - Pencil next to a route: change name, sector (moves the route), type, grade; "Delete route" lists your ascents of it. After deleting, those ascents are gone from the Journal and Progress.
 2. Goals: see §3d and §3f.
 
-## 5a. One-file import (the only CSV route import; the old crags.csv/routes.csv set is gone)
-1. Settings -> Import crags from a CSV file. Pick one file with the headers `Region;Rejon;Grupa;Skała;Sektor;Nazwa;Typ;Wycena` (English headers and commas work too). Expected: the question "Import?", then the crags appear under region › area › group.
-2. A row without region or area, or with a wrong grade, shows "<file>, line N: …" and nothing is imported.
-3. A file with other headers shows "File … was not recognised".
-
-## 5b. Guidebook import and editing imported data
-1. Import the guidebook export itself (one file, e.g. `drogi_i_bouldery_Kamieniec.csv`). Expected: Czarnorzeki › Kamieniec with groups Grupa Słonecznej Turni, Kursowe Skałki, Krowia Turnia; Strzelnica, Sokoli Grzbiet, Przełom Marcinka and Smoczy Grzbiet as areas without groups; crag Krowia with sector "Ściana zachodnia". If the older three files were imported before, the ascents stay and no old crags are left over. Expected: a question "Import?" with the numbers of crags and routes and a warning that re-importing overwrites changes; Cancel imports nothing.
-2. After Import: the Crags tab shows the regions; drilling down reaches the crags. Boulders, routes named "(bez nazwy)" and routes marked "zakaz wspinania" are not imported (Leśna Turnia is missing); routes and crags have no notes, styles, guidebook numbers or wall heights.
-2a. Re-import a file with one route removed: the route disappears unless you logged an ascent on it; routes you added yourself stay.
-3. Grades from the guidebook are shown as written (VI+, VI.4/4+, VI.5?) when the display system is KR; in FR they show the nearest grade. They count in Progress as the nearest lower step.
-4. Imported crags, sectors, routes and regions have pencils like your own: rename a crag, move a route to a new sector, delete a route. Import the same files again: the changes are undone and deleted routes come back; ascents stay.
-
-## 5c. theCrag export (big file)
-1. Settings -> Import crags from a CSV file -> pick a theCrag export (headers `Region;Sektor;Nazwa;Trudność;…;Długość (m);Przeloty;…;Link`). Expected: the question shows the numbers of crags and routes and "Rows left out: N (boulders, ice, …)". The import may take some seconds.
-2. Crags tab: regions from the file (e.g. Jura, Pogórze Dynowskie, Slovenský raj). Tap down through every level, e.g. Jura -> Jura Południowa -> Garb Tenczyński -> Dolina Sanki -> Zimny Dół -> Grupa Labiryntu -> a crag. Each level shows how many crags are below it.
-3. Search "zimny" or a crag name in the Crags tab, and a route name in a new ascent. Expected: results appear without a noticeable delay after the first letter.
-4. Open a route with length and bolts: under the crag line it says e.g. "18 m · bolts: 6". Edit the route: Length and Bolts fields; letters there show an error.
-5. Slovak routes show their grade converted (e.g. "7-" as VII- in UIAA, VI.2 in KR). Grades above VI.7 (VI.7+, VI.8, VI.8+) are accepted.
-6. Settings -> "Remove imported crags and routes": the question names the numbers; after it, imported crags are gone except those with your ascents; routes you added yourself stay.
-7. Add a crag from a deep group ("Add a crag" on its screen): the form shows Region, Area and the Group field with all lower levels, e.g. "Garb Tenczyński › Dolina Sanki › Zimny Dół". Group chips go one level deeper after each pick.
+## 5. Import of crags and routes (the Cruxlog template, `docs/IMPORT.md`)
+1. Settings -> Import crags from a CSV file -> pick `docs/cruxlog-wzor.csv` (or your own file in that template). Expected: "Import?" with the numbers of crags and routes; after Import the crags are under region › area › group, with positions, descriptions, approach, length, bolts, first ascent (author, year).
+2. Change the order of the columns in the file, add a column of your own, import again. Expected: the same result, no duplicates.
+3. Remove the column "Wycena" (or "Rejon"). Expected: "File … lacks the columns: Wycena", nothing imported.
+4. Put a wrong grade (e.g. `9z`) in one row. Expected: "<file>, line N: …", nothing imported.
+5. Taking over: on a crag you already have (with your ascents and a wall photo) make a file with the same crag and route names (other letter case is fine) and your own ID_skały / ID_drogi. Import. Expected: the message says how many routes were taken over; the crag is not doubled; your ascents, photos and topo lines are still on the routes; a position you set on the phone is kept. Routes of that crag that are not in the file and have no ascents are gone.
+6. Rename that route in the file (keep its ID_drogi) and import again. Expected: the route is renamed, not doubled, and "taken over" is not mentioned again.
+7. Positions only: a file with Skała;Lat;Lng;Przybliżone sets the map pins (approximate ones say "about").
+8. Settings -> "Remove imported crags and routes": the question names the numbers; afterwards imported crags are gone except those with your ascents; routes you added yourself stay.
+9. Files from theCrag or the guidebook are no longer recognised: "File … was not recognised".
 
 ## 6. Backup (one file, by hand)
 Since the automatic backup (§6a) these buttons are under Settings › "Other ways to back up (one file, no photos)".
@@ -220,7 +210,7 @@ Since the automatic backup (§6a) these buttons are under Settings › "Other wa
 4. Rename a sector to the name of another sector of the same crag (or an area to its neighbour's name). Expected: "The name … is already used here", nothing changed.
 5. Settings › "Back up now" right after opening the app (while the automatic copy may be running). Expected: one new copy, no error; the folder keeps 5 copies and one `zdjecia` folder.
 6. Errors about the backup folder are now in the app's language (e.g. remove the folder on Drive, "Back up now").
-7. Route finder with a name typed, on the big theCrag import: results appear without delay; the counts match the filters.
+7. Route finder with a name typed, on a big import (thousands of routes): results appear without delay; the counts match the filters.
 8. Look of lists: section headings, route cards, the switches on the share screen and the "Log another ascent" / "Save the line" buttons look as before (spacing may differ by a few points).
 
 ## 7. Robustness

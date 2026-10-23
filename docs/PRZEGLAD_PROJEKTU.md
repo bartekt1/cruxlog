@@ -1,6 +1,6 @@
 # Cruxlog: przegląd projektu
 
-Stan na 22 października 2026. Dokument dla zespołu i dla agenta AI, który ma pracować z projektem bez dostępu do kodu. Kod jest w publicznym repozytorium `github.com/bartekt1/cruxlog`, gałąź robocza `claude/optimize-costs-quality-ux-5janpl`, główna `main`.
+Stan na 23 października 2026. Dokument dla zespołu i dla agenta AI, który ma pracować z projektem bez dostępu do kodu. Kod jest w publicznym repozytorium `github.com/bartekt1/cruxlog`, gałąź robocza `claude/optimize-costs-quality-ux-5janpl`, główna `main`.
 
 ## 1. Czym jest Cruxlog
 
@@ -103,7 +103,7 @@ Zasady:
 - **Identyfikatory i daty.** Każdy wiersz ma tekstowy identyfikator oraz `created_at`, `updated_at` i `deleted_at` (milisekundy). Usuwanie tylko ustawia `deleted_at`.
 - **Własne drogi.** Drogi dodane przez użytkownika mają `source='user'` i `status='private'`. Przygotowanie pod przyszłe „zaproponuj do katalogu”.
 - **Wycena** jest zapisana jako pozycja na wspólnej drabinie trudności (`grade_index`) plus oryginalny zapis i skala. Skale: kręgowa (VI.1+), UIAA (VII-) i francuska (6a+), przeliczane w przybliżeniu. Na ekranie pokazuje się oryginał, gdy skala się zgadza.
-- **Migracje** tylko się dopisuje (obecnie 8), starych nigdy się nie zmienia. Przy zmianie formatu kopii podbija się `BACKUP_VERSION` (obecnie 6), a starsze kopie dalej się wczytują.
+- **Migracje** tylko się dopisuje (obecnie 9), starych nigdy się nie zmienia. Przy zmianie formatu kopii podbija się `BACKUP_VERSION` (obecnie 7), a starsze kopie dalej się wczytują.
 - **Transakcje.** Zapis, który dotyka kilku tabel, idzie w jednej transakcji: nowe przejście z nową drogą, zdjęciami i projektem zapisuje się w całości albo wcale.
 
 ### Zdjęcia
@@ -133,24 +133,24 @@ Język, motyw, skala wycen, podkład mapy oraz stan kopii (folder, data ostatnie
 
 ## 6. Import danych
 
-Jeden przycisk w Ustawieniach, „Importuj skały z pliku CSV”. Aplikacja sama rozpoznaje rodzaj pliku po nagłówkach:
+Jeden format: **wzór Cruxlog** (`docs/IMPORT.md`, przykład `docs/cruxlog-wzor.csv`). Właściciel buduje własną bazę skał we wzorze, wolną od danych stron trzecich. Formaty theCrag i przewodnika usunięto 23 października 2026, a dawny import z trzech plików 21 października 2026.
 
-| Format | Rozpoznanie | Co daje |
-|---|---|---|
-| **Prosta tabela** | kolumny region, rejon, grupa, skała, sektor, nazwa, typ, wycena (po polsku lub angielsku; separator przecinek, średnik lub tabulator); opcjonalnie skala wyceny, długość, przeloty, opis, lat, lng | drzewo miejsc i drogi |
-| **Eksport z przewodnika** | polskie nagłówki z kolumną „Rodzaj wyceny” | regiony, rejony, grupy, skały, sektory („Krowia (ściana zachodnia)” → skała Krowia, sektor Ściana zachodnia), wyceny kręgowe |
-| **Eksport z theCrag** | kolumny Region; Sektor; Nazwa; Trudność; …; Długość (m); Przeloty | cała ścieżka miejsc z kolumny „Sektor”, przeliczenie wycen (UIAA, francuska, YDS, słowacka) |
-| **Plik położeń** | skała (lub klucz skały), lat, lng, opcjonalnie „przybliżone” | tylko pozycje skał na mapie |
+- Plik CSV (UTF-8; separator średnik, przecinek albo tabulator), jeden wiersz to jedna droga. Kolumny są wyszukiwane po nazwach nagłówków, w dowolnej kolejności, a nieznane kolumny aplikacja pomija. Nazwy są po polsku lub angielsku; wielkość liter i polskie znaki nie mają znaczenia.
+- **Obowiązkowe:** Region, Rejon, Skała, Nazwa, Wycena. Gdy którejś brakuje, aplikacja wypisuje, której.
+- **Opcjonalne dla drogi:** Grupa (kilka poziomów przez `›`), Sektor, Typ (droga/wielowyciąg), Skala_wycen (kr/uiaa/fr), Długość, Przeloty, Autor, Rok, Opis, ID_drogi.
+- **Opcjonalne dla skały:** Lat, Lng, Przybliżone, Opis_skały, Dojście, ID_skały. Wystarczy je wpisać w jednym wierszu danej skały.
+- **Plik położeń:** same kolumny Skała (lub ID_skały), Lat, Lng, ewentualnie Przybliżone. Ustawia tylko pinezki na mapie.
 
 Zasady importu:
-- Najpierw sprawdzenie całego pliku. Błędy pokazują się z nazwą pliku i numerem wiersza i wtedy nic się nie zapisuje.
-- Potem pytanie z liczbą skał i dróg oraz liczbą pominiętych wierszy.
-- Pomijane: bouldery, lód i via ferraty, drogi bez nazwy, projekty, drogi bez wyceny lub z nieczytelną wyceną, drogi z zakazem wspinania.
-- **Stałe klucze** (`imp:<rodzaj>:<klucz>`): ponowny import tego samego pliku aktualizuje dane zamiast je dublować. Cofa ręczne zmiany w importowanych drogach, ale zostawia przejścia użytkownika i jego własne drogi.
+- **Najpierw sprawdzenie całego pliku.** Błędy pokazują się z nazwą pliku i numerem wiersza i wtedy nic się nie zapisuje. Potem pytanie z liczbą skał i dróg. Bouldery są pomijane.
+- **Identyfikatory.** Wiersze z importu mają identyfikatory `imp:<rodzaj>:<klucz>`. Kluczem jest ID_skały lub ID_drogi z pliku, a bez nich klucz robiony z nazw. Ponowny import aktualizuje te same wiersze.
+- **Przejmowanie po nazwie.** Skała o tej samej nazwie (gdy w aplikacji jest dokładnie jedna), a w niej sektor i droga o tej samej nazwie, są przejmowane razem z przejściami, zdjęciami i liniami topo.
+- **Zapamiętany klucz.** Przy przejętym wierszu zostaje zapisany klucz z pliku (kolumna `import_key`, migracja 9). Następne importy trafiają w ten sam wiersz, także po zmianie nazwy w pliku. Komunikat po imporcie podaje liczbę przejętych dróg.
+- **Plik decyduje o drogach skały.** Zaimportowane wcześniej drogi tej skały, których nie ma w pliku i które nie mają przejść, znikają. Drogi dodane w telefonie zostają.
+- **Puste komórki.** Pusta komórka opcjonalnej kolumny zostawia istniejącą wartość.
 - **Pozycje.** Pozycja ustawiona ręcznie na telefonie nigdy nie jest nadpisywana plikiem.
 - Przycisk **„Usuń importowane skały i drogi”** zostawia drogi, na których użytkownik ma przejścia.
-- **Pozycje skał z OpenStreetMap** były dopasowane jednorazowo skryptami poza aplikacją (przez GitHub Actions, bo sandbox nie miał dostępu do OSM). Skały bez dokładnej pozycji dostały pozycję przybliżoną z sąsiednich skał grupy i są tak oznaczone. Około 40 skał nie ma pozycji; użytkownik poprawia je na miejscu.
-- Dawny import z trzech plików (crags.csv, sectors.csv, routes.csv) usunięto 21 października 2026.
+- **Obecna baza we wzorze.** Dane z theCrag i dopasowania położeń z OpenStreetMap właściciel dostał jako plik we wzorze (tylko do własnego użytku, nie trafia do repozytorium). Klucze w nim (ID) zgadzają się z tymi w telefonie.
 
 ## 7. Eksport i udostępnianie
 

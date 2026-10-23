@@ -30,7 +30,7 @@ The APK is built by GitHub Actions on every push (artifact `cruxlog-apk`).
 - Every table has a text UUID id, `created_at`, `updated_at`, `deleted_at`. Never hard-delete, so sync can be added later.
 - Grades are stored as `grade_index` on a shared ladder plus the original label and system. Conversions are approximate.
 - User-created crags, sectors and routes are `source='user'`, `status='private'`. Proposing them to a shared catalog comes with the social features.
-- CSV import ids are `imp:<kind>:<key>`, so importing again updates instead of duplicating.
+- One import format: the Cruxlog CSV template (`docs/IMPORT.md`, `docs/cruxlog-wzor.csv`), columns found by name in any order. Import ids are `imp:<kind>:<key>`, and rows taken over by name remember the file's key (`import_key`), so importing again updates instead of duplicating.
 - Bundled or imported guidebook data must not copy protected text or topo drawings. Keep to facts: name, grade, length, location.
 - Crag positions record where they came from (`crag.pos_source`: user, file, approx). A file never overwrites a position the user set on the phone.
 - Photos are files `photos/<id>.jpg` in the app's folder plus a `photo` row (ascent, crag or sector). The app never reads or writes the gallery; picked photos are shrunk and stripped of location. Topo lines (`topo_line`) store points normalised to the photo (0..1).

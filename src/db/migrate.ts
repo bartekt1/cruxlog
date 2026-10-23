@@ -91,6 +91,13 @@ export const MIGRATIONS: string[] = [
   CREATE INDEX idx_ascent_route ON ascent(route_id);
   CREATE INDEX idx_crag_region ON crag(region_id);
   `,
+  // 9: the key a row has in the user's import file (ID_skały, ID_drogi or one made from the names), so a row taken over by
+  // name (an earlier import or the user's own) keeps following that key on the next imports, also after a rename in the file.
+  `
+  ALTER TABLE crag ADD COLUMN import_key TEXT;
+  ALTER TABLE sector ADD COLUMN import_key TEXT;
+  ALTER TABLE route ADD COLUMN import_key TEXT;
+  `,
 ];
 
 export async function migrate(db: SQLiteDatabase): Promise<void> {

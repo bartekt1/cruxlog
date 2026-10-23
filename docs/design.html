@@ -281,15 +281,8 @@ ul{margin:0 0 12px;padding-left:20px} li{margin-bottom:5px;max-width:68ch}
   <h3>Pozycja użytkownika</h3>
   <p>Pozycja jest pokazywana na mapie i służy do podpowiadania pobliskich skał przy dodawaniu wpisu. Używamy jej tylko na urządzeniu, za zgodą systemu i bez wysyłania na serwer. Polityka prywatności musi to opisywać, bo sklepy tego wymagają.</p>
   <h3>Import CSV</h3>
-  <p>Jeden plik, jeden wiersz na drogę z całą ścieżką: region, rejon, grupa, skała, sektor, nazwa, typ, wycena (nagłówki po polsku lub angielsku, separator przecinek, średnik lub tabulator). Aplikacja rozpoznaje też eksport z przewodnika i z theCrag oraz plik samych położeń skał (skała, lat, lng). Przed zapisem pokazuje liczby i raport błędów z numerami wierszy; ponowny import tego samego pliku aktualizuje dane zamiast je dublować.</p>
-  <div class="scroll"><table>
-    <tr><th>Kolumna</th><th>Znaczenie</th></tr>
-    <tr><td class="mono">Region; Rejon; Grupa</td><td>miejsce skały; grupa opcjonalna, może mieć kilka poziomów (A › B)</td></tr>
-    <tr><td class="mono">Skała; Sektor</td><td>sektor opcjonalny (bez niego droga trafia do sektora nazwanego jak skała)</td></tr>
-    <tr><td class="mono">Nazwa; Typ; Wycena; Skala_wycen</td><td>typ: droga lub wielowyciąg; skala domyślnie kręgowa</td></tr>
-    <tr><td class="mono">Długość; Przeloty; Opis; lat; lng</td><td>opcjonalne</td></tr>
-  </table></div>
-  <p class="note">Bouldery są pomijane. Dawny import z trzech plików (crags.csv, sectors.csv, routes.csv) usunięto w październiku 2026.</p>
+  <p>Jeden format, wzór Cruxlog (<span class="mono">docs/IMPORT.md</span>): jeden plik, jeden wiersz na drogę, kolumny wyszukiwane po nagłówkach w dowolnej kolejności. Obowiązkowe: Region, Rejon, Skała, Nazwa, Wycena; opcjonalne: Grupa, Sektor, Typ, Skala_wycen, Długość, Przeloty, Autor, Rok, Opis, Lat, Lng, Przybliżone, Opis_skały, Dojście, ID_skały, ID_drogi. Osobny plik samych położeń (Skała, Lat, Lng) ustawia pinezki. Przed zapisem aplikacja pokazuje liczby i raport błędów z numerami wierszy; ponowny import aktualizuje dane, a skała i droga o tej samej nazwie są przejmowane razem z przejściami.</p>
+  <p class="note">Bazę skał właściciel tworzy sam, bez danych stron trzecich. Formaty theCrag i przewodnika oraz dawny import z trzech plików usunięto w październiku 2026.</p>
   <h3>Style przejścia</h3>
   <p>OS, flash, RP, PP, TR i próba (nieudana). Boulder dodatkowo używa „flash” i „RP”. Do piramidy trudności liczą się tylko style zaliczające drogę.</p>
 </section>
