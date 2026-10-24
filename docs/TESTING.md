@@ -123,6 +123,9 @@ Write down the result of every step (OK / problem). Report problems with: step n
 6. Route screen and crag screen: the share icon next to the pencil (top right). Expected: cards "Join me on this route" (with length and bolts) and "Join me at this crag" (with the route count).
 7. A crag without a position: no switch, a note that there is no map to include, and no coordinates on the card or in the text.
 8. Your own position is never in the card or the text.
+9. "Card look" (Wygląd karty): tap each of Przewodnik, Pełny kadr, Polaroid, Plakat, Bilet, Nocny, Topo. Expected: the card changes at once; each look works with the photo switched on and off and on ascent, route and crag cards; nothing is cut off (long names and grades like "VI.4/4+" shrink to fit). Send one picture in each look and check the saved image matches the preview.
+10. Leave the screen and share something else. Expected: the last chosen look is remembered.
+11. "Topo" without a photo on a route with bolts: a drawn wall with the red line, one ring per bolt (4 when the number is unknown) and the anchor at the top. On a crag card only the wall, no line.
 
 ## 3h. Trips: invitation and summary
 1. Goals tab › "Trips" › "+ New trip" (or the calendar icon on a crag screen, which fills that crag in). Fill the name, From and To (future days can be picked), add a crag by typing its name, then tap routes in the list below to add them. Arrows move a route up or down, the cross removes it; removing a crag removes its routes.

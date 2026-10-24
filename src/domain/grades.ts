@@ -118,3 +118,8 @@ export function feltGrade(felt: number | null | undefined, routeIndex: number): 
 export function gradeExample(system: GradeSystem, type: RouteType): string {
   return formatGrade(9, system, type);
 }
+
+/** The route's grade in the other route systems, e.g. "VI+ UIAA · 6a FR" (the poster share card). */
+export function otherGrades(r: GradedRoute, system: GradeSystem): string {
+  return ROUTE_SYSTEMS.filter((s) => s !== system).map((s) => `${routeGrade(r, s)} ${s.toUpperCase()}`).join(' · ');
+}

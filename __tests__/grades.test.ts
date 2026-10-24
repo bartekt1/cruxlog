@@ -1,4 +1,4 @@
-import { feltGrade, formatGrade, gradeExample, nearbyGrades, parseGrade, ROUTE_LADDER, routeGrade, systemAfterTypeChange } from '../src/domain/grades';
+import { feltGrade, formatGrade, gradeExample, nearbyGrades, otherGrades, parseGrade, ROUTE_LADDER, routeGrade, systemAfterTypeChange } from '../src/domain/grades';
 
 describe('grades', () => {
   it('parses and converts route grades', () => {
@@ -77,5 +77,13 @@ describe('systemAfterTypeChange', () => {
   it('keeps the chosen system when it fits the new type', () => {
     expect(systemAfterTypeChange('multipitch', 'uiaa', 'kr')).toBe('uiaa');
     expect(systemAfterTypeChange('sport', 'fr', 'kr')).toBe('fr');
+  });
+});
+
+describe('otherGrades', () => {
+  it('lists the grade in the two other systems', () => {
+    const i = parseGrade('VI.1', 'kr')!;
+    expect(otherGrades({ grade_index: i, type: 'sport' }, 'kr')).toBe(`${formatGrade(i, 'uiaa')} UIAA · ${formatGrade(i, 'fr')} FR`);
+    expect(otherGrades({ grade_index: i, type: 'sport', grade_label: 'VI.1+/2', grade_system: 'kr' }, 'fr')).toBe('VI.1+/2 KR · ' + `${formatGrade(i, 'uiaa')} UIAA`);
   });
 });

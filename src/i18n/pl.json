@@ -123,6 +123,7 @@
     "approxCard": "położenie przybliżone", "approxText": "położenie przybliżone", "mapLabel": "Mapa",
     "sendImage": "Wyślij obrazek", "sendText": "Wyślij tekst z linkiem do mapy", "failed": "Nie udało się przygotować wiadomości."
   },
+  "cards": { "look": "Wygląd karty", "styles": { "guide": "Przewodnik", "full": "Pełny kadr", "polaroid": "Polaroid", "poster": "Plakat", "ticket": "Bilet", "night": "Nocny", "topo": "Topo" }, "grade": "Wycena", "style": "Styl", "date": "Data", "rating": "Ocena" },
   "photos": {
     "title": "Zdjęcia", "add": "Dodaj zdjęcia", "usage": "Zdjęcia: {{count}} z {{max}}", "preparing": "Przygotowuję zdjęcia…",
     "cragTitle": "Zdjęcia skały", "addWall": "Dodaj zdjęcia ściany: {{sector}}", "delete": "Usuń zdjęcie", "deleteTitle": "Usunąć zdjęcie?", "deleteQuestion": "Zdjęcie zniknie z tego telefonu. Kopia na Dysku zostaje.", "removeA11y": "Usuń zdjęcie", "openA11y": "Otwórz zdjęcie {{n}}", "missing": "Zdjęcie niedostępne", "viewerTitle": "Zdjęcie {{n}} z {{total}}",

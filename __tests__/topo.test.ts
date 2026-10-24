@@ -1,5 +1,5 @@
 import {
-  clampZoom, commit, FIT, fingerDistance, fingerMidpoint, hitPoint, pinchZoom, MAX_ZOOM, numberLines, parsePoints, redo, simplify, smoothPath, startHistory, stringifyPoints, toPhoto, undo, zoomAt,
+  clampZoom, commit, FIT, schematicLine, fingerDistance, fingerMidpoint, hitPoint, pinchZoom, MAX_ZOOM, numberLines, parsePoints, redo, simplify, smoothPath, startHistory, stringifyPoints, toPhoto, undo, zoomAt,
 } from '../src/domain/topo';
 
 describe('topo points', () => {
@@ -106,5 +106,19 @@ describe('two-finger zoom', () => {
     expect(z.scale).toBeCloseTo(2);
     expect(z.tx).toBeCloseTo(20);
     expect(z.ty).toBeCloseTo(20);
+  });
+});
+
+describe('schematicLine', () => {
+  it('has the start, one point per bolt and the anchor, going up', () => {
+    const l = schematicLine(6);
+    expect(l).toHaveLength(8);
+    expect(l[0].y).toBeGreaterThan(l[7].y);
+    for (let i = 1; i < l.length; i++) expect(l[i].y).toBeLessThan(l[i - 1].y);
+    expect(l.every((p) => p.x > 0 && p.x < 1 && p.y > 0 && p.y < 1)).toBe(true);
+  });
+  it('draws 4 bolts when the number is unknown and at most 14', () => {
+    expect(schematicLine(null)).toHaveLength(6);
+    expect(schematicLine(40)).toHaveLength(16);
   });
 });

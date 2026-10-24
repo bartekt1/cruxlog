@@ -158,3 +158,13 @@ export function pinchZoom(start: { zoom: Zoom; dist: number; mid: { x: number; y
   const zoomed = zoomAt(start.zoom, fingerDistance(touches) / start.dist, start.mid, boxW, boxH);
   return clampZoom({ ...zoomed, tx: zoomed.tx + mid.x - start.mid.x, ty: zoomed.ty + mid.y - start.mid.y }, boxW, boxH);
 }
+
+/**
+ * A drawn-looking line for a route without a photo (the "schematic" share card): the start at the bottom, `bolts` points
+ * going up in a gentle S, the anchor at the top, in photo coordinates (0..1). 0 or unknown bolts draws 4.
+ */
+export function schematicLine(bolts: number | null): Pt[] {
+  const n = bolts && bolts > 0 ? Math.min(Math.round(bolts), 14) : 4;
+  const at = (t: number): Pt => ({ x: 0.5 + 0.05 * Math.sin(t * Math.PI * 2), y: 0.92 - 0.8 * t });
+  return [at(0), ...Array.from({ length: n }, (_, i) => at((i + 1) / (n + 1))), at(1)];
+}

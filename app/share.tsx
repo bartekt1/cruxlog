@@ -10,7 +10,8 @@ import { getAscent, getCrag, getRoute, listAreas, listCragRoutes, listPhotos, li
 import { pathLabel } from '../src/domain/areas';
 import { formatDay, isoDate } from '../src/domain/dates';
 import { isLatLng } from '../src/domain/geo';
-import { routeGrade } from '../src/domain/grades';
+import { otherGrades, routeGrade } from '../src/domain/grades';
+import { CARD_STYLES } from '../src/domain/settings';
 import { coordsLabel, shareMessage, type SharePlace } from '../src/domain/share';
 import { numberLines } from '../src/domain/topo';
 import { sectorLine } from '../src/domain/text';
@@ -26,6 +27,7 @@ type Kind = 'ascent' | 'route' | 'crag';
 type Content = {
   tag: string; title: string; grade: string | null; style: string | null; rating: number | null;
   line: string; path: string; facts: string[]; date: string | null; headline: string; place: SharePlace | null;
+  otherGrades: string; cragName: string; bolts: number | null;
 };
 
 const OUT_WIDTH = 1080;
@@ -36,7 +38,7 @@ export default function ShareScreen() {
   const db = useSQLiteContext();
   const { t, i18n } = useTranslation();
   const th = useTheme();
-  const { routeSystem } = useSettings();
+  const { routeSystem, cardStyle, setCardStyle } = useSettings();
   const { width: screenWidth } = useWindowDimensions();
   const cardRef = useRef<View>(null);
   const [content, setContent] = useState<Content | null | undefined>(undefined);
@@ -104,6 +106,7 @@ export default function ShareScreen() {
             tag: t('share.tagAscent'), title: a.route.name, grade, style, rating: a.rating || null,
             line: sectorLine(a.route.crag_name, a.route.sector_name), path: pathOf(crag), facts: [t(`types.${a.route.type}`)], date,
             headline: `${a.route.name} ${grade} – ${style}`, place: placeOf(crag),
+            otherGrades: otherGrades(a.route, routeSystem), cragName: crag.name, bolts: a.route.bolts,
           };
         }
       } else if (kind === 'route') {
@@ -115,6 +118,7 @@ export default function ShareScreen() {
             tag: t('share.tagRoute'), title: r.name, grade, style: null, rating: null,
             line: sectorLine(r.crag_name, r.sector_name), path: pathOf(crag), facts: routeFacts(r), date: null,
             headline: `${r.name} ${grade}`, place: placeOf(crag),
+            otherGrades: otherGrades(r, routeSystem), cragName: crag.name, bolts: r.bolts,
           };
         }
       } else if (kind === 'crag') {
@@ -124,7 +128,7 @@ export default function ShareScreen() {
           out = {
             tag: t('share.tagCrag'), title: crag.name, grade: null, style: null, rating: null,
             line: t('crags.routes', { count: routes.length }), path: pathOf(crag), facts: [], date: null,
-            headline: crag.name, place: placeOf(crag),
+            headline: crag.name, place: placeOf(crag), otherGrades: '', cragName: crag.name, bolts: null,
           };
         }
       }
@@ -140,6 +144,7 @@ export default function ShareScreen() {
   const cardWidth = Math.min(screenWidth - 32, 380);
   const card: ShareCardData = {
     tag: content.tag, title: content.title, grade: content.grade, style: content.style, rating: content.rating,
+    otherGrades: content.otherGrades, cragName: content.cragName, bolts: content.bolts,
     line: content.line, path: content.path, facts: content.facts, date: content.date, message: message.trim(),
     place: place ? { coords: coordsLabel(place), approx: place.approx } : null, approxLabel: t('share.approxCard'),
     photoUri: chosenPhoto ? photoUri(chosenPhoto.id) : null,
@@ -178,9 +183,12 @@ export default function ShareScreen() {
       <Stack.Screen options={{ title: t('share.title') }} />
       <View style={{ alignItems: 'center' }}>
         <View ref={cardRef} collapsable={false} style={{ borderWidth: 1, borderColor: th.line }}>
-          <ShareCard data={card} width={cardWidth} onPhotoLoaded={setLoadedPhoto} />
+          <ShareCard look={cardStyle} data={card} width={cardWidth} onPhotoLoaded={setLoadedPhoto} />
         </View>
       </View>
+
+      <Label>{t('cards.look')}</Label>
+      <ChipRow>{CARD_STYLES.map((s) => <Chip key={s} label={t(`cards.styles.${s}`)} on={cardStyle === s} onPress={() => setCardStyle(s)} />)}</ChipRow>
 
       {photoIds.length ? (
         <>
