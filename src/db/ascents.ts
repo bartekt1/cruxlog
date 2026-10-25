@@ -11,14 +11,14 @@ export type AscentRow = {
   /** The grade the climber felt (ladder index), or null when it matches the route's. */
   felt_grade_index: number | null;
   route_id: string; route_name: string; type: RouteType; grade_index: number; grade_label: string; grade_system: GradeSystem;
-  crag_name: string; partner_name: string | null;
+  crag_id: string; crag_name: string; partner_name: string | null;
   /** How many photos the ascent has. */
   photos: number;
 };
 
 // The columns of AscentRow (getAscent adds the weather), shared by the ascent lists.
 const ASCENT_SELECT = `SELECT a.id, a.date, a.style, a.attempts, a.rating, a.notes, a.felt_grade_index, a.weather, r.id AS route_id, r.name AS route_name,
-    r.type, r.grade_index, r.grade_label, r.grade_system, c.name AS crag_name, p.name AS partner_name,
+    r.type, r.grade_index, r.grade_label, r.grade_system, c.id AS crag_id, c.name AS crag_name, p.name AS partner_name,
     (SELECT COUNT(*) FROM photo ph WHERE ph.owner_type = 'ascent' AND ph.owner_id = a.id AND ph.deleted_at IS NULL) AS photos
   FROM ascent a JOIN route r ON r.id = a.route_id JOIN sector s ON s.id = r.sector_id JOIN crag c ON c.id = s.crag_id
   LEFT JOIN partner p ON p.id = a.partner_id`;

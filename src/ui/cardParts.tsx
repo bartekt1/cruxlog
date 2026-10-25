@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useState, type ReactNode } from 'react';
 import { Image, View, type ViewStyle } from 'react-native';
-import { TopoLines, type DrawnLine } from './TopoLines';
+import type { PhotoFit } from '../domain/settings';
+import { fitRect, TopoLines, type DrawnLine } from './TopoLines';
 import { F } from './fonts';
 import { Text } from './Text';
 import { paperTheme as c, type Theme } from './theme';
@@ -29,6 +30,9 @@ export type ShareCardData = {
   approxLabel: string;
   /** A photo of the ascent to show on the card (a file address), or null. */
   photoUri: string | null;
+  /** The photo's own size, to fit it whole in the card's frame; and whether it is shown whole or fills the frame (cropped). */
+  photoSize: { w: number; h: number } | null;
+  photoFit: PhotoFit;
   /** Topo lines to draw over the photo, with the photo's own size (to place them on the cropped picture); null = none. */
   topo: { photoW: number; photoH: number; lines: DrawnLine[] } | null;
 };
@@ -96,29 +100,40 @@ export function CardFooter({ place, approxLabel, u, pal = c }: { place: ShareCar
   );
 }
 
-/** The card's photo filling `style` ("cover"), with its topo lines placed on the cropped picture. */
+/**
+ * The card's photo in the frame `style`, with its topo lines on it. "fill": it fills the frame and is cropped at the edges.
+ * "whole": all of it is seen, and the strips left beside it show the same photo enlarged and blurred.
+ */
 export function PhotoBox({ data, onPhotoLoaded, style, children }: {
   data: ShareCardData; onPhotoLoaded?: (uri: string) => void; style: ViewStyle; children?: ReactNode;
 }) {
   const [frame, setFrame] = useState({ w: 0, h: 0 });
+  const size = data.topo ? { w: data.topo.photoW, h: data.topo.photoH } : data.photoSize;
+  const whole = data.photoFit === 'whole' && size != null && frame.w > 0;
+  const r = whole ? fitRect(size.w, size.h, frame.w, frame.h) : coverRect(size, frame.w, frame.h);
+  const loaded = () => onPhotoLoaded?.(data.photoUri!);
   return (
     <View style={[{ backgroundColor: c.soft, overflow: 'hidden' }, style]} onLayout={(e) => setFrame({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}>
-      <Image source={{ uri: data.photoUri! }} resizeMode="cover" style={{ width: '100%', height: '100%' }}
-        onLoad={() => onPhotoLoaded?.(data.photoUri!)} onError={() => onPhotoLoaded?.(data.photoUri!)} />
-      {data.topo && frame.w ? <CoverTopo topo={data.topo} w={frame.w} h={frame.h} /> : null}
+      {whole ? <Image source={{ uri: data.photoUri! }} resizeMode="cover" blurRadius={18} style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%', opacity: 0.85 }} /> : null}
+      {r ? (
+        <Image source={{ uri: data.photoUri! }} resizeMode="stretch" style={{ position: 'absolute', left: r.left, top: r.top, width: r.width, height: r.height }}
+          onLoad={loaded} onError={loaded} />
+      ) : (
+        <Image source={{ uri: data.photoUri! }} resizeMode="cover" style={{ width: '100%', height: '100%' }} onLoad={loaded} onError={loaded} />
+      )}
+      {data.topo && r ? (
+        <View pointerEvents="none" style={{ position: 'absolute', left: r.left, top: r.top, width: r.width, height: r.height }}>
+          <TopoLines lines={data.topo.lines} width={r.width} height={r.height} />
+        </View>
+      ) : null}
       {children}
     </View>
   );
 }
 
-/** Topo lines placed like the photo under them, which fills the area and is cropped at the edges ("cover"). */
-function CoverTopo({ topo, w, h }: { topo: NonNullable<ShareCardData['topo']>; w: number; h: number }) {
-  const s = Math.max(w / topo.photoW, h / topo.photoH);
-  const dw = topo.photoW * s;
-  const dh = topo.photoH * s;
-  return (
-    <View pointerEvents="none" style={{ position: 'absolute', left: (w - dw) / 2, top: (h - dh) / 2, width: dw, height: dh }}>
-      <TopoLines lines={topo.lines} width={dw} height={dh} />
-    </View>
-  );
+/** Where a photo sits when it fills the frame and is cropped at the edges ("cover"); null until both sizes are known. */
+function coverRect(size: { w: number; h: number } | null, w: number, h: number) {
+  if (!size || !size.w || !size.h || !w || !h) return null;
+  const s = Math.max(w / size.w, h / size.h);
+  return { left: (w - size.w * s) / 2, top: (h - size.h * s) / 2, width: size.w * s, height: size.h * s };
 }
