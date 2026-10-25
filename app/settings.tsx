@@ -5,6 +5,7 @@ import { ROUTE_SYSTEMS } from '../src/domain/grades';
 import type { Lang } from '../src/domain/settings';
 import i18n from '../src/i18n';
 import { showError } from '../src/ui/errors';
+import { FoldSection } from '../src/ui/Fold';
 import { Chip, ChipRow, Label } from '../src/ui/kit';
 import { BackupSection } from '../src/ui/settings/BackupSection';
 import { ImportSection } from '../src/ui/settings/ImportSection';
@@ -39,6 +40,8 @@ export default function Settings() {
 
   return (
     <ScrollView style={{ backgroundColor: th.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 48 }}>
+      <FoldSection title={t('settings.sectionLook')}
+        summary={[i18n.language === 'pl' ? 'Polski' : 'English', t(`settings.themes.${s.themeMode}`), s.routeSystem.toUpperCase()].join(' · ')}>
       <Label>{t('settings.language')}</Label>
       <ChipRow>
         <Chip label="Polski" on={i18n.language === 'pl'} onPress={() => setLanguage('pl')} />
@@ -52,6 +55,7 @@ export default function Settings() {
       <ChipRow>
         {ROUTE_SYSTEMS.map((x) => <Chip key={x} label={x.toUpperCase()} on={s.routeSystem === x} onPress={() => s.setRouteSystem(x)} />)}
       </ChipRow>
+      </FoldSection>
       <ImportSection run={run} busy={busy} />
       <BackupSection run={run} busy={busy} />
       <UpdateSection run={run} busy={busy} />

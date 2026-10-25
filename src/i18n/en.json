@@ -1,6 +1,6 @@
 {
   "tabs": { "journal": "Journal", "progress": "Progress", "crags": "Crags", "goals": "Goals" },
-  "common": {
+  "common": { "more": "More ›", "less": "Less",
     "optional": "Optional",
     "save": "Save", "saving": "Saving…", "edit": "Edit", "delete": "Delete", "cancel": "Cancel", "add": "Add", "change": "Change",
     "today": "Today", "yesterday": "Yesterday", "failed": "Something went wrong: {{message}}", "failedText": "{{message}}"
@@ -125,6 +125,8 @@
   },
   "cards": { "look": "Card look", "styles": { "guide": "Guidebook", "full": "Full frame", "polaroid": "Polaroid", "poster": "Poster", "ticket": "Ticket", "night": "Night", "topo": "Topo" }, "grade": "Grade", "style": "Style", "date": "Date", "rating": "Rating" },
   "updates": {"section": "App version", "current": "Installed version: {{version}}", "check": "Check for updates", "title": "Update", "question": "A new version of Cruxlog is available: {{version}}. Download and install it? Your data stays.", "later": "Later", "install": "Install", "downloading": "Downloading the new version…", "upToDate": "You have the latest version.", "devBuild": "This build has no version number (built outside GitHub). The latest is {{version}}.", "offline": "Could not reach GitHub. Check your internet connection.", "failed": "GitHub answered with an error ({{status}}). Try again later.", "downloadFailed": "Could not download the new version. Check your internet connection and try again."},
+  "statsShare": {"title": "Show off your year", "tag": "My year", "days": "Days", "hardest": "Hardest", "hardestGrades": "Hardest grades", "calendar": "Days at the crag", "favCrag_one": "Favourite crag: {{name}} ({{count}} day)", "favCrag_other": "Favourite crag: {{name}} ({{count}} days)", "partners": "Climbed with: {{names}}", "withPartners": "Show partners (their names go on the card)", "messagePlaceholder": "e.g. Best season yet!", "sendText": "Send as text"},
+  "goalsShare": {"title": "Show off your goals", "open": "Show off goals", "tag": "My goals", "which": "Goals on the card (at most {{max}})", "none": "Choose at least one goal.", "messagePlaceholder": "e.g. Keep your fingers crossed!"},
   "photos": {
     "title": "Photos", "add": "Add photos", "usage": "Photos: {{count}} of {{max}}", "preparing": "Preparing the photos…",
     "cragTitle": "Photos of the crag", "addWall": "Add photos of the wall: {{sector}}", "delete": "Delete photo", "deleteTitle": "Delete this photo?", "deleteQuestion": "The photo disappears from this phone. The copy on Drive stays.", "removeA11y": "Remove photo", "openA11y": "Open photo {{n}}", "missing": "Photo not available", "viewerTitle": "Photo {{n}} of {{total}}",
@@ -144,7 +146,7 @@
     "discardTitle": "Discard changes?", "discardQuestion": "The line will not be saved.", "discard": "Discard",
     "canvasA11y": "Photo of the wall. Tap to add a point of the line."
   },
-  "settings": {
+  "settings": { "sectionLook": "Look and language", "sectionCrags": "Crags and packs", "sectionCragsSummary": "Crag packs, import from a CSV file", "autoBackupShort": "Every 7 days the app saves a copy in a folder you choose, e.g. on Google Drive.", "backupShort": "All data in one file, without photos.", "csvShort": "A file with a route list in the Cruxlog template.", "removeImportedShort": "Before loading a file that replaces the previous one.",
     "title": "Settings", "language": "Language", "theme": "Appearance", "themes": { "system": "Like the phone", "light": "Light", "dark": "Dark" }, "routeGrades": "Route grades",
     "backup": "Backup", "manualBackup": "Other ways to back up (one file, no photos)", "autoBackup": "Automatic backup", "autoBackupHelp": "Choose a folder, e.g. on Google Drive. When the app opens and 7 days have passed since the last copy and something changed, it saves a copy there by itself. The 5 latest stay. First I check that the folder can be written to. On a new phone choose the same folder, then “Restore from a copy in the folder”.",
     "folderNone": "No folder chosen.", "folderDrive": "Folder: on Google Drive", "folderDevice": "Folder: {{path}} (phone storage)",

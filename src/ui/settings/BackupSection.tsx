@@ -18,6 +18,7 @@ import { pickBackupFolder, testBackupFolder } from '../backupFolder';
 import { ask } from '../confirm';
 import { errorMessage } from '../errors';
 import { F } from '../fonts';
+import { FoldSection, MoreText } from '../Fold';
 import { Button, Label, LinkButton } from '../kit';
 import { useSettings } from '../settingsStore';
 import { Text } from '../Text';
@@ -110,13 +111,10 @@ export function BackupSection({ run, busy }: { run: Run; busy: boolean }) {
   });
 
   return (
-    <>
-      <Label>{t('settings.backup')}</Label>
-      <Text style={{ color: backup.due ? th.warn : th.ink, marginTop: 8, fontWeight: '600' }}>
-        {backup.days == null ? t('settings.lastBackupNever') : backup.days === 0 ? t('settings.lastBackupToday') : t('settings.lastBackupDays', { n: backup.days })}
-      </Text>
+    <FoldSection title={t('settings.backup')} warn={backup.due}
+      summary={backup.days == null ? t('settings.lastBackupNever') : backup.days === 0 ? t('settings.lastBackupToday') : t('settings.lastBackupDays', { n: backup.days })}>
       <Label>{t('settings.autoBackup')}</Label>
-      <Text style={{ color: th.muted }}>{t('settings.autoBackupHelp')}</Text>
+      <MoreText short={t('settings.autoBackupShort')} long={t('settings.autoBackupHelp')} />
       <Text style={{ color: th.ink, marginTop: 8, fontWeight: '600' }}>{folderText}</Text>
       {s.backupDir ? (
         <>
@@ -149,11 +147,11 @@ export function BackupSection({ run, busy }: { run: Run; busy: boolean }) {
       </Pressable>
       {showManual ? (
         <>
-          <Text style={{ color: th.muted }}>{t('settings.backupHelp')}</Text>
+          <MoreText short={t('settings.backupShort')} long={t('settings.backupHelp')} />
           <Button label={t('settings.export')} onPress={doExport} variant="plain" disabled={busy} />
           <Button label={t('settings.import')} onPress={doImport} variant="plain" disabled={busy} />
         </>
       ) : null}
-    </>
+    </FoldSection>
   );
 }

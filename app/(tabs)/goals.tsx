@@ -13,7 +13,7 @@ import { countGoalProgress, gradeGoalProgress, projectProgress, yearStats, type 
 import { F } from '../../src/ui/fonts';
 import { EMPTY_GOAL, GoalForm } from '../../src/ui/GoalForm';
 import { ProgressBar, toStat } from '../../src/ui/progress';
-import { Button, EmptyState, GradeBadge, Label, Screen } from '../../src/ui/kit';
+import { Button, EmptyState, GradeBadge, Label, LinkButton, Screen } from '../../src/ui/kit';
 import { useSettings } from '../../src/ui/settingsStore';
 import { Text } from '../../src/ui/Text';
 import { useTheme } from '../../src/ui/theme';
@@ -101,7 +101,10 @@ export default function Goals() {
               );
             })}
             <Button label={t('trip.new')} variant="plain" onPress={() => router.push('/trip/edit')} />
-            <Label>{t('tabs.goals')}</Label>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Label>{t('tabs.goals')}</Label>
+              {rows.length ? <LinkButton label={t('goalsShare.open')} onPress={() => router.push('/goal/share')} /> : null}
+            </View>
             {adding ? (
               <GoalForm
                 initial={EMPTY_GOAL}

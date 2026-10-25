@@ -127,6 +127,13 @@ Write down the result of every step (OK / problem). Report problems with: step n
 10. Leave the screen and share something else. Expected: the last chosen look is remembered.
 11. "Topo" without a photo on a route with bolts: a drawn wall with the red line, one ring per bolt (4 when the number is unknown) and the anchor at the top. On a crag card only the wall, no line.
 
+## 3g2. Sharing the year and goals
+1. Progress tab, a year with ascents: a share icon to the right of the year. Expected: "Show off your year" with a tall card (9:16): the year, sends, days, hardest route, the 5 hardest grades, the year's calendar, the favourite crag. No share icon on a year without ascents.
+2. The year chips at the top switch the card to another year (this year, last year…).
+3. "Show partners" is off at first; switched on, up to 3 partner names appear on the card. Without partners in that year the switch is not shown.
+4. Look: Guidebook (paper) or Night. Type a message; send the picture and the text.
+5. Goals tab: "Show off goals" next to the Goals heading. Expected: open goals are ticked (at most 5). Untick all but one: the one goal is shown big. Untick all: the send buttons are off and a note asks to choose one.
+
 ## 3h. Trips: invitation and summary
 1. Goals tab › "Trips" › "+ New trip" (or the calendar icon on a crag screen, which fills that crag in). Fill the name, From and To (future days can be picked), add a crag by typing its name, then tap routes in the list below to add them. Arrows move a route up or down, the cross removes it; removing a crag removes its routes.
 2. Save without a name, with the end before the start, or with no crag. Expected: a clear message, nothing saved.
@@ -240,6 +247,10 @@ Since the automatic backup (§6a) these buttons are under Settings › "Other wa
 3. After the next merge into main (and ~12 minutes of building) open the app. Expected: after a few seconds "A new version of Cruxlog is available: 1.0.<m>". "Install": a short message "Downloading…", then Android's installer. The first time Android asks to allow Cruxlog to install apps: allow it, go back and tap "Install" again in Settings if needed. After installing, all data is still there.
 4. "Later" instead: the question does not come back on the next start for that version, but Settings › "Check for updates" still offers it.
 5. Without internet: nothing is shown on start; "Check for updates" says GitHub cannot be reached.
+
+## 6g. Settings: folded sections
+1. Settings opens with four folded sections: Look and language, Crags and packs, Backup, App version; each shows one line (e.g. "Polski · Jak w telefonie · KR", the last backup, the version). The backup line is red when a copy is due.
+2. Tap a section: it opens; tap again: it folds. Long descriptions show one sentence and "More ›"; tapping it shows the full text, "Less" hides it.
 
 ## 7. Robustness
 1. Change the language and the route grade system, close the app completely (swipe away) and reopen it. Expected: all data is still there, and the language and grade system are the ones you chose.

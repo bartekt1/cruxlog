@@ -3,11 +3,13 @@ import { File } from 'expo-file-system';
 import { useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useTranslation } from 'react-i18next';
+import { View } from 'react-native';
 import { applyCragPositions, applyImport, importedUsage, removeImported } from '../../db/repo';
 import { AppError } from '../../domain/errors';
 import { detectFormat, parsePositionsCsv } from '../../domain/flatImport';
 import { MissingColumnsError, planFromFiles, UnknownFileError } from '../../domain/importPlan';
 import { ask } from '../confirm';
+import { FoldSection, MoreText } from '../Fold';
 import { Button, Label } from '../kit';
 import { Text } from '../Text';
 import { useTheme } from '../theme';
@@ -79,15 +81,15 @@ export function ImportSection({ run, busy }: { run: Run; busy: boolean }) {
   });
 
   return (
-    <>
+    <FoldSection title={t('settings.sectionCrags')} summary={t('settings.sectionCragsSummary')}>
       <Label>{t('packs.title')}</Label>
       <Text style={{ color: th.muted }}>{t('packs.settingsHelp')}</Text>
       <Button label={t('packs.open')} onPress={() => router.push('/packs')} disabled={busy} />
       <Label>{t('settings.csv')}</Label>
-      <Text style={{ color: th.muted }}>{t('settings.csvHelp')}</Text>
+      <MoreText short={t('settings.csvShort')} long={t('settings.csvHelp')} />
       <Button label={t('settings.csv')} onPress={doCsv} disabled={busy} />
-      <Text style={{ color: th.muted, marginTop: 8 }}>{t('settings.removeImportedHelp')}</Text>
+      <View style={{ marginTop: 8 }}><MoreText short={t('settings.removeImportedShort')} long={t('settings.removeImportedHelp')} /></View>
       <Button label={t('settings.removeImported')} onPress={doRemoveImported} disabled={busy} variant="plain" />
-    </>
+    </FoldSection>
   );
 }

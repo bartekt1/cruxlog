@@ -1,6 +1,6 @@
 {
   "tabs": { "journal": "Dziennik", "progress": "Postępy", "crags": "Skały", "goals": "Cele" },
-  "common": {
+  "common": { "more": "Więcej ›", "less": "Mniej",
     "optional": "Opcjonalnie",
     "save": "Zapisz", "saving": "Zapisywanie…", "edit": "Edytuj", "delete": "Usuń", "cancel": "Anuluj", "add": "Dodaj", "change": "Zmień",
     "today": "Dziś", "yesterday": "Wczoraj", "failed": "Coś poszło nie tak: {{message}}", "failedText": "{{message}}"
@@ -125,6 +125,8 @@
   },
   "cards": { "look": "Wygląd karty", "styles": { "guide": "Przewodnik", "full": "Pełny kadr", "polaroid": "Polaroid", "poster": "Plakat", "ticket": "Bilet", "night": "Nocny", "topo": "Topo" }, "grade": "Wycena", "style": "Styl", "date": "Data", "rating": "Ocena" },
   "updates": {"section": "Wersja aplikacji", "current": "Zainstalowana wersja: {{version}}", "check": "Sprawdź aktualizacje", "title": "Aktualizacja", "question": "Jest nowa wersja Cruxlog: {{version}}. Pobrać i zainstalować? Twoje dane zostają.", "later": "Później", "install": "Zainstaluj", "downloading": "Pobieram nową wersję…", "upToDate": "Masz najnowszą wersję.", "devBuild": "Ta wersja nie ma numeru (zbudowana poza GitHubem). Najnowsza to {{version}}.", "offline": "Nie udało się połączyć z GitHubem. Sprawdź internet.", "failed": "GitHub odpowiedział błędem ({{status}}). Spróbuj później.", "downloadFailed": "Nie udało się pobrać nowej wersji. Sprawdź internet i spróbuj ponownie."},
+  "statsShare": {"title": "Pochwal się rokiem", "tag": "Mój rok", "days": "Dni", "hardest": "Najtrudniejsza", "hardestGrades": "Najtrudniejsze wyceny", "calendar": "Dni na skale", "favCrag_one": "Ulubiona skała: {{name}} ({{count}} dzień)", "favCrag_few": "Ulubiona skała: {{name}} ({{count}} dni)", "favCrag_many": "Ulubiona skała: {{name}} ({{count}} dni)", "favCrag_other": "Ulubiona skała: {{name}} ({{count}} dni)", "partners": "Na skale z: {{names}}", "withPartners": "Pokaż partnerów (ich imiona będą na karcie)", "messagePlaceholder": "np. Najlepszy sezon!", "sendText": "Wyślij jako tekst"},
+  "goalsShare": {"title": "Pochwal się celami", "open": "Pochwal się celami", "tag": "Moje cele", "which": "Które cele na karcie (najwięcej {{max}})", "none": "Wybierz co najmniej jeden cel.", "messagePlaceholder": "np. Trzymajcie kciuki!"},
   "photos": {
     "title": "Zdjęcia", "add": "Dodaj zdjęcia", "usage": "Zdjęcia: {{count}} z {{max}}", "preparing": "Przygotowuję zdjęcia…",
     "cragTitle": "Zdjęcia skały", "addWall": "Dodaj zdjęcia ściany: {{sector}}", "delete": "Usuń zdjęcie", "deleteTitle": "Usunąć zdjęcie?", "deleteQuestion": "Zdjęcie zniknie z tego telefonu. Kopia na Dysku zostaje.", "removeA11y": "Usuń zdjęcie", "openA11y": "Otwórz zdjęcie {{n}}", "missing": "Zdjęcie niedostępne", "viewerTitle": "Zdjęcie {{n}} z {{total}}",
@@ -144,7 +146,7 @@
     "discardTitle": "Odrzucić zmiany?", "discardQuestion": "Linia nie zostanie zapisana.", "discard": "Odrzuć",
     "canvasA11y": "Zdjęcie ściany. Dotknij, aby dodać punkt linii."
   },
-  "settings": {
+  "settings": { "sectionLook": "Wygląd i język", "sectionCrags": "Skały i paczki", "sectionCragsSummary": "Paczki skał, import z pliku CSV", "autoBackupShort": "Co 7 dni aplikacja sama zapisuje kopię w wybranym folderze, np. na Dysku Google.", "backupShort": "Wszystkie dane w jednym pliku, bez zdjęć.", "csvShort": "Plik z listą dróg we wzorze Cruxlog.", "removeImportedShort": "Przed wczytaniem pliku, który zastępuje poprzedni.",
     "title": "Ustawienia", "language": "Język", "theme": "Wygląd", "themes": { "system": "Jak w telefonie", "light": "Jasny", "dark": "Ciemny" }, "routeGrades": "Wyceny dróg",
     "backup": "Kopia zapasowa", "manualBackup": "Inne sposoby kopii (jeden plik, bez zdjęć)", "autoBackup": "Kopia automatyczna", "autoBackupHelp": "Wybierz folder, np. na Dysku Google. Po otwarciu aplikacji, gdy od ostatniej kopii minęło 7 dni i coś się zmieniło, sama zapisze tam kopię. Zostaje 5 ostatnich. Najpierw sprawdzę, czy da się do tego folderu zapisać. Na nowym telefonie wybierz ten sam folder, a potem „Przywróć z kopii w folderze”.",
     "folderNone": "Folder nie jest wybrany.", "folderDrive": "Folder: na Dysku Google", "folderDevice": "Folder: {{path}} (pamięć telefonu)",

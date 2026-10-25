@@ -154,3 +154,8 @@ export function yearCalendar(days: Map<string, number>, year: number): { key: st
     });
   });
 }
+
+/** The `limit` hardest grades of a pyramid, hardest first (the stats share card). */
+export function pyramidTop(p: Map<number, number>, limit = 5): { gradeIndex: number; count: number }[] {
+  return [...p.entries()].sort((a, b) => b[0] - a[0]).slice(0, limit).map(([gradeIndex, count]) => ({ gradeIndex, count }));
+}

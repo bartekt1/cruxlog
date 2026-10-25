@@ -51,6 +51,8 @@ export default function RootLayout() {
         <Stack.Screen name="trip/[id]" options={{ title: t('trip.title') }} />
         <Stack.Screen name="trip/edit" options={{ title: t('trip.newTitle') }} />
         <Stack.Screen name="trip/share" options={{ title: t('share.title'), presentation: 'modal' }} />
+        <Stack.Screen name="stats/share" options={{ title: t('statsShare.title'), presentation: 'modal' }} />
+        <Stack.Screen name="goal/share" options={{ title: t('goalsShare.title'), presentation: 'modal' }} />
         <Stack.Screen name="settings" options={{ title: t('settings.title') }} />
         <Stack.Screen name="packs" options={{ title: t('packs.title') }} />
       </Stack>
