@@ -1,4 +1,4 @@
-import { fold, matches, sameName, suggest } from '../src/domain/text';
+import { fold, matches, sameName, sectorLine, suggest } from '../src/domain/text';
 
 describe('text matching', () => {
   it('folds case and Polish letters', () => {
@@ -19,5 +19,13 @@ describe('text matching', () => {
     expect(suggest(items, 'rys', (x) => x)).toEqual(['Rysa', 'Rysiek', 'Zachodnia Rysa']);
     expect(suggest(items, 'lys', (x) => x)).toEqual(['Łysa']);
     expect(suggest(items, '', (x) => x, () => [], 2)).toEqual(['Filar', 'Łysa']);
+  });
+});
+
+describe('sectorLine', () => {
+  it('says the crag once when the sector is named like it or has no name', () => {
+    expect(sectorLine('Krowia', 'Zachód')).toBe('Krowia › Zachód');
+    expect(sectorLine('Krowia', 'krowia')).toBe('Krowia');
+    expect(sectorLine('Krowia', '')).toBe('Krowia');
   });
 });

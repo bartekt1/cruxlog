@@ -2,12 +2,14 @@ import { Directory, File, FileMode } from 'expo-file-system';
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { exportBackup, importBackup, latestChange } from '../db/backup';
 import { activePhotos, latestPhotoChange } from '../db/repo';
-import { backupDue, backupFileName, packBackup, RETRY_AFTER_MS, unpackBackup } from '../domain/autoBackup';
+import { backupDue, backupFileName, packBackup, photosDue, unpackBackup } from '../domain/autoBackup';
 import { addCopy, dropCopies, expiredCopies, mergeScan, readPhotoMarker, withPhotoMarker, type FolderCopy } from '../domain/backupIndex';
 import { BACKUP_PHOTO_DIR, missingIds, photoFileName } from '../domain/photos';
 import { getBackupIndex, setBackupIndex } from './backupIndexStore';
 import { photoFile } from './photos';
 import { useSettings } from './settingsStore';
+import { AppError } from '../domain/errors';
+import { errorMessage } from './errors';
 
 // Google Drive gives files no readable names through the system folder access, only opaque addresses. So nothing here
 // looks for a file by name: the app keeps the addresses of what it wrote (backupIndex), and when it has to look through
@@ -79,7 +81,7 @@ export async function listBackups(dirUri: string): Promise<FolderBackup[]> {
 /** Writes a new copy into the folder, then deletes the oldest so only 5 stay. A half-written file is removed. */
 export async function writeBackup(db: SQLiteDatabase, dirUri: string): Promise<{ name: string; bytes: number; count: number }> {
   const dir = new Directory(dirUri);
-  if (!dir.exists) throw new Error('The folder is no longer there. Choose it again.');
+  if (!dir.exists) throw new AppError('errors.folderGone');
   await ensureScanned(dirUri);
   const bytes = packBackup(JSON.stringify(await exportBackup(db)));
   const at = Date.now();
@@ -87,7 +89,7 @@ export async function writeBackup(db: SQLiteDatabase, dirUri: string): Promise<{
   const file = dir.createFile(name, 'application/gzip');
   try {
     file.write(bytes);
-    if ((file.size ?? 0) < bytes.length) throw new Error('The copy was written only in part.');
+    if ((file.size ?? 0) < bytes.length) throw new AppError('errors.partialCopy');
   } catch (e) {
     try { file.delete(); } catch { /* nothing more to do */ }
     throw e;
@@ -113,7 +115,7 @@ export async function restoreBackup(db: SQLiteDatabase, copy: FolderBackup): Pro
  */
 export async function syncPhotos(db: SQLiteDatabase, dirUri: string): Promise<number> {
   const dir = new Directory(dirUri);
-  if (!dir.exists) throw new Error('The folder is no longer there. Choose it again.');
+  if (!dir.exists) throw new AppError('errors.folderGone');
   await ensureScanned(dirUri);
   const wanted = (await activePhotos(db)).map((p) => p.id).filter((id) => photoFile(id).exists);
   if (!wanted.length) return 0;
@@ -130,7 +132,7 @@ export async function syncPhotos(db: SQLiteDatabase, dirUri: string): Promise<nu
     const file = target.createFile(photoFileName(id), 'image/jpeg');
     try {
       file.write(bytes);
-      if ((file.size ?? 0) < bytes.length) throw new Error('A photo was written only in part.');
+      if ((file.size ?? 0) < bytes.length) throw new AppError('errors.partialPhoto');
     } catch (e) {
       try { file.delete(); } catch { /* nothing more to do */ }
       throw e;
@@ -162,37 +164,67 @@ export async function restorePhotos(db: SQLiteDatabase, dirUri: string): Promise
   return restored;
 }
 
-let running = false;
+let queue: Promise<unknown> = Promise.resolve();
+let pending = 0;
+
+/**
+ * Runs backup work one piece at a time: the copy at startup, the one when the app comes back, "Back up now", the list
+ * and a restore all read and write the same folder index, so two at once could lose entries or copy a photo twice.
+ */
+export function withBackupLock<T>(fn: () => Promise<T>): Promise<T> {
+  pending++;
+  const run = queue.catch(() => {}).then(fn).finally(() => { pending--; });
+  queue = run;
+  return run;
+}
+
+/** Writes a copy now and then the new photos. The copy's result is recorded in the settings; a photo failure does not undo it. */
+export function backupNow(db: SQLiteDatabase, dirUri: string): Promise<{ copy: { name: string; bytes: number; count: number }; photos: number | Error }> {
+  return withBackupLock(async () => {
+    const settings = useSettings.getState();
+    let copy;
+    try {
+      copy = await writeBackup(db, dirUri);
+      settings.setAutoBackupResult(Date.now(), '');
+    } catch (e) {
+      settings.setAutoBackupResult(Date.now(), errorMessage(e));
+      throw e;
+    }
+    try {
+      const photos = await syncPhotos(db, dirUri);
+      settings.setPhotosSynced(Date.now());
+      return { copy, photos };
+    } catch (e) {
+      settings.setAutoBackupResult(Date.now(), `photos:${errorMessage(e)}`);
+      return { copy, photos: e as Error };
+    }
+  });
+}
 
 /** The automatic copy: when one is due, writes it and records the result in the settings. Never throws. */
 export async function autoBackupIfDue(db: SQLiteDatabase): Promise<void> {
-  const s = useSettings.getState();
-  if (!s.backupDir || running) return;
-  const now = Date.now();
-  const dbDue = backupDue({ now, lastAt: s.autoBackupAt, changedAt: await latestChange(db), lastTryAt: s.autoBackupTryAt });
-  // New photos are copied soon after they appear (not once a week), unless the last try failed less than an hour ago.
-  const photoChange = await latestPhotoChange(db);
-  const failedRecently = s.autoBackupError !== '' && s.autoBackupTryAt != null && now - s.autoBackupTryAt < RETRY_AFTER_MS;
-  const photosDue = photoChange != null && (s.photosSyncedAt == null || photoChange > s.photosSyncedAt) && !failedRecently;
-  if (!dbDue && !photosDue) return;
-  running = true;
-  try {
+  if (!useSettings.getState().backupDir || pending) return; // something is already running; the next start or return tries again
+  await withBackupLock(async () => {
+    const s = useSettings.getState();
+    if (!s.backupDir) return;
+    const now = Date.now();
+    const dbDue = backupDue({ now, lastAt: s.autoBackupAt, changedAt: await latestChange(db), lastTryAt: s.autoBackupTryAt });
+    const photos = photosDue({ now, changedAt: await latestPhotoChange(db), syncedAt: s.photosSyncedAt, failed: s.autoBackupError !== '', lastTryAt: s.autoBackupTryAt });
     if (dbDue) {
       try {
         await writeBackup(db, s.backupDir);
-        useSettings.getState().setAutoBackupResult(Date.now(), '');
+        s.setAutoBackupResult(Date.now(), '');
       } catch (e) {
-        useSettings.getState().setAutoBackupResult(Date.now(), (e as Error).message || 'error');
+        s.setAutoBackupResult(Date.now(), errorMessage(e));
         return;
       }
     }
+    if (!dbDue && !photos) return;
     try {
       await syncPhotos(db, s.backupDir);
-      useSettings.getState().setPhotosSynced(Date.now());
+      s.setPhotosSynced(Date.now());
     } catch (e) {
-      useSettings.getState().setAutoBackupResult(Date.now(), `photos:${(e as Error).message || 'error'}`);
+      s.setAutoBackupResult(Date.now(), `photos:${errorMessage(e)}`);
     }
-  } finally {
-    running = false;
-  }
+  }).catch(() => { /* never disturbs the app; the error is in the settings */ });
 }

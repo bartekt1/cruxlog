@@ -74,7 +74,7 @@ Severity: **H** blocks a task or loses/corrupts data, **M** slows a task or conf
 | S2 | Result message appeared at the bottom, often off screen | M | Fixed: alert |
 | S3 | Buttons could be pressed again during import | M | Fixed: disabled + spinner |
 | S4 | A wrong file gave a raw JSON parse error | M | Fixed: "This file is not a Cruxlog backup." |
-| S5 | Missing crags.csv or routes.csv gave confusing parser errors | M | Fixed: names the required files and what was selected |
+| S5 | Missing crags.csv or routes.csv gave confusing parser errors | M | Fixed; the three-file import was removed on 2026-10-21 |
 | S6 | Import behavior (merge, newer wins) was not explained | L | Fixed: help text |
 
 | N11 | Dates other than today or yesterday had to be typed as YYYY-MM-DD | M | Fixed: system calendar (`@react-native-community/datetimepicker`), future days blocked |
@@ -103,7 +103,7 @@ Severity: **H** blocks a task or loses/corrupts data, **M** slows a task or conf
 | F8 | No reminder to back up; data lives only on the phone | H | Fixed: Journal reminder after 30 days or when never backed up; last backup shown in Settings |
 | F9 | Year arrows could break after deleting all ascents of the shown year | L | Fixed |
 
-## Round 5 (crag building, after comparing theCrag, Mountain Project, KAYA)
+## Round 5 (crag building, after comparing other climbing apps)
 
 | # | Issue | Sev | Status |
 |---|---|---|---|
@@ -119,7 +119,6 @@ Severity: **H** blocks a task or loses/corrupts data, **M** slows a task or conf
 |---|---|---|---|
 | G1 | Guidebook grades VI+, VI-, V-, IV+, IV-, II, ranges (VI.4/4+), "?" and Font 4+, 8A+ were rejected by the importer | H | Fixed: mapped to the nearest lower ladder step, original label kept and shown |
 | G2 | Imported data was read-only, so routes could not be moved to sectors or corrected | M | Fixed: everything editable; the import asks first and warns that re-importing overwrites changes |
-| G3 | Guidebook export not in the app's CSV format | M | Converter `src/domain/guidebookCsv.ts` (region = group, Kamieniec groups merged; crag = rock; walls in the crag description) |
 
 ## Round 7 (crag hierarchy)
 
@@ -137,11 +136,11 @@ Severity: **H** blocks a task or loses/corrupts data, **M** slows a task or conf
 | S2 | Re-import left routes that were deleted from the file | M | Fixed: the file decides the imported routes of its crags; routes with ascents and your own routes stay |
 | S3 | Renaming a crag in the file made a second crag | L | Fixed: optional crag key column (`key_skaly` / `crag_key`) |
 
-## Round 9 (big theCrag import)
+## Round 9 (big import)
 
 | # | Issue | Sev | Status |
 |---|---|---|---|
-| T1 | Three area levels could not hold theCrag paths (up to 7 levels) | H | Fixed: groups nest at any depth; the group field takes several levels ("A › B") |
+| T1 | Three area levels could not hold deep paths (up to 7 levels) | H | Fixed: groups nest at any depth; the group field takes several levels ("A › B") |
 | T2 | 15 000 routes: route search loaded and folded every route on each keystroke; path labels and crag counts recomputed per row | H | Fixed: search index kept in memory until the next write; labels and counts computed once per list |
 | T3 | Length and bolts imported but never shown | M | Fixed: shown on the route screen and editable |
 | T4 | Replacing one imported file with another left the old crags | M | Fixed: "Remove imported crags and routes" in Settings (keeps routes with ascents and own data) |

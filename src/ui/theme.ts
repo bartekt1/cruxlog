@@ -22,6 +22,8 @@ export type Theme = typeof light;
 
 /** The paper palette whatever the phone is set to; for pictures sent to other people (share cards). */
 export const paperTheme: Theme = light;
+/** The night palette, for the dark share card, whatever the phone is set to. */
+export const nightTheme: Theme = dark;
 
 export function useIsDark(): boolean {
   const system = useColorScheme();

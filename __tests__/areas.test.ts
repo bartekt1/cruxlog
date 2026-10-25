@@ -1,4 +1,4 @@
-import { areaPath, childLevel, childrenOf, cragCounts, pathLabel, pathLabels, pathNames, splitPath, type Area } from '../src/domain/areas';
+import { areaPath, childLevel, childrenOf, cragCounts, pathLabel, pathLabels, pathNames, splitPath, type Area, rankByChosenArea } from '../src/domain/areas';
 
 const areas: Area[] = [
   { id: 'r', name: 'Czarnorzeki', level: 'region', parent_id: null },
@@ -43,5 +43,18 @@ describe('areas', () => {
     expect(counts.get('k')).toBe(3);
     expect(counts.get('j')).toBe(2);
     expect(counts.get('ds')).toBe(1);
+  });
+});
+
+describe('rankByChosenArea', () => {
+  it('puts crags of the chosen region and area first and keeps the rest in order', () => {
+    const areas = [
+      { id: 'r1', name: 'Jura', level: 'region' as const, parent_id: null },
+      { id: 'a1', name: 'Sokoliki', level: 'area' as const, parent_id: 'r1' },
+      { id: 'r2', name: 'Czarnorzeki', level: 'region' as const, parent_id: null },
+    ];
+    const crags = [{ id: 'x', region_id: 'r2' }, { id: 'y', region_id: null }, { id: 'z', region_id: 'a1' }, { id: 'w', region_id: 'r1' }];
+    expect(rankByChosenArea(crags, areas, { region: 'jura', area: 'Sokoliki' }).map((c) => c.id)).toEqual(['z', 'w', 'x', 'y']);
+    expect(rankByChosenArea(crags, areas, { region: '', area: '' }).map((c) => c.id)).toEqual(['x', 'y', 'z', 'w']);
   });
 });

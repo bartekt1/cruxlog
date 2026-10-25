@@ -86,6 +86,37 @@ export const MIGRATIONS: string[] = [
   CREATE INDEX idx_topo_photo ON topo_line(photo_id);
   CREATE INDEX idx_topo_route ON topo_line(route_id);
   `,
+  // 8: indexes for the per-route ascent counts (crag screen, route finder, goals) and for crags of an area.
+  `
+  CREATE INDEX idx_ascent_route ON ascent(route_id);
+  CREATE INDEX idx_crag_region ON crag(region_id);
+  `,
+  // 9: the key a row has in the user's import file (ID_skały, ID_drogi or one made from the names), so a row taken over by
+  // name (an earlier import or the user's own) keeps following that key on the next imports, also after a rename in the file.
+  `
+  ALTER TABLE crag ADD COLUMN import_key TEXT;
+  ALTER TABLE sector ADD COLUMN import_key TEXT;
+  ALTER TABLE route ADD COLUMN import_key TEXT;
+  `,
+  // 10: trips: a planned day or days at some crags with a list of proposed routes, shared as an invitation and, afterwards,
+  // as a summary of what was climbed. Dates are ISO days; the crags and routes keep the order they were picked in.
+  `
+  CREATE TABLE trip (
+    id TEXT PRIMARY KEY, name TEXT NOT NULL, start_date TEXT NOT NULL, end_date TEXT NOT NULL, message TEXT NOT NULL DEFAULT '', ${COMMON});
+  CREATE TABLE trip_crag (
+    id TEXT PRIMARY KEY, trip_id TEXT NOT NULL REFERENCES trip(id), crag_id TEXT NOT NULL REFERENCES crag(id), position INTEGER NOT NULL DEFAULT 0, ${COMMON});
+  CREATE TABLE trip_route (
+    id TEXT PRIMARY KEY, trip_id TEXT NOT NULL REFERENCES trip(id), route_id TEXT NOT NULL REFERENCES route(id), position INTEGER NOT NULL DEFAULT 0, ${COMMON});
+  CREATE INDEX idx_trip_crag_trip ON trip_crag(trip_id);
+  CREATE INDEX idx_trip_route_trip ON trip_route(trip_id);
+  `,
+  // 11: crag packs downloaded from the packs repository: which packs are installed (id, name, version), and which pack
+  // brought each crag, so a pack can be updated or removed on its own.
+  `
+  CREATE TABLE pack (id TEXT PRIMARY KEY, name TEXT NOT NULL, version INTEGER NOT NULL, ${COMMON});
+  ALTER TABLE crag ADD COLUMN pack_id TEXT;
+  CREATE INDEX idx_crag_pack ON crag(pack_id);
+  `,
 ];
 
 export async function migrate(db: SQLiteDatabase): Promise<void> {

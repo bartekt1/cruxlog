@@ -5,11 +5,11 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, View } from 'react-native';
 import { listAreas, listCrags, type AreaRow, type CragRow } from '../../src/db/repo';
 import { childrenOf, cragCounts, pathLabels } from '../../src/domain/areas';
-import { Button, Chip, EmptyState, Field, LinkButton } from '../../src/ui/kit';
+import { Button, Chip, EmptyState, Field, LinkButton, Label } from '../../src/ui/kit';
 import { CragMap } from '../../src/ui/CragMap';
 import { useLocation } from '../../src/ui/useLocation';
 import { formatDistance, isLatLng, nearest } from '../../src/domain/geo';
-import { NavRow, SectionTitle } from '../../src/ui/NavRow';
+import { NavRow } from '../../src/ui/NavRow';
 import { PlaceSearch } from '../../src/ui/PlaceSearch';
 import { useTheme } from '../../src/ui/theme';
 
@@ -66,7 +66,7 @@ export default function Crags() {
           {!crags.length && !regions.length ? <EmptyState title={t('crags.empty')} hint={t('crags.emptyHint')} /> : null}
           {near.length ? (
             <>
-              <SectionTitle>{t('map.nearby')}</SectionTitle>
+              <Label>{t('map.nearby')}</Label>
               {near.map((c) => (
                 <NavRow key={c.id} title={c.name} subtitle={[c.pos_source === 'approx' ? t('map.about', { distance: formatDistance(c.distance, i18n.language) }) : formatDistance(c.distance, i18n.language), path(c), t('crags.routes', { count: c.routes })].filter(Boolean).join(' · ')} onPress={() => openCrag(c)} />
               ))}
@@ -74,11 +74,11 @@ export default function Crags() {
           ) : placed && loc.state !== 'granted' && loc.state !== 'denied' ? (
             <LinkButton label={t('map.showNearby')} onPress={() => { loc.locate(); }} />
           ) : null}
-          {regions.length ? <SectionTitle>{t('areas.regions')}</SectionTitle> : null}
+          {regions.length ? <Label>{t('areas.regions')}</Label> : null}
           {regions.map((r) => (
             <NavRow key={r.id} title={r.name} subtitle={t('areas.cragCount', { count: counts.get(r.id) ?? 0 })} onPress={() => router.push(`/area/${r.id}`)} />
           ))}
-          {loose.length ? <SectionTitle>{t('crags.noRegion')}</SectionTitle> : null}
+          {loose.length ? <Label>{t('crags.noRegion')}</Label> : null}
           {loose.map((c) => <NavRow key={c.id} title={c.name} subtitle={t('crags.routes', { count: c.routes })} onPress={() => openCrag(c)} />)}
           <View style={{ flexDirection: 'row', gap: 8, marginTop: 16 }}>
             <View style={{ flex: 1 }}>

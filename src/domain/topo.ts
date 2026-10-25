@@ -138,3 +138,33 @@ export function toPhoto(touch: { x: number; y: number }, v: Zoom, boxW: number, 
   const y = (touch.y - v.ty) / (boxH * v.scale) + 0.5;
   return x < 0 || x > 1 || y < 0 || y > 1 ? null : { x, y };
 }
+
+/** Distance between the first two fingers (at least 1, so it can divide). */
+export function fingerDistance(t: { x: number; y: number }[]): number {
+  return Math.max(1, Math.hypot(t[1].x - t[0].x, t[1].y - t[0].y));
+}
+
+/** The point halfway between the first two fingers. */
+export function fingerMidpoint(t: { x: number; y: number }[]): { x: number; y: number } {
+  return { x: (t[0].x + t[1].x) / 2, y: (t[0].y + t[1].y) / 2 };
+}
+
+/**
+ * The zoom during a two-finger gesture that began with `start` (fingers `dist` apart around `mid`): spreading the fingers
+ * zooms around where they began, moving them moves the photo; always kept within the limits.
+ */
+export function pinchZoom(start: { zoom: Zoom; dist: number; mid: { x: number; y: number } }, touches: { x: number; y: number }[], boxW: number, boxH: number): Zoom {
+  const mid = fingerMidpoint(touches);
+  const zoomed = zoomAt(start.zoom, fingerDistance(touches) / start.dist, start.mid, boxW, boxH);
+  return clampZoom({ ...zoomed, tx: zoomed.tx + mid.x - start.mid.x, ty: zoomed.ty + mid.y - start.mid.y }, boxW, boxH);
+}
+
+/**
+ * A drawn-looking line for a route without a photo (the "schematic" share card): the start at the bottom, `bolts` points
+ * going up in a gentle S, the anchor at the top, in photo coordinates (0..1). 0 or unknown bolts draws 4.
+ */
+export function schematicLine(bolts: number | null): Pt[] {
+  const n = bolts && bolts > 0 ? Math.min(Math.round(bolts), 14) : 4;
+  const at = (t: number): Pt => ({ x: 0.5 + 0.05 * Math.sin(t * Math.PI * 2), y: 0.92 - 0.8 * t });
+  return [at(0), ...Array.from({ length: n }, (_, i) => at((i + 1) / (n + 1))), at(1)];
+}

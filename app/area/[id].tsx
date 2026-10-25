@@ -7,8 +7,8 @@ import { Text } from '../../src/ui/Text';
 import { listAreas, listCrags, type AreaRow, type CragRow } from '../../src/db/repo';
 import { areaPath, childLevel, childrenOf, cragCounts, descendantIds, pathLabels } from '../../src/domain/areas';
 import { IconButton } from '../../src/ui/icons';
-import { Button, EmptyState, Field } from '../../src/ui/kit';
-import { NavRow, SectionTitle } from '../../src/ui/NavRow';
+import { Button, EmptyState, Field, Label } from '../../src/ui/kit';
+import { NavRow } from '../../src/ui/NavRow';
 import { PlaceSearch } from '../../src/ui/PlaceSearch';
 import { useTheme } from '../../src/ui/theme';
 
@@ -60,11 +60,11 @@ export default function AreaScreen() {
         <PlaceSearch query={query} crags={insideCrags} areaIds={inside} path={path} onOpenCrag={(c) => router.push(`/crag/${c.id}`)} />
       ) : (
         <>
-        {children.length ? <SectionTitle>{t(next === 'group' ? 'areas.groups' : 'areas.areas')}</SectionTitle> : null}
+        {children.length ? <Label>{t(next === 'group' ? 'areas.groups' : 'areas.areas')}</Label> : null}
         {children.map((a) => (
           <NavRow key={a.id} title={a.name} subtitle={t('areas.cragCount', { count: counts.get(a.id) ?? 0 })} onPress={() => router.push(`/area/${a.id}`)} />
         ))}
-        {here.length ? <SectionTitle>{t('crags.title')}</SectionTitle> : null}
+        {here.length ? <Label>{t('crags.title')}</Label> : null}
         {here.map((c) => <NavRow key={c.id} title={c.name} subtitle={t('crags.routes', { count: c.routes })} onPress={() => router.push(`/crag/${c.id}`)} />)}
         {!children.length && !here.length ? <EmptyState title={t('areas.empty')} /> : null}
         </>

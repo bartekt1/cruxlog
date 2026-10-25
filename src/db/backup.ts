@@ -1,11 +1,14 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { HIDE_BOULDERS } from './migrate';
+import { AppError } from '../domain/errors';
 
-// 2: region.source added. Version 1 backups still import (their regions came from CSV).
-// 3: region.parent_id and region.level (nested areas). Older backups import as top-level regions.
-// 5: the photo table. Older backups simply have no photos. 6: the topo_line table.
-export const BACKUP_VERSION = 6; // 4: crag.pos_source
-const TABLES = ['region', 'crag', 'sector', 'route', 'pitch', 'partner', 'ascent', 'ascent_pitch', 'goal', 'photo', 'topo_line'] as const;
+// Backup versions; every older one still imports:
+// 1 the first; 2 region.source (version 1 regions came from CSV); 3 region.parent_id and level (older ones import as
+// top-level regions); 4 crag.pos_source; 5 the photo table (older backups have no photos); 6 the topo_line table;
+// 7 import_key on crag, sector and route (older backups have none; the next import matches those rows by name);
+// 8 the trip, trip_crag and trip_route tables (older backups have no trips); 9 the pack table and crag.pack_id.
+export const BACKUP_VERSION = 9;
+const TABLES = ['region', 'crag', 'sector', 'route', 'pitch', 'partner', 'ascent', 'ascent_pitch', 'goal', 'photo', 'topo_line', 'trip', 'trip_crag', 'trip_route', 'pack'] as const;
 
 /** When anything in the backed-up tables last changed (also deletions); null for an empty database. */
 export async function latestChange(db: SQLiteDatabase): Promise<number | null> {
@@ -25,19 +28,21 @@ export async function exportBackup(db: SQLiteDatabase): Promise<Backup> {
 /** Merges a backup into the database. Rows are matched by id and the newer updated_at wins. */
 export async function importBackup(db: SQLiteDatabase, data: unknown): Promise<number> {
   const b = data as Backup;
-  if (!b || b.app !== 'cruxlog' || typeof b.version !== 'number' || !b.tables) throw new Error('Not a Cruxlog backup');
-  if (b.version > BACKUP_VERSION) throw new Error('Backup comes from a newer app version');
+  if (!b || b.app !== 'cruxlog' || typeof b.version !== 'number' || !b.tables) throw new AppError('settings.notBackup');
+  if (b.version > BACKUP_VERSION) throw new AppError('errors.newerBackup');
   let merged = 0;
   await db.withTransactionAsync(async () => {
     await db.execAsync('PRAGMA defer_foreign_keys = ON');
     for (const t of TABLES) {
+      // Only columns this table has: a hand-edited or odd file must not stop the whole restore.
+      const known = new Set((await db.getAllAsync<{ name: string }>(`PRAGMA table_info(${t})`)).map((c) => c.name));
       for (const original of b.tables[t] ?? []) {
         const row = t === 'region' && b.version < 2 && !('source' in original) ? { ...original, source: 'import' } : original;
-        const cols = Object.keys(row);
+        const cols = Object.keys(row).filter((c) => known.has(c));
         if (!cols.includes('id') || !cols.includes('updated_at')) continue;
         const existing = await db.getFirstAsync<{ updated_at: number }>(`SELECT updated_at FROM ${t} WHERE id = ?`, [row.id as string]);
         if (existing && existing.updated_at >= (row.updated_at as number)) continue;
-        const names = cols.map((c) => `"${c.replace(/"/g, '')}"`).join(',');
+        const names = cols.map((c) => `"${c}"`).join(',');
         const marks = cols.map(() => '?').join(',');
         await db.runAsync(`INSERT OR REPLACE INTO ${t} (${names}) VALUES (${marks})`, cols.map((c) => row[c] as string | number | null));
         merged++;

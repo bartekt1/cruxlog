@@ -37,3 +37,8 @@ export function formatDay(iso: string, locale: string, today: string): string {
     weekday: 'short', day: 'numeric', month: 'long', ...(sameYear ? {} : { year: 'numeric' }),
   });
 }
+
+/** Localized day and time of a moment, e.g. "21 October 2026, 08:12" (backup copies). */
+export function formatDateTime(at: number, locale: string): string {
+  return new Date(at).toLocaleString(locale, { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}

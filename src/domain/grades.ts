@@ -39,8 +39,10 @@ export function systemsFor(_type: RouteType): GradeSystem[] {
   return ROUTE_SYSTEMS;
 }
 
-export function ladderLength(_type: RouteType): number {
-  return ROUTE_LADDER.length;
+/** The grade system after the route type changed: the chosen one if it fits the new type, else the user's usual one (or the first that fits). */
+export function systemAfterTypeChange(next: RouteType, current: GradeSystem, usual: GradeSystem): GradeSystem {
+  const fits = systemsFor(next);
+  return fits.includes(current) ? current : fits.includes(usual) ? usual : fits[0];
 }
 
 const norm = (s: string) => s.trim().replace(/\s+/g, '').toUpperCase();
@@ -94,6 +96,8 @@ export function routeGrade(r: GradedRoute, system: GradeSystem): string {
 /** Styles that count as a completed climb in stats. */
 export type AscentStyle = 'os' | 'flash' | 'rp' | 'pp' | 'tr' | 'attempt';
 export const ASCENT_STYLES: AscentStyle[] = ['os', 'flash', 'rp', 'pp', 'tr', 'attempt'];
+/** Led sends (not top-rope): they count for goals and the hardest climbs. */
+export const LEAD_STYLES: AscentStyle[] = ['os', 'flash', 'rp', 'pp'];
 export function isSend(style: AscentStyle): boolean {
   return style !== 'attempt';
 }
@@ -113,4 +117,9 @@ export function feltGrade(felt: number | null | undefined, routeIndex: number): 
 /** A typical mid-range grade in the given system, used as a hint in forms. */
 export function gradeExample(system: GradeSystem, type: RouteType): string {
   return formatGrade(9, system, type);
+}
+
+/** The route's grade in the other route systems, e.g. "VI+ UIAA · 6a FR" (the poster share card). */
+export function otherGrades(r: GradedRoute, system: GradeSystem): string {
+  return ROUTE_SYSTEMS.filter((s) => s !== system).map((s) => `${routeGrade(r, s)} ${s.toUpperCase()}`).join(' · ');
 }

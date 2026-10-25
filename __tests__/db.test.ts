@@ -1,18 +1,15 @@
 /// <reference types="node" />
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { BACKUP_VERSION, exportBackup, importBackup, latestChange } from '../src/db/backup';
 import { packBackup, unpackBackup } from '../src/domain/autoBackup';
 import { MIGRATIONS, migrate } from '../src/db/migrate';
 import {
-  addAscent, addGoal, addUserRoute, applyImport, cragUsage, deleteAscent, deleteCrag, deleteGoal, deleteArea, deleteRoute, deleteSector,
+  addAscent, addGoal, addUserRoute, saveAscent, installPack, listInstalledPacks, removePack, saveTrip, getTrip, listTrips, deleteTrip, tripRoutesOn, listAscentsBetween, applyImport, cragUsage, deleteAscent, deleteCrag, deleteGoal, deleteArea, deleteRoute, deleteSector,
   getAscent, getCrag, getArea, getRoute, getSector, listAscents, listCragRoutes, listCrags, listGoals, listAreas, listSectorNames, addArea, areaIdFor,
   renameArea, renameSector, routeUsage, saveCrag, searchRoutes, sectorUsage, setGoalDone, updateAscent, updateRoute, type NewRoute, type RouteFilter,
   listCragChoices, listPartners, applyCragPositions, addRouteGoal, routeGoalKinds, addPhotos, listPhotos, listPhotosOf, removePhotos, activePhotos, latestPhotoChange, getPhoto, listTopoLines, topoRoutes, saveTopoLine, deleteTopoLine, routeTopos, setCragLocation, listRouteAscents, recentRoutes, listSectors, addSector, createRoute, importedUsage, removeImported, findRoutes, getGoal, updateGoal, routeGoals,
 } from '../src/db/repo';
 import { descendantIds } from '../src/domain/areas';
-import { buildImportPlan } from '../src/domain/csvImport';
 import { detectFormat, parseFlatCsv, parsePositionsCsv, planFromFlatRows, type FlatRow } from '../src/domain/flatImport';
 import { parseGrade } from '../src/domain/grades';
 import { openTestDb } from './helpers/sqlite';
@@ -36,10 +33,11 @@ const ascent = (routeId: string, over: Partial<Parameters<typeof addAscent>[1]> 
 
 const count = async (db: SQLiteDatabase, table: string) => (await db.getFirstAsync<{ n: number }>(`SELECT COUNT(*) AS n FROM ${table}`))!.n;
 
-const samples = () => {
-  const read = (f: string) => readFileSync(join(__dirname, '..', 'samples', f), 'utf8');
-  return buildImportPlan({ crags: read('crags.csv'), sectors: read('sectors.csv'), routes: read('routes.csv'), pitches: read('pitches.csv') });
-};
+// A small one-file import: one crag with a sector and a sport and a multipitch route.
+const samples = () => planFromFlatRows(parseFlatCsv(
+  'region;area;crag;sector;name;type;grade;lat;lng\n'
+  + 'Example region;Example area;Example crag;Example sector;Example sport route;sport;VI.3;50.0;19.9\n'
+  + 'Example region;Example area;Example crag;Example sector;Example multipitch;multipitch;V+;;\n'));
 
 describe('migrate', () => {
   it('creates the schema on a fresh database and records the version', async () => {
@@ -83,6 +81,35 @@ describe('repo', () => {
     await expect(addAscent(db, ascent('missing-route'))).rejects.toThrow();
     expect(await count(db, 'ascent')).toBe(0);
     expect(await count(db, 'partner')).toBe(0);
+  });
+  it('saves a new route, an ascent, its photos and the project goal together, or nothing at all', async () => {
+    const db = await freshDb();
+    const photo = { id: 'p1', width: 10, height: 10, bytes: 100 };
+    const { ascentId, routeId } = await saveAscent(db, {
+      id: null, newRoute: route(), ascent: { ...ascent(''), style: 'attempt' }, addPhotos: [photo], asProject: true,
+    });
+    expect(await getRoute(db, routeId)).toMatchObject({ name: 'Test Route 1' });
+    expect((await listPhotos(db, 'ascent', ascentId)).map((p) => p.id)).toEqual(['p1']);
+    expect((await listGoals(db)).map((g) => [g.kind, g.route_id])).toEqual([['project', routeId]]);
+    // The photo id is taken, so this save fails at the end: the new route and the ascent must not stay behind.
+    await expect(saveAscent(db, { id: null, newRoute: route({ name: 'Second' }), ascent: ascent(''), addPhotos: [photo] })).rejects.toThrow();
+    expect(await count(db, 'route')).toBe(1);
+    expect(await count(db, 'ascent')).toBe(1);
+    // Editing: one photo goes, another comes.
+    await saveAscent(db, { id: ascentId, routeId, ascent: ascent(''), removePhotoIds: ['p1'], addPhotos: [{ ...photo, id: 'p2' }] });
+    expect((await listPhotos(db, 'ascent', ascentId)).map((p) => p.id)).toEqual(['p2']);
+    expect(await count(db, 'ascent')).toBe(1);
+  });
+  it('refuses to rename a sector or an area to a name its neighbour has', async () => {
+    const db = await freshDb();
+    const crag = await saveCrag(db, null, { name: 'Krowia', areas: A('Czarnorzeki', 'Kamieniec'), description: '', approach: '', sectorNames: ['Zachód', 'Wschód'] });
+    const [east, west] = await listSectors(db, crag);
+    await expect(renameSector(db, east.id, 'zachod')).rejects.toMatchObject({ key: 'errors.nameTaken' });
+    await renameSector(db, east.id, 'Wschód główny');
+    await renameSector(db, east.id, 'WSCHÓD GŁÓWNY'); // its own name, other letters: fine
+    expect((await listSectors(db, crag)).map((x) => x.name)).toEqual(['WSCHÓD GŁÓWNY', west.name]);
+    const other = await addArea(db, null, 'Jura');
+    await expect(renameArea(db, other, 'czarnorzeki')).rejects.toMatchObject({ key: 'errors.nameTaken' });
   });
   it('searches by route, sector and crag name and hides deleted routes', async () => {
     const db = await freshDb();
@@ -149,7 +176,7 @@ describe('repo', () => {
     await deleteGoal(db, first.id);
     expect((await listGoals(db)).map((g) => g.title)).toEqual(['Second']);
   });
-  it('imports the sample CSV files idempotently', async () => {
+  it('imports the sample file idempotently', async () => {
     const db = await freshDb();
     const plan = samples();
     expect(plan.errors).toEqual([]);
@@ -157,7 +184,7 @@ describe('repo', () => {
     await applyImport(db, plan);
     expect(await count(db, 'crag')).toBe(first.crags);
     expect(await count(db, 'route')).toBe(first.routes);
-    expect(await count(db, 'pitch')).toBe(first.pitches);
+    expect(first).toEqual({ crags: 1, sectors: 1, routes: 2, taken: 0 });
   });
 });
 
@@ -296,8 +323,11 @@ describe('editing own crags, sectors, routes and regions', () => {
     const db = await freshDb();
     await applyImport(db, samples());
     const [c] = await listCrags(db);
-    expect(c).toMatchObject({ source: 'import', region_name: 'Example region' });
-    expect((await listAreas(db))[0]).toMatchObject({ name: 'Example region', source: 'import', level: 'region' });
+    expect(c).toMatchObject({ source: 'import', region_name: 'Example area' });
+    expect(await listAreas(db)).toEqual([
+      expect.objectContaining({ name: 'Example area', source: 'import', level: 'area' }),
+      expect.objectContaining({ name: 'Example region', source: 'import', level: 'region' }),
+    ]);
   });
 });
 
@@ -359,13 +389,13 @@ describe('nested areas', () => {
     // Old layout: wall as its own crag in a flat region.
     await applyImport(db, { crags: [crag('k-krowia', 'Krowia', 'Kamieniec'), crag('k-krowia-w', 'Krowia (ściana zachodnia)', 'Kamieniec')],
       sectors: [sec('k-krowia-s', 'k-krowia', 'Krowia'), sec('k-krowia-w-s', 'k-krowia-w', 'Krowia (ściana zachodnia)')],
-      routes: [r('a', 'k-krowia-s'), r('b', 'k-krowia-w-s')], pitches: [], errors: [] });
+      routes: [r('a', 'k-krowia-s'), r('b', 'k-krowia-w-s')], errors: [] });
     const [b] = await searchRoutes(db, 'b');
     await addAscent(db, ascent(b.id));
     // New layout: one crag with a wall sector, nested areas.
     await applyImport(db, { crags: [crag('k-krowia', 'Krowia', 'Czarnorzeki', 'Kamieniec', 'Krowia Turnia')],
       sectors: [sec('k-krowia-s', 'k-krowia', 'Krowia'), sec('k-krowia-west', 'k-krowia', 'Ściana zachodnia')],
-      routes: [r('a', 'k-krowia-s'), r('b', 'k-krowia-west')], pitches: [], errors: [] });
+      routes: [r('a', 'k-krowia-s'), r('b', 'k-krowia-west')], errors: [] });
     expect((await listCrags(db)).map((c) => c.name)).toEqual(['Krowia']);
     expect((await getRoute(db, b.id))).toMatchObject({ crag_name: 'Krowia', sector_name: 'Ściana zachodnia' });
     expect((await listAscents(db)).map((x) => x.route_name)).toEqual(['b']);
@@ -406,6 +436,158 @@ describe('no boulders, and the file decides which imported routes a crag has', (
     await applyImport(db, planFromFlatRows(parseFlatCsv(file('Krowia'))));
     await applyImport(db, planFromFlatRows(parseFlatCsv(file('Krowia Turnia'))));
     expect((await listCrags(db)).map((c) => [c.id, c.name])).toEqual([['imp:crag:krowia', 'Krowia Turnia']]);
+  });
+});
+
+describe('a hand-made file takes over existing data', () => {
+  const file = (rows: string) => planFromFlatRows(parseFlatCsv(`Region;Rejon;Skała;Sektor;Nazwa;Wycena;Opis_skały\n${rows}`));
+  it('keeps the ascents, photos and positions of routes and crags with the same names', async () => {
+    const db = await freshDb();
+    // What an earlier import left: a crag with a sector, two routes, an ascent, a wall photo and a position set on the phone.
+    await applyImport(db, planFromFlatRows([{ region: 'Czarnorzeki', area: 'Kamieniec', group: '', crag: 'Krowia', sector: 'Zachód', name: 'Rysa', type: '', grade: 'VI.1', gradeSystem: '', cragKey: 'sk-krowia', routeKey: 'dr-1' },
+      { region: 'Czarnorzeki', area: 'Kamieniec', group: '', crag: 'Krowia', sector: 'Zachód', name: 'Filar', type: '', grade: 'VI.2', gradeSystem: '', cragKey: 'sk-krowia', routeKey: 'dr-2' }]));
+    const [old] = await listCrags(db);
+    await setCragLocation(db, old.id, { lat: 49.74, lng: 21.78 });
+    const [rysa, filar] = (await listCragRoutes(db, old.id)).sort((a, b) => a.name.localeCompare(b.name)).reverse();
+    await addAscent(db, ascent(rysa.id));
+    await addPhotos(db, 'sector', rysa.sector_id, [{ id: 'p1', width: 1, height: 1, bytes: 1 }]);
+
+    // The new file has its own keys, other letters in the names and a description; Filar is gone from it.
+    const done = await applyImport(db, file('Czarnorzeki;Kamieniec;KROWIA;zachod;rysa;VI.1+;Lita ściana\n'));
+    expect(done.taken).toBe(1);
+    const crags = await listCrags(db);
+    expect(crags).toHaveLength(1);
+    expect(crags[0]).toMatchObject({ id: old.id, name: 'KROWIA', lat: 49.74, pos_source: 'user' });
+    expect((await getCrag(db, old.id))?.description).toBe('Lita ściana');
+    const routes = await listCragRoutes(db, old.id);
+    expect(routes.map((r) => [r.id, r.name, r.grade_label, r.ascents])).toEqual([[rysa.id, 'rysa', 'VI.1+', 1]]);
+    expect(await getRoute(db, filar.id)).toBeNull(); // the file decides which routes the crag has
+    expect((await listPhotos(db, 'sector', rysa.sector_id)).map((p) => p.id)).toEqual(['p1']);
+
+    // Importing the new file again changes nothing and takes nothing over twice.
+    expect((await applyImport(db, file('Czarnorzeki;Kamieniec;KROWIA;zachod;rysa;VI.1+;\n'))).taken).toBe(0);
+    expect((await getCrag(db, old.id))?.description).toBe('Lita ściana'); // an empty cell keeps what is there
+    expect(await count(db, 'route')).toBe(2); // no new row was made, also not a deleted one
+  });
+  it('follows the ID columns after a takeover, also when a name changes in the file', async () => {
+    const db = await freshDb();
+    const routeId = await addUserRoute(db, route({ cragName: 'Baszta', sectorName: 'Baszta', name: 'Komin', areas: A('Jura', 'Sokoliki') }));
+    await addAscent(db, ascent(routeId));
+    const head = 'Region;Rejon;Skała;Nazwa;Wycena;ID_skały;ID_drogi\n';
+    expect((await applyImport(db, planFromFlatRows(parseFlatCsv(`${head}Jura;Sokoliki;Baszta;Komin;V;sk-1;dr-1\n`)))).taken).toBe(1);
+    // Renamed in the file: the ID still finds the same route, with its ascent.
+    expect((await applyImport(db, planFromFlatRows(parseFlatCsv(`${head}Jura;Sokoliki;Baszta Wielka;Komin Główny;V;sk-1;dr-1\n`)))).taken).toBe(0);
+    expect(await getRoute(db, routeId)).toMatchObject({ name: 'Komin Główny', crag_name: 'Baszta Wielka' });
+    expect(await listRouteAscents(db, routeId)).toHaveLength(1);
+    expect(await count(db, 'route')).toBe(1);
+  });
+  it('tells crags of one name apart by their place, and does not guess when two are at the same place', async () => {
+    const db = await freshDb();
+    const komin = await addUserRoute(db, route({ cragName: 'Baszta', sectorName: 'Baszta', name: 'Komin', areas: A('Jura', 'Sokoliki') }));
+    await saveCrag(db, null, { name: 'Baszta', areas: A('Tatry', 'Dolina'), description: '', approach: '' });
+    expect((await applyImport(db, file('Jura;Sokoliki;Baszta;;Komin;V\n'))).taken).toBe(1);
+    expect((await listCrags(db)).filter((c) => c.name === 'Baszta')).toHaveLength(2);
+    expect(await getRoute(db, komin)).toMatchObject({ name: 'Komin' });
+
+    const twins = await freshDb();
+    await saveCrag(twins, null, { name: 'Ostaniec', areas: A('Jura', 'Sokoliki'), description: '', approach: '' });
+    await saveCrag(twins, null, { name: 'Ostaniec', areas: A('Jura', 'Sokoliki'), description: 'drugi', approach: '' });
+    await applyImport(twins, file('Jura;Sokoliki;Ostaniec;;Rysa;V\n'));
+    expect((await listCrags(twins)).filter((c) => c.name === 'Ostaniec')).toHaveLength(3);
+  });
+  it('tells routes of one name on one wall apart by their grade', async () => {
+    const db = await freshDb();
+    const a = await addUserRoute(db, route({ cragName: 'Okap', sectorName: 'Okap', name: 'Bez nazwy', gradeLabel: 'V', gradeIndex: parseGrade('V', 'kr')!, areas: A('Jura', 'Sokoliki') }));
+    const b = await addUserRoute(db, route({ cragName: 'Okap', sectorName: 'Okap', name: 'Bez nazwy', gradeLabel: 'VI.2', gradeIndex: parseGrade('VI.2', 'kr')! }));
+    const done = await applyImport(db, file('Jura;Sokoliki;Okap;;Bez nazwy;VI.2\nJura;Sokoliki;Okap;;Bez nazwy;V\n'));
+    expect(done.taken).toBe(2);
+    expect(await getRoute(db, a)).toMatchObject({ grade_label: 'V' });
+    expect(await getRoute(db, b)).toMatchObject({ grade_label: 'VI.2' });
+    expect(await count(db, 'route')).toBe(2);
+  });
+  it('marks an approximate position from the file', async () => {
+    const db = await freshDb();
+    await applyImport(db, planFromFlatRows(parseFlatCsv('Region;Rejon;Skała;Nazwa;Wycena;Lat;Lng;Przybliżone\nJura;Sokoliki;Baszta;Komin;V;50.1;19.2;tak\n')));
+    expect((await listCrags(db))[0]).toMatchObject({ lat: 50.1, lng: 19.2, pos_source: 'approx' });
+  });
+});
+
+describe('trips', () => {
+  it('saves a trip with its crags and routes in order, edits it, finds its routes by day and deletes it', async () => {
+    const db = await freshDb();
+    const r1 = await addUserRoute(db, route({ cragName: 'Krowia', name: 'Rysa' }));
+    const r2 = await addUserRoute(db, route({ cragName: 'Krowia', name: 'Filar' }));
+    const r3 = await addUserRoute(db, route({ cragName: 'Okap', name: 'Komin' }));
+    const [krowia, okap] = (await listCrags(db)).sort((a, b) => a.name.localeCompare(b.name));
+    const id = await saveTrip(db, null, { name: 'Majówka', startDate: '2026-05-01', endDate: '2026-05-03', message: 'Zbiórka 8:00', cragIds: [okap.id, krowia.id], routeIds: [r2, r3, r1] });
+    const t = await getTrip(db, id);
+    expect(t).toMatchObject({ name: 'Majówka', start_date: '2026-05-01', end_date: '2026-05-03', message: 'Zbiórka 8:00' });
+    expect(t!.crags.map((c) => c.name)).toEqual(['Okap', 'Krowia']);
+    expect(t!.routes.map((r) => r.name)).toEqual(['Filar', 'Komin', 'Rysa']);
+    expect(await listTrips(db)).toEqual([expect.objectContaining({ id, crags: 'Okap, Krowia', routes: 3 })]);
+
+    await saveTrip(db, id, { name: 'Majówka 2', startDate: '2026-05-02', endDate: '2026-05-02', message: '', cragIds: [krowia.id], routeIds: [r1] });
+    expect((await getTrip(db, id))!.routes.map((r) => r.name)).toEqual(['Rysa']);
+    expect((await tripRoutesOn(db, '2026-05-02'))).toMatchObject({ trip: 'Majówka 2', routes: [{ id: r1 }] });
+    expect(await tripRoutesOn(db, '2026-05-03')).toBeNull();
+
+    // A deleted route drops out of the trip; the trip itself stays.
+    await deleteRoute(db, r1);
+    expect((await getTrip(db, id))!.routes).toEqual([]);
+    await deleteTrip(db, id);
+    expect(await getTrip(db, id)).toBeNull();
+    expect(await listTrips(db)).toEqual([]);
+  });
+  it('lists the ascents of the trip days', async () => {
+    const db = await freshDb();
+    const r = await addUserRoute(db, route());
+    for (const date of ['2026-04-30', '2026-05-01', '2026-05-03', '2026-05-04']) await addAscent(db, ascent(r, { date }));
+    expect((await listAscentsBetween(db, '2026-05-01', '2026-05-03')).map((a) => a.date)).toEqual(['2026-05-01', '2026-05-03']);
+  });
+  it('goes into the backup and comes back', async () => {
+    const db = await freshDb();
+    const r = await addUserRoute(db, route());
+    const [c] = await listCrags(db);
+    await saveTrip(db, null, { name: 'Wyjazd', startDate: '2026-06-01', endDate: '2026-06-01', message: '', cragIds: [c.id], routeIds: [r] });
+    const target = await freshDb();
+    await importBackup(target, JSON.parse(JSON.stringify(await exportBackup(db))));
+    expect(await listTrips(target)).toEqual(await listTrips(db));
+  });
+});
+
+describe('packs', () => {
+  const pack = (rows: string) => planFromFlatRows(parseFlatCsv(`Region;Rejon;Grupa;Skała;Nazwa;Wycena;ID_skały;ID_drogi\n${rows}`));
+  const kamieniec = 'Czarnorzeki;Skałki;Kamieniec;Krowia;Rysa;VI.1;sk-1;dr-1\nCzarnorzeki;Skałki;Kamieniec;Krowia;Filar;VI.2;sk-1;dr-2\n';
+  const strzelnica = 'Czarnorzeki;Skałki;Strzelnica;Okap;Komin;V;sk-2;dr-3\n';
+  it('installs, updates and removes packs one by one', async () => {
+    const db = await freshDb();
+    await installPack(db, { id: 'kamieniec', name: 'Kamieniec', version: 1 }, pack(kamieniec));
+    await installPack(db, { id: 'strzelnica', name: 'Strzelnica', version: 1 }, pack(strzelnica));
+    expect(await listInstalledPacks(db)).toEqual([{ id: 'kamieniec', name: 'Kamieniec', version: 1 }, { id: 'strzelnica', name: 'Strzelnica', version: 1 }]);
+    const krowia = (await listCrags(db)).find((c) => c.name === 'Krowia')!;
+    const [rysa, filar] = (await listCragRoutes(db, krowia.id)).sort((a, b) => b.name.localeCompare(a.name));
+    await addAscent(db, ascent(rysa.id));
+    const own = await createRoute(db, krowia.id, { sectorName: '', name: 'Moja droga', type: 'sport', gradeLabel: 'V', gradeSystem: 'kr', gradeIndex: parseGrade('V', 'kr')! });
+
+    // Version 2 of Kamieniec renames Rysa; the route and its ascent stay the same.
+    await installPack(db, { id: 'kamieniec', name: 'Kamieniec', version: 2 }, pack(kamieniec.replace('Rysa', 'Rysa Główna')));
+    expect((await listInstalledPacks(db))[0].version).toBe(2);
+    expect(await getRoute(db, rysa.id)).toMatchObject({ name: 'Rysa Główna' });
+
+    await removePack(db, 'kamieniec');
+    expect((await listInstalledPacks(db)).map((p) => p.id)).toEqual(['strzelnica']);
+    // Kept: the route with an ascent and the one added on the phone, so the crag stays; the rest of the pack is gone.
+    expect((await listCragRoutes(db, krowia.id)).map((r) => r.name).sort()).toEqual(['Moja droga', 'Rysa Główna']);
+    expect(await getRoute(db, filar.id)).toBeNull();
+    expect(await getRoute(db, own)).not.toBeNull();
+    expect((await listCrags(db)).map((c) => c.name).sort()).toEqual(['Krowia', 'Okap']);
+
+    await removePack(db, 'strzelnica');
+    expect((await listCrags(db)).map((c) => c.name)).toEqual(['Krowia']);
+    expect((await listAreas(db)).map((a) => a.name).sort()).toEqual(['Czarnorzeki', 'Kamieniec', 'Skałki']); // Strzelnica's group is gone
+    // Installing again takes the kept rows back.
+    await installPack(db, { id: 'kamieniec', name: 'Kamieniec', version: 2 }, pack(kamieniec));
+    expect((await listCrags(db)).filter((c) => c.name === 'Krowia')).toHaveLength(1);
   });
 });
 
@@ -825,7 +1007,9 @@ describe('backup', () => {
     backup.tables.region = backup.tables.region.map(({ source: _s, ...rest }: Record<string, unknown>) => rest);
     const target = await freshDb();
     await importBackup(target, backup);
-    expect((await listAreas(target)).every((g) => g.source === 'import' && g.level === 'region')).toBe(true);
+    const areas = await listAreas(target);
+    expect(areas.length).toBeGreaterThan(0);
+    expect(areas.every((g) => g.source === 'import')).toBe(true);
   });
   it('rejects files that are not a backup or come from a newer version', async () => {
     const db = await freshDb();

@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { migrate } from '../src/db/migrate';
 import { AutoBackup } from '../src/ui/AutoBackup';
 import { F, FONT_ASSETS } from '../src/ui/fonts';
+import { UpdateCheck } from '../src/ui/UpdateCheck';
 import { useIsDark, useTheme } from '../src/ui/theme';
 
 export default function RootLayout() {
@@ -23,6 +24,7 @@ export default function RootLayout() {
     <SQLiteProvider databaseName="cruxlog.db" onInit={migrate}>
       <StatusBar style={dark ? 'light' : 'dark'} />
       <AutoBackup />
+      <UpdateCheck />
       <Stack screenOptions={{
         headerStyle: { backgroundColor: th.bg }, headerShadowVisible: false, headerTintColor: th.ink,
         headerTitleStyle: { fontFamily: F.display, fontSize: 24, color: th.ink }, contentStyle: { backgroundColor: th.bg, paddingBottom: insets.bottom },
@@ -46,7 +48,13 @@ export default function RootLayout() {
         <Stack.Screen name="area/[id]" options={{ title: t('areas.level.region') }} />
         <Stack.Screen name="area/new" options={{ title: t('areas.add.region') }} />
         <Stack.Screen name="goal/[id]" options={{ title: t('goals.editTitle') }} />
+        <Stack.Screen name="trip/[id]" options={{ title: t('trip.title') }} />
+        <Stack.Screen name="trip/edit" options={{ title: t('trip.newTitle') }} />
+        <Stack.Screen name="trip/share" options={{ title: t('share.title'), presentation: 'modal' }} />
+        <Stack.Screen name="stats/share" options={{ title: t('statsShare.title'), presentation: 'modal' }} />
+        <Stack.Screen name="goal/share" options={{ title: t('goalsShare.title'), presentation: 'modal' }} />
         <Stack.Screen name="settings" options={{ title: t('settings.title') }} />
+        <Stack.Screen name="packs" options={{ title: t('packs.title') }} />
       </Stack>
     </SQLiteProvider>
   );

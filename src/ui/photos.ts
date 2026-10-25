@@ -4,24 +4,35 @@ import * as ImagePicker from 'expo-image-picker';
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { activePhotos, addPhotos, type PhotoOwner } from '../db/repo';
 import { newId } from '../db/ids';
-import { orphanFiles, PHOTO_EDGE, PHOTO_MAX_EDGE, photoFileName, PHOTO_QUALITY, scaleTo, slotsLeft } from '../domain/photos';
+import { orphanFiles, PHOTO_EDGE, photoFileName, photoIdFromFile, PHOTO_QUALITY, scaleTo, slotsLeft } from '../domain/photos';
 
 /** A photo that was chosen and shrunk but is not saved yet: its file is still in the cache. */
 export type PreparedPhoto = { id: string; uri: string; width: number; height: number; bytes: number };
 
-/** Where the app keeps its photos: files named <photo id>.jpg. */
-export function photosDir(): Directory {
-  const dir = new Directory(Paths.document, 'photos');
-  if (!dir.exists) dir.create({ intermediates: true });
+let dir: Directory | null = null;
+/** Where the app keeps its photos: files named <photo id>.jpg. Checked (and created) once per app start. */
+function photosDir(): Directory {
+  if (!dir) {
+    dir = new Directory(Paths.document, 'photos');
+    if (!dir.exists) dir.create({ intermediates: true });
+  }
   return dir;
 }
 
 export const photoFile = (id: string): File => new File(photosDir(), photoFileName(id));
 
+// Addresses of files known to be there. Screens ask on every render (the topo editor on every finger move), so the disk
+// is asked only until a file is found; a missing one is asked again, as a restore may bring it back.
+const known = new Map<string, string>();
+
 /** The picture's address if the file is there, else null (e.g. after restoring only the database). */
 export function photoUri(id: string): string | null {
+  const hit = known.get(id);
+  if (hit) return hit;
   const file = photoFile(id);
-  return file.exists ? file.uri : null;
+  if (!file.exists) return null;
+  known.set(id, file.uri);
+  return file.uri;
 }
 
 /** The system gallery picker. Needs no permission: the system hands over only what was chosen. Cancelled = []. */
@@ -34,7 +45,7 @@ export async function pickPhotos(limit: number): Promise<ImagePicker.ImagePicker
 }
 
 /** Shrinks a chosen picture (longer side `maxEdge`, 1600 px for an ascent; JPEG) into a new cache file. The result carries no location data from the original. */
-export async function preparePhoto(asset: ImagePicker.ImagePickerAsset, maxEdge = PHOTO_MAX_EDGE): Promise<PreparedPhoto> {
+export async function preparePhoto(asset: ImagePicker.ImagePickerAsset, maxEdge = PHOTO_EDGE.ascent): Promise<PreparedPhoto> {
   let width = asset.width;
   let height = asset.height;
   if (!(width > 0 && height > 0)) { // the system did not say how big it is: load it once to find out
@@ -70,9 +81,11 @@ export async function addPhotosFromGallery(db: SQLiteDatabase, owner: PhotoOwner
   return done.length;
 }
 
-/** Moves a prepared photo from the cache into the photos folder. */
+/** Moves a prepared photo from the cache into the photos folder; a photo already moved (a save tried again) is left as it is. */
 export function storePhoto(photo: PreparedPhoto): void {
-  new File(photo.uri).move(photoFile(photo.id));
+  const target = photoFile(photo.id);
+  if (target.exists) return;
+  new File(photo.uri).move(target);
 }
 
 /** Deletes picture files that no photo needs: removed photos, and photos of deleted ascents. Runs when the app opens; never throws. */
@@ -82,7 +95,7 @@ export async function cleanOrphanPhotos(db: SQLiteDatabase): Promise<void> {
     const active = (await activePhotos(db)).map((p) => p.id);
     const files = dir.list().filter((x): x is File => x instanceof File);
     const gone = new Set(orphanFiles(files.map((f) => f.name), active));
-    for (const f of files) if (gone.has(f.name)) { try { f.delete(); } catch { /* it will be tried again next time */ } }
+    for (const f of files) if (gone.has(f.name)) { try { f.delete(); known.delete(photoIdFromFile(f.name) ?? ''); } catch { /* it will be tried again next time */ } }
   } catch {
     // Tidying up is not important enough to disturb anything.
   }

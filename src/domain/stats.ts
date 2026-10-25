@@ -1,4 +1,4 @@
-import { type AscentStyle, type RouteType, isSend } from './grades';
+import { type AscentStyle, type RouteType, isSend, LEAD_STYLES } from './grades';
 
 export type StatAscent = {
   date: string; // YYYY-MM-DD
@@ -14,7 +14,7 @@ export type StatAscent = {
 
 /** Sends that count for goals and "hardest": led, not top-rope. */
 export function isLeadSend(style: AscentStyle): boolean {
-  return style === 'os' || style === 'flash' || style === 'rp' || style === 'pp';
+  return LEAD_STYLES.includes(style);
 }
 
 export type YearStats = {
@@ -153,4 +153,9 @@ export function yearCalendar(days: Map<string, number>, year: number): { key: st
       return { key, n: days.get(key) ?? 0 };
     });
   });
+}
+
+/** The `limit` hardest grades of a pyramid, hardest first (the stats share card). */
+export function pyramidTop(p: Map<number, number>, limit = 5): { gradeIndex: number; count: number }[] {
+  return [...p.entries()].sort((a, b) => b[0] - a[0]).slice(0, limit).map(([gradeIndex, count]) => ({ gradeIndex, count }));
 }

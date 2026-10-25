@@ -7,6 +7,7 @@ import type { NamedRow } from '../db/repo';
 import { validateName } from '../domain/forms';
 import { Button, ErrorText, Field, Label } from './kit';
 import { useTheme } from './theme';
+import { errorMessage } from './errors';
 
 /** Rename or delete something that only has a name (a sector, a region). */
 export function NameEditor({ title, hint, load, rename, onDelete, deleteLabel }: {
@@ -38,7 +39,7 @@ export function NameEditor({ title, hint, load, rename, onDelete, deleteLabel }:
       await rename(v.value);
       router.back();
     } catch (e) {
-      setError(t('common.failed', { message: (e as Error).message }));
+      setError(errorMessage(e));
       setSaving(false);
     }
   }

@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image, Pressable, ScrollView, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { MAX_PHOTOS, PHOTO_LIMIT, type PhotoOwnerType } from '../domain/photos';
+import { PHOTO_LIMIT, type PhotoOwnerType } from '../domain/photos';
 import { F } from './fonts';
 import { Button, LinkButton } from './kit';
 import { photoUri, type PreparedPhoto } from './photos';
@@ -15,7 +15,7 @@ export function PhotoBadge({ count }: { count: number }) {
   const th = useTheme();
   const { t } = useTranslation();
   return (
-    <View accessible accessibilityLabel={t('photos.usage', { count, max: MAX_PHOTOS })} style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+    <View accessible accessibilityLabel={t('photos.usage', { count, max: PHOTO_LIMIT.ascent })} style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
       <Ionicons name="camera-outline" size={15} color={th.muted} />
       <Text style={{ color: th.muted, fontSize: 12, fontFamily: F.semi }}>{count}</Text>
     </View>
@@ -35,7 +35,7 @@ function Tile({ uri, onPress, label }: { uri: string | null; onPress?: () => voi
   );
 }
 
-/** The photos of an ascent in a row; tapping one opens it full screen. */
+/** Photos (of an ascent, crag or wall) in a row; tapping one opens it full screen. */
 export function PhotoStrip({ ids, onOpen }: { ids: string[]; onOpen: (index: number) => void }) {
   const { t } = useTranslation();
   if (!ids.length) return null;
@@ -84,8 +84,8 @@ export function PhotoEditor({ photos, busy, onAdd, onRemove }: {
           ))}
         </ScrollView>
       ) : null}
-      <Text style={{ color: th.muted, fontSize: 13, marginTop: 2 }}>{busy ? t('photos.preparing') : t('photos.usage', { count: photos.length, max: MAX_PHOTOS })}</Text>
-      {photos.length < MAX_PHOTOS ? <Button label={t('photos.add')} variant="plain" onPress={onAdd} disabled={busy} /> : null}
+      <Text style={{ color: th.muted, fontSize: 13, marginTop: 2 }}>{busy ? t('photos.preparing') : t('photos.usage', { count: photos.length, max: PHOTO_LIMIT.ascent })}</Text>
+      {photos.length < PHOTO_LIMIT.ascent ? <Button label={t('photos.add')} variant="plain" onPress={onAdd} disabled={busy} /> : null}
     </View>
   );
 }

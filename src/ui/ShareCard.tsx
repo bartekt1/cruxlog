@@ -1,65 +1,23 @@
-import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
-import { Image, View } from 'react-native';
-import { TopoLines, type DrawnLine } from './TopoLines';
+import type { ReactElement } from 'react';
+import { View } from 'react-native';
+import type { CardStyle } from '../domain/settings';
+import { CARD_RATIO, CardFooter, PhotoBox, type CardProps, type ShareCardData } from './cardParts';
+import { FullCard, NightCard, PolaroidCard, PosterCard, TicketCard, TopoCard } from './cardStyles';
 import { Contours } from './Contours';
 import { F } from './fonts';
 import { Text } from './Text';
 import { paperTheme as c } from './theme';
 
-export type ShareCardData = {
-  /** Small heading, e.g. "Przejście" or "Zapraszam na skałę". */
-  tag: string;
-  title: string;
-  /** Grade square; null for a crag. */
-  grade: string | null;
-  style: string | null;
-  rating: number | null;
-  /** Crag and sector, then the area path, then facts such as length and bolts. */
-  line: string; path: string; facts: string[];
-  date: string | null;
-  message: string;
-  /** Coordinates already formatted; null when left out. */
-  place: { coords: string; approx: boolean } | null;
-  approxLabel: string;
-  /** A photo of the ascent to show on the card (a file address), or null. */
-  photoUri: string | null;
-  /** Topo lines to draw over the photo, with the photo's own size (to place them on the cropped picture); null = none. */
-  topo: { photoW: number; photoH: number; lines: DrawnLine[] } | null;
-};
+export { CARD_RATIO, CardFooter, type ShareCardData };
 
-export const CARD_RATIO = 1.25;
-const BRAND = 'Cruxlog'; // the app's name is not translated
-
-
-/** Coordinates (with "approximate" when they are) on the left, the app's name on the right. */
-function Footer({ data, u }: { data: ShareCardData; u: number }) {
-  return (
-  <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12 * u }}>
-    {data.place ? (
-      <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6 * u }}>
-        <Ionicons name={data.place.approx ? 'location-outline' : 'location'} size={18 * u} color={c.accent} />
-        <View style={{ flexShrink: 1 }}>
-          <Text style={{ color: c.ink, fontFamily: F.semi, fontSize: 13 * u }}>{data.place.coords}</Text>
-          {data.place.approx ? <Text style={{ color: c.muted, fontSize: 12 * u }}>{data.approxLabel}</Text> : null}
-        </View>
-      </View>
-    ) : <View style={{ flex: 1 }} />}
-    <Text style={{ color: c.ink, fontFamily: F.display, fontSize: 20 * u, letterSpacing: 1.5 * u, textTransform: 'uppercase' }}>{BRAND}</Text>
-  </View>
-  );
-}
+const Footer = ({ data, u }: { data: ShareCardData; u: number }) => <CardFooter place={data.place} approxLabel={data.approxLabel} u={u} />;
 
 /** With a photo the picture comes first: it fills the top of the card, the grade sits on it like a label, the text is below. */
-function PhotoCard({ data, width, onPhotoLoaded }: { data: ShareCardData; width: number; onPhotoLoaded?: (uri: string) => void }) {
+function PhotoCard({ data, width, onPhotoLoaded }: CardProps) {
   const u = width / 360;
-  const [frame, setFrame] = useState({ w: 0, h: 0 }); // the photo's area, to place topo lines on the cropped picture
   return (
     <View collapsable={false} style={{ width, height: width * CARD_RATIO, backgroundColor: c.bg, overflow: 'hidden' }}>
-      <View style={{ flex: 1, backgroundColor: c.soft, overflow: 'hidden' }} onLayout={(e) => setFrame({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}>
-        <Image source={{ uri: data.photoUri! }} resizeMode="cover" style={{ width: '100%', height: '100%' }}
-          onLoad={() => onPhotoLoaded?.(data.photoUri!)} onError={() => onPhotoLoaded?.(data.photoUri!)} />
-        {data.topo && frame.w ? <CoverTopo topo={data.topo} w={frame.w} h={frame.h} /> : null}
+      <PhotoBox data={data} onPhotoLoaded={onPhotoLoaded} style={{ flex: 1 }}>
         {data.grade ? (
           <View style={{ position: 'absolute', left: 14 * u, bottom: 12 * u, flexDirection: 'row', alignItems: 'center', gap: 8 * u }}>
             <View style={{ minWidth: 56 * u, height: 56 * u, paddingHorizontal: 8 * u, borderRadius: 10 * u, backgroundColor: c.badge, alignItems: 'center', justifyContent: 'center' }}>
@@ -73,7 +31,7 @@ function PhotoCard({ data, width, onPhotoLoaded }: { data: ShareCardData; width:
             ) : null}
           </View>
         ) : null}
-      </View>
+      </PhotoBox>
       <View style={{ paddingHorizontal: 20 * u, paddingTop: 12 * u, paddingBottom: 14 * u, gap: 3 * u }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 * u }}>
           <Text style={{ color: c.accent, fontFamily: F.semi, fontSize: 11 * u, letterSpacing: 1.8 * u, textTransform: 'uppercase' }}>{data.tag}</Text>
@@ -93,23 +51,21 @@ function PhotoCard({ data, width, onPhotoLoaded }: { data: ShareCardData; width:
   );
 }
 
-/** Topo lines placed like the photo under them, which fills the area and is cropped at the edges ("cover"). */
-function CoverTopo({ topo, w, h }: { topo: NonNullable<ShareCardData['topo']>; w: number; h: number }) {
-  const s = Math.max(w / topo.photoW, h / topo.photoH);
-  const dw = topo.photoW * s;
-  const dh = topo.photoH * s;
-  return (
-    <View pointerEvents="none" style={{ position: 'absolute', left: (w - dw) / 2, top: (h - dh) / 2, width: dw, height: dh }}>
-      <TopoLines lines={topo.lines} width={dw} height={dh} />
-    </View>
-  );
-}
+const STYLES: Record<Exclude<CardStyle, 'guide'>, (p: CardProps) => ReactElement> = {
+  full: FullCard, polaroid: PolaroidCard, poster: PosterCard, ticket: TicketCard, night: NightCard, topo: TopoCard,
+};
 
 /**
- * The picture sent to a friend. Always on paper, in the app's own look, whatever the phone's theme.
+ * The picture sent to a friend, in the look the user picked (`look`), the same whatever the phone's theme.
  * Sized by `width` (dp) so the preview and the saved image look the same.
  */
-export function ShareCard({ data, width, onPhotoLoaded }: { data: ShareCardData; width: number; onPhotoLoaded?: (uri: string) => void }) {
+export function ShareCard({ look = 'guide', ...p }: CardProps & { look?: CardStyle }) {
+  if (look !== 'guide') { const Card = STYLES[look]; return <Card {...p} />; }
+  return <GuideCard {...p} />;
+}
+
+/** "Przewodnik": the app's own look on paper. */
+function GuideCard({ data, width, onPhotoLoaded }: CardProps) {
   if (data.photoUri) return <PhotoCard data={data} width={width} onPhotoLoaded={onPhotoLoaded} />;
   const u = width / 360;
   return (

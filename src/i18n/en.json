@@ -1,9 +1,18 @@
 {
   "tabs": { "journal": "Journal", "progress": "Progress", "crags": "Crags", "goals": "Goals" },
-  "common": {
+  "common": { "more": "More ›", "less": "Less",
     "optional": "Optional",
-    "save": "Save", "saving": "Saving…", "edit": "Edit", "delete": "Delete", "cancel": "Cancel", "add": "Add", "change": "Change", "search": "Search", "none": "Nothing here yet",
-    "today": "Today", "yesterday": "Yesterday", "failed": "Something went wrong: {{message}}"
+    "save": "Save", "saving": "Saving…", "edit": "Edit", "delete": "Delete", "cancel": "Cancel", "add": "Add", "change": "Change",
+    "today": "Today", "yesterday": "Yesterday", "failed": "Something went wrong: {{message}}", "failedText": "{{message}}"
+  },
+  "errors": {
+    "folderGone": "The backup folder is gone or the app lost access to it. Choose it again.",
+    "partialCopy": "The copy was written only in part. Check the free space and try again.",
+    "partialPhoto": "A photo was written only in part. Check the free space and try again.",
+    "readBack": "The file in the folder read back differently than it was written.",
+    "notFound": "This is no longer there (it was deleted).",
+    "newerBackup": "This copy comes from a newer version of the app. Update Cruxlog first.",
+    "nameTaken": "The name “{{name}}” is already used here."
   },
   "styles": { "os": "OS", "flash": "Flash", "rp": "RP", "pp": "PP", "tr": "TR", "attempt": "Attempt" },
   "types": { "sport": "Sport", "multipitch": "Multipitch" },
@@ -19,7 +28,7 @@
     "duplicate": "This crag already has \"{{name}}\" ({{sector}}, {{grade}}).", "useExisting": "Use this route", "route": "Route", "searchRoute": "Search by route, sector or crag", "newRoute": "Create a new route",
     "newRouteNamed": "Create route \"{{name}}\"", "noResults": "No routes match \"{{query}}\".",
     "style": "Style", "attempts": "Attempts", "rating": "Rating", "ratingStar": "{{n}} of 5", "partner": "Partner", "weather": "Conditions",
-    "notes": "Notes", "date": "Date", "datePlaceholder": "YYYY-MM-DD", "crag": "Crag", "sector": "Sector (optional)", "name": "Route name",
+    "notes": "Notes", "date": "Date", "crag": "Crag", "sector": "Sector (optional)", "name": "Route name",
     "grade": "Grade", "gradeExample": "e.g. {{example}}", "type": "Type", "gradeSystem": "Grade system",
     "pickRoute": "Choose a route first",
     "errors": {
@@ -29,9 +38,8 @@
     }
   },
   "progress": {
-    "months": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"], "byMonth": "Hardest send per month", "byYear": "Hardest send per year", "styles": "Ascent styles", "activityYear": "Activity in {{year}}", "topCrags": "Most visited crags", "topPartners": "Partners", "noData": "No data yet.", "noPartners": "Add a partner when logging an ascent to see this list.", "daysCount": "days: {{count}}",
-    "title": "Progress", "sends": "Sends", "days": "Days out", "hardestRoute": "Hardest route",
-    "pyramidRoutes": "Route pyramid", "activity": "Activity (last 18 weeks)",
+    "months": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"], "byMonth": "Hardest send per month", "byYear": "Hardest send per year", "styles": "Ascent styles", "activityYear": "Activity in {{year}}", "topCrags": "Most visited crags", "topPartners": "Partners", "noData": "No data yet.", "noPartners": "Add a partner when logging an ascent to see this list.", "daysCount": "days: {{count}}", "sends": "Sends", "days": "Days out", "hardestRoute": "Hardest route",
+    "pyramidRoutes": "Route pyramid",
     "empty": "No sends in {{year}} yet", "emptyHint": "Log an ascent in the Journal to see your stats.", "noSends": "No sends.", "prevYear": "Previous year", "nextYear": "Next year",
     "legendNone": "No climbing", "legendSome": "1–2 ascents", "legendMany": "3 or more"
   },
@@ -58,11 +66,11 @@
     "errors": { "name": "Enter a name.", "region": "Choose or type a region.", "area": "Choose or type an area.", "number": "Length and bolts must be numbers (or leave them empty)." }
   },
   "goals": {
-    "title": "Goals", "count": "Count", "project": "Project", "wishlist": "Wishlist", "newTitle": "Goal title", "target": "Target (number)",
+    "count": "Count", "project": "Project", "wishlist": "Wishlist", "newTitle": "Goal title", "target": "Target (number)",
     "grade": "Grade", "gradeTitle": "{{count}} × {{grade}} or harder in {{year}}", "gradeProgress": "{{value}} / {{target}} routes {{grade}} or harder in {{year}}", "routesCount": "How many routes (default 1)",
     "help": { "count": "How many sends you want this year.", "grade": "Pick a grade: routes of that grade or harder count, led (not top-rope), this year.", "project": "A route you are working on. It is ticked off by itself when you lead it.", "wishlist": "A dream route. It is ticked off by itself when you lead it." },
     "route": "Route", "routeSearch": "Start typing a route or crag name", "sentOn": "sent {{date}}", "tries": "tries: {{tries}} · days: {{days}}", "notTried": "not tried yet",
-    "add": "+ Add a goal", "yours": "Your goals", "editHint": "Opens the goal for editing", "editTitle": "Edit goal", "yourProject": "Your project", "yourWish": "On your wishlist",
+    "add": "+ Add a goal", "editHint": "Opens the goal for editing", "editTitle": "Edit goal", "yourProject": "Your project", "yourWish": "On your wishlist",
     "addRoute": "Add to goals", "addRouteTitle": "Add to goals", "addRouteQuestion": "Add “{{name}}” as a project or to your wishlist?",
     "asProject": "Add this route as a project", "isProject": "This route is your project.", "addAsProject": "Add as a project", "badgeProject": "project", "badgeWish": "wishlist",
     "kind": "Kind", "empty": "No goals yet", "emptyHint": "Add a yearly target, a grade goal, a project or a route you dream about.",
@@ -70,6 +78,8 @@
     "deleteTitle": "Delete goal?", "deleteQuestion": "\"{{title}}\" will be removed.",
     "errors": { "title": "Enter a goal title.", "target": "The target must be a whole number, 1 or more.", "grade": "Pick a grade." }
   },
+  "trip": {"title": "Trip", "list": "Trips", "new": "+ New trip", "newTitle": "New trip", "editTitle": "Edit trip", "planHere": "Plan a trip to this crag", "name": "Trip name", "namePlaceholder": "e.g. May weekend at Kamieniec", "from": "From", "to": "To", "oneDay": "One day (end = start)", "crags": "Crags", "addCrag": "Add a crag: type its name", "routes": "Proposed routes: {{count}}", "routesCount": "routes: {{count}}", "routesHint": "Pick the crags, then tap routes in the list below to add them.", "searchRoutes": "Search routes on the chosen crags", "tapToAdd": "Tap to add", "moveUp": "Move up: {{name}}", "moveDown": "Move down: {{name}}", "removeRoute": "Remove from the list: {{name}}", "message": "Message", "messagePlaceholder": "e.g. Meet at 8:00 at the car park", "bragPlaceholder": "e.g. Two great days!", "errors": {"name": "Enter the trip name.", "dates": "The end cannot be before the start.", "place": "Add at least one crag."}, "status": {"planned": "Planned", "ongoing": "On now", "done": "Done"}, "invite": "Invite to the trip", "brag": "Show off the trip", "climbed": "What got climbed", "sends": "Sends", "days": "Days", "hardest": "Hardest", "plannedDone": "Done from the plan: {{done}} of {{total}}", "nothingYet": "No ascents logged on the trip days yet.", "sent": "sent on the trip", "noRoutes": "No proposed routes.", "notFound": "Trip not found.", "delete": "Delete trip", "deleteTitle": "Delete the trip?", "deleteQuestion": "The trip “{{name}}” disappears from the list. Your ascents stay.", "cardInvite": "Join me on a trip", "cardSummary": "Trip", "more": "and more routes: {{count}}", "placeHint": "The card shows the position of the crag {{crag}}, not yours.", "fromTrip": "From the trip: {{name}}"},
+  "packs": {"title": "Crag packs", "open": "Choose crag packs", "settingsHelp": "Ready packs of crags and routes to download, one pack per group of crags.", "help": "Pick the groups of crags you want on the phone. Updating a pack keeps your ascents. Removing one keeps the routes you have ascents on.", "retry": "Try again", "badList": "The list of packs on the server is damaged. Try later.", "offline": "No internet connection. The list of packs needs the internet.", "serverError": "The packs server did not answer properly (code {{status}}). Try later.", "badPack": "The pack “{{name}}” on the server is damaged. Nothing was changed.", "empty": "No packs on the server yet.", "getArea": "Get the whole area (packs: {{count}})", "counts": "crags: {{crags}} · routes: {{routes}} · {{size}}", "notInstalled": "Not downloaded", "installed": "Downloaded (version {{version}})", "update": "Update available (version {{version}})", "get": "Download", "doUpdate": "Update", "remove": "Remove", "done": "Imported: {{crags}} crags, {{routes}} routes.", "removeTitle": "Remove the pack?", "removeQuestion": "The crags and routes of “{{name}}” disappear from the phone. Routes with your ascents and your own ones stay.", "gone": "Packs no longer on the server"},
   "routeSearch": {
     "open": "Find routes", "openHere": "Find routes with filters", "title": "Find routes", "name": "Route or crag name", "any": "Any", "from": "Grade from", "to": "Grade to",
     "where": "Where", "up": "One level up", "everywhere": "Everywhere", "status": "Your ascents",
@@ -113,6 +123,10 @@
     "approxCard": "approximate position", "approxText": "approximate position", "mapLabel": "Map",
     "sendImage": "Send picture", "sendText": "Send text with a map link", "failed": "Could not prepare the message."
   },
+  "cards": { "look": "Card look", "styles": { "guide": "Guidebook", "full": "Full frame", "polaroid": "Polaroid", "poster": "Poster", "ticket": "Ticket", "night": "Night", "topo": "Topo" }, "grade": "Grade", "style": "Style", "date": "Date", "rating": "Rating" },
+  "updates": {"section": "App version", "current": "Installed version: {{version}}", "check": "Check for updates", "title": "Update", "question": "A new version of Cruxlog is available: {{version}}. Download and install it? Your data stays.", "later": "Later", "install": "Install", "downloading": "Downloading the new version…", "upToDate": "You have the latest version.", "devBuild": "This build has no version number (built outside GitHub). The latest is {{version}}.", "offline": "Could not reach GitHub. Check your internet connection.", "failed": "GitHub answered with an error ({{status}}). Try again later.", "downloadFailed": "Could not download the new version. Check your internet connection and try again."},
+  "statsShare": {"title": "Show off your year", "tag": "My year", "days": "Days", "hardest": "Hardest", "hardestGrades": "Hardest grades", "calendar": "Days at the crag", "favCrag_one": "Favourite crag: {{name}} ({{count}} day)", "favCrag_other": "Favourite crag: {{name}} ({{count}} days)", "partners": "Climbed with: {{names}}", "withPartners": "Show partners (their names go on the card)", "messagePlaceholder": "e.g. Best season yet!", "sendText": "Send as text"},
+  "goalsShare": {"title": "Show off your goals", "open": "Show off goals", "tag": "My goals", "which": "Goals on the card (at most {{max}})", "none": "Choose at least one goal.", "messagePlaceholder": "e.g. Keep your fingers crossed!"},
   "photos": {
     "title": "Photos", "add": "Add photos", "usage": "Photos: {{count}} of {{max}}", "preparing": "Preparing the photos…",
     "cragTitle": "Photos of the crag", "addWall": "Add photos of the wall: {{sector}}", "delete": "Delete photo", "deleteTitle": "Delete this photo?", "deleteQuestion": "The photo disappears from this phone. The copy on Drive stays.", "removeA11y": "Remove photo", "openA11y": "Open photo {{n}}", "missing": "Photo not available", "viewerTitle": "Photo {{n}} of {{total}}",
@@ -132,7 +146,7 @@
     "discardTitle": "Discard changes?", "discardQuestion": "The line will not be saved.", "discard": "Discard",
     "canvasA11y": "Photo of the wall. Tap to add a point of the line."
   },
-  "settings": {
+  "settings": { "sectionLook": "Look and language", "sectionCrags": "Crags and packs", "sectionCragsSummary": "Crag packs, import from a CSV file", "autoBackupShort": "Every 7 days the app saves a copy in a folder you choose, e.g. on Google Drive.", "backupShort": "All data in one file, without photos.", "csvShort": "A file with a route list in the Cruxlog template.", "removeImportedShort": "Before loading a file that replaces the previous one.",
     "title": "Settings", "language": "Language", "theme": "Appearance", "themes": { "system": "Like the phone", "light": "Light", "dark": "Dark" }, "routeGrades": "Route grades",
     "backup": "Backup", "manualBackup": "Other ways to back up (one file, no photos)", "autoBackup": "Automatic backup", "autoBackupHelp": "Choose a folder, e.g. on Google Drive. When the app opens and 7 days have passed since the last copy and something changed, it saves a copy there by itself. The 5 latest stay. First I check that the folder can be written to. On a new phone choose the same folder, then “Restore from a copy in the folder”.",
     "folderNone": "No folder chosen.", "folderDrive": "Folder: on Google Drive", "folderDevice": "Folder: {{path}} (phone storage)",
@@ -143,14 +157,13 @@
     "folderOk": "Writing to the folder “{{name}}” works.", "folderFailed": "Could not write to this folder: {{message}}",
     "backupHelp": "Export saves all data in one file, without photos; handy to send yourself a copy or to move the data without a backup folder. Import merges a file with the app: newer entries win, nothing is deleted. Import also reads an automatic copy (.json.gz).",
     "export": "Export backup", "import": "Import backup", "csv": "Import crags from a CSV file",
-    "csvHelp": "Pick one file with a list of routes (e.g. a guidebook export or a theCrag export). Each row is one route: region, area, group, crag, sector, name, grade. The older import with crags.csv and routes.csv still works. A file with columns Crag, lat, lng only saves crag positions for the map.",
-    "csvSkipped": "Rows left out: {{count}} (boulders, ice, via ferratas, unnamed routes, projects, routes without a grade or with an unknown grade).",
+    "csvHelp": "Pick a CSV file with a route list in the Cruxlog template: one row per route; the columns Region, Rejon (area), Skała (crag), Nazwa (name) and Wycena (grade) are required, the others (Grupa, Sektor, Typ, Skala_wycen, Długość, Przeloty, Autor, Rok, Opis, Lat, Lng, Przybliżone, Opis_skały, Dojście, ID_skały, ID_drogi; English names work too) are optional, in any order. A route with the same name on the same crag takes over the existing one with your ascents. A file with only the columns Crag, Lat, Lng saves crag positions for the map.",
     "removeImported": "Remove imported crags and routes", "removeImportedHelp": "Before loading a file that should replace the previous one. Routes with your ascents and everything you added yourself stay.",
     "removeImportedTitle": "Remove imported data?", "removeImportedConfirm": "This removes {{routes}} routes and {{crags}} crags. Routes with your ascents and everything you added yourself stay.",
     "removeImportedDone": "Removed {{routes}} routes and {{crags}} crags.", "removeImportedNone": "There is no imported data to remove.",
-    "csvLine": "line {{line}}", "csvUnknown": "File {{file}} was not recognised. The first row should hold headers, e.g. Region;Area;Crag;Name;Grade.",
-    "importDone": "Imported {{count}} records.", "csvDone": "Imported {{crags}} crags, {{sectors}} sectors, {{routes}} routes, {{pitches}} pitches.",
-    "csvErrors": "{{count}} problems found. Nothing was imported.", "csvMissing": "crags.csv and routes.csv are required. Selected: {{files}}.",
+    "csvLine": "line {{line}}", "csvMissingColumns": "File {{file}} lacks the columns: {{columns}}.", "csvTaken": "Existing routes taken over (with your ascents): {{count}}.", "csvUnknown": "File {{file}} was not recognised. The first line should hold the headers, e.g. Region;Rejon;Skała;Nazwa;Wycena.",
+    "importDone": "Imported {{count}} records.", "csvDone": "Imported {{crags}} crags, {{sectors}} sectors, {{routes}} routes.",
+    "csvErrorList": "{{count}} problems found. Nothing was imported.\n\n{{list}}",
     "notBackup": "This file is not a Cruxlog backup.", "lastBackupNever": "No backup yet.", "lastBackupToday": "Last backup: today.", "lastBackupDays": "Last backup: {{n}} days ago.",
     "done": "Done", "problem": "Problem",
     "positionsConfirm": "The file has crag positions: {{count}}. They will be saved on crags with the same name or key. Routes and ascents will not change.",

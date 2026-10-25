@@ -7,6 +7,7 @@ import { addSector } from '../../src/db/repo';
 import { validateName } from '../../src/domain/forms';
 import { Button, ErrorText, Field, Label } from '../../src/ui/kit';
 import { useTheme } from '../../src/ui/theme';
+import { errorMessage } from '../../src/ui/errors';
 
 /** /sector/new?cragId=<crag>: add a sector to a crag. An existing name is reused, not duplicated. */
 export default function NewSector() {
@@ -27,7 +28,7 @@ export default function NewSector() {
       await addSector(db, cragId, v.value);
       router.back();
     } catch (e) {
-      setError(t('common.failed', { message: (e as Error).message }));
+      setError(errorMessage(e));
       setSaving(false);
     }
   }

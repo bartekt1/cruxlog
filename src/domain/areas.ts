@@ -1,10 +1,9 @@
 // Areas above a crag: region → area ("rejon") → any number of groups (optional). Stored in one table with a parent link.
 // Below the area every level is a group, so imported trees such as
 // Jura › Jura Południowa › Garb Tenczyński › Dolina Sanki › Zimny Dół keep all their levels.
+import { sameName } from './text';
 
 export type AreaLevel = 'region' | 'area' | 'group';
-export const AREA_LEVELS: AreaLevel[] = ['region', 'area', 'group'];
-
 export type Area = { id: string; name: string; level: AreaLevel; parent_id: string | null };
 
 /** Separates group levels in one text, e.g. "Dolina Sanki › Zimny Dół". */
@@ -50,6 +49,15 @@ export function pathNames(areas: Area[], id: string | null): { region: string; a
 }
 
 /** Path labels of all areas at once (fast for long lists). */
+/** Puts first the items (e.g. crags offered while typing) that lie in the region and area already chosen; otherwise keeps the order. */
+export function rankByChosenArea<T extends { region_id: string | null }>(items: T[], areas: Area[], chosen: { region: string; area: string }): T[] {
+  const score = (x: T) => {
+    const p = pathNames(areas, x.region_id);
+    return (chosen.region && sameName(p.region, chosen.region) ? 1 : 0) + (chosen.area && sameName(p.area, chosen.area) ? 1 : 0);
+  };
+  return [...items].sort((a, b) => score(b) - score(a));
+}
+
 export function pathLabels(areas: Area[]): Map<string, string> {
   const byId = new Map(areas.map((a) => [a.id, a]));
   const out = new Map<string, string>();
@@ -92,4 +100,14 @@ export function descendantIds(areas: Area[], id: string): Set<string> {
     for (const a of areas) if (a.parent_id && inside.has(a.parent_id) && !inside.has(a.id)) { inside.add(a.id); grew = true; }
   }
   return inside;
+}
+
+export type AreaNames = { region: string; area: string; group: string };
+
+/** Region, area and the group levels ("Dolina Sanki › Zimny Dół" is two groups) as one list, top down. */
+export function areaChain(names: AreaNames): string[] {
+  const region = names.region.trim();
+  if (!region) return [];
+  const area = names.area.trim();
+  return area ? [region, area, ...splitPath(names.group)] : [region];
 }

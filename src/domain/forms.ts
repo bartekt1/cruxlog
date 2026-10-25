@@ -18,6 +18,17 @@ export function validateRouteDraft(r: RouteDraft): Result<{ cragName: string; se
   return { ok: true, value: { cragName: crag, sectorName: r.sector.trim() || crag, name, gradeLabel: r.grade.trim(), gradeIndex } };
 }
 
+/**
+ * A route typed in the new-ascent form: as validateRouteDraft, and a new crag (or one without an area) needs a region and an area,
+ * so it does not end up outside the tree.
+ */
+export function validateNewRoute(r: RouteDraft & { areas: AreaDraft; cragHasArea: boolean }) {
+  const v = validateRouteDraft(r);
+  if (!v.ok) return v;
+  if (!r.cragHasArea && (!r.areas.region.trim() || !r.areas.area.trim())) return { ok: false as const, error: 'ascent.errors.region' };
+  return v;
+}
+
 /** Optional length or bolt count from a text field: empty → null; anything but a number ≥ 0 is an error. */
 export function validateOptionalNumber(text: string, integer: boolean): Result<number | null> {
   const s = text.trim().replace(',', '.');

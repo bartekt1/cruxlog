@@ -3,28 +3,31 @@ import * as Sharing from 'expo-sharing';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Pressable, ScrollView, Share, Switch, useWindowDimensions, View } from 'react-native';
+import { Alert, ScrollView, Share, useWindowDimensions, View } from 'react-native';
 import { captureRef } from 'react-native-view-shot';
 import { Text } from '../src/ui/Text';
-import { getAscent, getCrag, getRoute, listAreas, listCragRoutes, listPhotos, listTopoLines, routeTopos, type PhotoRow, type TopoLineRow, type CragDetail, type RouteRow } from '../src/db/repo';
+import { getAscent, getCrag, getRoute, listAreas, listCragRoutes, listPhotos, listTopoLines, drawnPhotoIds, type PhotoRow, type TopoLineRow, type CragDetail, type RouteRow } from '../src/db/repo';
 import { pathLabel } from '../src/domain/areas';
 import { formatDay, isoDate } from '../src/domain/dates';
 import { isLatLng } from '../src/domain/geo';
-import { routeGrade } from '../src/domain/grades';
+import { otherGrades, routeGrade } from '../src/domain/grades';
+import { CARD_STYLES } from '../src/domain/settings';
 import { coordsLabel, shareMessage, type SharePlace } from '../src/domain/share';
 import { numberLines } from '../src/domain/topo';
-import { sameName } from '../src/domain/text';
+import { sectorLine } from '../src/domain/text';
 import { Button, Chip, ChipRow, EmptyState, Field, Label } from '../src/ui/kit';
 import { photoUri } from '../src/ui/photos';
 import { CARD_RATIO, ShareCard, type ShareCardData } from '../src/ui/ShareCard';
 import { useSettings } from '../src/ui/settingsStore';
 import { useTheme } from '../src/ui/theme';
+import { SwitchRow } from '../src/ui/rows';
 
 type Kind = 'ascent' | 'route' | 'crag';
 /** What the card and the text say, before the user's message and the position switch are applied. */
 type Content = {
   tag: string; title: string; grade: string | null; style: string | null; rating: number | null;
   line: string; path: string; facts: string[]; date: string | null; headline: string; place: SharePlace | null;
+  otherGrades: string; cragName: string; bolts: number | null;
 };
 
 const OUT_WIDTH = 1080;
@@ -35,7 +38,7 @@ export default function ShareScreen() {
   const db = useSQLiteContext();
   const { t, i18n } = useTranslation();
   const th = useTheme();
-  const { routeSystem } = useSettings();
+  const { routeSystem, cardStyle, setCardStyle } = useSettings();
   const { width: screenWidth } = useWindowDimensions();
   const cardRef = useRef<View>(null);
   const [content, setContent] = useState<Content | null | undefined>(undefined);
@@ -63,7 +66,7 @@ export default function ShareScreen() {
         const r = await getRoute(db, id);
         if (r) {
           // Photos the route is drawn on come first, so the default photo shows its line.
-          const drawn = new Set((await routeTopos(db, id)).map((x) => x.photo.id));
+          const drawn = new Set(await drawnPhotoIds(db, id));
           const all = [...(await listPhotos(db, 'sector', r.sector_id)), ...(await listPhotos(db, 'crag', r.crag_id))];
           rows = [...all.filter((p) => drawn.has(p.id)), ...all.filter((p) => !drawn.has(p.id))];
         }
@@ -76,7 +79,9 @@ export default function ShareScreen() {
   const chosenPhoto = withPhoto && photoRows.length ? photoRows[Math.min(photoIndex, photoRows.length - 1)] : null;
   useEffect(() => {
     if (!chosenPhoto || chosenPhoto.owner_type === 'ascent') { setPhotoLines([]); return; }
-    listTopoLines(db, chosenPhoto.id).then((all) => setPhotoLines(kind === 'route' ? all.filter((l) => l.route_id === id) : all));
+    let live = true;
+    listTopoLines(db, chosenPhoto.id).then((all) => { if (live) setPhotoLines(kind === 'route' ? all.filter((l) => l.route_id === id) : all); });
+    return () => { live = false; };
   }, [db, chosenPhoto?.id, chosenPhoto?.owner_type, kind, id]);
 
   useEffect(() => {
@@ -86,8 +91,6 @@ export default function ShareScreen() {
       const placeOf = (c: CragDetail | null): SharePlace | null =>
         c && isLatLng(c.lat, c.lng) ? { lat: c.lat!, lng: c.lng!, approx: c.pos_source === 'approx' } : null;
       const pathOf = (c: CragDetail) => (c.region_id ? pathLabel(areas, c.region_id) : c.region ?? '');
-      // A crag's only sector is often named like the crag; then the name is said once.
-      const sectorLine = (r: RouteRow) => (sameName(r.crag_name, r.sector_name) ? r.crag_name : [r.crag_name, r.sector_name].filter(Boolean).join(' › '));
       const routeFacts = (r: RouteRow) => [
         t(`types.${r.type}`), r.length_m != null ? t('route.length', { m: r.length_m }) : '', r.bolts != null ? t('route.bolts', { count: r.bolts }) : '',
       ].filter(Boolean);
@@ -101,8 +104,9 @@ export default function ShareScreen() {
           const date = formatDay(a.date, i18n.language, isoDate(new Date()));
           out = {
             tag: t('share.tagAscent'), title: a.route.name, grade, style, rating: a.rating || null,
-            line: sectorLine(a.route), path: pathOf(crag), facts: [t(`types.${a.route.type}`)], date,
+            line: sectorLine(a.route.crag_name, a.route.sector_name), path: pathOf(crag), facts: [t(`types.${a.route.type}`)], date,
             headline: `${a.route.name} ${grade} – ${style}`, place: placeOf(crag),
+            otherGrades: otherGrades(a.route, routeSystem), cragName: crag.name, bolts: a.route.bolts,
           };
         }
       } else if (kind === 'route') {
@@ -112,8 +116,9 @@ export default function ShareScreen() {
           const grade = routeGrade(r, routeSystem);
           out = {
             tag: t('share.tagRoute'), title: r.name, grade, style: null, rating: null,
-            line: sectorLine(r), path: pathOf(crag), facts: routeFacts(r), date: null,
+            line: sectorLine(r.crag_name, r.sector_name), path: pathOf(crag), facts: routeFacts(r), date: null,
             headline: `${r.name} ${grade}`, place: placeOf(crag),
+            otherGrades: otherGrades(r, routeSystem), cragName: crag.name, bolts: r.bolts,
           };
         }
       } else if (kind === 'crag') {
@@ -123,7 +128,7 @@ export default function ShareScreen() {
           out = {
             tag: t('share.tagCrag'), title: crag.name, grade: null, style: null, rating: null,
             line: t('crags.routes', { count: routes.length }), path: pathOf(crag), facts: [], date: null,
-            headline: crag.name, place: placeOf(crag),
+            headline: crag.name, place: placeOf(crag), otherGrades: '', cragName: crag.name, bolts: null,
           };
         }
       }
@@ -139,6 +144,7 @@ export default function ShareScreen() {
   const cardWidth = Math.min(screenWidth - 32, 380);
   const card: ShareCardData = {
     tag: content.tag, title: content.title, grade: content.grade, style: content.style, rating: content.rating,
+    otherGrades: content.otherGrades, cragName: content.cragName, bolts: content.bolts,
     line: content.line, path: content.path, facts: content.facts, date: content.date, message: message.trim(),
     place: place ? { coords: coordsLabel(place), approx: place.approx } : null, approxLabel: t('share.approxCard'),
     photoUri: chosenPhoto ? photoUri(chosenPhoto.id) : null,
@@ -177,27 +183,22 @@ export default function ShareScreen() {
       <Stack.Screen options={{ title: t('share.title') }} />
       <View style={{ alignItems: 'center' }}>
         <View ref={cardRef} collapsable={false} style={{ borderWidth: 1, borderColor: th.line }}>
-          <ShareCard data={card} width={cardWidth} onPhotoLoaded={setLoadedPhoto} />
+          <ShareCard look={cardStyle} data={card} width={cardWidth} onPhotoLoaded={setLoadedPhoto} />
         </View>
       </View>
 
+      <Label>{t('cards.look')}</Label>
+      <ChipRow>{CARD_STYLES.map((s) => <Chip key={s} label={t(`cards.styles.${s}`)} on={cardStyle === s} onPress={() => setCardStyle(s)} />)}</ChipRow>
+
       {photoIds.length ? (
         <>
-          <Pressable onPress={() => setWithPhoto(!withPhoto)} accessibilityRole="switch" accessibilityState={{ checked: withPhoto }}
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 14, minHeight: 44 }}>
-            <Switch value={withPhoto} onValueChange={setWithPhoto} trackColor={{ false: th.line, true: th.accent }} thumbColor={th.surface} importantForAccessibility="no" />
-            <Text style={{ color: th.ink, flex: 1 }}>{t('photos.useOnCard')}</Text>
-          </Pressable>
+          <SwitchRow label={t('photos.useOnCard')} value={withPhoto} onChange={setWithPhoto} marginTop={14} />
           <Text style={{ color: th.muted, fontSize: 13 }}>{t('photos.cardHint')}</Text>
           {withPhoto && photoIds.length > 1 ? (
             <ChipRow>{photoIds.map((pid, i) => <Chip key={pid} label={String(i + 1)} on={photoIndex === i} onPress={() => setPhotoIndex(i)} />)}</ChipRow>
           ) : null}
           {withPhoto && photoLines.length ? (
-            <Pressable onPress={() => setWithTopo(!withTopo)} accessibilityRole="switch" accessibilityState={{ checked: withTopo }}
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6, minHeight: 44 }}>
-              <Switch value={withTopo} onValueChange={setWithTopo} trackColor={{ false: th.line, true: th.accent }} thumbColor={th.surface} importantForAccessibility="no" />
-              <Text style={{ color: th.ink, flex: 1 }}>{t('topo.onCard')}</Text>
-            </Pressable>
+            <SwitchRow label={t('topo.onCard')} value={withTopo} onChange={setWithTopo} marginTop={6} />
           ) : null}
         </>
       ) : null}
@@ -207,11 +208,7 @@ export default function ShareScreen() {
 
       {content.place ? (
         <>
-          <Pressable onPress={() => setWithPlace(!withPlace)} accessibilityRole="switch" accessibilityState={{ checked: withPlace }}
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10, minHeight: 44 }}>
-            <Switch value={withPlace} onValueChange={setWithPlace} trackColor={{ false: th.line, true: th.accent }} thumbColor={th.surface} importantForAccessibility="no" />
-            <Text style={{ color: th.ink, flex: 1 }}>{t('share.withPlace')}</Text>
-          </Pressable>
+          <SwitchRow label={t('share.withPlace')} value={withPlace} onChange={setWithPlace} />
           <Text style={{ color: th.muted, fontSize: 13 }}>{content.place.approx ? t('share.approxHint') : t('share.placeHint')}</Text>
         </>
       ) : (

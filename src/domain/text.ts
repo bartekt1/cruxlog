@@ -38,3 +38,8 @@ export function suggest<T>(items: T[], query: string, name: (x: T) => string, ex
     .sort((a, b) => starts(a) - starts(b) || fold(name(a)).localeCompare(fold(name(b))))
     .slice(0, limit);
 }
+
+/** "Crag › sector" for a route; a crag's only sector is often named like the crag, and then the name is said once. */
+export function sectorLine(crag: string, sector: string): string {
+  return sameName(crag, sector) || !sector.trim() ? crag : `${crag} › ${sector}`;
+}

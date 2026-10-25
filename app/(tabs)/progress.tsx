@@ -1,4 +1,5 @@
-import { useFocusEffect } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -122,6 +123,7 @@ function YearArrow({ label, hint, target, onPress }: { label: string; hint: stri
 
 export default function Progress() {
   const db = useSQLiteContext();
+  const router = useRouter();
   const { t } = useTranslation();
   const th = useTheme();
   const { routeSystem } = useSettings();
@@ -156,6 +158,12 @@ export default function Progress() {
           <YearArrow label="‹" hint={t('progress.prevYear')} target={years[years.indexOf(year) + 1]} onPress={setYear} />
           <Text accessibilityRole="header" style={{ color: th.ink, fontSize: 32, fontFamily: F.display, minWidth: 80, textAlign: 'center' }}>{year}</Text>
           <YearArrow label="›" hint={t('progress.nextYear')} target={years[years.indexOf(year) - 1]} onPress={setYear} />
+          {stats.sends ? (
+            <Pressable onPress={() => router.push(`/stats/share?year=${year}`)} hitSlop={HIT} accessibilityRole="button" accessibilityLabel={t('statsShare.title')}
+              style={{ position: 'absolute', right: 0, padding: 6 }}>
+              <Ionicons name="share-social-outline" size={24} color={th.accent} />
+            </Pressable>
+          ) : null}
         </View>
         {stats.sends === 0 ? <EmptyState title={t('progress.empty', { year })} hint={t('progress.emptyHint')} /> : null}
         <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>

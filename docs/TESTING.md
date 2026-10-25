@@ -5,7 +5,7 @@ Write down the result of every step (OK / problem). Report problems with: step n
 
 ## 0. Preparation
 1. Uninstall any older Cruxlog, install the new APK, open it. Expected: the Journal tab opens with the text "No ascents yet..." (or Polish equivalent).
-2. Copy the files from `samples/` (crags.csv, sectors.csv, routes.csv, pitches.csv) to the phone (Downloads).
+2. Put a route list in the Cruxlog template on the phone (Downloads), e.g. `docs/cruxlog-wzor.csv` (§5).
 3. Note the phone language (Polish or English). The app should start in that language (other languages fall back to English).
 
 ## 1. Navigation and language
@@ -48,7 +48,7 @@ Write down the result of every step (OK / problem). Report problems with: step n
 
 ## 2d. Backup reminder
 1. With at least one ascent and no backup made: the Journal shows a red-bordered box "You have never made a backup"; tapping it opens Settings, which shows "No backup yet."
-2. Export a backup. Expected: the box disappears; Settings shows "Last backup: today."
+2. Make a backup ("Back up now" in Automatic backup, or the export under "Other ways to back up"). Expected: the box disappears; Settings shows "Last backup: today."
 3. Install the new APK over the old one (without uninstalling). Expected: the app updates and all data is still there.
 
 ## 2e. Building a crag ("+" where the new thing goes)
@@ -123,6 +123,63 @@ Write down the result of every step (OK / problem). Report problems with: step n
 6. Route screen and crag screen: the share icon next to the pencil (top right). Expected: cards "Join me on this route" (with length and bolts) and "Join me at this crag" (with the route count).
 7. A crag without a position: no switch, a note that there is no map to include, and no coordinates on the card or in the text.
 8. Your own position is never in the card or the text.
+9. "Card look" (Wygląd karty): tap each of Przewodnik, Pełny kadr, Polaroid, Plakat, Bilet, Nocny, Topo. Expected: the card changes at once; each look works with the photo switched on and off and on ascent, route and crag cards; nothing is cut off (long names and grades like "VI.4/4+" shrink to fit). Send one picture in each look and check the saved image matches the preview.
+10. Leave the screen and share something else. Expected: the last chosen look is remembered.
+11. "Topo" without a photo on a route with bolts: a drawn wall with the red line, one ring per bolt (4 when the number is unknown) and the anchor at the top. On a crag card only the wall, no line.
+
+## 3g2. Sharing the year and goals
+1. Progress tab, a year with ascents: a share icon to the right of the year. Expected: "Show off your year" with a tall card (9:16): the year, sends, days, hardest route, the 5 hardest grades, the year's calendar, the favourite crag. No share icon on a year without ascents.
+2. The year chips at the top switch the card to another year (this year, last year…).
+3. "Show partners" is off at first; switched on, up to 3 partner names appear on the card. Without partners in that year the switch is not shown.
+4. Look: Guidebook (paper) or Night. Type a message; send the picture and the text.
+5. Goals tab: "Show off goals" next to the Goals heading. Expected: open goals are ticked (at most 5). Untick all but one: the one goal is shown big. Untick all: the send buttons are off and a note asks to choose one.
+
+## 3h. Trips: invitation and summary
+1. Goals tab › "Trips" › "+ New trip" (or the calendar icon on a crag screen, which fills that crag in). Fill the name, From and To (future days can be picked), add a crag by typing its name, then tap routes in the list below to add them. Arrows move a route up or down, the cross removes it; removing a crag removes its routes.
+2. Save without a name, with the end before the start, or with no crag. Expected: a clear message, nothing saved.
+3. Save. Expected: the trip screen: "Planned", the days (e.g. "1–3 May 2026"), the crags as chips, the message, the proposed routes.
+4. "Invite to the trip": a tall paper card with "Join me on a trip", the name, days, crags, area, the routes with grades (up to 10, then "and more routes: N"), the message and the crag's coordinates. "Send picture" opens the share sheet (WhatsApp); "Send text with a map link" sends the same as text with a Google Maps link. The position switch works like on other cards.
+5. On a trip day log an ascent: the route search (empty field) shows "From the trip: <name>" with the proposed routes first.
+6. After the first day: the trip screen shows "On now" or "Done", the tiles Sends / Days / Hardest, "Done from the plan: x of y", ticks on the proposed routes you sent. "Show off the trip" makes the summary card: the tiles, the routes sent (hardest first, with the style), the line about the plan.
+7. Edit a trip (pencil): change the days and routes, save. Delete it: "Delete the trip?"; your ascents stay.
+8. Backup: make a backup, clear the app, restore: the trips come back.
+
+## 4. Crags and goals
+1. Crags tab. Expected: "Test Crag" with the number of routes. Tap it. Expected: the crag screen with routes grouped by sector; "Test Route 1" shows "✓ sends: 1" (rust) or "tried: N". Tap the route. Expected: the route screen (§2c).
+1a. Editing (your own and imported crags, sectors, routes and regions; re-importing a file undoes changes to imported ones, see §5b):
+   - Crags tab: a search field, then "Regions" (each with its number of crags) and "No region" for crags without one. Typing "krowia" lists matching crags with their path and matching routes (§3f).
+   - Tap a region: its areas (rejony); tap an area: its groups and crags; tap a group: its crags. Each level has "+ Add area/group" and "Add a crag"; "+ Add region" is on the Crags tab.
+   - Pencil at the top right of a region, area or group: rename it; delete it. Expected: its crags and sub-areas move one level up (deleting group "Krowia Turnia" puts crag Krowia directly in Kamieniec).
+   - On a crag screen: pencil at the top right edits name, region, description, approach; "Delete crag" asks first and lists how many sectors, routes and your ascents go with it.
+   - Pencil next to a sector header: rename or delete (lists routes and ascents that go with it).
+   - Pencil next to a route: change name, sector (moves the route), type, grade; "Delete route" lists your ascents of it. After deleting, those ascents are gone from the Journal and Progress.
+2. Goals: see §3d and §3f.
+
+## 5. Import of crags and routes (the Cruxlog template, `docs/IMPORT.md`)
+1. Settings -> Import crags from a CSV file -> pick `docs/cruxlog-wzor.csv` (or your own file in that template). Expected: "Import?" with the numbers of crags and routes; after Import the crags are under region › area › group, with positions, descriptions, approach, length, bolts, first ascent (author, year).
+2. Change the order of the columns in the file, add a column of your own, import again. Expected: the same result, no duplicates.
+3. Remove the column "Wycena" (or "Rejon"). Expected: "File … lacks the columns: Wycena", nothing imported.
+4. Put a wrong grade (e.g. `9z`) in one row. Expected: "<file>, line N: …", nothing imported.
+5. Taking over: on a crag you already have (with your ascents and a wall photo) make a file with the same crag and route names (other letter case is fine) and your own ID_skały / ID_drogi. Import. Expected: the message says how many routes were taken over; the crag is not doubled; your ascents, photos and topo lines are still on the routes; a position you set on the phone is kept. Routes of that crag that are not in the file and have no ascents are gone.
+6. Rename that route in the file (keep its ID_drogi) and import again. Expected: the route is renamed, not doubled, and "taken over" is not mentioned again.
+7. Positions only: a file with Skała;Lat;Lng;Przybliżone sets the map pins (approximate ones say "about").
+8. Settings -> "Remove imported crags and routes": the question names the numbers; afterwards imported crags are gone except those with your ascents; routes you added yourself stay.
+9. A file with other headers (not the template) is not recognised: "File … was not recognised".
+
+## 5d. Crag packs (internet needed)
+1. Settings › Crag packs › "Choose crag packs". Expected: the list from the packs repository by region › area, each pack with crags, routes, size and "Not downloaded".
+2. "Download" one pack. Expected: a message with the counts; the pack says "Downloaded (version N)"; its crags are in the Crags tab under the right region, area and group. "Get the whole area" downloads the rest of that area at once.
+3. Packs that hold crags you already have (from a file or a backup with the same ID_skały / ID_drogi): nothing is doubled, your ascents stay on their routes.
+4. After the owner changes the base on GitHub (and "Zbuduj paczki" turns green): open the list again. Expected: "Update available"; "Update" keeps your ascents, renamed routes are renamed, not doubled.
+5. "Remove" (asks first): the pack's crags and routes go, except routes with your ascents and routes you added on the phone; the area disappears when nothing is left in it.
+6. Airplane mode: the list says there is no internet and offers "Try again"; nothing changes.
+
+## 6. Backup (one file, by hand)
+Since the automatic backup (§6a) these buttons are under Settings › "Other ways to back up (one file, no photos)".
+1. Settings -> Export backup. Expected: the system share sheet opens; save the JSON file (for example to Drive or send to yourself).
+2. Add one more ascent, then import the backup file. Expected: confirmation message; the data is still there with no duplicates.
+3. Clear the app data (Android settings -> Apps -> Cruxlog -> Storage -> Clear data), open the app (empty), import the backup. Expected: all ascents, routes, goals come back and the Progress numbers match what you had.
+4. Try importing a file that is not a backup (for example routes.csv renamed to .json or a random JSON). Expected: "This file is not a Cruxlog backup.", no crash.
 
 ## 6a. Automatic backup to a folder (Google Drive)
 1. Settings › Automatic backup › "Choose folder", pick a folder on Google Drive. Expected: after a moment "Writing to the folder … works"; the label says "Folder: on Google Drive". Nothing is left in the folder (the test file is removed at once).
@@ -174,53 +231,26 @@ Write down the result of every step (OK / problem). Report problems with: step n
 14. Route screen: a "Topo" section with the wall photo, this route in full and the others dimmed; tap it to open the photo full screen at that photo. A route without a line on a wall that has photos shows "Draw this route on the wall photo", which opens the editor with the route already chosen.
 15. Share a route: "Include a photo" offers the photo with its line first; "Show the topo line on the photo" (on by default) draws its line on the card, placed right on the cropped picture. Sharing a crag draws all lines of the photo with their numbers.
 
+## 6e. After the clean-up (2026-10-21): things that changed inside
+1. New ascent with a new route and 2 photos, Save. Expected: one ascent, one new route, both photos. If an error message ever appears after Save, tapping Save again must not make a second ascent or route.
+2. Topo editor: tap "Save the line" twice quickly. Expected: one save, back on the photo once (not two screens back).
+3. Delete a photo, a goal, a sector, a crag: if anything fails, a "Problem" message now says so (before it failed silently). Normally everything works as before.
+4. Rename a sector to the name of another sector of the same crag (or an area to its neighbour's name). Expected: "The name … is already used here", nothing changed.
+5. Settings › "Back up now" right after opening the app (while the automatic copy may be running). Expected: one new copy, no error; the folder keeps 5 copies and one `zdjecia` folder.
+6. Errors about the backup folder are now in the app's language (e.g. remove the folder on Drive, "Back up now").
+7. Route finder with a name typed, on a big import (thousands of routes): results appear without delay; the counts match the filters.
+8. Look of lists: section headings, route cards, the switches on the share screen and the "Log another ascent" / "Save the line" buttons look as before (spacing may differ by a few points).
 
-## 4. Crags and goals
-1. Crags tab. Expected: "Test Crag" with the number of routes. Tap it. Expected: the crag screen with routes grouped by sector; "Test Route 1" shows "✓ sends: 1" (rust) or "tried: N". Tap the route. Expected: the route screen (§2c).
-1a. Editing (your own and imported crags, sectors, routes and regions; re-importing a file undoes changes to imported ones, see §5b):
-   - Crags tab: a search field, then "Regions" (each with its number of crags) and "No region" for crags without one. Typing "krowia" lists matching crags with their path and matching routes (§3f).
-   - Tap a region: its areas (rejony); tap an area: its groups and crags; tap a group: its crags. Each level has "+ Add area/group" and "Add a crag"; "+ Add region" is on the Crags tab.
-   - Pencil at the top right of a region, area or group: rename it; delete it. Expected: its crags and sub-areas move one level up (deleting group "Krowia Turnia" puts crag Krowia directly in Kamieniec).
-   - On a crag screen: pencil at the top right edits name, region, description, approach; "Delete crag" asks first and lists how many sectors, routes and your ascents go with it.
-   - Pencil next to a sector header: rename or delete (lists routes and ascents that go with it).
-   - Pencil next to a route: change name, sector (moves the route), type, grade; "Delete route" lists your ascents of it. After deleting, those ascents are gone from the Journal and Progress.
-2. Goals: see §3d and §3f.
+## 6f. Updates (only versions merged into main)
+1. Install the APK from the latest release once by hand: https://github.com/bartekt1/cruxlog/releases/latest (the file cruxlog-1.0.<n>.apk). From now on updates come by themselves.
+2. Settings › "App version". Expected: "Installed version: 1.0.<n>"; "Check for updates" says you have the latest version.
+3. After the next merge into main (and ~12 minutes of building) open the app. Expected: after a few seconds "A new version of Cruxlog is available: 1.0.<m>". "Install": a short message "Downloading…", then Android's installer. The first time Android asks to allow Cruxlog to install apps: allow it, go back and tap "Install" again in Settings if needed. After installing, all data is still there.
+4. "Later" instead: the question does not come back on the next start for that version, but Settings › "Check for updates" still offers it.
+5. Without internet: nothing is shown on start; "Check for updates" says GitHub cannot be reached.
 
-## 5. CSV import
-1. Settings -> Import crags from CSV. Select all four sample files at once. Expected: an alert with counts (1 crag, 1 sector, 2 routes, 3 pitches). Buttons are disabled with a spinner while it runs.
-2. Crags tab shows "Example crag". In a new ascent, searching "Example" finds the sport route and the multipitch route.
-3. Import the same files again. Expected: same message, and no duplicates in the Crags list or in the search.
-4. Error handling: edit a copy of routes.csv on the phone (or on a computer) so that one grade is wrong (for example `9z`) and one `sector_key` does not exist. Import. Expected: "problems found, nothing was imported" with file and line numbers, and no data changed.
-5. Select only routes.csv and crags.csv without sectors.csv. Expected: errors about unknown `sector_key`, nothing imported.
-5a. Select only sectors.csv. Expected: "crags.csv and routes.csv are required. Selected: sectors.csv".
-6. File names must be exactly `crags.csv`, `sectors.csv`, `routes.csv`, `pitches.csv`. A different name is ignored (note what happens).
-
-## 5a. One-file import
-1. Settings -> Import crags from a CSV file. Pick one file with the headers `Region;Rejon;Grupa;Skała;Sektor;Nazwa;Typ;Wycena` (English headers and commas work too). Expected: the question "Import?", then the crags appear under region › area › group.
-2. A row without region or area, or with a wrong grade, shows "<file>, line N: …" and nothing is imported.
-3. A file with other headers shows "File … was not recognised".
-
-## 5b. Guidebook import and editing imported data
-1. Import the guidebook export itself (one file, e.g. `drogi_i_bouldery_Kamieniec.csv`). Expected: Czarnorzeki › Kamieniec with groups Grupa Słonecznej Turni, Kursowe Skałki, Krowia Turnia; Strzelnica, Sokoli Grzbiet, Przełom Marcinka and Smoczy Grzbiet as areas without groups; crag Krowia with sector "Ściana zachodnia". If the older three files were imported before, the ascents stay and no old crags are left over. Expected: a question "Import?" with the numbers of crags and routes and a warning that re-importing overwrites changes; Cancel imports nothing.
-2. After Import: the Crags tab shows the regions; drilling down reaches the crags. Boulders, routes named "(bez nazwy)" and routes marked "zakaz wspinania" are not imported (Leśna Turnia is missing); routes and crags have no notes, styles, guidebook numbers or wall heights.
-2a. Re-import a file with one route removed: the route disappears unless you logged an ascent on it; routes you added yourself stay.
-3. Grades from the guidebook are shown as written (VI+, VI.4/4+, VI.5?) when the display system is KR; in FR they show the nearest grade. They count in Progress as the nearest lower step.
-4. Imported crags, sectors, routes and regions have pencils like your own: rename a crag, move a route to a new sector, delete a route. Import the same files again: the changes are undone and deleted routes come back; ascents stay.
-
-## 5c. theCrag export (big file)
-1. Settings -> Import crags from a CSV file -> pick a theCrag export (headers `Region;Sektor;Nazwa;Trudność;…;Długość (m);Przeloty;…;Link`). Expected: the question shows the numbers of crags and routes and "Rows left out: N (boulders, ice, …)". The import may take some seconds.
-2. Crags tab: regions from the file (e.g. Jura, Pogórze Dynowskie, Slovenský raj). Tap down through every level, e.g. Jura -> Jura Południowa -> Garb Tenczyński -> Dolina Sanki -> Zimny Dół -> Grupa Labiryntu -> a crag. Each level shows how many crags are below it.
-3. Search "zimny" or a crag name in the Crags tab, and a route name in a new ascent. Expected: results appear without a noticeable delay after the first letter.
-4. Open a route with length and bolts: under the crag line it says e.g. "18 m · bolts: 6". Edit the route: Length and Bolts fields; letters there show an error.
-5. Slovak routes show their grade converted (e.g. "7-" as VII- in UIAA, VI.2 in KR). Grades above VI.7 (VI.7+, VI.8, VI.8+) are accepted.
-6. Settings -> "Remove imported crags and routes": the question names the numbers; after it, imported crags are gone except those with your ascents; routes you added yourself stay.
-7. Add a crag from a deep group ("Add a crag" on its screen): the form shows Region, Area and the Group field with all lower levels, e.g. "Garb Tenczyński › Dolina Sanki › Zimny Dół". Group chips go one level deeper after each pick.
-
-## 6. Backup
-1. Settings -> Export backup. Expected: the system share sheet opens; save the JSON file (for example to Drive or send to yourself).
-2. Add one more ascent, then import the backup file. Expected: confirmation message; the data is still there with no duplicates.
-3. Clear the app data (Android settings -> Apps -> Cruxlog -> Storage -> Clear data), open the app (empty), import the backup. Expected: all ascents, routes, goals come back and the Progress numbers match what you had.
-4. Try importing a file that is not a backup (for example routes.csv renamed to .json or a random JSON). Expected: "This file is not a Cruxlog backup.", no crash.
+## 6g. Settings: folded sections
+1. Settings opens with four folded sections: Look and language, Crags and packs, Backup, App version; each shows one line (e.g. "Polski · Jak w telefonie · KR", the last backup, the version). The backup line is red when a copy is due.
+2. Tap a section: it opens; tap again: it folds. Long descriptions show one sentence and "More ›"; tapping it shows the full text, "Less" hides it.
 
 ## 7. Robustness
 1. Change the language and the route grade system, close the app completely (swipe away) and reopen it. Expected: all data is still there, and the language and grade system are the ones you chose.
@@ -237,7 +267,8 @@ Write down the result of every step (OK / problem). Report problems with: step n
 - The map needs internet for its tiles; no offline download yet.
 - No multipitch pitch form (data model only).
 - Some crags have no position or only an approximate one until you set it (no GPS tracks are ever recorded).
-- Backup is manual (Settings › Export backup), with a reminder.
+- The automatic backup runs only when the app is opened (Android does not let it run in the background without extra services).
+- Old duplicate `zdjecia` folders made by earlier test builds on Drive are not removed by the app; delete them by hand.
 - Grade conversions between systems are approximate.
 
 ## Report template

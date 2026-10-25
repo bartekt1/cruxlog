@@ -1,5 +1,6 @@
 import { parseGrade } from '../src/domain/grades';
 import {
+  pyramidTop,
   activityByDay, ascentYears, countGoalProgress, gradeGoalProgress, hardestByMonth, hardestByYear, projectProgress, pyramid, styleCounts, topByDays,
   yearCalendar, yearStats, type StatAscent,
 } from '../src/domain/stats';
@@ -82,5 +83,12 @@ describe('goals and more stats', () => {
     expect(cal[1]).toHaveLength(28);
     expect(cal[1][27]).toEqual({ key: '2026-02-28', n: 2 });
     expect(yearCalendar(new Map(), 2028)[1]).toHaveLength(29);
+  });
+});
+
+describe('pyramidTop', () => {
+  it('keeps the hardest grades, hardest first', () => {
+    expect(pyramidTop(new Map([[10, 3], [14, 1], [12, 2], [8, 5]]), 3)).toEqual([{ gradeIndex: 14, count: 1 }, { gradeIndex: 12, count: 2 }, { gradeIndex: 10, count: 3 }]);
+    expect(pyramidTop(new Map())).toEqual([]);
   });
 });

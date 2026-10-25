@@ -1,4 +1,5 @@
 import { Directory } from 'expo-file-system';
+import { AppError } from '../domain/errors';
 
 /** The system folder picker. Returns null when the user backs out. Android keeps the access after a restart. */
 export async function pickBackupFolder(): Promise<Directory | null> {
@@ -15,7 +16,7 @@ export function testBackupFolder(dir: Directory): void {
   const file = dir.createFile(`cruxlog-test-${Date.now()}.txt`, 'text/plain');
   try {
     file.write('ok');
-    if (file.textSync() !== 'ok') throw new Error('The file read back differently than it was written.');
+    if (file.textSync() !== 'ok') throw new AppError('errors.readBack');
   } finally {
     try { file.delete(); } catch { /* a leftover test file is harmless */ }
   }

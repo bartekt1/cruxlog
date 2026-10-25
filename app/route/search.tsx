@@ -2,15 +2,16 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList, Pressable, ScrollView, View } from 'react-native';
+import { FlatList, ScrollView, View } from 'react-native';
 import { findRoutes, listAreas, type AreaRow, type FoundRoute, type RouteStatus } from '../../src/db/repo';
 import { areaPath, childrenOf, descendantIds, pathLabels } from '../../src/domain/areas';
 import { formatGrade, routeGrade, ROUTE_LADDER, type RouteType } from '../../src/domain/grades';
 import { F } from '../../src/ui/fonts';
-import { Chip, ChipRow, EmptyState, Field, GradeBadge, Label, LinkButton } from '../../src/ui/kit';
+import { Chip, ChipRow, EmptyState, Field, Label, LinkButton } from '../../src/ui/kit';
 import { useSettings } from '../../src/ui/settingsStore';
 import { Text } from '../../src/ui/Text';
 import { useTheme } from '../../src/ui/theme';
+import { RouteCard, routeStatus } from '../../src/ui/rows';
 
 const STATUSES: RouteStatus[] = ['all', 'todo', 'tried', 'sent'];
 const TYPES: (RouteType | null)[] = [null, 'sport', 'multipitch'];
@@ -59,7 +60,6 @@ export default function RouteSearch() {
 
   const chosen = areaId ? areaPath(areas, areaId) : [];
   const areaOptions = childrenOf(areas, areaId);
-  const status_ = (r: FoundRoute) => (r.sends > 0 ? `✓ ${t('crags.sends', { count: r.sends })}` : r.ascents > 0 ? t('crags.tried', { count: r.ascents }) : '');
 
   const filters = (
     <View style={{ paddingTop: 8 }}>
@@ -88,9 +88,9 @@ export default function RouteSearch() {
       <Label>{t('ascent.type')}</Label>
       <ChipRow>{TYPES.map((x) => <Chip key={x ?? 'all'} label={x ? t(`types.${x}`) : t('routeSearch.any')} on={type === x} onPress={() => setType(x)} />)}</ChipRow>
 
-      <Text accessibilityLiveRegion="polite" style={{ color: th.muted, fontFamily: F.semi, fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase', marginTop: 18, marginBottom: 4 }}>
+      <Label live style={{ marginBottom: 4 }}>
         {result.total > result.rows.length ? t('routeSearch.foundSome', { total: result.total, shown: result.rows.length }) : t('routeSearch.found', { total: result.total })}
-      </Text>
+      </Label>
     </View>
   );
 
@@ -104,23 +104,9 @@ export default function RouteSearch() {
       ListHeaderComponent={filters}
       ListEmptyComponent={<EmptyState title={t('routeSearch.none')} hint={t('routeSearch.noneHint')} />}
       renderItem={({ item }) => (
-        <Pressable
-          onPress={() => router.push(`/route/${item.id}`)}
-          accessibilityRole="button"
-          style={({ pressed }) => ({
-            flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 8, padding: 10,
-            backgroundColor: th.surface, borderWidth: 1, borderColor: th.line, borderRadius: 14, opacity: pressed ? 0.6 : 1,
-          })}
-        >
-          <GradeBadge text={routeGrade(item, routeSystem)} />
-          <View style={{ flex: 1 }}>
-            <Text style={{ color: th.ink, fontFamily: F.semi, fontSize: 16 }}>{item.name}</Text>
-            <Text style={{ color: th.muted, fontSize: 13 }} numberOfLines={1}>
-              {[item.region_id ? labels.get(item.region_id) : '', item.crag_name].filter(Boolean).join(' › ')}
-            </Text>
-            {status_(item) ? <Text style={{ color: item.sends > 0 ? th.accent : th.muted, fontSize: 13 }}>{status_(item)}</Text> : null}
-          </View>
-        </Pressable>
+        <RouteCard grade={routeGrade(item, routeSystem)} name={item.name}
+          subtitle={[item.region_id ? labels.get(item.region_id) : '', item.crag_name].filter(Boolean).join(' › ')}
+          note={routeStatus(t, item)} noteAccent={item.sends > 0} onPress={() => router.push(`/route/${item.id}`)} />
       )}
     />
   );

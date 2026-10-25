@@ -2,13 +2,13 @@ import { Stack, useLocalSearchParams, useNavigation, useRouter } from 'expo-rout
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, FlatList, Image, PanResponder, Pressable, View, type GestureResponderEvent, type LayoutChangeEvent } from 'react-native';
+import { Alert, FlatList, Image, View, type LayoutChangeEvent } from 'react-native';
 import {
   deleteTopoLine, getPhoto, listTopoLines, saveTopoLine, topoRoutes, type PhotoRow, type RouteRow, type TopoLineRow,
 } from '../src/db/repo';
 import { routeGrade } from '../src/domain/grades';
 import {
-  clampZoom, commit, FIT, hitPoint, numberLines, redo, simplify, startHistory, toPhoto, undo, zoomAt, type History, type Pt, type TopoMode, type Zoom,
+  commit, FIT, numberLines, redo, startHistory, undo, zoomAt, type History, type Pt, type TopoMode, type Zoom,
 } from '../src/domain/topo';
 import { F } from '../src/ui/fonts';
 import { IconButton, type IconName } from '../src/ui/icons';
@@ -18,16 +18,11 @@ import { useSettings } from '../src/ui/settingsStore';
 import { Text } from '../src/ui/Text';
 import { useTheme } from '../src/ui/theme';
 import { fitRect, TopoLines } from '../src/ui/TopoLines';
+import { runOrAlert } from '../src/ui/errors';
+import { CtaButton, RouteCard } from '../src/ui/rows';
+import { useTopoGestures } from '../src/ui/useTopoGestures';
 
-const HIT_RADIUS = 24; // px: how near a finger must be to grab a point
-const TAP_SLOP = 8; // px: a touch that moves less than this is a tap
 const BUTTON_ZOOM = 1.6;
-
-type Gesture =
-  | { kind: 'pinch'; dist: number; mid: { x: number; y: number }; zoom: Zoom }
-  | { kind: 'drag'; index: number; moved: boolean }
-  | { kind: 'pan'; start: { x: number; y: number }; zoom: Zoom; moved: boolean; at: number }
-  | { kind: 'stroke'; points: Pt[] };
 
 /**
  * /topo?photoId=<photo>[&routeId=<route>]: draw a route on a wall photo. "Bolts": tap the start, then the bolts from the
@@ -55,6 +50,7 @@ export default function TopoEditor() {
   const [canvas, setCanvas] = useState({ w: 0, h: 0 });
   const [dirty, setDirty] = useState(false);
   const [mode, setMode] = useState<TopoMode>('bolts');
+  const [saving, setSaving] = useState(false);
   const leaving = useRef(false); // set once the line is saved or deleted, so the unsaved-changes question is skipped
 
   useEffect(() => {
@@ -90,83 +86,8 @@ export default function TopoEditor() {
   const box = useMemo(() => (photo ? fitRect(photo.width, photo.height, canvas.w, canvas.h) : fitRect(0, 0, 0, 0)), [photo, canvas]);
   const points = draft ?? history.present;
 
-  // The touch handler is made once, so it reads the latest values through a ref.
-  const live = useRef({ zoom, box, canvas, points, history, mode });
-  live.current = { zoom, box, canvas, points, history, mode };
-  const gesture = useRef<Gesture | null>(null);
-
-  const rel = (x: number, y: number) => ({ x: x - live.current.canvas.w / 2, y: y - live.current.canvas.h / 2 });
-  const touchesOf = (e: GestureResponderEvent) => e.nativeEvent.touches.map((tch) => rel(tch.locationX, tch.locationY));
   const step = (next: Pt[], sel: number) => { setHistory((h) => commit(h, next)); setSelected(sel); setDirty(true); };
-
-  const responder = useMemo(() => PanResponder.create({
-    onStartShouldSetPanResponder: () => true,
-    onMoveShouldSetPanResponder: () => true,
-    onPanResponderGrant: (e) => {
-      const touches = touchesOf(e);
-      const { zoom: z, box: b, points: pts, mode: m } = live.current;
-      if (touches.length >= 2) { gesture.current = pinchStart(touches, z); return; }
-      const at = toPhoto(touches[0], z, b.width, b.height);
-      if (m === 'free' && at) { gesture.current = { kind: 'stroke', points: [at] }; return; }
-      const hit = at ? hitPoint(pts, at, b.width * z.scale, b.height * z.scale, HIT_RADIUS) : -1;
-      gesture.current = hit >= 0
-        ? { kind: 'drag', index: hit, moved: false }
-        : { kind: 'pan', start: touches[0], zoom: z, moved: false, at: Date.now() };
-    },
-    onPanResponderMove: (e) => {
-      const touches = touchesOf(e);
-      const g = gesture.current;
-      const { zoom: z, box: b, points: pts } = live.current;
-      if (!g) return;
-      if (touches.length >= 2) {
-        // A second finger turns any gesture into a pinch; a point being dragged stays where it was.
-        if (g.kind !== 'pinch') {
-          if (g.kind === 'drag' || g.kind === 'stroke') setDraft(null); // a second finger cancels the stroke or the drag
-          gesture.current = pinchStart(touches, z);
-          return;
-        }
-        const mid = midpoint(touches);
-        const zoomed = zoomAt(g.zoom, distance(touches) / g.dist, g.mid, b.width, b.height);
-        setZoom(clampZoom({ ...zoomed, tx: zoomed.tx + mid.x - g.mid.x, ty: zoomed.ty + mid.y - g.mid.y }, b.width, b.height));
-        return;
-      }
-      if (g.kind === 'stroke') {
-        const at = toPhoto(touches[0], z, b.width, b.height);
-        if (!at) return;
-        g.points.push(at);
-        setDraft([...live.current.history.present, ...g.points]);
-      } else if (g.kind === 'drag') {
-        const at = toPhoto(touches[0], z, b.width, b.height);
-        if (!at) return;
-        g.moved = true;
-        setDraft(pts.map((p, i) => (i === g.index ? at : p)));
-      } else if (g.kind === 'pan') {
-        const dx = touches[0].x - g.start.x;
-        const dy = touches[0].y - g.start.y;
-        if (!g.moved && Math.hypot(dx, dy) < TAP_SLOP) return;
-        g.moved = true;
-        setZoom(clampZoom({ ...g.zoom, tx: g.zoom.tx + dx, ty: g.zoom.ty + dy }, b.width, b.height));
-      }
-    },
-    onPanResponderRelease: () => {
-      const g = gesture.current;
-      gesture.current = null;
-      if (!g) return;
-      const { zoom: z, box: b, points: pts, history: h } = live.current;
-      if (g.kind === 'stroke') {
-        // The stroke is thinned out (finer when zoomed in) and continues the line drawn so far.
-        step([...h.present, ...simplify(g.points, 0.004 / z.scale)], -1);
-        setDraft(null);
-      } else if (g.kind === 'drag') {
-        if (g.moved) step(pts, g.index); else setSelected(g.index); // a tap on a point only selects it
-        setDraft(null);
-      } else if (g.kind === 'pan' && !g.moved && Date.now() - g.at < 600) {
-        const at = toPhoto(g.start, z, b.width, b.height);
-        if (at) step([...h.present, at], h.present.length);
-      }
-    },
-    onPanResponderTerminate: () => { gesture.current = null; setDraft(null); },
-  }), []); // it reads everything through refs, so it never needs to be made again
+  const responder = useTopoGestures({ zoom, box, canvas, points, history, mode }, { setZoom, setDraft, step, setSelected });
 
   if (!photo) return <View style={{ flex: 1, backgroundColor: th.bg }} />;
   const uri = photoUri(photo.id);
@@ -182,17 +103,11 @@ export default function TopoEditor() {
         <FlatList
           data={routes}
           keyExtractor={(r) => r.id}
-          contentContainerStyle={{ padding: 16, gap: 8 }}
+          contentContainerStyle={{ padding: 16, paddingTop: 8 }}
           ListEmptyComponent={<EmptyState title={t('topo.noRoutes')} />}
           renderItem={({ item }) => (
-            <Pressable onPress={() => setRouteId(item.id)} accessibilityRole="button"
-              style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10, borderRadius: 14, borderWidth: 1, borderColor: th.line, backgroundColor: th.surface, opacity: pressed ? 0.6 : 1 })}>
-              <GradeBadge text={routeGrade(item, routeSystem)} />
-              <View style={{ flex: 1 }}>
-                <Text style={{ color: th.ink, fontFamily: F.semi, fontSize: 16 }}>{item.name}</Text>
-                {drawn.has(item.id) ? <Text style={{ color: th.accent, fontSize: 13 }}>{t('topo.hasLine')}</Text> : null}
-              </View>
-            </Pressable>
+            <RouteCard grade={routeGrade(item, routeSystem)} name={item.name} note={drawn.has(item.id) ? t('topo.hasLine') : undefined} noteAccent
+              onPress={() => setRouteId(item.id)} />
           )}
         />
       </View>
@@ -209,8 +124,11 @@ export default function TopoEditor() {
 
   const zoomBy = (f: number) => setZoom((z) => zoomAt(z, f, { x: 0, y: 0 }, box.width, box.height));
   const save = async () => {
+    if (saving) return; // a second tap while saving would save twice and go back two screens
     if (points.length < 2) { Alert.alert(t('topo.title'), t('topo.needTwo')); return; }
-    await saveTopoLine(db, { photoId: photo.id, routeId: route.id, mode, points });
+    setSaving(true);
+    const ok = await runOrAlert(() => saveTopoLine(db, { photoId: photo.id, routeId: route.id, mode, points }));
+    if (!ok) { setSaving(false); return; }
     leaving.current = true;
     router.back();
   };
@@ -218,7 +136,7 @@ export default function TopoEditor() {
     if (!existing) return;
     Alert.alert(t('topo.deleteLineTitle'), t('topo.deleteLineQuestion', { name: route.name }), [
       { text: t('common.cancel'), style: 'cancel' },
-      { text: t('common.delete'), style: 'destructive', onPress: async () => { await deleteTopoLine(db, existing.id); leaving.current = true; router.back(); } },
+      { text: t('common.delete'), style: 'destructive', onPress: () => runOrAlert(async () => { await deleteTopoLine(db, existing.id); leaving.current = true; router.back(); }) },
     ]);
   };
 
@@ -276,22 +194,8 @@ export default function TopoEditor() {
         {tool('close-circle-outline', t('topo.deletePoint'), () => { step(points.filter((_, i) => i !== selected), -1); }, selected < 0 || mode === 'free')}
         {tool('refresh-outline', t('topo.clear'), () => step([], -1), !points.length)}
       </View>
-      <Pressable onPress={save} accessibilityRole="button"
-        style={({ pressed }) => ({ margin: 16, marginTop: 8, minHeight: 50, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: th.cta, opacity: pressed ? 0.85 : 1 })}>
-        <Text style={{ color: th.onCta, fontFamily: F.display, fontSize: 20, letterSpacing: 0.8, textTransform: 'uppercase' }}>{t('topo.save')}</Text>
-      </Pressable>
+      <CtaButton label={t('topo.save')} onPress={save} disabled={saving} style={{ margin: 16, marginTop: 8 }} />
     </View>
   );
 }
 
-function distance(t: { x: number; y: number }[]): number {
-  return Math.max(1, Math.hypot(t[1].x - t[0].x, t[1].y - t[0].y));
-}
-
-function midpoint(t: { x: number; y: number }[]): { x: number; y: number } {
-  return { x: (t[0].x + t[1].x) / 2, y: (t[0].y + t[1].y) / 2 };
-}
-
-function pinchStart(touches: { x: number; y: number }[], zoom: Zoom): Gesture {
-  return { kind: 'pinch', dist: distance(touches), mid: midpoint(touches), zoom };
-}

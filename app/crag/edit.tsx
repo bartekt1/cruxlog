@@ -11,6 +11,7 @@ import { confirmDelete } from '../../src/ui/confirm';
 import { AreaPicker } from '../../src/ui/AreaPicker';
 import { Button, ErrorText, Field, Label, LinkButton } from '../../src/ui/kit';
 import { useTheme } from '../../src/ui/theme';
+import { errorMessage } from '../../src/ui/errors';
 
 /** /crag/edit adds a crag (?areaId=<area> preselects region, area and group), /crag/edit?id=<crag> edits one. */
 export default function EditCrag() {
@@ -47,7 +48,7 @@ export default function EditCrag() {
       if (id) router.back();
       else router.replace(`/crag/${cragId}`);
     } catch (e) {
-      setError(t('common.failed', { message: (e as Error).message }));
+      setError(errorMessage(e));
       setSaving(false);
     }
   }

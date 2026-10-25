@@ -12,11 +12,14 @@ import { routeSummary } from '../../src/domain/history';
 import { IconButton } from '../../src/ui/icons';
 import { Contours } from '../../src/ui/Contours';
 import { F } from '../../src/ui/fonts';
-import { Card, EmptyState, GradeBadge, LinkButton, Screen, Title } from '../../src/ui/kit';
+import { Card, EmptyState, GradeBadge, LinkButton, Screen, Title, Label } from '../../src/ui/kit';
 import { TopoPreview } from '../../src/ui/TopoLines';
 import { PhotoBadge } from '../../src/ui/PhotoViews';
 import { useSettings } from '../../src/ui/settingsStore';
 import { useTheme } from '../../src/ui/theme';
+import { runOrAlert } from '../../src/ui/errors';
+import { CtaButton } from '../../src/ui/rows';
+import { sectorLine } from '../../src/domain/text';
 
 /** One route: the user's whole history on it and a quick way to log another go. */
 export default function RouteScreen() {
@@ -44,10 +47,14 @@ export default function RouteScreen() {
   }, [db, id, router]));
 
   // Wall photos (of its sector, then of its crag) where the route could be drawn when it has no topo yet.
+  const sectorId = route?.sector_id;
+  const cragId = route?.crag_id;
   useFocusEffect(useCallback(() => {
-    if (!route) return;
-    Promise.all([listPhotos(db, 'sector', route.sector_id), listPhotos(db, 'crag', route.crag_id)]).then(([a, b]) => setWallPhotos([...a, ...b]));
-  }, [db, route]));
+    if (!sectorId || !cragId) return;
+    let live = true;
+    Promise.all([listPhotos(db, 'sector', sectorId), listPhotos(db, 'crag', cragId)]).then(([a, b]) => { if (live) setWallPhotos([...a, ...b]); });
+    return () => { live = false; };
+  }, [db, sectorId, cragId]));
 
   // Project or wish, picked in a small dialog; the badge then replaces the button.
   const addToGoals = () =>
@@ -55,7 +62,7 @@ export default function RouteScreen() {
       { text: t('common.cancel'), style: 'cancel' },
       ...(['wishlist', 'project'] as const).map((kind) => ({
         text: t(`goals.${kind}`),
-        onPress: async () => { await addRouteGoal(db, id, kind); setGoals(await routeGoals(db, id)); },
+        onPress: () => runOrAlert(async () => { await addRouteGoal(db, id, kind); setGoals(await routeGoals(db, id)); }),
       })),
     ]);
 
@@ -96,7 +103,7 @@ export default function RouteScreen() {
             <Contours height={160} />
             <Pressable onPress={() => router.push(`/crag/${route.crag_id}`)} accessibilityRole="link">
               <Text style={{ color: th.accent, fontFamily: F.semi, fontSize: 13, letterSpacing: 1.2, textTransform: 'uppercase' }}>
-                {route.crag_name} › {route.sector_name} · {t(`types.${route.type}`)}
+                {sectorLine(route.crag_name, route.sector_name)} · {t(`types.${route.type}`)}
               </Text>
             </Pressable>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
@@ -127,16 +134,10 @@ export default function RouteScreen() {
               <Text style={{ color: th.ink, fontFamily: F.semi, fontSize: 16 }}>{summary.firstSend ? '✓ ' : ''}{status}</Text>
               {summary.ascents ? <Text style={{ color: th.muted, fontSize: 13, marginTop: 2 }}>{t('route.totals', { ascents: summary.ascents, sends: summary.sends })}</Text> : null}
             </Card>
-            <Pressable
-              onPress={() => router.push({ pathname: '/ascent/new', params: { routeId: route.id } })}
-              accessibilityRole="button"
-              style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: th.cta, borderRadius: 14, minHeight: 54, marginTop: 8, opacity: pressed ? 0.85 : 1 })}
-            >
-              <Ionicons name="add" size={24} color={th.onCta} />
-              <Text style={{ color: th.onCta, fontFamily: F.display, fontSize: 20, letterSpacing: 0.8, textTransform: 'uppercase' }}>{t('route.logAnother')}</Text>
-            </Pressable>
+            <CtaButton label={t('route.logAnother')} icon="add" style={{ marginTop: 8 }}
+              onPress={() => router.push({ pathname: '/ascent/new', params: { routeId: route.id } })} />
             {topos.length || wallPhotos.length ? (
-              <Text accessibilityRole="header" style={{ color: th.muted, fontSize: 12, fontFamily: F.semi, marginTop: 18, marginBottom: 4, textTransform: 'uppercase', letterSpacing: 1.5 }}>{t('topo.title')}</Text>
+              <Label style={{ marginBottom: 4 }}>{t('topo.title')}</Label>
             ) : null}
             {topos.map(({ photo, lines }) => (
               <View key={photo.id} style={{ marginBottom: 8 }}>
@@ -147,7 +148,7 @@ export default function RouteScreen() {
             {!topos.length && wallPhotos.length ? (
               <LinkButton label={t('topo.drawThis')} onPress={() => router.push({ pathname: '/topo', params: { photoId: wallPhotos[0].id, routeId: route.id } })} />
             ) : null}
-            {ascents.length ? <Text accessibilityRole="header" style={{ color: th.muted, fontSize: 12, fontFamily: F.semi, marginTop: 18, marginBottom: 4, textTransform: 'uppercase', letterSpacing: 1.5 }}>{t('route.history')}</Text> : null}
+            {ascents.length ? <Label style={{ marginBottom: 4 }}>{t('route.history')}</Label> : null}
           </View>
         }
         ListEmptyComponent={<EmptyState title={t('route.neverTried')} />}
