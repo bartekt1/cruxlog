@@ -234,6 +234,13 @@ Since the automatic backup (§6a) these buttons are under Settings › "Other wa
 7. Route finder with a name typed, on a big import (thousands of routes): results appear without delay; the counts match the filters.
 8. Look of lists: section headings, route cards, the switches on the share screen and the "Log another ascent" / "Save the line" buttons look as before (spacing may differ by a few points).
 
+## 6f. Updates (only versions merged into main)
+1. Install the APK from the latest release once by hand: https://github.com/bartekt1/cruxlog/releases/latest (the file cruxlog-1.0.<n>.apk). From now on updates come by themselves.
+2. Settings › "App version". Expected: "Installed version: 1.0.<n>"; "Check for updates" says you have the latest version.
+3. After the next merge into main (and ~12 minutes of building) open the app. Expected: after a few seconds "A new version of Cruxlog is available: 1.0.<m>". "Install": a short message "Downloading…", then Android's installer. The first time Android asks to allow Cruxlog to install apps: allow it, go back and tap "Install" again in Settings if needed. After installing, all data is still there.
+4. "Later" instead: the question does not come back on the next start for that version, but Settings › "Check for updates" still offers it.
+5. Without internet: nothing is shown on start; "Check for updates" says GitHub cannot be reached.
+
 ## 7. Robustness
 1. Change the language and the route grade system, close the app completely (swipe away) and reopen it. Expected: all data is still there, and the language and grade system are the ones you chose.
 2. Rotate the phone, switch to dark mode and back. Expected: readable text and no layout breaks.

@@ -8,6 +8,7 @@ import { showError } from '../src/ui/errors';
 import { Chip, ChipRow, Label } from '../src/ui/kit';
 import { BackupSection } from '../src/ui/settings/BackupSection';
 import { ImportSection } from '../src/ui/settings/ImportSection';
+import { UpdateSection } from '../src/ui/settings/UpdateSection';
 import type { Run } from '../src/ui/settings/run';
 import { useSettings } from '../src/ui/settingsStore';
 import { useTheme } from '../src/ui/theme';
@@ -53,6 +54,7 @@ export default function Settings() {
       </ChipRow>
       <ImportSection run={run} busy={busy} />
       <BackupSection run={run} busy={busy} />
+      <UpdateSection run={run} busy={busy} />
       {busy ? <ActivityIndicator color={th.accent} style={{ marginTop: 16 }} /> : null}
     </ScrollView>
   );

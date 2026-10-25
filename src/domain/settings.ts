@@ -15,9 +15,11 @@ export type Settings = {
   /** When the photos were last copied into the backup folder (null = not yet). */
   photosSyncedAt: number | null;
   cardStyle: CardStyle;
+  /** A new app version the user answered "later" to (its build number); it is not offered again on start. */
+  skippedUpdate: number | null;
 };
 
-export const DEFAULT_SETTINGS: Settings = { language: null, routeSystem: 'kr', themeMode: 'system', mapBase: 'standard', lastBackupAt: null, backupDir: null, backupDirName: '', autoBackupAt: null, autoBackupTryAt: null, autoBackupError: '', photosSyncedAt: null, cardStyle: 'guide' };
+export const DEFAULT_SETTINGS: Settings = { language: null, routeSystem: 'kr', themeMode: 'system', mapBase: 'standard', lastBackupAt: null, backupDir: null, backupDirName: '', autoBackupAt: null, autoBackupTryAt: null, autoBackupError: '', photosSyncedAt: null, cardStyle: 'guide', skippedUpdate: null };
 
 /** Turns stored JSON (possibly old, partial or corrupt) into valid settings. */
 export function parseSettings(raw: string | null): Settings {
@@ -42,6 +44,7 @@ export function parseSettings(raw: string | null): Settings {
     autoBackupError: typeof data.autoBackupError === 'string' ? data.autoBackupError : '',
     photosSyncedAt: typeof data.photosSyncedAt === 'number' && Number.isFinite(data.photosSyncedAt) ? data.photosSyncedAt : null,
     cardStyle: pick<CardStyle>(data.cardStyle, CARD_STYLES, DEFAULT_SETTINGS.cardStyle),
+    skippedUpdate: typeof data.skippedUpdate === 'number' && Number.isInteger(data.skippedUpdate) ? data.skippedUpdate : null,
   };
 }
 

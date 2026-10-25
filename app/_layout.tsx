@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { migrate } from '../src/db/migrate';
 import { AutoBackup } from '../src/ui/AutoBackup';
 import { F, FONT_ASSETS } from '../src/ui/fonts';
+import { UpdateCheck } from '../src/ui/UpdateCheck';
 import { useIsDark, useTheme } from '../src/ui/theme';
 
 export default function RootLayout() {
@@ -23,6 +24,7 @@ export default function RootLayout() {
     <SQLiteProvider databaseName="cruxlog.db" onInit={migrate}>
       <StatusBar style={dark ? 'light' : 'dark'} />
       <AutoBackup />
+      <UpdateCheck />
       <Stack screenOptions={{
         headerStyle: { backgroundColor: th.bg }, headerShadowVisible: false, headerTintColor: th.ink,
         headerTitleStyle: { fontFamily: F.display, fontSize: 24, color: th.ink }, contentStyle: { backgroundColor: th.bg, paddingBottom: insets.bottom },

@@ -9,6 +9,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-24.04
+    permissions:
+      contents: write # to publish the release from main
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v7
@@ -31,6 +33,17 @@ jobs:
           npm run typecheck
           npm test
 
+      # The build number goes into the app: version 1.0.<n>, Android versionCode <n>. The app compares it with
+      # the latest release to offer updates (src/domain/updates.ts).
+      - name: Set version
+        run: |
+          node -e "
+            const fs = require('fs'); const n = Number(process.env.GITHUB_RUN_NUMBER);
+            const a = JSON.parse(fs.readFileSync('app.json', 'utf8'));
+            a.expo.version = '1.0.' + n; a.expo.android.versionCode = n;
+            fs.writeFileSync('app.json', JSON.stringify(a, null, 2));
+          "
+
       - name: Generate native Android project
         run: npx expo prebuild --platform android --no-install
 
@@ -46,3 +59,14 @@ jobs:
           name: cruxlog-apk
           path: android/app/build/outputs/apk/release/*.apk
           if-no-files-found: error
+
+      # Only main is published: phones offered an update get only what was merged.
+      - name: Publish release (main only)
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          V="1.0.${GITHUB_RUN_NUMBER}"
+          cp android/app/build/outputs/apk/release/app-release.apk "cruxlog-$V.apk"
+          gh release create "v$V" "cruxlog-$V.apk" --target "$GITHUB_SHA" --title "Cruxlog $V" \
+            --notes "$(git log -1 --pretty=%s)" --latest
