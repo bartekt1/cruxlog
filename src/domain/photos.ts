@@ -3,9 +3,10 @@
 export type PhotoOwnerType = 'ascent' | 'crag' | 'sector';
 /** How many photos one ascent, crag or sector (wall) may have. */
 export const PHOTO_LIMIT: Record<PhotoOwnerType, number> = { ascent: 5, crag: 10, sector: 10 };
-/** The longer side of a stored photo, in pixels. Walls and crags are bigger, because lines are drawn on them later. */
-export const PHOTO_EDGE: Record<PhotoOwnerType, number> = { ascent: 1600, crag: 2000, sector: 2000 };
-export const PHOTO_QUALITY = 0.75;
+/** The longer side of a stored photo, in pixels. Walls and crags are bigger and sharper, because topo lines are drawn on them. */
+export const PHOTO_EDGE: Record<PhotoOwnerType, number> = { ascent: 1600, crag: 3000, sector: 3000 };
+/** JPEG quality (0..1) of a stored photo. */
+export const PHOTO_QUALITY: Record<PhotoOwnerType, number> = { ascent: 0.75, crag: 0.85, sector: 0.85 };
 /** The folder inside the backup folder that holds the pictures. */
 export const BACKUP_PHOTO_DIR = 'zdjecia';
 

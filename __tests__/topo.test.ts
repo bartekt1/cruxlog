@@ -1,5 +1,5 @@
 import {
-  clampZoom, commit, FIT, schematicLine, fingerDistance, fingerMidpoint, hitPoint, pinchZoom, MAX_ZOOM, numberLines, parsePoints, redo, simplify, smoothPath, startHistory, stringifyPoints, toPhoto, undo, zoomAt,
+  clampZoom, commit, FIT, insertAfter, loupeLeft, schematicLine, fingerDistance, fingerMidpoint, hitPoint, pinchZoom, MAX_ZOOM, numberLines, parsePoints, redo, simplify, smoothPath, startHistory, stringifyPoints, toPhoto, undo, zoomAt,
 } from '../src/domain/topo';
 
 describe('topo points', () => {
@@ -120,5 +120,24 @@ describe('schematicLine', () => {
   it('draws 4 bolts when the number is unknown and at most 14', () => {
     expect(schematicLine(null)).toHaveLength(6);
     expect(schematicLine(40)).toHaveLength(16);
+  });
+});
+
+describe('insertAfter', () => {
+  const line = [{ x: 0.5, y: 0.9 }, { x: 0.5, y: 0.5 }, { x: 0.7, y: 0.1 }];
+  it('adds a point halfway to the next one', () => {
+    expect(insertAfter(line, 1)).toEqual([line[0], line[1], { x: 0.6, y: 0.3 }, line[2]]);
+    expect(insertAfter(line, 0)[1]).toEqual({ x: 0.5, y: 0.7 });
+  });
+  it('leaves the line alone after the last point or without a selection', () => {
+    expect(insertAfter(line, 2)).toBe(line);
+    expect(insertAfter(line, -1)).toBe(line);
+  });
+});
+
+describe('loupeLeft', () => {
+  it('puts the magnifier away from the finger', () => {
+    expect(loupeLeft(50, 400, 120)).toBe(272);
+    expect(loupeLeft(350, 400, 120)).toBe(8);
   });
 });

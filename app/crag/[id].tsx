@@ -17,7 +17,7 @@ import { distanceM, formatDistance, isLatLng } from '../../src/domain/geo';
 import { Ionicons } from '@expo/vector-icons';
 import { PHOTO_LIMIT } from '../../src/domain/photos';
 import { PhotoSection, PhotoStrip } from '../../src/ui/PhotoViews';
-import { addPhotosFromGallery } from '../../src/ui/photos';
+import { addPhotosTo } from '../../src/ui/photos';
 import { useSettings } from '../../src/ui/settingsStore';
 import { useTheme } from '../../src/ui/theme';
 import { errorMessage } from '../../src/ui/errors';
@@ -54,7 +54,7 @@ export default function CragScreen() {
   async function addPhotoTo(owner: PhotoOwner, ownerId: string, have: number) {
     setPhotoBusy(`${owner}:${ownerId}`);
     try {
-      await addPhotosFromGallery(db, owner, ownerId, have);
+      await addPhotosTo(db, owner, ownerId, have);
       await loadSectorsAndPhotos();
     } catch (e) {
       Alert.alert(t('photos.title'), t('photos.failed', { message: errorMessage(e) }));
