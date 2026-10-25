@@ -6,6 +6,8 @@ export type MapBase = 'standard' | 'topo';
 /** The look of a share card (src/ui/cards); the last one picked is used next time. */
 export const CARD_STYLES = ['guide', 'full', 'polaroid', 'poster', 'ticket', 'night', 'topo'] as const;
 export type CardStyle = typeof CARD_STYLES[number];
+/** A photo on a share card: all of it seen ("whole") or filling the frame, cropped at the edges ("fill"). */
+export type PhotoFit = 'whole' | 'fill';
 export type Settings = {
   language: Lang | null; routeSystem: GradeSystem; themeMode: ThemeMode; mapBase: MapBase; lastBackupAt: number | null;
   /** The folder (Android tree URI) automatic backups go to, and its name for display; null = not chosen. */
@@ -15,11 +17,12 @@ export type Settings = {
   /** When the photos were last copied into the backup folder (null = not yet). */
   photosSyncedAt: number | null;
   cardStyle: CardStyle;
+  photoFit: PhotoFit;
   /** A new app version the user answered "later" to (its build number); it is not offered again on start. */
   skippedUpdate: number | null;
 };
 
-export const DEFAULT_SETTINGS: Settings = { language: null, routeSystem: 'kr', themeMode: 'system', mapBase: 'standard', lastBackupAt: null, backupDir: null, backupDirName: '', autoBackupAt: null, autoBackupTryAt: null, autoBackupError: '', photosSyncedAt: null, cardStyle: 'guide', skippedUpdate: null };
+export const DEFAULT_SETTINGS: Settings = { language: null, routeSystem: 'kr', themeMode: 'system', mapBase: 'standard', lastBackupAt: null, backupDir: null, backupDirName: '', autoBackupAt: null, autoBackupTryAt: null, autoBackupError: '', photosSyncedAt: null, cardStyle: 'guide', photoFit: 'whole', skippedUpdate: null };
 
 /** Turns stored JSON (possibly old, partial or corrupt) into valid settings. */
 export function parseSettings(raw: string | null): Settings {
@@ -44,6 +47,7 @@ export function parseSettings(raw: string | null): Settings {
     autoBackupError: typeof data.autoBackupError === 'string' ? data.autoBackupError : '',
     photosSyncedAt: typeof data.photosSyncedAt === 'number' && Number.isFinite(data.photosSyncedAt) ? data.photosSyncedAt : null,
     cardStyle: pick<CardStyle>(data.cardStyle, CARD_STYLES, DEFAULT_SETTINGS.cardStyle),
+    photoFit: pick<PhotoFit>(data.photoFit, ['whole', 'fill'], DEFAULT_SETTINGS.photoFit),
     skippedUpdate: typeof data.skippedUpdate === 'number' && Number.isInteger(data.skippedUpdate) ? data.skippedUpdate : null,
   };
 }

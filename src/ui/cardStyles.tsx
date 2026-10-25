@@ -1,6 +1,6 @@
 // The share card looks other than "Przewodnik" (ShareCard.tsx). Each one has a version with the photo and one without.
 // Sizes are those of the 360×450 design, times `u`.
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import Svg, { Circle, Ellipse, G, Line, Path, Rect, Text as SvgText } from 'react-native-svg';
@@ -39,9 +39,11 @@ const tagLine = (d: ShareCardData) => [d.tag, d.style, stars(d.rating)].filter(B
 /** "Pełny kadr": the photo over the whole card (or rust with contours), the text on a dark strip at the bottom. */
 export function FullCard({ data, width, onPhotoLoaded }: CardProps) {
   const u = width / 360;
+  // A whole photo ends above the dark strip, so the strip does not hide its bottom.
+  const [strip, setStrip] = useState(0);
   return (
     <Frame width={width} bg={c.accent}>
-      {data.photoUri ? <PhotoBox data={data} onPhotoLoaded={onPhotoLoaded} style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} /> : (
+      {data.photoUri ? <PhotoBox data={data} onPhotoLoaded={onPhotoLoaded} style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: data.photoFit === 'whole' ? strip : 0 }} /> : (
         <Svg width={width} height={width * CARD_RATIO} viewBox="0 0 360 450" style={{ position: 'absolute' }}>
           <G fill="none" stroke={c.bg} strokeWidth={2} opacity={0.14}>
             {[40, 80, 120, 160, 200, 240].map((y) => <Path key={y} d={`M-20 ${y} Q90 ${y - 40} 180 ${y + 10} T380 ${y - 10}`} />)}
@@ -55,7 +57,8 @@ export function FullCard({ data, width, onPhotoLoaded }: CardProps) {
           <Brand u={u} color={c.bg} />
         </View>
       </View>
-      <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 18 * u, paddingTop: 16 * u, paddingBottom: 14 * u, backgroundColor: c.ink, gap: 6 * u }}>
+      <View onLayout={(e) => setStrip(e.nativeEvent.layout.height)}
+        style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 18 * u, paddingTop: 16 * u, paddingBottom: 14 * u, backgroundColor: c.ink, gap: 6 * u }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 * u }}>
           {data.grade ? <GradeBadge grade={data.grade} u={u} size={58} bg={n.accent} color={n.onAccent} /> : null}
           <View style={{ flex: 1 }}>

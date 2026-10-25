@@ -2,7 +2,7 @@ import { Storage } from 'expo-sqlite/kv-store';
 import { create } from 'zustand';
 import type { GradeSystem } from '../domain/grades';
 import { resetBackupIndex } from './backupIndexStore';
-import { parseSettings, type CardStyle, type Lang, type MapBase, type Settings, type ThemeMode } from '../domain/settings';
+import { parseSettings, type CardStyle, type Lang, type PhotoFit, type MapBase, type Settings, type ThemeMode } from '../domain/settings';
 
 const KEY = 'settings';
 
@@ -13,6 +13,7 @@ type SettingsState = Settings & {
   setMapBase: (m: MapBase) => void;
   setCardStyle: (c: CardStyle) => void;
   setSkippedUpdate: (code: number | null) => void;
+  setPhotoFit: (f: PhotoFit) => void;
   setLastBackupAt: (t: number) => void;
   setBackupDir: (uri: string | null, name?: string) => void;
   /** Records a try: ok = it worked (error ''), else the reason. */
@@ -33,10 +34,10 @@ function load(): Settings {
 export const useSettings = create<SettingsState>((set, get) => {
   const save = (patch: Partial<Settings>) => {
     set(patch);
-    const { language, routeSystem, themeMode, mapBase, lastBackupAt, backupDir, backupDirName, autoBackupAt, autoBackupTryAt, autoBackupError, photosSyncedAt, cardStyle, skippedUpdate } = get();
+    const { language, routeSystem, themeMode, mapBase, lastBackupAt, backupDir, backupDirName, autoBackupAt, autoBackupTryAt, autoBackupError, photosSyncedAt, cardStyle, photoFit, skippedUpdate } = get();
     try {
       Storage.setItemSync(KEY, JSON.stringify({
-        language, routeSystem, themeMode, mapBase, lastBackupAt, backupDir, backupDirName, autoBackupAt, autoBackupTryAt, autoBackupError, photosSyncedAt, cardStyle, skippedUpdate,
+        language, routeSystem, themeMode, mapBase, lastBackupAt, backupDir, backupDirName, autoBackupAt, autoBackupTryAt, autoBackupError, photosSyncedAt, cardStyle, photoFit, skippedUpdate,
       }));
     } catch {
       // Keep the in-memory value; it will be saved on the next change.
@@ -50,6 +51,7 @@ export const useSettings = create<SettingsState>((set, get) => {
     setMapBase: (mapBase) => save({ mapBase }),
     setCardStyle: (cardStyle) => save({ cardStyle }),
     setSkippedUpdate: (skippedUpdate) => save({ skippedUpdate }),
+    setPhotoFit: (photoFit) => save({ photoFit }),
     setLastBackupAt: (lastBackupAt) => save({ lastBackupAt }),
     // A new folder starts afresh: no earlier copy counts for it.
     setBackupDir: (backupDir, backupDirName = '') => {

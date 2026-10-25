@@ -38,7 +38,7 @@ export default function ShareScreen() {
   const db = useSQLiteContext();
   const { t, i18n } = useTranslation();
   const th = useTheme();
-  const { routeSystem, cardStyle, setCardStyle } = useSettings();
+  const { routeSystem, cardStyle, setCardStyle, photoFit, setPhotoFit } = useSettings();
   const { width: screenWidth } = useWindowDimensions();
   const cardRef = useRef<View>(null);
   const [content, setContent] = useState<Content | null | undefined>(undefined);
@@ -148,6 +148,7 @@ export default function ShareScreen() {
     line: content.line, path: content.path, facts: content.facts, date: content.date, message: message.trim(),
     place: place ? { coords: coordsLabel(place), approx: place.approx } : null, approxLabel: t('share.approxCard'),
     photoUri: chosenPhoto ? photoUri(chosenPhoto.id) : null,
+    photoSize: chosenPhoto ? { w: chosenPhoto.width, h: chosenPhoto.height } : null, photoFit,
     topo: chosenPhoto && withTopo && photoLines.length ? {
       photoW: chosenPhoto.width, photoH: chosenPhoto.height,
       lines: (() => {
@@ -196,6 +197,12 @@ export default function ShareScreen() {
           <Text style={{ color: th.muted, fontSize: 13 }}>{t('photos.cardHint')}</Text>
           {withPhoto && photoIds.length > 1 ? (
             <ChipRow>{photoIds.map((pid, i) => <Chip key={pid} label={String(i + 1)} on={photoIndex === i} onPress={() => setPhotoIndex(i)} />)}</ChipRow>
+          ) : null}
+          {withPhoto ? (
+            <ChipRow>
+              <Chip label={t('cards.fitWhole')} on={photoFit === 'whole'} onPress={() => setPhotoFit('whole')} />
+              <Chip label={t('cards.fitFill')} on={photoFit === 'fill'} onPress={() => setPhotoFit('fill')} />
+            </ChipRow>
           ) : null}
           {withPhoto && photoLines.length ? (
             <SwitchRow label={t('topo.onCard')} value={withTopo} onChange={setWithTopo} marginTop={6} />
