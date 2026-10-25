@@ -13,7 +13,7 @@ import { PhotoBadge } from '../../src/ui/PhotoViews';
 import { yearStats } from '../../src/domain/stats';
 import { Contours } from '../../src/ui/Contours';
 import { F } from '../../src/ui/fonts';
-import { EmptyState, GradeBadge, Screen, StatTile, Label } from '../../src/ui/kit';
+import { EmptyState, GradeBadge, HIT, Screen, StatTile, Label } from '../../src/ui/kit';
 import { useSettings } from '../../src/ui/settingsStore';
 import { useTheme } from '../../src/ui/theme';
 import { GroupedRow } from '../../src/ui/rows';
@@ -83,9 +83,15 @@ export default function Journal() {
         ListEmptyComponent={<EmptyState title={t('journal.empty')} hint={t('journal.emptyHint')} />}
         stickySectionHeadersEnabled={false}
         renderSectionHeader={({ section }) => (
-          <Label style={{ paddingHorizontal: 4 }}>
-            {dayTitle(section.day)}{section.data.length > 1 ? ` · ${t('journal.dayCount', { count: section.data.length })}` : ''}
-          </Label>
+          <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
+            <Label style={{ paddingHorizontal: 4, flex: 1 }}>
+              {dayTitle(section.day)}{section.data.length > 1 ? ` · ${t('journal.dayCount', { count: section.data.length })}` : ''}
+            </Label>
+            <Pressable onPress={() => router.push(`/day/share?date=${section.day}`)} hitSlop={HIT} accessibilityRole="button"
+              accessibilityLabel={t('dayShare.a11y', { day: dayTitle(section.day) })} style={{ paddingHorizontal: 6, paddingBottom: 4 }}>
+              <Ionicons name="share-social-outline" size={20} color={th.accent} />
+            </Pressable>
+          </View>
         )}
         // One card per day: the rows of a day share the card's border, separated by thin lines.
         renderItem={({ item, index, section }) => {

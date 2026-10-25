@@ -3,7 +3,7 @@ import { Contours } from './Contours';
 import { F } from './fonts';
 import { CardFooter, type ShareCardData } from './ShareCard';
 import { Text } from './Text';
-import { paperTheme as c } from './theme';
+import { nightTheme, paperTheme, type Theme } from './theme';
 
 /** Trip cards are taller than the route card, to hold a list of routes. */
 export const TRIP_CARD_RATIO = 1.5;
@@ -23,8 +23,9 @@ export type TripCardData = {
   approxLabel: string;
 };
 
-/** The picture of a trip: an invitation with the proposed routes, or afterwards what was climbed. Paper look, like ShareCard. */
-export function TripCard({ data, width }: { data: TripCardData; width: number }) {
+/** The picture of a trip: an invitation with the proposed routes, or afterwards what was climbed. Paper look like ShareCard, or the night colours. Also used for one day of the journal. */
+export function TripCard({ data, width, night = false }: { data: TripCardData; width: number; night?: boolean }) {
+  const c: Theme = night ? nightTheme : paperTheme;
   const u = width / 360;
   return (
     <View collapsable={false} style={{ width, height: width * TRIP_CARD_RATIO, backgroundColor: c.bg, overflow: 'hidden' }}>
@@ -36,7 +37,7 @@ export function TripCard({ data, width }: { data: TripCardData; width: number })
           {data.title}
         </Text>
         <Text style={{ color: c.ink, fontFamily: F.semi, fontSize: 17 * u, marginTop: 6 * u }}>{data.dates}</Text>
-        <Text numberOfLines={2} style={{ color: c.ink, fontSize: 15 * u, marginTop: 2 * u }}>{data.crags}</Text>
+        {data.crags ? <Text numberOfLines={2} style={{ color: c.ink, fontSize: 15 * u, marginTop: 2 * u }}>{data.crags}</Text> : null}
         {data.path ? <Text numberOfLines={1} style={{ color: c.muted, fontSize: 13 * u }}>{data.path}</Text> : null}
 
         {data.stats ? (
@@ -44,7 +45,7 @@ export function TripCard({ data, width }: { data: TripCardData; width: number })
             {data.stats.map((s, i) => (
               <View key={s.label} style={{ flex: 1, borderRadius: 10 * u, padding: 8 * u, backgroundColor: i === 0 ? c.badge : c.soft }}>
                 <Text style={{ color: i === 0 ? c.onBadge : c.ink, fontFamily: F.display, fontSize: 24 * u, lineHeight: 26 * u }}>{s.value}</Text>
-                <Text style={{ color: i === 0 ? c.onBadge : c.muted, fontFamily: F.semi, fontSize: 10 * u, letterSpacing: 1 * u, textTransform: 'uppercase' }}>{s.label}</Text>
+                <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} style={{ color: i === 0 ? c.onBadge : c.muted, fontFamily: F.semi, fontSize: 10 * u, letterSpacing: 1 * u, textTransform: 'uppercase' }}>{s.label}</Text>
               </View>
             ))}
           </View>
@@ -71,7 +72,7 @@ export function TripCard({ data, width }: { data: TripCardData; width: number })
         ) : null}
 
         <View style={{ flex: 1 }} />
-        <CardFooter place={data.place} approxLabel={data.approxLabel} u={u} />
+        <CardFooter place={data.place} approxLabel={data.approxLabel} u={u} pal={c} />
       </View>
     </View>
   );

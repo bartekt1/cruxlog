@@ -134,6 +134,12 @@ Write down the result of every step (OK / problem). Report problems with: step n
 4. Look: Guidebook (paper) or Night. Type a message; send the picture and the text.
 5. Goals tab: "Show off goals" next to the Goals heading. Expected: open goals are ticked (at most 5). Untick all but one: the one goal is shown big. Untick all: the send buttons are off and a note asks to choose one.
 
+## 3g3. Showing off a day (without a trip)
+1. Journal: a share icon at the right of each day's heading. Expected: "Show off the day" with a card: "A day at the crag", the crag(s), the full date, the area path, sends, attempts and the hardest grade, the routes sent with grade and style (up to 8, then "and N more"), the message and the crag's position.
+2. Look: Guidebook or Night. "Include the crag's position" works as on the trip card.
+3. A day with attempts only: the card shows the numbers, a note says the route list is empty.
+4. "Send text with a map link" lists every route sent that day.
+
 ## 3h. Trips: invitation and summary
 1. Goals tab › "Trips" › "+ New trip" (or the calendar icon on a crag screen, which fills that crag in). Fill the name, From and To (future days can be picked), add a crag by typing its name, then tap routes in the list below to add them. Arrows move a route up or down, the cross removes it; removing a crag removes its routes.
 2. Save without a name, with the end before the start, or with no crag. Expected: a clear message, nothing saved.
