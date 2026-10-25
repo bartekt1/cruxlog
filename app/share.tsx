@@ -55,13 +55,26 @@ export default function ShareScreen() {
   const [photoIndex, setPhotoIndex] = useState(0);
   const [loadedPhoto, setLoadedPhoto] = useState<string | null>(null);
 
-  // Which photos can go on the card: those of the ascent; of the crag; for a route the photos of its wall, then of its crag.
+  // Which photos can go on the card: those of the ascent, then the wall or crag photos its route is drawn on; of the crag;
+  // for a route the photos of its wall, then of its crag. `lineRoute` is the route whose topo line is drawn on the card.
+  const [lineRoute, setLineRoute] = useState<string | null>(kind === 'route' ? id : null);
   useEffect(() => {
     let live = true;
     (async () => {
       let rows: PhotoRow[] = [];
-      if (kind === 'ascent') rows = await listPhotos(db, 'ascent', id);
-      else if (kind === 'crag') rows = await listPhotos(db, 'crag', id);
+      if (kind === 'ascent') {
+        const a = await getAscent(db, id);
+        const own = await listPhotos(db, 'ascent', id);
+        let drawnRows: PhotoRow[] = [];
+        if (a) {
+          const drawn = new Set(await drawnPhotoIds(db, a.route_id));
+          const walls = [...(await listPhotos(db, 'sector', a.route.sector_id)), ...(await listPhotos(db, 'crag', a.route.crag_id))];
+          drawnRows = walls.filter((p) => drawn.has(p.id));
+          if (live) setLineRoute(a.route_id);
+        }
+        // The topo look shows a photo with the line first; the others the climber's own photos first.
+        rows = cardStyle === 'topo' ? [...drawnRows, ...own] : [...own, ...drawnRows];
+      } else if (kind === 'crag') rows = await listPhotos(db, 'crag', id);
       else if (kind === 'route') {
         const r = await getRoute(db, id);
         if (r) {
@@ -71,18 +84,18 @@ export default function ShareScreen() {
           rows = [...all.filter((p) => drawn.has(p.id)), ...all.filter((p) => !drawn.has(p.id))];
         }
       }
-      if (live) setPhotoRows(rows);
+      if (live) { setPhotoRows(rows); setPhotoIndex(0); }
     })();
     return () => { live = false; };
-  }, [db, kind, id]);
+  }, [db, kind, id, cardStyle]);
 
   const chosenPhoto = withPhoto && photoRows.length ? photoRows[Math.min(photoIndex, photoRows.length - 1)] : null;
   useEffect(() => {
     if (!chosenPhoto || chosenPhoto.owner_type === 'ascent') { setPhotoLines([]); return; }
     let live = true;
-    listTopoLines(db, chosenPhoto.id).then((all) => { if (live) setPhotoLines(kind === 'route' ? all.filter((l) => l.route_id === id) : all); });
+    listTopoLines(db, chosenPhoto.id).then((all) => { if (live) setPhotoLines(lineRoute ? all.filter((l) => l.route_id === lineRoute) : all); });
     return () => { live = false; };
-  }, [db, chosenPhoto?.id, chosenPhoto?.owner_type, kind, id]);
+  }, [db, chosenPhoto?.id, chosenPhoto?.owner_type, lineRoute]);
 
   useEffect(() => {
     let live = true;

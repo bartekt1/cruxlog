@@ -128,6 +128,8 @@ Write down the result of every step (OK / problem). Report problems with: step n
 10. Leave the screen and share something else. Expected: the last chosen look is remembered.
 11. "Topo" without a photo on a route with bolts: a drawn wall with the red line, one ring per bolt (4 when the number is unknown) and the anchor at the top. On a crag card only the wall, no line.
 
+13. Ascent of a route drawn on a wall photo › Show it off › Include photo. Expected: besides the ascent's own photos, the wall/crag photos with this route's line can be picked (1, 2, 3…). With the "Topo" look the photo with the line comes first and the red line is visible; with other looks the ascent's own photos come first. Only this route's line is drawn.
+
 ## 3g2. Sharing the year and goals
 1. Progress tab, a year with ascents: a share icon to the right of the year. Expected: "Show off your year" with a tall card (9:16): the year, sends, days, hardest route, the 5 hardest grades, the year's calendar, the favourite crag. No share icon on a year without ascents.
 2. The year chips at the top switch the card to another year (this year, last year…).
