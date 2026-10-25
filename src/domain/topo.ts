@@ -168,3 +168,16 @@ export function schematicLine(bolts: number | null): Pt[] {
   const at = (t: number): Pt => ({ x: 0.5 + 0.05 * Math.sin(t * Math.PI * 2), y: 0.92 - 0.8 * t });
   return [at(0), ...Array.from({ length: n }, (_, i) => at((i + 1) / (n + 1))), at(1)];
 }
+
+/** Adds a point halfway between point `index` and the next one (a bolt missed between two others); the line is unchanged when `index` is the last point. */
+export function insertAfter(points: Pt[], index: number): Pt[] {
+  if (index < 0 || index >= points.length - 1) return points;
+  const a = points[index];
+  const b = points[index + 1];
+  return [...points.slice(0, index + 1), { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, ...points.slice(index + 1)];
+}
+
+/** Where the magnifier sits: in the top corner away from the finger (`fingerX` from the canvas's left edge), `margin` from the edges. */
+export function loupeLeft(fingerX: number, canvasW: number, size: number, margin = 8): number {
+  return fingerX < canvasW / 2 ? canvasW - size - margin : margin;
+}

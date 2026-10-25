@@ -127,7 +127,7 @@
   "updates": {"section": "App version", "current": "Installed version: {{version}}", "check": "Check for updates", "title": "Update", "question": "A new version of Cruxlog is available: {{version}}. Download and install it? Your data stays.", "later": "Later", "install": "Install", "downloading": "Downloading the new version…", "upToDate": "You have the latest version.", "devBuild": "This build has no version number (built outside GitHub). The latest is {{version}}.", "offline": "Could not reach GitHub. Check your internet connection.", "failed": "GitHub answered with an error ({{status}}). Try again later.", "downloadFailed": "Could not download the new version. Check your internet connection and try again."},
   "statsShare": {"title": "Show off your year", "tag": "My year", "days": "Days", "hardest": "Hardest", "hardestGrades": "Hardest grades", "calendar": "Days at the crag", "favCrag_one": "Favourite crag: {{name}} ({{count}} day)", "favCrag_other": "Favourite crag: {{name}} ({{count}} days)", "partners": "Climbed with: {{names}}", "withPartners": "Show partners (their names go on the card)", "messagePlaceholder": "e.g. Best season yet!", "sendText": "Send as text"},
   "goalsShare": {"title": "Show off your goals", "open": "Show off goals", "tag": "My goals", "which": "Goals on the card (at most {{max}})", "none": "Choose at least one goal.", "messagePlaceholder": "e.g. Keep your fingers crossed!"},
-  "photos": {
+  "photos": { "sourceQuestion": "Where should the photo come from?", "fromGallery": "From the gallery", "fromCamera": "Take a photo", "cameraDenied": "Cruxlog has no access to the camera. Allow it in the phone's settings or add a photo from the gallery.",
     "title": "Photos", "add": "Add photos", "usage": "Photos: {{count}} of {{max}}", "preparing": "Preparing the photos…",
     "cragTitle": "Photos of the crag", "addWall": "Add photos of the wall: {{sector}}", "delete": "Delete photo", "deleteTitle": "Delete this photo?", "deleteQuestion": "The photo disappears from this phone. The copy on Drive stays.", "removeA11y": "Remove photo", "openA11y": "Open photo {{n}}", "missing": "Photo not available", "viewerTitle": "Photo {{n}} of {{total}}",
     "failed": "Could not add the photos: {{message}}", "stats": "Photos: {{count}} ({{size}})", "restored": "Photos restored: {{count}}.",
@@ -137,10 +137,10 @@
   "topo": {
     "title": "Topo", "draw": "Draw topo", "pickRoute": "Which route are you drawing?", "hasLine": "already has a line on this photo",
     "noRoutes": "This wall has no routes yet. Add them on the crag screen.", "changeRoute": "Change route",
-    "hint": "Tap the start of the route, then the bolts from the bottom up, and the anchor last. Two fingers zoom and move the photo.",
-    "points": "Points: {{count}}. Drag a point to move it; tap it to select it.",
+    "hint": "Tap the start of the route, then the bolts from the bottom up, and the anchor last. Hold your finger down and a magnifier shows exactly where the point goes. Two fingers zoom and move the photo.",
+    "points": "Points: {{count}}. Drag a point to move it; tap it to select it, then delete it or insert a new point after it.",
     "modeBolts": "Bolts", "modeFree": "By hand", "hintFree": "Draw the line with a finger from the start to the anchor; pieces are fine, each one continues the line. Two fingers zoom and move the photo.", "openRoute": "Route {{n}}: {{name}}", "openPhoto": "Topo of {{name}}. Tap to open the photo.", "drawThis": "Draw this route on the wall photo", "onCard": "Show the topo line on the photo", "zoomIn": "Zoom in", "zoomOut": "Zoom out", "fit": "Whole photo", "undo": "Undo", "redo": "Redo",
-    "deletePoint": "Delete the selected point", "clear": "Clear the line", "save": "Save line",
+    "insertPoint": "Insert a point after the selected one", "deletePoint": "Delete the selected point", "clear": "Clear the line", "save": "Save line",
     "needTwo": "A line needs at least two points: the start and the anchor.",
     "deleteLine": "Delete line", "deleteLineTitle": "Delete the line?", "deleteLineQuestion": "The line of “{{name}}” disappears from this photo.",
     "discardTitle": "Discard changes?", "discardQuestion": "The line will not be saved.", "discard": "Discard",

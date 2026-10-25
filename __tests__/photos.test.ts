@@ -9,11 +9,11 @@ describe('photos', () => {
   });
   it('allows more and bigger photos for a crag or a wall than for an ascent', () => {
     expect(PHOTO_LIMIT).toEqual({ ascent: 5, crag: 10, sector: 10 });
-    expect(PHOTO_EDGE).toEqual({ ascent: 1600, crag: 2000, sector: 2000 });
+    expect(PHOTO_EDGE).toEqual({ ascent: 1600, crag: 3000, sector: 3000 });
     expect(slotsLeft(4, 'crag')).toBe(6);
     expect(slotsLeft(10, 'sector')).toBe(0);
-    expect(scaleTo(4000, 3000, PHOTO_EDGE.sector)).toEqual({ width: 2000 });
-    expect(scaleTo(1800, 1200, PHOTO_EDGE.sector)).toBeNull();
+    expect(scaleTo(4000, 3000, PHOTO_EDGE.sector)).toEqual({ width: 3000 });
+    expect(scaleTo(2800, 1200, PHOTO_EDGE.sector)).toBeNull();
   });
   it('scales the longer side to 1600 and never enlarges', () => {
     expect(scaleTo(4000, 3000)).toEqual({ width: 1600 });

@@ -5,7 +5,7 @@ import { Alert } from 'react-native';
 import { listPhotos } from '../../db/repo';
 import { slotsLeft } from '../../domain/photos';
 import { errorMessage } from '../errors';
-import { photoUri, pickPhotos, preparePhoto, type PreparedPhoto } from '../photos';
+import { getPhotos, photoUri, preparePhoto, type PreparedPhoto } from '../photos';
 import { editorPhoto, type EditorPhoto } from '../PhotoViews';
 
 /**
@@ -33,7 +33,7 @@ export function useAscentPhotos(db: SQLiteDatabase, ascentId: string | undefined
   async function add() {
     setBusy(true);
     try {
-      const assets = await pickPhotos(slotsLeft(photos.length));
+      const assets = await getPhotos(slotsLeft(photos.length));
       for (const asset of assets) {
         const p = await preparePhoto(asset);
         setPrepared((all) => ({ ...all, [p.id]: p }));

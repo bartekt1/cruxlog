@@ -2,9 +2,12 @@ import { Directory, File, Paths } from 'expo-file-system';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import type { SQLiteDatabase } from 'expo-sqlite';
+import { Alert } from 'react-native';
 import { activePhotos, addPhotos, type PhotoOwner } from '../db/repo';
 import { newId } from '../db/ids';
+import { AppError } from '../domain/errors';
 import { orphanFiles, PHOTO_EDGE, photoFileName, photoIdFromFile, PHOTO_QUALITY, scaleTo, slotsLeft } from '../domain/photos';
+import i18n from '../i18n';
 
 /** A photo that was chosen and shrunk but is not saved yet: its file is still in the cache. */
 export type PreparedPhoto = { id: string; uri: string; width: number; height: number; bytes: number };
@@ -44,8 +47,29 @@ export async function pickPhotos(limit: number): Promise<ImagePicker.ImagePicker
   return res.canceled ? [] : res.assets.slice(0, limit);
 }
 
-/** Shrinks a chosen picture (longer side `maxEdge`, 1600 px for an ascent; JPEG) into a new cache file. The result carries no location data from the original. */
-export async function preparePhoto(asset: ImagePicker.ImagePickerAsset, maxEdge = PHOTO_EDGE.ascent): Promise<PreparedPhoto> {
+/** The phone's camera, for one picture. The picture stays in the app's cache: it is not saved to the gallery. Cancelled = []. */
+export async function takePhoto(): Promise<ImagePicker.ImagePickerAsset[]> {
+  const perm = await ImagePicker.requestCameraPermissionsAsync();
+  if (!perm.granted) throw new AppError('photos.cameraDenied');
+  const res = await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 1, exif: false });
+  return res.canceled ? [] : res.assets.slice(0, 1);
+}
+
+/** Asks where the photos come from, the camera or the gallery, and gets them; cancelled = []. */
+export async function getPhotos(limit: number): Promise<ImagePicker.ImagePickerAsset[]> {
+  if (limit <= 0) return [];
+  const source = await new Promise<'camera' | 'gallery' | null>((resolve) => {
+    Alert.alert(i18n.t('photos.add'), i18n.t('photos.sourceQuestion'), [
+      { text: i18n.t('common.cancel'), style: 'cancel', onPress: () => resolve(null) },
+      { text: i18n.t('photos.fromGallery'), onPress: () => resolve('gallery') },
+      { text: i18n.t('photos.fromCamera'), onPress: () => resolve('camera') },
+    ], { cancelable: true, onDismiss: () => resolve(null) });
+  });
+  return source === 'camera' ? takePhoto() : source === 'gallery' ? pickPhotos(limit) : [];
+}
+
+/** Shrinks a chosen picture to the size and JPEG quality for its owner (1600 px for an ascent, 3000 px for a crag or wall) into a new cache file. The result carries no location data from the original. */
+export async function preparePhoto(asset: ImagePicker.ImagePickerAsset, owner: PhotoOwner = 'ascent'): Promise<PreparedPhoto> {
   let width = asset.width;
   let height = asset.height;
   if (!(width > 0 && height > 0)) { // the system did not say how big it is: load it once to find out
@@ -53,23 +77,23 @@ export async function preparePhoto(asset: ImagePicker.ImagePickerAsset, maxEdge 
     ({ width, height } = probe);
   }
   let context = ImageManipulator.manipulate(asset.uri);
-  const size = scaleTo(width, height, maxEdge);
+  const size = scaleTo(width, height, PHOTO_EDGE[owner]);
   if (size) context = context.resize(size);
-  const out = await (await context.renderAsync()).saveAsync({ format: SaveFormat.JPEG, compress: PHOTO_QUALITY });
+  const out = await (await context.renderAsync()).saveAsync({ format: SaveFormat.JPEG, compress: PHOTO_QUALITY[owner] });
   return { id: newId(), uri: out.uri, width: out.width, height: out.height, bytes: new File(out.uri).size ?? 0 };
 }
 
 /**
- * For a crag or a wall (sector), which exist already: picks photos, shrinks them, stores them and records them in one go.
+ * For a crag or a wall (sector), which exist already: takes or picks photos, shrinks them, stores them and records them in one go.
  * Returns how many were added; throws only when none could be.
  */
-export async function addPhotosFromGallery(db: SQLiteDatabase, owner: PhotoOwner, ownerId: string, have: number): Promise<number> {
-  const assets = await pickPhotos(slotsLeft(have, owner));
+export async function addPhotosTo(db: SQLiteDatabase, owner: PhotoOwner, ownerId: string, have: number): Promise<number> {
+  const assets = await getPhotos(slotsLeft(have, owner));
   const done: PreparedPhoto[] = [];
   let failure: unknown = null;
   for (const asset of assets) {
     try {
-      const p = await preparePhoto(asset, PHOTO_EDGE[owner]);
+      const p = await preparePhoto(asset, owner);
       storePhoto(p);
       done.push(p);
     } catch (e) {

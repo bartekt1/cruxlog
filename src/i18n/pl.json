@@ -127,7 +127,7 @@
   "updates": {"section": "Wersja aplikacji", "current": "Zainstalowana wersja: {{version}}", "check": "Sprawdź aktualizacje", "title": "Aktualizacja", "question": "Jest nowa wersja Cruxlog: {{version}}. Pobrać i zainstalować? Twoje dane zostają.", "later": "Później", "install": "Zainstaluj", "downloading": "Pobieram nową wersję…", "upToDate": "Masz najnowszą wersję.", "devBuild": "Ta wersja nie ma numeru (zbudowana poza GitHubem). Najnowsza to {{version}}.", "offline": "Nie udało się połączyć z GitHubem. Sprawdź internet.", "failed": "GitHub odpowiedział błędem ({{status}}). Spróbuj później.", "downloadFailed": "Nie udało się pobrać nowej wersji. Sprawdź internet i spróbuj ponownie."},
   "statsShare": {"title": "Pochwal się rokiem", "tag": "Mój rok", "days": "Dni", "hardest": "Najtrudniejsza", "hardestGrades": "Najtrudniejsze wyceny", "calendar": "Dni na skale", "favCrag_one": "Ulubiona skała: {{name}} ({{count}} dzień)", "favCrag_few": "Ulubiona skała: {{name}} ({{count}} dni)", "favCrag_many": "Ulubiona skała: {{name}} ({{count}} dni)", "favCrag_other": "Ulubiona skała: {{name}} ({{count}} dni)", "partners": "Na skale z: {{names}}", "withPartners": "Pokaż partnerów (ich imiona będą na karcie)", "messagePlaceholder": "np. Najlepszy sezon!", "sendText": "Wyślij jako tekst"},
   "goalsShare": {"title": "Pochwal się celami", "open": "Pochwal się celami", "tag": "Moje cele", "which": "Które cele na karcie (najwięcej {{max}})", "none": "Wybierz co najmniej jeden cel.", "messagePlaceholder": "np. Trzymajcie kciuki!"},
-  "photos": {
+  "photos": { "sourceQuestion": "Skąd wziąć zdjęcie?", "fromGallery": "Z galerii", "fromCamera": "Zrób zdjęcie", "cameraDenied": "Cruxlog nie ma dostępu do aparatu. Pozwól na to w ustawieniach telefonu albo dodaj zdjęcie z galerii.",
     "title": "Zdjęcia", "add": "Dodaj zdjęcia", "usage": "Zdjęcia: {{count}} z {{max}}", "preparing": "Przygotowuję zdjęcia…",
     "cragTitle": "Zdjęcia skały", "addWall": "Dodaj zdjęcia ściany: {{sector}}", "delete": "Usuń zdjęcie", "deleteTitle": "Usunąć zdjęcie?", "deleteQuestion": "Zdjęcie zniknie z tego telefonu. Kopia na Dysku zostaje.", "removeA11y": "Usuń zdjęcie", "openA11y": "Otwórz zdjęcie {{n}}", "missing": "Zdjęcie niedostępne", "viewerTitle": "Zdjęcie {{n}} z {{total}}",
     "failed": "Nie udało się dodać zdjęć: {{message}}", "stats": "Zdjęcia: {{count}} ({{size}})", "restored": "Przywrócone zdjęcia: {{count}}.",
@@ -137,10 +137,10 @@
   "topo": {
     "title": "Topo", "draw": "Rysuj topo", "pickRoute": "Którą drogę rysujesz?", "hasLine": "ma już linię na tym zdjęciu",
     "noRoutes": "Ta ściana nie ma jeszcze dróg. Dodaj je na ekranie skały.", "changeRoute": "Zmień drogę",
-    "hint": "Dotknij startu drogi, potem kolejnych ringów od dołu, na końcu stanowiska. Dwoma palcami powiększasz i przesuwasz zdjęcie.",
-    "points": "Punkty: {{count}}. Przeciągnij punkt, żeby go przesunąć; dotknij, żeby go zaznaczyć.",
+    "hint": "Dotknij startu drogi, potem kolejnych ringów od dołu, na końcu stanowiska. Przytrzymaj palec, a lupa pokaże, gdzie dokładnie stawiasz punkt. Dwoma palcami powiększasz i przesuwasz zdjęcie.",
+    "points": "Punkty: {{count}}. Przeciągnij punkt, żeby go przesunąć; dotknij, żeby go zaznaczyć, a potem usunąć albo wstawić nowy punkt za nim.",
     "modeBolts": "Ringi", "modeFree": "Ręcznie", "hintFree": "Rysuj linię palcem od startu do stanowiska; można w kilku kawałkach, każdy przedłuża linię. Dwoma palcami powiększasz i przesuwasz zdjęcie.", "openRoute": "Droga {{n}}: {{name}}", "openPhoto": "Topo drogi {{name}}. Dotknij, aby otworzyć zdjęcie.", "drawThis": "Narysuj tę drogę na zdjęciu ściany", "onCard": "Pokaż linię topo na zdjęciu", "zoomIn": "Powiększ", "zoomOut": "Pomniejsz", "fit": "Całe zdjęcie", "undo": "Cofnij", "redo": "Ponów",
-    "deletePoint": "Usuń zaznaczony punkt", "clear": "Wyczyść linię", "save": "Zapisz linię",
+    "insertPoint": "Wstaw punkt za zaznaczonym", "deletePoint": "Usuń zaznaczony punkt", "clear": "Wyczyść linię", "save": "Zapisz linię",
     "needTwo": "Linia potrzebuje co najmniej dwóch punktów: startu i stanowiska.",
     "deleteLine": "Usuń linię", "deleteLineTitle": "Usunąć linię?", "deleteLineQuestion": "Linia drogi „{{name}}” zniknie z tego zdjęcia.",
     "discardTitle": "Odrzucić zmiany?", "discardQuestion": "Linia nie zostanie zapisana.", "discard": "Odrzuć",

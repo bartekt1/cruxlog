@@ -252,6 +252,14 @@ Since the automatic backup (§6a) these buttons are under Settings › "Other wa
 1. Settings opens with four folded sections: Look and language, Crags and packs, Backup, App version; each shows one line (e.g. "Polski · Jak w telefonie · KR", the last backup, the version). The backup line is red when a copy is due.
 2. Tap a section: it opens; tap again: it folds. Long descriptions show one sentence and "More ›"; tapping it shows the full text, "Less" hides it.
 
+## 6h. Camera, sharper wall photos, magnifier and inserting a point
+1. Crag screen › add a crag photo, or the camera icon of a wall. Expected: a question "Where should the photo come from?" with "From the gallery" and "Take a photo". The same question in the ascent form.
+2. "Take a photo": the first time Android asks for the camera; allow it. The phone's camera opens; after taking the picture it appears in the app. It is not in the phone's gallery. Refusing the camera shows a message suggesting the gallery.
+3. A new wall photo is sharp when zoomed in the topo editor (stored at 3000 px, about 1–2.5 MB). Older photos stay as they were.
+4. Topo editor, bolts mode: hold a finger still on the photo. Expected: after a moment a round magnifier appears in the top corner away from the finger, with a red cross; moving the finger moves the cross; lifting it adds a point exactly there. A quick tap still adds a point at once; a quick move still pans a zoomed photo.
+5. Dragging an existing point also shows the magnifier.
+6. Tap a point to select it, then the "insert point" button (between undo/redo and delete). Expected: a new point appears halfway to the next point and is selected; drag it onto the missed bolt. The button is off for the last point and in by-hand mode.
+
 ## 7. Robustness
 1. Change the language and the route grade system, close the app completely (swipe away) and reopen it. Expected: all data is still there, and the language and grade system are the ones you chose.
 2. Rotate the phone, switch to dark mode and back. Expected: readable text and no layout breaks.

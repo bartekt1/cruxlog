@@ -8,7 +8,7 @@ import {
 } from '../src/db/repo';
 import { routeGrade } from '../src/domain/grades';
 import {
-  commit, FIT, numberLines, redo, startHistory, undo, zoomAt, type History, type Pt, type TopoMode, type Zoom,
+  commit, FIT, insertAfter, loupeLeft, numberLines, redo, startHistory, undo, zoomAt, type History, type Pt, type TopoMode, type Zoom,
 } from '../src/domain/topo';
 import { F } from '../src/ui/fonts';
 import { IconButton, type IconName } from '../src/ui/icons';
@@ -17,7 +17,7 @@ import { photoUri } from '../src/ui/photos';
 import { useSettings } from '../src/ui/settingsStore';
 import { Text } from '../src/ui/Text';
 import { useTheme } from '../src/ui/theme';
-import { fitRect, TopoLines } from '../src/ui/TopoLines';
+import { fitRect, TopoLines, type DrawnLine } from '../src/ui/TopoLines';
 import { runOrAlert } from '../src/ui/errors';
 import { CtaButton, RouteCard } from '../src/ui/rows';
 import { useTopoGestures } from '../src/ui/useTopoGestures';
@@ -51,6 +51,7 @@ export default function TopoEditor() {
   const [dirty, setDirty] = useState(false);
   const [mode, setMode] = useState<TopoMode>('bolts');
   const [saving, setSaving] = useState(false);
+  const [loupe, setLoupe] = useState<{ x: number; y: number; at: Pt } | null>(null);
   const leaving = useRef(false); // set once the line is saved or deleted, so the unsaved-changes question is skipped
 
   useEffect(() => {
@@ -87,7 +88,7 @@ export default function TopoEditor() {
   const points = draft ?? history.present;
 
   const step = (next: Pt[], sel: number) => { setHistory((h) => commit(h, next)); setSelected(sel); setDirty(true); };
-  const responder = useTopoGestures({ zoom, box, canvas, points, history, mode }, { setZoom, setDraft, step, setSelected });
+  const responder = useTopoGestures({ zoom, box, canvas, points, history, mode }, { setZoom, setDraft, step, setSelected, setLoupe });
 
   if (!photo) return <View style={{ flex: 1, backgroundColor: th.bg }} />;
   const uri = photoUri(photo.id);
@@ -171,6 +172,7 @@ export default function TopoEditor() {
         {/* The lines are drawn on the visible canvas only, not on the whole enlarged photo (see TopoLines). */}
         <TopoLines lines={shown} width={scaledW} height={scaledH} selected={selected >= 0 ? { routeId: route.id, index: selected } : null}
           frame={{ width: canvas.w, height: canvas.h, left: canvas.w / 2 - scaledW / 2 + zoom.tx, top: canvas.h / 2 - scaledH / 2 + zoom.ty }} />
+        {loupe ? <Loupe uri={uri} lines={shown} at={loupe.at} fingerX={loupe.x} canvasW={canvas.w} photoW={scaledW} photoH={scaledH} maxW={photo.width} /> : null}
         {/* On top of everything: catches the fingers. */}
         <View style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} {...responder.panHandlers}
           accessible accessibilityLabel={t('topo.canvasA11y')} />
@@ -191,6 +193,7 @@ export default function TopoEditor() {
         {tool('add-circle-outline', t('topo.zoomIn'), () => zoomBy(BUTTON_ZOOM))}
         {tool('arrow-undo-outline', t('topo.undo'), () => { setHistory(undo); setSelected(-1); setDirty(true); }, !history.past.length)}
         {tool('arrow-redo-outline', t('topo.redo'), () => { setHistory(redo); setSelected(-1); setDirty(true); }, !history.future.length)}
+        {tool('git-commit-outline', t('topo.insertPoint'), () => step(insertAfter(points, selected), selected + 1), selected < 0 || selected >= points.length - 1 || mode === 'free')}
         {tool('close-circle-outline', t('topo.deletePoint'), () => { step(points.filter((_, i) => i !== selected), -1); }, selected < 0 || mode === 'free')}
         {tool('refresh-outline', t('topo.clear'), () => step([], -1), !points.length)}
       </View>
@@ -199,3 +202,29 @@ export default function TopoEditor() {
   );
 }
 
+
+const LOUPE = 128; // px, the magnifier's diameter
+const LOUPE_ZOOM = 3;
+
+/**
+ * The magnifier: a round window in the top corner away from the finger, showing the photo and the lines under the finger
+ * enlarged, with a cross on the exact point. Not enlarged beyond twice the photo's own pixels, where it would only blur.
+ */
+function Loupe({ uri, lines, at, fingerX, canvasW, photoW, photoH, maxW }: {
+  uri: string | null; lines: DrawnLine[]; at: Pt; fingerX: number; canvasW: number; photoW: number; photoH: number; maxW: number;
+}) {
+  const th = useTheme();
+  const k = Math.max(1, Math.min(LOUPE_ZOOM, (maxW * 2) / photoW));
+  const w = photoW * k;
+  const h = photoH * k;
+  const left = LOUPE / 2 - at.x * w;
+  const top = LOUPE / 2 - at.y * h;
+  return (
+    <View pointerEvents="none" style={{ position: 'absolute', top: 8, left: loupeLeft(fingerX, canvasW, LOUPE), width: LOUPE, height: LOUPE, borderRadius: LOUPE / 2, overflow: 'hidden', borderWidth: 3, borderColor: th.topoHalo, backgroundColor: th.soft, elevation: 6 }}>
+      {uri ? <Image source={{ uri }} style={{ position: 'absolute', left, top, width: w, height: h }} resizeMode="stretch" /> : null}
+      <TopoLines lines={lines} width={w} height={h} frame={{ width: LOUPE, height: LOUPE, left, top }} />
+      <View style={{ position: 'absolute', left: LOUPE / 2 - 0.75, top: LOUPE / 2 - 14, width: 1.5, height: 28, backgroundColor: th.topo }} />
+      <View style={{ position: 'absolute', top: LOUPE / 2 - 0.75, left: LOUPE / 2 - 14, height: 1.5, width: 28, backgroundColor: th.topo }} />
+    </View>
+  );
+}
