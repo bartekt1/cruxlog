@@ -117,6 +117,11 @@ export const MIGRATIONS: string[] = [
   ALTER TABLE crag ADD COLUMN pack_id TEXT;
   CREATE INDEX idx_crag_pack ON crag(pack_id);
   `,
+  // 12: proposals waiting to be sent: the user's changes to crags, sectors and routes, each with the row as it was then
+  // (template columns, JSON) and what changed. Sent to the shared working sheet, then deleted; not part of backups.
+  `
+  CREATE TABLE outbox (id TEXT PRIMARY KEY, created_at INTEGER NOT NULL, kind TEXT NOT NULL, row TEXT NOT NULL, changes TEXT NOT NULL DEFAULT '');
+  `,
 ];
 
 export async function migrate(db: SQLiteDatabase): Promise<void> {

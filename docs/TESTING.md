@@ -269,6 +269,12 @@ Since the automatic backup (§6a) these buttons are under Settings › "Other wa
 5. Dragging an existing point also shows the magnifier.
 6. Tap a point to select it, then the "insert point" button (between undo/redo and delete). Expected: a new point appears halfway to the next point and is selected; drag it onto the missed bolt. The button is off for the last point and in by-hand mode.
 
+## 6i. Shared crag base (proposals)
+1. Settings › "Shared crag base": sending on by default; the line shows how many changes wait. Before the sheet is set up a note says the base is not running yet and changes wait.
+2. Add a route on a crag, change its grade, move a crag's position, add and rename a sector, delete a route. Expected: the waiting count grows by one per real change (saving without a change adds nothing). Importing a file or installing a pack adds nothing.
+3. Once the sheet is set up (docs/PROPOZYCJE.md): on the next start a one-time note explains what is sent; "OK" sends, "Don't send" switches it off. Within about 2 minutes the rows appear in the sheet with Kiedy, Zmiana, Co zmieniono, Urządzenie and the template columns; the waiting count drops to 0.
+4. Without internet changes wait; "Send now" says it could not connect. Switching sending off: nothing is sent; the changes keep waiting.
+
 ## 7. Robustness
 1. Change the language and the route grade system, close the app completely (swipe away) and reopen it. Expected: all data is still there, and the language and grade system are the ones you chose.
 2. Rotate the phone, switch to dark mode and back. Expected: readable text and no layout breaks.

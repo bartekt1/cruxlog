@@ -3,6 +3,7 @@ import { sameName } from '../domain/text';
 import { areaIdFor, type AreaNames } from './areas';
 import { AppError } from '../domain/errors';
 import { newId, now } from './ids';
+import { cragSnapshot, recordChange, routeSnapshot, sectorSnapshot } from './proposals';
 import { count, findByName, sectorIdFor, type NamedRow, type PosSource } from './shared';
 
 export type CragChoice = { id: string; name: string; region_id: string | null; region_name: string | null; routes: number; lat: number | null; lng: number | null; pos_source: PosSource };
@@ -33,7 +34,11 @@ export async function listCrags(db: SQLiteDatabase): Promise<CragRow[]> {
 
 /** Sets (or clears, with null) where a crag is, e.g. from the phone's GPS under the crag or a pin on the map. */
 export async function setCragLocation(db: SQLiteDatabase, id: string, at: { lat: number; lng: number } | null): Promise<void> {
-  await db.runAsync('UPDATE crag SET lat = ?, lng = ?, pos_source = ?, updated_at = ? WHERE id = ?', [at?.lat ?? null, at?.lng ?? null, at ? 'user' : '', now(), id]);
+  await db.withTransactionAsync(async () => {
+    const before = await cragSnapshot(db, id);
+    await db.runAsync('UPDATE crag SET lat = ?, lng = ?, pos_source = ?, updated_at = ? WHERE id = ?', [at?.lat ?? null, at?.lng ?? null, at ? 'user' : '', now(), id]);
+    await recordChange(db, 'crag_position', before, await cragSnapshot(db, id));
+  });
 }
 
 export type CragPosition = { key: string; name: string; lat: number; lng: number; approx?: boolean };
@@ -109,12 +114,16 @@ async function deleteRoutesWhere(db: SQLiteDatabase, routeFilter: string, id: st
 
 export async function deleteRoute(db: SQLiteDatabase, id: string): Promise<void> {
   const t = now();
-  await db.withTransactionAsync(() => deleteRoutesWhere(db, 'r.id = ?', id, t));
+  await db.withTransactionAsync(async () => {
+    await recordChange(db, 'route_delete', null, await routeSnapshot(db, id));
+    await deleteRoutesWhere(db, 'r.id = ?', id, t);
+  });
 }
 
 export async function deleteSector(db: SQLiteDatabase, id: string): Promise<void> {
   const t = now();
   await db.withTransactionAsync(async () => {
+    await recordChange(db, 'sector_delete', null, await sectorSnapshot(db, id));
     await deleteRoutesWhere(db, 's.id = ?', id, t);
     await db.runAsync('UPDATE sector SET deleted_at = ?, updated_at = ? WHERE id = ?', [t, t, id]);
   });
@@ -123,6 +132,7 @@ export async function deleteSector(db: SQLiteDatabase, id: string): Promise<void
 export async function deleteCrag(db: SQLiteDatabase, id: string): Promise<void> {
   const t = now();
   await db.withTransactionAsync(async () => {
+    await recordChange(db, 'crag_delete', null, await cragSnapshot(db, id));
     await deleteRoutesWhere(db, 's.crag_id = ?', id, t);
     await db.runAsync('UPDATE sector SET deleted_at = ?, updated_at = ? WHERE deleted_at IS NULL AND crag_id = ?', [t, t, id]);
     await db.runAsync('UPDATE crag SET deleted_at = ?, updated_at = ? WHERE id = ?', [t, t, id]);
@@ -136,6 +146,7 @@ export async function saveCrag(db: SQLiteDatabase, id: string | null, c: CragInp
   const t = now();
   const cragId = id ?? newId();
   await db.withTransactionAsync(async () => {
+    const before = id ? await cragSnapshot(db, id) : null;
     const regionId = await areaIdFor(db, c.areas, t);
     if (id) {
       await db.runAsync('UPDATE crag SET name = ?, region_id = ?, description = ?, approach = ?, updated_at = ? WHERE id = ?',
@@ -145,6 +156,7 @@ export async function saveCrag(db: SQLiteDatabase, id: string | null, c: CragInp
         [cragId, regionId, c.name, c.description, c.approach, t, t]);
     }
     for (const s of c.sectorNames ?? []) await sectorIdFor(db, cragId, s, t);
+    await recordChange(db, id ? 'crag_edit' : 'crag_new', before, await cragSnapshot(db, cragId));
   });
   return cragId;
 }
@@ -158,7 +170,14 @@ export async function listSectors(db: SQLiteDatabase, cragId: string): Promise<S
 
 /** Adds a sector to a crag; returns the existing one when the name already exists (ignoring case and Polish letters). */
 export async function addSector(db: SQLiteDatabase, cragId: string, name: string): Promise<string> {
-  return sectorIdFor(db, cragId, name, now());
+  const t = now();
+  let id = '';
+  await db.withTransactionAsync(async () => {
+    const existed = await findByName(db, 'SELECT id, name FROM sector WHERE crag_id = ? AND deleted_at IS NULL', [cragId], name);
+    id = await sectorIdFor(db, cragId, name, t);
+    if (!existed) await recordChange(db, 'sector_new', null, await sectorSnapshot(db, id));
+  });
+  return id;
 }
 
 export async function getSector(db: SQLiteDatabase, id: string): Promise<NamedRow | null> {
@@ -169,7 +188,11 @@ export async function getSector(db: SQLiteDatabase, id: string): Promise<NamedRo
 export async function renameSector(db: SQLiteDatabase, id: string, name: string): Promise<void> {
   const same = await findByName(db, 'SELECT id, name FROM sector WHERE deleted_at IS NULL AND id <> ? AND crag_id = (SELECT crag_id FROM sector WHERE id = ?)', [id, id], name);
   if (same) throw new AppError('errors.nameTaken', { name: name.trim() });
-  await db.runAsync('UPDATE sector SET name = ?, updated_at = ? WHERE id = ?', [name, now(), id]);
+  await db.withTransactionAsync(async () => {
+    const before = await sectorSnapshot(db, id);
+    await db.runAsync('UPDATE sector SET name = ?, updated_at = ? WHERE id = ?', [name, now(), id]);
+    await recordChange(db, 'sector_edit', before, await sectorSnapshot(db, id));
+  });
 }
 
 export async function listSectorNames(db: SQLiteDatabase, cragId: string): Promise<string[]> {

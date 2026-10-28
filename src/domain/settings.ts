@@ -20,9 +20,15 @@ export type Settings = {
   photoFit: PhotoFit;
   /** A new app version the user answered "later" to (its build number); it is not offered again on start. */
   skippedUpdate: number | null;
+  /** Send the user's changes to crags and routes to the shared working sheet (on unless switched off). */
+  shareEdits: boolean;
+  /** Whether the one-time note about sending changes was shown (nothing is sent before it is). */
+  shareNoticeShown: boolean;
+  /** This installation's random code in the sheet ('' until the first sending). */
+  deviceCode: string;
 };
 
-export const DEFAULT_SETTINGS: Settings = { language: null, routeSystem: 'kr', themeMode: 'system', mapBase: 'standard', lastBackupAt: null, backupDir: null, backupDirName: '', autoBackupAt: null, autoBackupTryAt: null, autoBackupError: '', photosSyncedAt: null, cardStyle: 'guide', photoFit: 'whole', skippedUpdate: null };
+export const DEFAULT_SETTINGS: Settings = { language: null, routeSystem: 'kr', themeMode: 'system', mapBase: 'standard', lastBackupAt: null, backupDir: null, backupDirName: '', autoBackupAt: null, autoBackupTryAt: null, autoBackupError: '', photosSyncedAt: null, cardStyle: 'guide', photoFit: 'whole', skippedUpdate: null, shareEdits: true, shareNoticeShown: false, deviceCode: '' };
 
 /** Turns stored JSON (possibly old, partial or corrupt) into valid settings. */
 export function parseSettings(raw: string | null): Settings {
@@ -49,6 +55,9 @@ export function parseSettings(raw: string | null): Settings {
     cardStyle: pick<CardStyle>(data.cardStyle, CARD_STYLES, DEFAULT_SETTINGS.cardStyle),
     photoFit: pick<PhotoFit>(data.photoFit, ['whole', 'fill'], DEFAULT_SETTINGS.photoFit),
     skippedUpdate: typeof data.skippedUpdate === 'number' && Number.isInteger(data.skippedUpdate) ? data.skippedUpdate : null,
+    shareEdits: typeof data.shareEdits === 'boolean' ? data.shareEdits : DEFAULT_SETTINGS.shareEdits,
+    shareNoticeShown: data.shareNoticeShown === true,
+    deviceCode: typeof data.deviceCode === 'string' && /^[a-z0-9]{4,12}$/.test(data.deviceCode) ? data.deviceCode : '',
   };
 }
 
