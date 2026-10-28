@@ -53,12 +53,12 @@
     "length": "{{m}} m", "bolts": "ringi: {{count}}", "lengthLabel": "Długość (m)", "boltsLabel": "Ringi"
   },
   "edit": {
-    "cragTitle": "Edycja skały", "newCragTitle": "Dodaj skałę", "addCrag": "+ Dodaj skałę", "routeTitle": "Edycja drogi", "routeTitleNamed": "Edytuj drogę {{name}}",
+    "cragTitle": "Edycja skały", "newCragTitle": "Dodaj skałę", "addCrag": "+ Dodaj skałę", "routeTitle": "Edycja drogi", 
     "sectorTitle": "Edycja sektora",
     "name": "Nazwa", "cragName": "Nazwa skały", "sectors": "Sektory (opcjonalnie)",
     "addAnotherSector": "+ Kolejny sektor", "sectorsHint": "Małe skały często nie mają sektorów; możesz je dodać później na ekranie skały.", "sectorOptional": "Opcjonalnie; puste = bez sektora",
-    "addRoutes": "+ Dodaj drogi", "addSector": "+ Dodaj sektor", "addRoutesTitle": "Dodaj drogi", "addSectorTitle": "Dodaj sektor", "addRouteInSector": "Dodaj drogę w sektorze {{sector}}",
-    "emptySector": "Brak dróg. Dotknij +, aby dodać.", "addedRoutes": "Dodano: {{list}}",
+    "editCrag": "Edytuj skałę", "editSector": "Edytuj sektor", "addSectorItem": "Dodaj sektor", "sectorMenu": "Sektor {{sector}}", "addRouteHere": "Dodaj drogę w tym sektorze", "addRoutes": "+ Dodaj drogi",  "addRoutesTitle": "Dodaj drogi", "addSectorTitle": "Dodaj sektor", 
+    "emptySector": "Brak dróg. Dodaj je z menu ⋯ sektora.", "addedRoutes": "Dodano: {{list}}",
     "routeExists": "Ta skała ma już drogę „{{name}}” ({{sector}}).", "saveAndNext": "Zapisz i dodaj kolejną", "saveAndClose": "Zapisz i zamknij", "description": "Opis", "sector": "Sektor",
     "deleteCrag": "Usuń skałę", "deleteRoute": "Usuń drogę", "deleteSector": "Usuń sektor",
     "deleteTitle": "Usunąć „{{name}}”?", "deleteAlso": "Zostaną też usunięte:", "deleteSimple": "Tego nie można cofnąć.",

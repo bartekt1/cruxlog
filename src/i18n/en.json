@@ -53,12 +53,12 @@
     "length": "{{m}} m", "bolts": "bolts: {{count}}", "lengthLabel": "Length (m)", "boltsLabel": "Bolts"
   },
   "edit": {
-    "cragTitle": "Edit crag", "newCragTitle": "Add a crag", "addCrag": "+ Add a crag", "routeTitle": "Edit route", "routeTitleNamed": "Edit route {{name}}",
+    "cragTitle": "Edit crag", "newCragTitle": "Add a crag", "addCrag": "+ Add a crag", "routeTitle": "Edit route", 
     "sectorTitle": "Edit sector",
     "name": "Name", "cragName": "Crag name", "sectors": "Sectors (optional)",
     "addAnotherSector": "+ Another sector", "sectorsHint": "Small crags often have no sectors; you can add them later on the crag screen.", "sectorOptional": "Optional; empty = no sector",
-    "addRoutes": "+ Add routes", "addSector": "+ Add sector", "addRoutesTitle": "Add routes", "addSectorTitle": "Add sector", "addRouteInSector": "Add a route in {{sector}}",
-    "emptySector": "No routes yet. Tap + to add one.", "addedRoutes": "Added: {{list}}",
+    "editCrag": "Edit crag", "editSector": "Edit sector", "addSectorItem": "Add a sector", "sectorMenu": "Sector {{sector}}", "addRouteHere": "Add a route in this sector", "addRoutes": "+ Add routes",  "addRoutesTitle": "Add routes", "addSectorTitle": "Add sector", 
+    "emptySector": "No routes. Add them from the sector's ⋯ menu.", "addedRoutes": "Added: {{list}}",
     "routeExists": "This crag already has \"{{name}}\" ({{sector}}).", "saveAndNext": "Save and add another", "saveAndClose": "Save and close", "description": "Description", "sector": "Sector",
     "deleteCrag": "Delete crag", "deleteRoute": "Delete route", "deleteSector": "Delete sector",
     "deleteTitle": "Delete \"{{name}}\"?", "deleteAlso": "This also deletes:", "deleteSimple": "This cannot be undone.",

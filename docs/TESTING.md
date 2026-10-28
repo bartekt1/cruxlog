@@ -304,6 +304,16 @@ Since the automatic backup (§6a) these buttons are under Settings › "Other wa
 6. Own grade appears inside the details only once a route is chosen (or a grade is typed for a new route).
 7. Trip dates still use the old date field (future days allowed).
 
+## 6m. UX stage 3 (crag screen)
+
+1. Crag header: only share and "⋯". "⋯" opens a list from the bottom: Edytuj skałę, Zaplanuj wyprawę na tę skałę, Dodaj sektor, Anuluj. Tapping outside the list or the Back button closes it.
+2. Route rows have no pencil. Tapping a route opens it, and the route screen's pencil edits it.
+3. Under a route: the length (e.g. "25 m") and "✓ przejścia: 2" or "próby: 1". "Sport" is gone; "Wielowyciąg" still shows. A sport route with no length and no ascents shows only its name.
+4. Sector header: camera (until 10 photos) and "⋯" with "Dodaj drogę w tym sektorze" (the sector already filled in) and "Edytuj sektor".
+5. A crag whose only sector has the crag's name (e.g. imported routes): the header reads "DROGI" instead of repeating the name.
+6. "+ Dodaj drogi" is an outlined button, not orange.
+7. TalkBack: "⋯" reads the crag's name or "Sektor …".
+
 ## 7. Robustness
 1. Change the language and the route grade system, close the app completely (swipe away) and reopen it. Expected: all data is still there, and the language and grade system are the ones you chose.
 2. Rotate the phone, switch to dark mode and back. Expected: readable text and no layout breaks.
