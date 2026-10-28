@@ -6,7 +6,7 @@ import { MIGRATIONS, migrate } from '../src/db/migrate';
 import {
   addAscent, addGoal, addUserRoute, saveAscent, installPack, listInstalledPacks, removePack, saveTrip, getTrip, listTrips, deleteTrip, tripRoutesOn, listAscentsBetween, applyImport, cragUsage, deleteAscent, deleteCrag, deleteGoal, deleteArea, deleteRoute, deleteSector,
   getAscent, getCrag, getArea, getRoute, getSector, listAscents, listCragRoutes, listCrags, listGoals, listAreas, listSectorNames, addArea, areaIdFor,
-  renameArea, renameSector, routeUsage, saveCrag, searchRoutes, sectorUsage, setGoalDone, updateAscent, updateRoute, type NewRoute, type RouteFilter,
+  renameArea, renameSector, routeUsage, countOutbox, deleteOutbox, listOutbox, saveCrag, searchRoutes, sectorUsage, setGoalDone, updateAscent, updateRoute, type NewRoute, type RouteFilter,
   listCragChoices, listPartners, applyCragPositions, addRouteGoal, routeGoalKinds, addPhotos, listPhotos, listPhotosOf, removePhotos, activePhotos, latestPhotoChange, getPhoto, listTopoLines, topoRoutes, saveTopoLine, deleteTopoLine, routeTopos, setCragLocation, listRouteAscents, recentRoutes, listSectors, addSector, createRoute, importedUsage, removeImported, findRoutes, getGoal, updateGoal, routeGoals,
 } from '../src/db/repo';
 import { descendantIds } from '../src/domain/areas';
@@ -1016,5 +1016,37 @@ describe('backup', () => {
     await expect(importBackup(db, { hello: 'world' })).rejects.toThrow();
     await expect(importBackup(db, null)).rejects.toThrow();
     await expect(importBackup(db, { app: 'cruxlog', version: BACKUP_VERSION + 1, exportedAt: 0, tables: {} })).rejects.toThrow();
+  });
+});
+
+describe('proposals outbox', () => {
+  it('records the user\'s changes to crags, sectors and routes, not packs or ascents', async () => {
+    const db = await freshDb();
+    const cragId = await saveCrag(db, null, { name: 'Krowia', areas: A('Pogórze', 'Czarnorzeki'), description: '', approach: '' });
+    const routeId = await createRoute(db, cragId, { sectorName: 'Zachód', name: 'Rysa', type: 'sport', gradeLabel: 'VI.2', gradeSystem: 'kr', gradeIndex: parseGrade('VI.2', 'kr')!, lengthM: 18, bolts: 5 });
+    await updateRoute(db, routeId, { sectorName: 'Zachód', name: 'Rysa', type: 'sport', gradeLabel: 'VI.3', gradeSystem: 'kr', gradeIndex: parseGrade('VI.3', 'kr')!, bolts: 6 });
+    await updateRoute(db, routeId, { sectorName: 'Zachód', name: 'Rysa', type: 'sport', gradeLabel: 'VI.3', gradeSystem: 'kr', gradeIndex: parseGrade('VI.3', 'kr')! }); // nothing changed
+    await setCragLocation(db, cragId, { lat: 49.7, lng: 21.8 });
+    await addSector(db, cragId, 'Wschód');
+    await addSector(db, cragId, 'wschod'); // the same sector: not new
+    const sectorId = (await listSectors(db, cragId)).find((s) => s.name === 'Wschód')!.id;
+    await renameSector(db, sectorId, 'Wschodnia');
+    await deleteRoute(db, routeId);
+    await addAscent(db, ascent((await addUserRoute(db, route({ cragName: 'Krowia', sectorName: 'Zachód', name: 'Nowa' }))))); // a new route from the ascent form
+    await applyImport(db, samples()); // an import is not a proposal
+
+    const out = await listOutbox(db);
+    expect(out.map((e) => e.kind)).toEqual(['crag_new', 'route_new', 'route_edit', 'crag_position', 'sector_new', 'sector_edit', 'route_delete', 'route_new']);
+    expect(out[0].row).toMatchObject({ Region: 'Pogórze', Rejon: 'Czarnorzeki', Skała: 'Krowia' });
+    expect(out[1].row).toMatchObject({ Skała: 'Krowia', Sektor: 'Zachód', Nazwa: 'Rysa', Wycena: 'VI.2', Długość: '18', Przeloty: '5' });
+    expect(out[2].changes).toBe('Wycena: VI.2 → VI.3; Przeloty: 5 → 6');
+    expect(out[3].changes).toBe('Lat: – → 49.7; Lng: – → 21.8');
+    expect(out[5]).toMatchObject({ changes: 'Sektor: Wschód → Wschodnia' });
+    expect(out[6].row).toMatchObject({ Nazwa: 'Rysa', Wycena: 'VI.3' });
+    expect(await countOutbox(db)).toBe(8);
+
+    await deleteOutbox(db, out.slice(0, 3).map((e) => e.id));
+    expect(await countOutbox(db)).toBe(5);
+    expect((await exportBackup(db)).tables).not.toHaveProperty('outbox');
   });
 });

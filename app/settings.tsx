@@ -9,6 +9,7 @@ import { FoldSection } from '../src/ui/Fold';
 import { Chip, ChipRow, Label } from '../src/ui/kit';
 import { BackupSection } from '../src/ui/settings/BackupSection';
 import { ImportSection } from '../src/ui/settings/ImportSection';
+import { ProposalSection } from '../src/ui/settings/ProposalSection';
 import { UpdateSection } from '../src/ui/settings/UpdateSection';
 import type { Run } from '../src/ui/settings/run';
 import { useSettings } from '../src/ui/settingsStore';
@@ -57,6 +58,7 @@ export default function Settings() {
       </ChipRow>
       </FoldSection>
       <ImportSection run={run} busy={busy} />
+      <ProposalSection run={run} busy={busy} />
       <BackupSection run={run} busy={busy} />
       <UpdateSection run={run} busy={busy} />
       {busy ? <ActivityIndicator color={th.accent} style={{ marginTop: 16 }} /> : null}

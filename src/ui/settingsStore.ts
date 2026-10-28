@@ -14,6 +14,9 @@ type SettingsState = Settings & {
   setCardStyle: (c: CardStyle) => void;
   setSkippedUpdate: (code: number | null) => void;
   setPhotoFit: (f: PhotoFit) => void;
+  setShareEdits: (on: boolean) => void;
+  setShareNoticeShown: () => void;
+  setDeviceCode: (code: string) => void;
   setLastBackupAt: (t: number) => void;
   setBackupDir: (uri: string | null, name?: string) => void;
   /** Records a try: ok = it worked (error ''), else the reason. */
@@ -34,10 +37,10 @@ function load(): Settings {
 export const useSettings = create<SettingsState>((set, get) => {
   const save = (patch: Partial<Settings>) => {
     set(patch);
-    const { language, routeSystem, themeMode, mapBase, lastBackupAt, backupDir, backupDirName, autoBackupAt, autoBackupTryAt, autoBackupError, photosSyncedAt, cardStyle, photoFit, skippedUpdate } = get();
+    const { language, routeSystem, themeMode, mapBase, lastBackupAt, backupDir, backupDirName, autoBackupAt, autoBackupTryAt, autoBackupError, photosSyncedAt, cardStyle, photoFit, skippedUpdate, shareEdits, shareNoticeShown, deviceCode } = get();
     try {
       Storage.setItemSync(KEY, JSON.stringify({
-        language, routeSystem, themeMode, mapBase, lastBackupAt, backupDir, backupDirName, autoBackupAt, autoBackupTryAt, autoBackupError, photosSyncedAt, cardStyle, photoFit, skippedUpdate,
+        language, routeSystem, themeMode, mapBase, lastBackupAt, backupDir, backupDirName, autoBackupAt, autoBackupTryAt, autoBackupError, photosSyncedAt, cardStyle, photoFit, skippedUpdate, shareEdits, shareNoticeShown, deviceCode,
       }));
     } catch {
       // Keep the in-memory value; it will be saved on the next change.
@@ -52,6 +55,9 @@ export const useSettings = create<SettingsState>((set, get) => {
     setCardStyle: (cardStyle) => save({ cardStyle }),
     setSkippedUpdate: (skippedUpdate) => save({ skippedUpdate }),
     setPhotoFit: (photoFit) => save({ photoFit }),
+    setShareEdits: (shareEdits) => save({ shareEdits }),
+    setShareNoticeShown: () => save({ shareNoticeShown: true }),
+    setDeviceCode: (deviceCode) => save({ deviceCode }),
     setLastBackupAt: (lastBackupAt) => save({ lastBackupAt }),
     // A new folder starts afresh: no earlier copy counts for it.
     setBackupDir: (backupDir, backupDirName = '') => {
