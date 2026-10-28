@@ -5,7 +5,7 @@ export * from './crags';
 export * from './goals';
 export * from './imports';
 export * from './photos';
-export { countOutbox, deleteOutbox, listOutbox } from './proposals';
+export { countOutbox, deleteOutbox, listOutbox, reportDeletion } from './proposals';
 export * from './routes';
 export type { NamedRow, PosSource, RouteRow } from './shared';
 export * from './topo';
