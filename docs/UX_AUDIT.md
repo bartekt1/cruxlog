@@ -52,3 +52,48 @@ Dolny pasek: **Dziennik · Postępy · [+] · Skały · Cele**; zębatka Ustawie
 ## 4. Do sprawdzenia na telefonie (zrzuty ekranu)
 
 Dziennik, Skały (lista), ekran skały z kilkoma sektorami, formularz nowego przejścia (cały, z przewijaniem), Ustawienia, ekran udostępniania przejścia. Także: duża czcionka systemowa, tryb ciemny, TalkBack (`docs/TESTING.md` §8).
+
+## 5. Lista kontrolna `ux-audit` (cała aplikacja, kod)
+
+Zrobione umiejętnością `ux-audit` ze sprawdzeniami automatycznymi (każdy przycisk, pole, lista, kolory motywu). „✓” = w porządku.
+
+| Obszar | Wynik | Waga | Propozycja |
+|---|---|---|---|
+| **Przebieg: ustawienia domyślne** | ✓ przejście: dziś, styl RP, ostatnie drogi, skały w pobliżu, drogi z wyprawy | – | – |
+| **Przebieg: informacja po akcji** | ✓ zapis zamyka ekran, błędy pokazywane (`runOrAlert`, `ErrorText`) | – | – |
+| **Przebieg: podwójne zapisanie** | ✓ każdy formularz blokuje przycisk na czas zapisu | – | – |
+| **Przebieg: potwierdzenia usuwania** | ✓ przejście, skała, sektor, droga, cel, wyprawa, zdjęcie, linia topo, paczka, „Moje…”, import, przywracanie kopii | – | – |
+| **Stany: puste listy, brak wyników** | ✓ Dziennik, Cele, skała, droga, wyszukiwarki, „Moje…” | – | – |
+| **Stany: ładowanie** | Ekrany udostępniania, skała, droga pokazują przez chwilę pusty ekran (bez kółka ładowania) | niska | Kółko ładowania; sprawdzić na telefonie, czy przerwa w ogóle jest widoczna |
+| **Formularze: widoczne etykiety** | Formularz celu: pola „Nazwa”, „Ile dróg” i „Liczba przejść” mają tylko podpowiedź w polu, która znika po wpisaniu | średnia | Dodać etykiety nad polami |
+| **Formularze: klawiatury** | ✓ liczby (próby, długość, przeloty, cele) | – | – |
+| **Formularze: komunikaty błędów** | ✓ nazywają pole i co poprawić; złe dane nie trafiają do bazy | – | – |
+| **Formularze: klawiatura zasłania pole** | Ekrany udostępniania: pole wiadomości na dole długiej strony | niska | Sprawdzić na telefonie (Android zwykle przesuwa ekran sam) |
+| **Formularze: wyszukiwarka na ekranie skały** | Przy otwartej klawiaturze pierwsze stuknięcie w drogę tylko chowa klawiaturę | średnia | Pierwsze stuknięcie od razu otwiera drogę (jedna linijka) |
+| **Dostępność: wielkość przycisków** | ✓ ikony (z zapasem) ≥ 44 pt. **Chipy** (styl przejścia, data, wycena, filtry) mają 36 pt bez zapasu | średnia | Chipy ≥ 44 pt (wyższe albo z zapasem na dotyk) – ważne przy zimnych palcach |
+| **Dostępność: opisy dla czytnika (TalkBack)** | ✓ każdy przycisk-ikona ma opis i rolę | – | – |
+| **Dostępność: kontrast** | ✓ tekst ≥ 4,5:1 w obu motywach (np. szary tekst 5,3:1). Gwiazdki oceny w jasnym motywie 3,2:1 – dobre dla dużych gwiazdek w formularzu, słabe dla małych na kartach | niska | Ciemniejszy złoty w jasnym motywie |
+| **Dostępność: znaczenie tylko kolorem** | ✓ przejścia mają „✓” i nazwę stylu, kalendarz ma legendę | – | – |
+| **Dostępność: duża czcionka** | Kwadraty z wyceną mają stały rozmiar (46 pt) – długie wyceny („VI.4/4+”) przy dużej czcionce mogą się nie zmieścić | niska | Sprawdzić na telefonie (§8) |
+| **Spójność: kolory, komponenty** | ✓ żadnych kolorów wpisanych na sztywno w ekranach, wspólne komponenty | – | – |
+| **Spójność: teksty** | zob. §6 | – | – |
+
+## 6. Teksty (`design:ux-copy`, 616 tekstów po polsku)
+
+| # | Problem | Przykłady | Waga | Propozycja |
+|---|---|---|---|---|
+| T1 | **Teksty tylko w rodzaju męskim** – kobieta czyta „dodałeś”, „ustawiłeś” | „Tylko to, co dodałeś sam”, „Nie dodałeś jeszcze własnych skał”, „wszystko, co dodałeś sam, zostaje”, „ustawiłeś je sam w telefonie” (6 tekstów) | średnia | Formy bezosobowe: „Tylko to, co dodano w telefonie”, „Brak własnych skał i dróg”, „Twoje własne skały i drogi zostają”, „ustawione w telefonie” |
+| T2 | **Udostępnianie: trzy różne słowa** | „Udostępnij”, „Pochwal się”, „Zaproś”; przyciski „Wyślij obrazek” / „Wyślij jako tekst” / „Wyślij tekst z linkiem do mapy” | średnia | Ikona i tytuł „Udostępnij” wszędzie; „Pochwal się …” tylko w nagłówku ekranu; przyciski zawsze „Wyślij obrazek” i „Wyślij tekst” |
+| T3 | **Za długie instrukcje stale widoczne na ekranie** | Topo: 188 i 131 znaków pod zdjęciem; ustawianie położenia: 154 znaki | średnia | Krótko + „Więcej ›”, np. topo: „Stuknij start, ringi od dołu i stanowisko. Przytrzymaj palec, by zobaczyć lupę.” |
+| T4 | **Aplikacja raz mówi „ja”, raz bezosobowo** | „nie dołączę mapy”, „Twojej pozycji nie wysyłam”, „Nie wysyłam przejść”, „Najpierw sprawdzę” vs reszta bezosobowo | niska | Wszędzie bezosobowo: „Mapa nie zostanie dołączona”, „Twoja pozycja nie jest wysyłana” |
+| T5 | **„Ringi” i „Przeloty” na to samo** | Topo: tryb „Ringi”; droga: „Przeloty” | niska | Ujednolicić (np. „Przeloty” wszędzie albo świadomie zostawić „Ringi” jako żargon w topo) |
+| T6 | **Przycisk „OK” w informacji o wysyłaniu** | „OK” / „Nie wysyłaj” | niska | „Wysyłaj” / „Nie wysyłaj” – przycisk mówi, co się stanie |
+| ✓ | Potwierdzenia | „Usunąć przejście?”, „Usunąć „Krowia”?” – mówią, co zostanie usunięte; długie opisy w Ustawieniach są już pod „Więcej ›” | – | – |
+
+## 7. Podsumowanie wag (§3, §5, §6)
+
+- **Wysoka (3):** formularz przejścia (Zapisz na dole), zakładka Skały (przyciski nad treścią, wiele wyszukiwarek), ekran skały (za dużo ikon).
+- **Średnia (8):** udostępnianie w 6 miejscach, przyciski na ekranie przejścia, zakładka „Cele” z wyprawami, etykiety w formularzu celu, wyszukiwarka na ekranie skały (podwójne stuknięcie), chipy 36 pt, teksty w rodzaju męskim, słowa przy udostępnianiu, długie instrukcje topo.
+- **Niska (9):** pozostałe.
+
+Do zrobienia po zrzutach ekranu: `design:design-critique` i `design:accessibility-review`.
