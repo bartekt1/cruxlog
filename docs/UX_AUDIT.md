@@ -97,3 +97,63 @@ Zrobione umiejętnością `ux-audit` ze sprawdzeniami automatycznymi (każdy prz
 - **Niska (9):** pozostałe.
 
 Do zrobienia po zrzutach ekranu: `design:design-critique` i `design:accessibility-review`.
+
+## 8. Krytyka na zrzutach z telefonu (`design:design-critique` + `design:accessibility-review`, 2026-10-28)
+
+Zrzuty: Dziennik, Skały, skała (Bąbel, Marta), nowe przejście, Ustawienia (4 stany), Pochwal się dniem. Android, motyw ciemny. Skala zrzutu ok. 2,16 px na punkt ekranu.
+
+### Pierwsze wrażenie
+Styl jest spójny i charakterystyczny (granat, krem, rdza, wąski krój nagłówków). Główny problem nie leży w wyglądzie, tylko w **liczbie rzeczy wołających o uwagę naraz**: na ekranie skały jest 12 pomarańczowych elementów (ikony, ołówki, przyciski), a w Dzienniku po jednej pomarańczowej ikonie przy każdym dniu. Przez to wzrok nie wie, co jest najważniejsze. To potwierdza odczucie właściciela.
+
+### Użyteczność
+| # | Ekran | Co widać | Waga | Propozycja |
+|---|---|---|---|---|
+| K1 | Skała | **Ołówek przy każdej drodze** (5–7 pomarańczowych ikon) + 3 ikony przy sektorze + 3 w nagłówku. Wiersz drogi ma dwa cele dotyku obok siebie | 🔴 | Bez ołówków przy drogach (edycja z ekranu drogi); akcje sektora w jednym „⋯”; w nagłówku: udostępnij + „⋯” (edycja, zaplanuj wyprawę) |
+| K2 | Skała | **„+ DODAJ DROGI” jako główny pomarańczowy przycisk** – na skale z paczki dodaje się drogi rzadko; najważniejsza jest lista dróg | 🔴 | „Dodaj drogę” i „Dodaj sektor” jako zwykłe przyciski pod listą albo w „⋯”; lista dróg wyżej |
+| K3 | Skały | Pole **„Szukaj skały lub drogi”** i zaraz pod nim przycisk **„Szukaj dróg”** – wyglądają na to samo | 🔴 | Jedno pole; filtry (wycena, typ) jako przycisk obok pola |
+| K4 | Skały | **„Moje skały i drogi”** jako duży przycisk na górze – narzędzie do sprzątania, rzadko potrzebne | 🟡 | Tylko w Ustawieniach (już tam jest) |
+| K5 | Nowe przejście | Na pierwszym ekranie nie widać **Zapisz**; **data podwójnie** (chipy Dziś/Wczoraj + pole „Dziś, śr., 28 października · Zmień”) | 🔴 | Zapisz przyklejony do dołu; tylko chipy Dziś / Wczoraj / „Inny dzień…” |
+| K6 | Nowe przejście | **„Twoja wycena”**: zaznaczony chip „VI.5 (jak droga)” ucięty przy prawej krawędzi | 🟡 | Przewinąć listę do zaznaczonego albo zaznaczony na środku |
+| K7 | Dziennik | **Przycisk [+] zasłania ostatni wiersz** listy („PRZEJŚCIA: 3” pod przyciskiem) | 🟡 | Większy margines na dole listy |
+| K8 | Dziennik | Pomarańczowa ikona udostępniania przy każdym dniu | 🟡 | Szara albo tylko przy dniach z przejściem, albo w menu dnia |
+| K9 | Skała | Nagłówek sektora „BĄBEL” = nazwa skały (skała bez sektorów) | 🟢 | Nie pokazywać nagłówka, gdy sektor nazywa się jak skała |
+| K10 | Skała | Pod każdą drogą „Sport” – mało przydatne, powtarza się | 🟢 | Pokazywać typ tylko dla wielowyciągów; miejsce na stan („✓ RP”, długość) |
+| K11 | Ustawienia › Skały i paczki | **Dwa duże pomarańczowe przyciski** jeden pod drugim (paczki i import CSV) – import CSV to narzędzie zaawansowane | 🟡 | Import CSV i „Usuń zaimportowane” jako zwykłe przyciski |
+| K12 | Ustawienia › Wspólna baza | „Czeka na wysłanie: 0 zmian” dwa razy (w nagłówku i w środku) | 🟢 | Raz |
+| K13 | Pochwal się dniem | Przy jednej drodze karta jest w ⅔ pusta | 🟢 | Karta niższa przy krótkiej liście albo większe elementy |
+
+### Hierarchia wizualna
+- **Co przyciąga wzrok najpierw:** na ekranie skały to „+ DODAJ DROGI” i rząd pomarańczowych ołówków, a powinna to być nazwa skały i lista dróg. W Dzienniku kafelki liczb (dobrze) i rząd ikon udostępniania (źle).
+- **Kolor akcentu użyty do wszystkiego:** pomarańczowy oznacza naraz główny przycisk, linki, ikony, styl przejścia (OS/RP) i ołówki, więc traci znaczenie. Propozycja: pomarańczowy tylko dla głównej akcji ekranu i stylu przejścia, ikony pomocnicze szare.
+- **Wielkie litery:** nagłówki działów, przyciski główne i daty dni w Dzienniku są wszystkie WIELKIMI LITERAMI – trudniej wyłowić, co jest przyciskiem.
+
+### Spójność
+| Element | Niespójność | Propozycja |
+|---|---|---|
+| Przyciski dodawania | „+ Dodaj region” z plusem, „Dodaj skałę” bez | Jednakowo (z plusem albo bez) |
+| Przyciski główne | Raz WIELKIE LITERY w pomarańczu, raz zwykłe w ramce – na jednym ekranie bywają dwa „główne” | Jeden główny przycisk na ekran |
+| Kwadraty wycen | Różna szerokość („VI.5+/6” szerszy) – nazwy dróg nie zaczynają się w jednej linii | Stała szerokość kwadratu, dłuższa wycena mniejszą czcionką |
+
+### Dostępność (WCAG 2.1 AA)
+| # | Problem | Kryterium | Waga | Propozycja |
+|---|---|---|---|---|
+| A1 | **Chipy ok. 35 pt** (styl, data, wycena, wygląd, język) – poniżej 44 pt; trudne zimnymi palcami | 2.5.5 | 🟡 | Chipy 44 pt |
+| A2 | **Kafelek „NAJTRUDNIEJSZ‑A”** w Dzienniku łamie słowo w połowie już przy zwykłej czcionce; przy dużej będzie gorzej | 1.4.4 / 1.4.10 | 🟡 | Krótszy podpis („Max”, „Najtrudn.”) albo zmniejszanie czcionki do szerokości |
+| A3 | Formularz przejścia: pola **Partner, Warunki** bez podpowiedzi, co wpisać | 3.3.2 | 🟢 | Podpowiedź w polu („np. Ania”, „np. słońce, sucho”) |
+| A4 | Puste gwiazdki oceny szare na granacie – kontrast ok. 3,9:1, wystarcza dla grafiki | 1.4.11 | ✓ | – |
+| A5 | Tekst główny i szary: ok. 14:1 i 6–7:1 | 1.4.3 | ✓ | – |
+| A6 | Wyłączony „Wyślij teraz” jest blady – przyciski wyłączone są zwolnione z wymogu kontrastu | 1.4.3 | ✓ | – |
+| A7 | Każda ikona ma opis dla TalkBack (sprawdzone w kodzie) | 4.1.2 | ✓ | Sprawdzić TalkBackiem na telefonie (§8 testów) |
+
+### Co działa dobrze
+- **Ustawienia po zwinięciu**: pięć działów z jedną linijką stanu – czytelne, wszystko na jednym ekranie.
+- **Dziennik**: dni jako karty, styl przejścia kolorem i literami, liczby sezonu na górze – szybki przegląd.
+- **Formularz przejścia**: rozsądne ustawienia domyślne (dziś, RP), droga wybrana na górze z „Zmień”.
+- **Spójny, rozpoznawalny styl** (kolory, krój, poziomice w tle).
+
+### Najważniejsze zmiany (kolejność)
+1. **Ekran skały odchudzony** (K1, K2, K9, K10): lista dróg na pierwszym planie, akcje w „⋯”.
+2. **Formularz przejścia** (K5, K6, A1): Zapisz zawsze widoczny, jedna data, chipy 44 pt.
+3. **Zakładka Skały** (K3, K4): jedno pole szukania, bez „Moje skały i drogi”, „+” w nagłówku.
+4. **Pomarańczowy tylko dla najważniejszego** (K8, K11, hierarchia): ikony pomocnicze szare, jeden główny przycisk na ekran.
+5. **Drobne** (K7, K12, K13, A2, A3, spójność przycisków i wycen).
