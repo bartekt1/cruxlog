@@ -1,5 +1,5 @@
 import { useSQLiteContext } from 'expo-sqlite';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { countOutbox } from '../../db/repo';
@@ -16,7 +16,6 @@ import type { Run } from './run';
 /** Settings › the shared crag base: whether the user's changes to crags and routes are sent, how many wait, "Send now". */
 export function ProposalSection({ run, busy }: { run: Run; busy: boolean }) {
   const db = useSQLiteContext();
-  const router = useRouter();
   const { t } = useTranslation();
   const th = useTheme();
   const { shareEdits, setShareEdits, setShareNoticeShown } = useSettings();
@@ -36,7 +35,6 @@ export function ProposalSection({ run, busy }: { run: Run; busy: boolean }) {
       <SwitchRow label={t('proposals.switch')} value={shareEdits} onChange={(on) => { setShareEdits(on); if (on) setShareNoticeShown(); }} />
       {shareEdits ? null : <Text style={{ color: th.muted, marginTop: 6 }}>{t('proposals.pending', { count: pending })}</Text>}
       {!PROPOSALS_URL ? <Text style={{ color: th.muted, marginTop: 4 }}>{t('proposals.notReadyHint')}</Text> : null}
-      <Button label={t('mine.open')} variant="plain" onPress={() => router.push('/mine')} />
       {shareEdits && PROPOSALS_URL ? <Button label={t('proposals.sendNow')} variant="plain" onPress={sendNow} disabled={busy || !pending} /> : null}
     </FoldSection>
   );

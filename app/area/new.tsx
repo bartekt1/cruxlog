@@ -45,7 +45,7 @@ export default function NewArea() {
   if (!level) return null;
   return (
     <ScrollView style={{ backgroundColor: th.bg }} contentContainerStyle={{ padding: 16 }} keyboardShouldPersistTaps="handled">
-      <Stack.Screen options={{ title: t(`areas.add.${level}`) }} />
+      <Stack.Screen options={{ title: t(`areas.addItem.${level}`) }} />
       {parentName ? <Text style={{ color: th.muted }}>{t('areas.inside', { name: parentName })}</Text> : null}
       <Label>{t('edit.name')}</Label>
       <Field value={name} onChangeText={setName} accessibilityLabel={t('edit.name')} placeholder={t(`areas.placeholder.${level}`)} autoFocus returnKeyType="done" onSubmitEditing={save} />

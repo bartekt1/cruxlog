@@ -1,17 +1,19 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Link } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { F } from './fonts';
 import { IconButton, type IconName } from './icons';
+import { HIT } from './kit';
 import { Text } from './Text';
 import { useTheme } from './theme';
 
 export type MenuItem = { icon: IconName; label: string; onPress: () => void };
 
-/** A "⋯" button that opens its actions in a sheet at the bottom of the screen, within reach of the thumb. */
-export function MenuButton({ label, items, size = 24 }: { label: string; items: MenuItem[]; size?: number }) {
+/** A "⋯" (or other icon) button that opens its actions in a sheet at the bottom of the screen, within reach of the thumb. */
+export function MenuButton({ label, items, size = 24, icon = 'ellipsis-vertical', color }: { label: string; items: MenuItem[]; size?: number; icon?: IconName; color?: string }) {
   const th = useTheme();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
@@ -19,7 +21,7 @@ export function MenuButton({ label, items, size = 24 }: { label: string; items: 
   const pick = (item: MenuItem) => { setOpen(false); item.onPress(); };
   return (
     <>
-      <IconButton name="ellipsis-vertical" size={size} label={label} onPress={() => setOpen(true)} />
+      <IconButton name={icon} size={size} color={color} label={label} onPress={() => setOpen(true)} />
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)} statusBarTranslucent>
         <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }} onPress={() => setOpen(false)}
           accessibilityRole="button" accessibilityLabel={t('common.cancel')}>
@@ -40,5 +42,25 @@ export function MenuButton({ label, items, size = 24 }: { label: string; items: 
         </Pressable>
       </Modal>
     </>
+  );
+}
+
+/** "+" in a header: one action is done at once, several open the sheet. */
+export function AddMenu({ label, items, size = 30 }: { label: string; items: MenuItem[]; size?: number }) {
+  const th = useTheme();
+  if (items.length === 1) return <IconButton name="add" size={size} color={th.ink} label={items[0].label} onPress={items[0].onPress} />;
+  return <MenuButton icon="add" size={size} color={th.ink} label={label} items={items} />;
+}
+
+/** The gear in the tabs' header that opens Settings. */
+export function SettingsButton() {
+  const th = useTheme();
+  const { t } = useTranslation();
+  return (
+    <Link href="/settings" asChild>
+      <Pressable hitSlop={HIT} accessibilityRole="button" accessibilityLabel={t('settings.title')} style={({ pressed }) => ({ marginRight: 8, padding: 8, opacity: pressed ? 0.6 : 1 })}>
+        <Ionicons name="settings-outline" size={28} color={th.ink} />
+      </Pressable>
+    </Link>
   );
 }

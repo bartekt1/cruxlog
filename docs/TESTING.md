@@ -314,6 +314,15 @@ Since the automatic backup (§6a) these buttons are under Settings › "Other wa
 6. "+ Dodaj drogi" is an outlined button, not orange.
 7. TalkBack: "⋯" reads the crag's name or "Sektor …".
 
+## 6n. UX stage 4 (Crags tab and search)
+
+1. Crags tab: one search field, with a filters icon (sliders) beside it that opens "Szukaj dróg" with its filters. The old "Szukaj dróg" and "Moje skały i drogi" buttons are gone.
+2. Type a region's or rejon's name: it shows under "Regiony i rejony" (with its level and the path above it), then crags, then routes.
+3. Header of the Crags tab: "+" and the gear. "+" opens Dodaj skałę / Dodaj region. The other tabs show only the gear.
+4. Region or rejon screen: "+" opens Dodaj skałę and Dodaj rejon (or Dodaj grupę). On a group, "+" adds a crag at once (no menu). The pencil still edits the area. The search there finds sub-areas, crags and routes inside it, and the filters icon opens the route search limited to that area.
+5. Settings: "Moje skały i drogi" is a row right under the look section. It is no longer inside "Udostępnianie zmian".
+6. The add-region and add-rejon screens are titled "Dodaj region" / "Dodaj rejon" (no "+").
+
 ## 7. Robustness
 1. Change the language and the route grade system, close the app completely (swipe away) and reopen it. Expected: all data is still there, and the language and grade system are the ones you chose.
 2. Rotate the phone, switch to dark mode and back. Expected: readable text and no layout breaks.
