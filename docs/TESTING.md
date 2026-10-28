@@ -282,6 +282,18 @@ Since the automatic backup (§6a) these buttons are under Settings › "Other wa
 5. Deleting a crag removes the region, area and group above it that are left with no crag (from the bottom up); a region that still has another crag stays. Leftover empty regions, areas and groups (e.g. from earlier tests) are listed in a third part, "Empty regions, areas and groups", and are deleted the same way, with what is below them.
 4. Something already sent and then deleted: a "usunięcie …" row reaches the sheet; in the sheet, Cruxlog › Posprzątaj wycofane removes the addition, its edits and the deletion (for a crag also its sectors and routes) and TEST rows.
 
+## 6k. UX stage 1 (small fixes)
+
+1. Chips (style, date, grade, card look) are a bit taller and easy to hit with a thumb.
+2. Journal and Progress: the tile labels stay on one line (no word broken in two); check with a large system font too.
+3. Every tab: scroll to the end, and the last row is not covered by the [+] button.
+4. Crag screen: type in the search box, then tap a route. It opens on the first tap, with the keyboard still up.
+5. New plan: the title, routes-count and target fields have labels above them.
+6. New ascent: the partner and conditions fields show hints ("np. Ania", "np. słońce, sucho"). "Twoja wycena" opens scrolled so the route's grade is in view.
+7. The bottom tab reads "Plany". Route details say "Ringi". The Crags tab has "+ Dodaj skałę".
+8. Light theme: the stars are a darker gold and readable in sunlight.
+9. Settings › Udostępnianie zmian: "Czeka na wysłanie" shows only once (only when sending is off). The first-time notice has the button "Wysyłaj".
+
 ## 7. Robustness
 1. Change the language and the route grade system, close the app completely (swipe away) and reopen it. Expected: all data is still there, and the language and grade system are the ones you chose.
 2. Rotate the phone, switch to dark mode and back. Expected: readable text and no layout breaks.
