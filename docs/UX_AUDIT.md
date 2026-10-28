@@ -157,3 +157,16 @@ Styl jest spójny i charakterystyczny (granat, krem, rdza, wąski krój nagłów
 3. **Zakładka Skały** (K3, K4): jedno pole szukania, bez „Moje skały i drogi”, „+” w nagłówku.
 4. **Pomarańczowy tylko dla najważniejszego** (K8, K11, hierarchia): ikony pomocnicze szare, jeden główny przycisk na ekran.
 5. **Drobne** (K7, K12, K13, A2, A3, spójność przycisków i wycen).
+
+## 9. Plan zmian (całość: §3, §5, §6, §8)
+
+Każdy etap to osobna wersja do sprawdzenia na telefonie i osobne „scalaj”. Nic z tego nie jest jeszcze zrobione.
+
+| Etap | Co | Problemy |
+|---|---|---|
+| **1. Szybkie poprawki** (bez zmiany układu) | chipy 44 pt; kafelek „Najtrudniejsza” bez łamania słowa; margines pod [+]; wyszukiwarka na skale otwiera drogę pierwszym stuknięciem; etykiety w formularzu celu; podpowiedzi w polach Partner i Warunki; „Twoja wycena” przewinięta do zaznaczonej; teksty bez rodzaju męskiego i bez „ja”; „Wysyłaj” zamiast „OK”; „Czeka na wysłanie” raz; jednakowe „+ Dodaj …”; ciemniejsze gwiazdki w jasnym motywie | A1, A2, K6, K7, K12, §5, T1, T4, T6, A3 |
+| **2. Formularz przejścia** | „Zapisz” przyklejony do dołu ekranu; data: chipy Dziś / Wczoraj / Inny dzień…; rzadziej używane pola pod „Więcej szczegółów” (rozwinięte, gdy coś w nich jest) | K5, §3 #1 |
+| **3. Ekran skały** | nagłówek: udostępnij + „⋯” (edytuj skałę, zaplanuj wyprawę, dodaj sektor); bez ołówków przy drogach; sektor: aparat + „⋯” (dodaj drogę, edytuj sektor); bez nagłówka sektora o nazwie skały; pod drogą stan i długość zamiast „Sport”; „Dodaj drogę” jako zwykły przycisk, nie główny | K1, K2, K9, K10, §3 #3 |
+| **4. Zakładka Skały i wyszukiwanie** | jedno pole szukania (skały, rejony, drogi) z ikoną filtrów obok zamiast przycisku „Szukaj dróg”; „Moje skały i drogi” tylko w Ustawieniach; „+” w nagłówku (Dodaj skałę / region); to samo w regionie | K3, K4, §3 #2, #9 |
+| **5. Udostępnianie i kolor akcentu** | ta sama ikona udostępniania w nagłówku wszędzie (także przejście: udostępnij + edytuj w nagłówku, na dole tylko Usuń); słowo „Udostępnij” wszędzie; na ekranie udostępniania „Wyślij” zaraz pod podglądem; ikony przy dniach w Dzienniku szare; pomarańczowy tylko dla głównej akcji ekranu (import CSV i inne poboczne jako zwykłe przyciski) | §3 #4, #5, K8, K11, T2, hierarchia |
+| **6. Reszta** | zakładka „Cele” → nazwa obejmująca wyprawy; krótkie instrukcje topo z „Więcej ›”; kwadraty wycen jednej szerokości; karta dnia niższa przy krótkiej liście; kółko ładowania | §3 #6, T3, K13, spójność, §5 |
