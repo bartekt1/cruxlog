@@ -53,7 +53,7 @@ export function Chip({ label, on, onPress }: { label: string; on?: boolean; onPr
       hitSlop={{ top: 4, bottom: 4 }}
       accessibilityRole="button"
       accessibilityState={{ selected: !!on }}
-      style={({ pressed }) => ({ borderWidth: 1, borderColor: on ? t.badge : t.outline, backgroundColor: on ? t.badge : t.surface, borderRadius: 18, paddingHorizontal: 14, minHeight: 36, justifyContent: 'center', marginRight: 8, marginBottom: 8, opacity: pressed ? 0.7 : 1 })}
+      style={({ pressed }) => ({ borderWidth: 1, borderColor: on ? t.badge : t.outline, backgroundColor: on ? t.badge : t.surface, borderRadius: 18, paddingHorizontal: 14, minHeight: 40, justifyContent: 'center', marginRight: 8, marginBottom: 8, opacity: pressed ? 0.7 : 1 })}
     >
       <Text style={{ color: on ? t.onBadge : t.ink, fontFamily: F.medium }}>{label}</Text>
     </Pressable>
@@ -127,7 +127,8 @@ export function StatTile({ value, label, strong }: { value: string; label: strin
     <View accessible accessibilityLabel={`${label}: ${value}`}
       style={{ flex: 1, borderRadius: 12, padding: 10, backgroundColor: strong ? t.badge : t.surface, borderWidth: strong ? 0 : 1, borderColor: t.line }}>
       <Text style={{ color: strong ? t.onBadge : t.ink, fontFamily: F.display, fontSize: 28, lineHeight: 30 }}>{value}</Text>
-      <Text style={{ color: strong ? t.onBadge : t.muted, fontFamily: F.semi, fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', opacity: strong ? 0.85 : 1 }}>{label}</Text>
+      <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}
+        style={{ color: strong ? t.onBadge : t.muted, fontFamily: F.semi, fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', opacity: strong ? 0.85 : 1 }}>{label}</Text>
     </View>
   );
 }

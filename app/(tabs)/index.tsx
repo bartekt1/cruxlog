@@ -54,7 +54,7 @@ export default function Journal() {
       <SectionList
         sections={sections}
         keyExtractor={(r) => r.id}
-        contentContainerStyle={{ paddingBottom: 32 }}
+        contentContainerStyle={{ paddingBottom: 88 }}
         ListHeaderComponent={<>
           {rows.length ? (
             <View style={{ paddingTop: 4, paddingBottom: 4 }}>

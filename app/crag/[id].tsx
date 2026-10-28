@@ -107,6 +107,7 @@ export default function CragScreen() {
       <SectionList
         sections={sections}
         keyExtractor={(r) => r.id}
+        keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ paddingBottom: 32 }}
         ListHeaderComponent={
           crag ? (

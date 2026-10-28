@@ -55,7 +55,7 @@ export default function Crags() {
   }
 
   return (
-    <ScrollView style={{ backgroundColor: th.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 32 }} keyboardShouldPersistTaps="handled">
+    <ScrollView style={{ backgroundColor: th.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 88 }} keyboardShouldPersistTaps="handled">
       {modeSwitch}
       <Field value={query} onChangeText={setQuery} placeholder={t('areas.search')} accessibilityLabel={t('areas.search')} returnKeyType="search" />
       <Button label={t('routeSearch.open')} variant="plain" onPress={() => router.push('/route/search')} />
@@ -86,7 +86,7 @@ export default function Crags() {
               <Button label={t('areas.addRegion')} variant="plain" onPress={() => router.push('/area/new')} />
             </View>
             <View style={{ flex: 1 }}>
-              <Button label={t('edit.newCragTitle')} variant="plain" onPress={() => router.push('/crag/edit')} />
+              <Button label={t('edit.addCrag')} variant="plain" onPress={() => router.push('/crag/edit')} />
             </View>
           </View>
         </>

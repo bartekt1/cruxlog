@@ -34,7 +34,7 @@ export function ProposalSection({ run, busy }: { run: Run; busy: boolean }) {
     <FoldSection title={t('proposals.section')} summary={summary}>
       <MoreText short={t('proposals.short')} long={t('proposals.long')} />
       <SwitchRow label={t('proposals.switch')} value={shareEdits} onChange={(on) => { setShareEdits(on); if (on) setShareNoticeShown(); }} />
-      <Text style={{ color: th.muted, marginTop: 6 }}>{t('proposals.pending', { count: pending })}</Text>
+      {shareEdits ? null : <Text style={{ color: th.muted, marginTop: 6 }}>{t('proposals.pending', { count: pending })}</Text>}
       {!PROPOSALS_URL ? <Text style={{ color: th.muted, marginTop: 4 }}>{t('proposals.notReadyHint')}</Text> : null}
       <Button label={t('mine.open')} variant="plain" onPress={() => router.push('/mine')} />
       {shareEdits && PROPOSALS_URL ? <Button label={t('proposals.sendNow')} variant="plain" onPress={sendNow} disabled={busy || !pending} /> : null}

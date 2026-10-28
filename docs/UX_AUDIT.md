@@ -70,7 +70,7 @@ Zrobione umiejętnością `ux-audit` ze sprawdzeniami automatycznymi (każdy prz
 | **Formularze: komunikaty błędów** | ✓ nazywają pole i co poprawić; złe dane nie trafiają do bazy | – | – |
 | **Formularze: klawiatura zasłania pole** | Ekrany udostępniania: pole wiadomości na dole długiej strony | niska | Sprawdzić na telefonie (Android zwykle przesuwa ekran sam) |
 | **Formularze: wyszukiwarka na ekranie skały** | Przy otwartej klawiaturze pierwsze stuknięcie w drogę tylko chowa klawiaturę | średnia | Pierwsze stuknięcie od razu otwiera drogę (jedna linijka) |
-| **Dostępność: wielkość przycisków** | ✓ ikony (z zapasem) ≥ 44 pt. **Chipy** (styl przejścia, data, wycena, filtry) mają 36 pt bez zapasu | średnia | Chipy ≥ 44 pt (wyższe albo z zapasem na dotyk) – ważne przy zimnych palcach |
+| **Dostępność: wielkość przycisków** | ✓ ikony i chipy (z zapasem) ≥ 44 pt. Korekta: chipy mają zapas 4 pt, który początkowo przeoczono | – | Chipy ≥ 44 pt (wyższe albo z zapasem na dotyk) – ważne przy zimnych palcach |
 | **Dostępność: opisy dla czytnika (TalkBack)** | ✓ każdy przycisk-ikona ma opis i rolę | – | – |
 | **Dostępność: kontrast** | ✓ tekst ≥ 4,5:1 w obu motywach (np. szary tekst 5,3:1). Gwiazdki oceny w jasnym motywie 3,2:1 – dobre dla dużych gwiazdek w formularzu, słabe dla małych na kartach | niska | Ciemniejszy złoty w jasnym motywie |
 | **Dostępność: znaczenie tylko kolorem** | ✓ przejścia mają „✓” i nazwę stylu, kalendarz ma legendę | – | – |
@@ -137,7 +137,7 @@ Styl jest spójny i charakterystyczny (granat, krem, rdza, wąski krój nagłów
 ### Dostępność (WCAG 2.1 AA)
 | # | Problem | Kryterium | Waga | Propozycja |
 |---|---|---|---|---|
-| A1 | **Chipy ok. 35 pt** (styl, data, wycena, wygląd, język) – poniżej 44 pt; trudne zimnymi palcami | 2.5.5 | 🟡 | Chipy 44 pt |
+| A1 | Chipy ok. 35 pt widoczne – **korekta:** mają już po 4 pt zapasu na dotyk (razem 44 pt), więc norma była spełniona | 2.5.5 | ✓ | Mimo to powiększone do 40 pt (48 pt z zapasem) – etap 1 |
 | A2 | **Kafelek „NAJTRUDNIEJSZ‑A”** w Dzienniku łamie słowo w połowie już przy zwykłej czcionce; przy dużej będzie gorzej | 1.4.4 / 1.4.10 | 🟡 | Krótszy podpis („Max”, „Najtrudn.”) albo zmniejszanie czcionki do szerokości |
 | A3 | Formularz przejścia: pola **Partner, Warunki** bez podpowiedzi, co wpisać | 3.3.2 | 🟢 | Podpowiedź w polu („np. Ania”, „np. słońce, sucho”) |
 | A4 | Puste gwiazdki oceny szare na granacie – kontrast ok. 3,9:1, wystarcza dla grafiki | 1.4.11 | ✓ | – |
@@ -170,3 +170,8 @@ Każdy etap to osobna wersja do sprawdzenia na telefonie i osobne „scalaj”. 
 | **4. Zakładka Skały i wyszukiwanie** | jedno pole szukania (skały, rejony, drogi) z ikoną filtrów obok zamiast przycisku „Szukaj dróg”; „Moje skały i drogi” tylko w Ustawieniach; „+” w nagłówku (Dodaj skałę / region); to samo w regionie | K3, K4, §3 #2, #9 |
 | **5. Udostępnianie i kolor akcentu** | ta sama ikona udostępniania w nagłówku wszędzie (także przejście: udostępnij + edytuj w nagłówku, na dole tylko Usuń); słowo „Udostępnij” wszędzie; na ekranie udostępniania „Wyślij” zaraz pod podglądem; ikony przy dniach w Dzienniku szare; pomarańczowy tylko dla głównej akcji ekranu (import CSV i inne poboczne jako zwykłe przyciski) | §3 #4, #5, K8, K11, T2, hierarchia |
 | **6. Reszta** | zakładka „Cele” → nazwa obejmująca wyprawy; krótkie instrukcje topo z „Więcej ›”; kwadraty wycen jednej szerokości; karta dnia niższa przy krótkiej liście; kółko ładowania | §3 #6, T3, K13, spójność, §5 |
+
+### Stan etapów
+
+- **Etap 1 – zrobione (2026-10-28, gałąź robocza):** chipy 40 pt (48 z zapasem); podpisy kafelków w Dzienniku i Postępach mieszczą się w jednej linii; margines pod [+] na wszystkich zakładkach; wyszukiwarka na skale otwiera drogę pierwszym stuknięciem; etykiety w formularzu celu; podpowiedzi „np. Ania”, „np. słońce, sucho”; „Twoja wycena” startuje przewinięta tak, że wycena drogi jest widoczna; teksty bez rodzaju męskiego i bez „ja” (T1, T4); „Wysyłaj” zamiast „OK” (T6); „Czeka na wysłanie” raz (K12); „+ Dodaj skałę” jak „+ Dodaj region”; ciemniejsze gwiazdki w jasnym motywie (4,8:1); „Ringi” zamiast „Przeloty” w aplikacji (decyzja właściciela; kolumna `Przeloty` w plikach CSV bez zmian); zakładka „Cele” nazywa się „Plany”.
+- Etapy 2–6: do zrobienia po akceptacji.

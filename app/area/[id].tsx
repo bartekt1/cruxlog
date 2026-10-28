@@ -76,7 +76,7 @@ export default function AreaScreen() {
           </View>
         ) : null}
         <View style={{ flex: 1 }}>
-          <Button label={t('edit.newCragTitle')} onPress={() => router.push({ pathname: '/crag/edit', params: { areaId: id } })} />
+          <Button label={t('edit.addCrag')} onPress={() => router.push({ pathname: '/crag/edit', params: { areaId: id } })} />
         </View>
       </View>
     </ScrollView>

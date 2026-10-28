@@ -80,7 +80,7 @@ export default function Goals() {
         data={rows}
         keyExtractor={(r) => r.id}
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ paddingBottom: 32 }}
+        contentContainerStyle={{ paddingBottom: 88 }}
         ListHeaderComponent={
           <View style={{ paddingBottom: 8 }}>
             {/* Trips first: planned and ongoing ones are what matters this week. */}

@@ -68,7 +68,7 @@ export default function TabsLayout() {
       />
       <Tabs.Screen
         name="goals"
-        options={{ title: t('tabs.goals'), tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'flag' : 'flag-outline'} size={size} color={color} /> }}
+        options={{ title: t('tabs.plans'), tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'flag' : 'flag-outline'} size={size} color={color} /> }}
       />
     </Tabs>
   );

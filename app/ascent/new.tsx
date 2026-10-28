@@ -118,6 +118,8 @@ export default function NewAscent() {
 
   const fail = (key: string) => setError({ key, field: FIELD_OF[key] });
   const scrollRef = useRef<ScrollView>(null);
+  const feltRef = useRef<ScrollView>(null);
+  const feltWidth = useRef(0);
 
   async function save() {
     if (saving) return;
@@ -224,7 +226,9 @@ export default function NewAscent() {
       {baseGrade != null ? (
         <>
           <Label>{t('ascent.felt')}</Label>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingRight: 8 }}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingRight: 8 }}
+            ref={feltRef} onLayout={(e) => { feltWidth.current = e.nativeEvent.layout.width; }}
+            onContentSizeChange={(w) => feltRef.current?.scrollTo({ x: Math.max(0, (w - feltWidth.current) / 2), animated: false })}>
             {nearbyGrades(baseGrade, 4, 4).map((i) => (
               <Chip key={i} label={i === baseGrade ? t('ascent.feltSame', { grade: formatGrade(i, settings.routeSystem) }) : formatGrade(i, settings.routeSystem)}
                 on={(feltGrade(felt, baseGrade) ?? baseGrade) === i} onPress={() => setFelt(i === baseGrade ? null : i)} />
@@ -251,12 +255,12 @@ export default function NewAscent() {
 
       <Label>{t('ascent.partner')}</Label>
       <Field
-        value={partner} onChangeText={setPartner} accessibilityLabel={t('ascent.partner')} autoCapitalize="words"
+        value={partner} onChangeText={setPartner} accessibilityLabel={t('ascent.partner')} placeholder={t('ascent.partnerPlaceholder')} autoCapitalize="words"
         onFocus={() => setPartnerFocus(true)} onBlur={() => setPartnerFocus(false)}
       />
       {partnerFocus ? <Suggestions items={nameItems(partners, partner)} onPick={(p) => { setPartner(p); setPartnerFocus(false); }} /> : null}
       <Label>{t('ascent.weather')}</Label>
-      <Field value={weather} onChangeText={setWeather} accessibilityLabel={t('ascent.weather')} />
+      <Field value={weather} onChangeText={setWeather} accessibilityLabel={t('ascent.weather')} placeholder={t('ascent.weatherPlaceholder')} />
       <Label>{t('ascent.notes')}</Label>
       <Field value={notes} onChangeText={setNotes} accessibilityLabel={t('ascent.notes')} multiline textAlignVertical="top" style={{ minHeight: 80 }} />
       <Label>{t('photos.title')}</Label>

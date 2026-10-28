@@ -59,16 +59,21 @@ export function GoalForm({ initial, submitLabel, onSubmit, onSaved }: {
           <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled">
             {ROUTE_LADDER.map((_, i) => <Chip key={i} label={`${formatGrade(i, routeSystem)}+`} on={v.gradeIndex === i} onPress={() => set({ gradeIndex: i })} />)}
           </ScrollView>
-          <Field style={{ marginTop: 8, width: 200 }} value={v.target} onChangeText={(s) => set({ target: s })} placeholder={t('goals.routesCount')}
+          <Label>{t('goals.routesCount')}</Label>
+          <Field style={{ width: 200 }} value={v.target} onChangeText={(s) => set({ target: s })} placeholder="1"
             accessibilityLabel={t('goals.routesCount')} keyboardType="number-pad" />
         </>
       ) : null}
       {v.kind === 'project' || v.kind === 'wishlist' ? <RoutePicker value={v.route} onChange={(route) => set({ route })} /> : null}
-      <Field style={{ marginTop: 8 }} value={v.title} onChangeText={(s) => set({ title: s })} placeholder={fallbackTitle || t('goals.newTitle')}
+      <Label>{t('goals.newTitle')}</Label>
+      <Field value={v.title} onChangeText={(s) => set({ title: s })} placeholder={fallbackTitle || t('goals.newTitle')}
         accessibilityLabel={t('goals.newTitle')} returnKeyType="done" />
       {v.kind === 'count' ? (
-        <Field style={{ marginTop: 8, width: 200 }} value={v.target} onChangeText={(s) => set({ target: s })} placeholder={t('goals.target')}
-          accessibilityLabel={t('goals.target')} keyboardType="number-pad" />
+        <>
+          <Label>{t('goals.target')}</Label>
+          <Field style={{ width: 200 }} value={v.target} onChangeText={(s) => set({ target: s })} placeholder="30"
+            accessibilityLabel={t('goals.target')} keyboardType="number-pad" />
+        </>
       ) : null}
       {error ? <ErrorText>{error}</ErrorText> : null}
       <Button label={saving ? t('common.saving') : submitLabel} onPress={save} disabled={saving} />
