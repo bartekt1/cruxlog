@@ -29,6 +29,9 @@ Status (2026-10-21): the app runs on the owner's phone (APK from GitHub Actions)
 
 ## Later, before a store release
 
+On hold (2026-10-28): the full plan for Google Play and iOS, with what was agreed and the open questions, is in `docs/PUBLIKACJA.md`.
+
+
 - Final app name check in the store and the domain, a privacy policy, and the project license.
 - Legal review of catalog data before shipping any to other users. The owner is building his own base in the template, so it carries no third-party data.
 - iOS build, social features with moderation of proposed routes.
