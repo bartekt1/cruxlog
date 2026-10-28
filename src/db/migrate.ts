@@ -122,6 +122,13 @@ export const MIGRATIONS: string[] = [
   `
   CREATE TABLE outbox (id TEXT PRIMARY KEY, created_at INTEGER NOT NULL, kind TEXT NOT NULL, row TEXT NOT NULL, changes TEXT NOT NULL DEFAULT '');
   `,
+  // 13: which crag, sector or route each waiting change is about (the app's own ids, sent as anonymous "ID w aplikacji"),
+  // so deleting something made by mistake drops its unsent changes and the sheet can pair an addition with its deletion.
+  `
+  ALTER TABLE outbox ADD COLUMN entity_id TEXT;
+  ALTER TABLE outbox ADD COLUMN crag_id TEXT;
+  CREATE INDEX idx_outbox_crag ON outbox(crag_id);
+  `,
 ];
 
 export async function migrate(db: SQLiteDatabase): Promise<void> {

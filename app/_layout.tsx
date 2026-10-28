@@ -57,6 +57,7 @@ export default function RootLayout() {
         <Stack.Screen name="stats/share" options={{ title: t('statsShare.title'), presentation: 'modal' }} />
         <Stack.Screen name="goal/share" options={{ title: t('goalsShare.title'), presentation: 'modal' }} />
         <Stack.Screen name="settings" options={{ title: t('settings.title') }} />
+        <Stack.Screen name="mine" options={{ title: t('mine.title') }} />
         <Stack.Screen name="packs" options={{ title: t('packs.title') }} />
       </Stack>
     </SQLiteProvider>
