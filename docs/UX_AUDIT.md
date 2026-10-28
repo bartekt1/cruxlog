@@ -174,4 +174,5 @@ Każdy etap to osobna wersja do sprawdzenia na telefonie i osobne „scalaj”. 
 ### Stan etapów
 
 - **Etap 1 – zrobione (2026-10-28, gałąź robocza):** chipy 40 pt (48 z zapasem); podpisy kafelków w Dzienniku i Postępach mieszczą się w jednej linii; margines pod [+] na wszystkich zakładkach; wyszukiwarka na skale otwiera drogę pierwszym stuknięciem; etykiety w formularzu celu; podpowiedzi „np. Ania”, „np. słońce, sucho”; „Twoja wycena” startuje przewinięta tak, że wycena drogi jest widoczna; teksty bez rodzaju męskiego i bez „ja” (T1, T4); „Wysyłaj” zamiast „OK” (T6); „Czeka na wysłanie” raz (K12); „+ Dodaj skałę” jak „+ Dodaj region”; ciemniejsze gwiazdki w jasnym motywie (4,8:1); „Ringi” zamiast „Przeloty” w aplikacji (decyzja właściciela; kolumna `Przeloty` w plikach CSV bez zmian); zakładka „Cele” nazywa się „Plany”.
-- Etapy 2–6: do zrobienia po akceptacji.
+- **Etap 2 – zrobione (2026-10-28, gałąź robocza):** formularz przejścia – „Zapisz” stale widoczny na dole (z błędem nad nim); data: chipy Dziś / Wczoraj / Inny dzień… (wybrany dzień widać na trzecim chipie, kalendarz systemowy); na wierzchu droga, data, styl, podejścia, ocena, partner; „Więcej szczegółów” chowa Twoją wycenę, warunki, notatki i zdjęcia i jest rozwinięte samo, gdy coś z tego jest wypełnione.
+- Etapy 3–6: do zrobienia po akceptacji.

@@ -294,6 +294,16 @@ Since the automatic backup (§6a) these buttons are under Settings › "Other wa
 8. Light theme: the stars are a darker gold and readable in sunlight.
 9. Settings › Udostępnianie zmian: "Czeka na wysłanie" shows only once (only when sending is off). The first-time notice has the button "Wysyłaj".
 
+## 6l. UX stage 2 (ascent form)
+
+1. New ascent: the Save button is always at the bottom, also before scrolling. With the keyboard up it sits just above the keyboard.
+2. Save with no route picked: the error shows right above Save.
+3. Date: "Dziś" is on by default. "Wczoraj" works. "Inny dzień…" opens the calendar, and the picked day shows on that chip (e.g. "pt, 10 października"). Future days cannot be picked.
+4. A new ascent shows only route, date, style, attempts, rating and partner. "Więcej szczegółów" opens own grade, conditions, notes and photos.
+5. Edit an ascent that has a note, conditions, an own grade or a photo: the details are already open. With none of them, they are folded.
+6. Own grade appears inside the details only once a route is chosen (or a grade is typed for a new route).
+7. Trip dates still use the old date field (future days allowed).
+
 ## 7. Robustness
 1. Change the language and the route grade system, close the app completely (swipe away) and reopen it. Expected: all data is still there, and the language and grade system are the ones you chose.
 2. Rotate the phone, switch to dark mode and back. Expected: readable text and no layout breaks.

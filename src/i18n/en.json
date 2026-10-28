@@ -23,7 +23,7 @@
   "ascent": {
     "title": "New ascent", "felt": "Your grade", "feltSame": "{{grade}} (as the route)", "feltFor": "felt {{grade}}", "editTitle": "Edit ascent", "detailTitle": "Ascent", "notFound": "This ascent no longer exists.",
     "deleteTitle": "Delete ascent?", "deleteQuestion": "The ascent of \"{{name}}\" will be removed from your journal and stats.",
-    "pickDate": "Opens a calendar", "recent": "Recently climbed", "routesHeader": "Routes", "cragsHeader": "Crags", "cragHitHint": "Tap a crag to add a new route on it.", "newCragHint": "New crag: it will be created when you save.", "cragPlaceholder": "Start typing to see crags",
+    "otherDay": "Other day…", "moreDetails": "More details", "moreDetailsHint": "Own grade, conditions, notes, photos", "pickDate": "Opens a calendar", "recent": "Recently climbed", "routesHeader": "Routes", "cragsHeader": "Crags", "cragHitHint": "Tap a crag to add a new route on it.", "newCragHint": "New crag: it will be created when you save.", "cragPlaceholder": "Start typing to see crags",
     "sectorPlaceholder": "e.g. Left wall", "noSectorsYet": "This crag has no sectors yet. Type a new one or leave empty.", "sectorNewCrag": "New crag: type a sector or leave empty.",
     "duplicate": "This crag already has \"{{name}}\" ({{sector}}, {{grade}}).", "useExisting": "Use this route", "route": "Route", "searchRoute": "Search by route, sector or crag", "newRoute": "Create a new route",
     "newRouteNamed": "Create route \"{{name}}\"", "noResults": "No routes match \"{{query}}\".",
