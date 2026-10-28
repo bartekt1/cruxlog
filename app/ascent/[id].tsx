@@ -7,7 +7,7 @@ import { Text } from '../../src/ui/Text';
 import { addRouteGoal, deleteAscent, getAscent, listPhotos, routeGoals, type AscentDetail } from '../../src/db/repo';
 import { formatDay, isoDate } from '../../src/domain/dates';
 import { feltGrade, formatGrade, routeGrade } from '../../src/domain/grades';
-import { Button, EmptyState, GradeBadge, Label, Title } from '../../src/ui/kit';
+import { Button, EmptyState, GradeBadge, Label, Loading, Title } from '../../src/ui/kit';
 import { IconButton } from '../../src/ui/icons';
 import { PhotoStrip } from '../../src/ui/PhotoViews';
 import { useSettings } from '../../src/ui/settingsStore';
@@ -34,7 +34,7 @@ export default function AscentScreen() {
     });
   }, [db, id]));
 
-  if (a === undefined) return <View style={{ flex: 1, backgroundColor: th.bg }} />;
+  if (a === undefined) return <Loading />;
   if (a === null) return <View style={{ flex: 1, backgroundColor: th.bg, padding: 16 }}><EmptyState title={t('ascent.notFound')} /></View>;
 
   const confirmDelete = () =>

@@ -138,7 +138,7 @@
   "topo": {
     "title": "Topo", "draw": "Draw topo", "pickRoute": "Which route are you drawing?", "hasLine": "already has a line on this photo",
     "noRoutes": "This wall has no routes yet. Add them on the crag screen.", "changeRoute": "Change route",
-    "hint": "Tap the start of the route, then the bolts from the bottom up, and the anchor last. Hold your finger down and a magnifier shows exactly where the point goes. Two fingers zoom and move the photo.",
+    "hintShort": "Tap the start, then the bolts, and the anchor last.", "hintFreeShort": "Draw with a finger from the start to the anchor.", "pointsShort": "Points: {{count}}. Drag to move; tap to select.", "hint": "Tap the start of the route, then the bolts from the bottom up, and the anchor last. Hold your finger down and a magnifier shows exactly where the point goes. Two fingers zoom and move the photo.",
     "points": "Points: {{count}}. Drag a point to move it; tap it to select it, then delete it or insert a new point after it.",
     "modeBolts": "Bolts", "modeFree": "By hand", "hintFree": "Draw the line with a finger from the start to the anchor; pieces are fine, each one continues the line. Two fingers zoom and move the photo.", "openRoute": "Route {{n}}: {{name}}", "openPhoto": "Topo of {{name}}. Tap to open the photo.", "drawThis": "Draw this route on the wall photo", "onCard": "Show the topo line on the photo", "zoomIn": "Zoom in", "zoomOut": "Zoom out", "fit": "Whole photo", "undo": "Undo", "redo": "Redo",
     "insertPoint": "Insert a point after the selected one", "deletePoint": "Delete the selected point", "clear": "Clear the line", "save": "Save line",

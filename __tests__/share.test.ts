@@ -1,4 +1,4 @@
-import { coordsLabel, mapLink, shareMessage } from '../src/domain/share';
+import { coordsLabel, mapLink, shareMessage, tripCardRatio, TRIP_RATIO } from '../src/domain/share';
 
 const base = { headline: 'Rysa VI.3 – RP', details: ['Krowia Turnia', '', 'Czarnorzeki › Kamieniec'], message: '', mapLabel: 'Mapa', approxLabel: 'położenie przybliżone' };
 
@@ -18,5 +18,21 @@ describe('share', () => {
   it('says when the position is approximate', () => {
     const text = shareMessage({ ...base, place: { lat: 49.74, lng: 21.78, approx: true } });
     expect(text).toContain('Mapa (położenie przybliżone): https://');
+  });
+});
+
+describe('tripCardRatio', () => {
+  it('keeps a short card at 4:5', () => {
+    expect(tripCardRatio(300, 360)).toBe(1.25);
+  });
+  it('follows the content in between, rounded up', () => {
+    expect(tripCardRatio(500, 360)).toBe(1.39);
+  });
+  it('stops at 9:16 for a long list', () => {
+    expect(tripCardRatio(2000, 360)).toBe(TRIP_RATIO.max);
+  });
+  it('falls back to 4:5 before anything is measured', () => {
+    expect(tripCardRatio(0, 360)).toBe(1.25);
+    expect(tripCardRatio(500, 0)).toBe(1.25);
   });
 });

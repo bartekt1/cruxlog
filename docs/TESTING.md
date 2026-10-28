@@ -333,6 +333,14 @@ Since the automatic backup (§6a) these buttons are under Settings › "Other wa
 6. Trip: before it starts, "Zaproś na wyprawę" is orange. Once it is ongoing or done, "Zaproś" is outlined and "Udostępnij podsumowanie" is orange (when there are ascents).
 7. Settings › Import: "Paczki" orange, "Import CSV" outlined.
 
+## 6p. UX stage 6 (finishing touches)
+
+1. Topo editor: one short line of instructions under the mode chips, with "Więcej ›" for the full text. It changes with the mode (bolts, freehand, points placed).
+2. Lists (journal, crag, route search): grade squares all have the same width, and the route names start in one column. A long grade such as "VI.1+/2" is smaller but whole.
+3. Day share with 1–2 routes: the card is 4:5 with no empty lower half. With 8 routes and a long message the card is taller and the footer (coordinates, CRUXLOG) is fully visible. The sent image has the same shape as the preview.
+4. Trip share (invitation with 10 routes): the footer is visible.
+5. Opening a crag, route, ascent, trip or region shows a spinner for a moment instead of an empty screen.
+
 ## 7. Robustness
 1. Change the language and the route grade system, close the app completely (swipe away) and reopen it. Expected: all data is still there, and the language and grade system are the ones you chose.
 2. Rotate the phone, switch to dark mode and back. Expected: readable text and no layout breaks.

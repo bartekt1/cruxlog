@@ -7,7 +7,7 @@ import { Text } from '../../src/ui/Text';
 import { listAreas, listCrags, type AreaRow, type CragRow } from '../../src/db/repo';
 import { areaPath, childLevel, childrenOf, cragCounts, descendantIds, pathLabels } from '../../src/domain/areas';
 import { IconButton } from '../../src/ui/icons';
-import { EmptyState, Label } from '../../src/ui/kit';
+import { EmptyState, Label, Loading } from '../../src/ui/kit';
 import { AddMenu } from '../../src/ui/Menu';
 import { NavRow } from '../../src/ui/NavRow';
 import { PlaceSearch, SearchBar } from '../../src/ui/PlaceSearch';
@@ -39,7 +39,7 @@ export default function AreaScreen() {
   const parentPath = (a: AreaRow) => (a.parent_id ? labels.get(a.parent_id) ?? '' : '');
   const gone = areas != null && !area;
   useEffect(() => { if (gone) router.back(); }, [gone, router]); // deleted from the edit screen
-  if (!areas || !area) return null;
+  if (!areas || !area) return <Loading />;
 
   const parents = areaPath(areas, id).slice(0, -1);
   const children = childrenOf(areas, id);

@@ -138,7 +138,7 @@
   "topo": {
     "title": "Topo", "draw": "Rysuj topo", "pickRoute": "Którą drogę rysujesz?", "hasLine": "ma już linię na tym zdjęciu",
     "noRoutes": "Ta ściana nie ma jeszcze dróg. Dodaj je na ekranie skały.", "changeRoute": "Zmień drogę",
-    "hint": "Dotknij startu drogi, potem kolejnych ringów od dołu, na końcu stanowiska. Przytrzymaj palec, a lupa pokaże, gdzie dokładnie stawiasz punkt. Dwoma palcami powiększasz i przesuwasz zdjęcie.",
+    "hintShort": "Dotknij startu, potem kolejnych ringów, na końcu stanowiska.", "hintFreeShort": "Rysuj palcem od startu do stanowiska.", "pointsShort": "Punkty: {{count}}. Przeciągnij, by przesunąć; dotknij, by zaznaczyć.", "hint": "Dotknij startu drogi, potem kolejnych ringów od dołu, na końcu stanowiska. Przytrzymaj palec, a lupa pokaże, gdzie dokładnie stawiasz punkt. Dwoma palcami powiększasz i przesuwasz zdjęcie.",
     "points": "Punkty: {{count}}. Przeciągnij punkt, żeby go przesunąć; dotknij, żeby go zaznaczyć, a potem usunąć albo wstawić nowy punkt za nim.",
     "modeBolts": "Ringi", "modeFree": "Ręcznie", "hintFree": "Rysuj linię palcem od startu do stanowiska; można w kilku kawałkach, każdy przedłuża linię. Dwoma palcami powiększasz i przesuwasz zdjęcie.", "openRoute": "Droga {{n}}: {{name}}", "openPhoto": "Topo drogi {{name}}. Dotknij, aby otworzyć zdjęcie.", "drawThis": "Narysuj tę drogę na zdjęciu ściany", "onCard": "Pokaż linię topo na zdjęciu", "zoomIn": "Powiększ", "zoomOut": "Pomniejsz", "fit": "Całe zdjęcie", "undo": "Cofnij", "redo": "Ponów",
     "insertPoint": "Wstaw punkt za zaznaczonym", "deletePoint": "Usuń zaznaczony punkt", "clear": "Wyczyść linię", "save": "Zapisz linię",

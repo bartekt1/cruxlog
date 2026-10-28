@@ -10,7 +10,7 @@ import { routeGrade } from '../../src/domain/grades';
 import { IconButton } from '../../src/ui/icons';
 import { Contours } from '../../src/ui/Contours';
 import { F } from '../../src/ui/fonts';
-import { Button, EmptyState, Field, GradeBadge, LinkButton, Screen, Label } from '../../src/ui/kit';
+import { Button, EmptyState, Field, GradeBadge, LinkButton, Loading, Screen, Label } from '../../src/ui/kit';
 import { matches, sameName } from '../../src/domain/text';
 import { MenuButton } from '../../src/ui/Menu';
 import { useLocation } from '../../src/ui/useLocation';
@@ -87,6 +87,8 @@ export default function CragScreen() {
       .filter((sec) => !query.trim() || sec.data.length);
   }, [routes, sectorRows, sectorPhotos, query]);
 
+
+  if (!crag) return <Loading />;
 
   return (
     <Screen>
