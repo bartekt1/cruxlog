@@ -76,6 +76,20 @@ export async function recordDeletion(db: SQLiteDatabase, what: 'crag' | 'sector'
   if (!unsentNew?.n) await recordChange(db, `${what}_delete`, null, before);
 }
 
+/**
+ * Reports that a crag, sector or route from a pack or an import no longer exists, without deleting it here: the owner removes
+ * it from the shared base and the next pack update removes it for everyone. Returns false when such a report is already waiting.
+ */
+export async function reportDeletion(db: SQLiteDatabase, what: 'crag' | 'sector' | 'route', id: string): Promise<boolean> {
+  const kind = `${what}_delete` as const;
+  const waiting = await db.getFirstAsync<{ n: number }>('SELECT COUNT(*) AS n FROM outbox WHERE entity_id = ? AND kind = ?', [id, kind]);
+  if (waiting?.n) return false;
+  const snap = what === 'crag' ? await cragSnapshot(db, id) : what === 'sector' ? await sectorSnapshot(db, id) : await routeSnapshot(db, id);
+  if (!snap) return false;
+  await recordChange(db, kind, null, snap);
+  return true;
+}
+
 /** The oldest changes waiting to be sent. */
 export async function listOutbox(db: SQLiteDatabase, limit = 200): Promise<OutboxEntry[]> {
   const rows = await db.getAllAsync<{ id: string; created_at: number; kind: ProposalKind; row: string; changes: string; entity_id: string | null; crag_id: string | null }>(

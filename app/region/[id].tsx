@@ -23,6 +23,7 @@ export default function EditArea() {
       load={load}
       rename={(name) => renameArea(db, id, name)}
       deleteLabel={t(`areas.delete.${level}`)}
+      fromPack={{ note: t('fromPack.area') }}
       onDelete={(name) => confirmDelete(t, name, null, async () => {
         await deleteArea(db, id);
         router.back();

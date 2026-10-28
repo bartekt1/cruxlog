@@ -2,7 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { deleteSector, getSector, renameSector, sectorUsage } from '../../src/db/repo';
+import { deleteSector, getSector, renameSector, reportDeletion, sectorUsage } from '../../src/db/repo';
 import { confirmDelete } from '../../src/ui/confirm';
 import { NameEditor } from '../../src/ui/NameEditor';
 
@@ -18,6 +18,7 @@ export default function EditSector() {
       load={load}
       rename={(name) => renameSector(db, id, name)}
       deleteLabel={t('edit.deleteSector')}
+      fromPack={{ note: t('fromPack.sector'), onReport: () => reportDeletion(db, 'sector', id) }}
       onDelete={async (name) => confirmDelete(t, name, await sectorUsage(db, id), async () => { await deleteSector(db, id); router.back(); })}
     />
   );

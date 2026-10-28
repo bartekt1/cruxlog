@@ -4,10 +4,11 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView } from 'react-native';
 import { Text } from '../../src/ui/Text';
-import { deleteRoute, getRoute, listSectorNames, routeUsage, updateRoute, type RouteRow } from '../../src/db/repo';
+import { deleteRoute, getRoute, listSectorNames, reportDeletion, routeUsage, updateRoute, type RouteRow } from '../../src/db/repo';
 import { validateOptionalNumber, validateRouteDraft } from '../../src/domain/forms';
 import { formatGrade, gradeExample, type GradeSystem, type RouteType } from '../../src/domain/grades';
 import { confirmDelete } from '../../src/ui/confirm';
+import { FromPack } from '../../src/ui/FromPack';
 import { Button, Chip, ChipRow, ErrorText, Field, Label } from '../../src/ui/kit';
 import { useTheme } from '../../src/ui/theme';
 import { errorMessage } from '../../src/ui/errors';
@@ -87,7 +88,9 @@ export default function EditRoute() {
       <Field value={bolts} onChangeText={setBolts} accessibilityLabel={t('route.boltsLabel')} keyboardType="number-pad" placeholder={t('common.optional')} />
       {error ? <ErrorText>{error}</ErrorText> : null}
       <Button label={saving ? t('common.saving') : t('common.save')} onPress={save} disabled={saving || !route} />
-      <Button label={t('edit.deleteRoute')} onPress={remove} variant="danger" disabled={saving || !route} />
+      {/* Routes from a pack or an import are not deleted one by one; they can be reported as gone. */}
+      {!route ? null : route.source === 'user' ? <Button label={t('edit.deleteRoute')} onPress={remove} variant="danger" disabled={saving} />
+        : <FromPack note={t('fromPack.route')} name={route.name} onReport={() => reportDeletion(db, 'route', id)} />}
     </ScrollView>
   );
 }

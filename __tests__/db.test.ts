@@ -6,7 +6,7 @@ import { MIGRATIONS, migrate } from '../src/db/migrate';
 import {
   addAscent, addGoal, addUserRoute, saveAscent, installPack, listInstalledPacks, removePack, saveTrip, getTrip, listTrips, deleteTrip, tripRoutesOn, listAscentsBetween, applyImport, cragUsage, deleteAscent, deleteCrag, deleteGoal, deleteArea, deleteRoute, deleteSector,
   getAscent, getCrag, getArea, getRoute, getSector, listAscents, listCragRoutes, listCrags, listGoals, listAreas, listSectorNames, addArea, areaIdFor,
-  renameArea, renameSector, routeUsage, countOutbox, deleteOutbox, listOutbox, listMyCrags, listMyRoutes, deleteMine, listEmptyAreas, saveCrag, searchRoutes, sectorUsage, setGoalDone, updateAscent, updateRoute, type NewRoute, type RouteFilter,
+  renameArea, renameSector, routeUsage, countOutbox, deleteOutbox, listOutbox, reportDeletion, listMyCrags, listMyRoutes, deleteMine, listEmptyAreas, saveCrag, searchRoutes, sectorUsage, setGoalDone, updateAscent, updateRoute, type NewRoute, type RouteFilter,
   listCragChoices, listPartners, applyCragPositions, addRouteGoal, routeGoalKinds, addPhotos, listPhotos, listPhotosOf, removePhotos, activePhotos, latestPhotoChange, getPhoto, listTopoLines, topoRoutes, saveTopoLine, deleteTopoLine, routeTopos, setCragLocation, listRouteAscents, recentRoutes, listSectors, addSector, createRoute, importedUsage, removeImported, findRoutes, getGoal, updateGoal, routeGoals,
 } from '../src/db/repo';
 import { descendantIds } from '../src/domain/areas';
@@ -1073,6 +1073,22 @@ describe('proposals outbox', () => {
     await createRoute(db, kept, { sectorName: 'Nowy', name: 'W2', ...grade });
     await deleteSector(db, s);
     expect((await listOutbox(db)).map((e) => e.kind)).toEqual(['route_delete']);
+  });
+
+  it('reports an imported crag or route as gone without deleting it, once', async () => {
+    const db = await freshDb();
+    await applyImport(db, samples());
+    const crag = (await listCrags(db))[0];
+    const route = (await listCragRoutes(db, crag.id))[0];
+    expect(await reportDeletion(db, 'route', route.id)).toBe(true);
+    expect(await reportDeletion(db, 'route', route.id)).toBe(false); // already waiting
+    expect(await reportDeletion(db, 'crag', crag.id)).toBe(true);
+    const out = await listOutbox(db);
+    expect(out.map((e) => e.kind)).toEqual(['route_delete', 'crag_delete']);
+    expect(out[0]).toMatchObject({ entityId: route.id, cragId: crag.id, row: { Nazwa: route.name } });
+    expect(await getRoute(db, route.id)).not.toBeNull(); // still here until the pack is updated
+    expect(await getCrag(db, crag.id)).not.toBeNull();
+    expect(await reportDeletion(db, 'sector', 'missing')).toBe(false);
   });
 
   it('migration 13 keeps the changes waiting from version 12', async () => {

@@ -4,11 +4,12 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView } from 'react-native';
 import { Text } from '../../src/ui/Text';
-import { cragUsage, deleteCrag, getCrag, listAreas, saveCrag, type AreaNames, type AreaRow } from '../../src/db/repo';
+import { cragUsage, deleteCrag, getCrag, listAreas, reportDeletion, saveCrag, type AreaNames, type AreaRow } from '../../src/db/repo';
 import { pathNames } from '../../src/domain/areas';
 import { validateCragDraft } from '../../src/domain/forms';
 import { confirmDelete } from '../../src/ui/confirm';
 import { AreaPicker } from '../../src/ui/AreaPicker';
+import { FromPack } from '../../src/ui/FromPack';
 import { Button, ErrorText, Field, Label, LinkButton } from '../../src/ui/kit';
 import { useTheme } from '../../src/ui/theme';
 import { errorMessage } from '../../src/ui/errors';
@@ -28,6 +29,8 @@ export default function EditCrag() {
   const [areaRows, setAreaRows] = useState<AreaRow[]>([]);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  // Crags from a pack or an import are not deleted one by one; they can be reported as gone.
+  const [own, setOwn] = useState(true);
 
   useEffect(() => {
     listAreas(db).then(async (rows) => {
@@ -35,7 +38,7 @@ export default function EditCrag() {
       if (!id) { if (areaId) setAreas(pathNames(rows, areaId)); return; }
       const c = await getCrag(db, id);
       if (!c) return;
-      setName(c.name); setAreas(pathNames(rows, c.region_id)); setDescription(c.description); setApproach(c.approach);
+      setName(c.name); setAreas(pathNames(rows, c.region_id)); setDescription(c.description); setApproach(c.approach); setOwn(c.source === 'user');
     });
   }, [db, id, areaId]);
 
@@ -91,7 +94,8 @@ export default function EditCrag() {
       <Field value={approach} onChangeText={setApproach} accessibilityLabel={t('crags.approach')} multiline textAlignVertical="top" style={{ minHeight: 60 }} />
       {error ? <ErrorText>{error}</ErrorText> : null}
       <Button label={saving ? t('common.saving') : t('common.save')} onPress={save} disabled={saving} />
-      {id ? <Button label={t('edit.deleteCrag')} onPress={remove} variant="danger" disabled={saving} /> : null}
+      {!id ? null : own ? <Button label={t('edit.deleteCrag')} onPress={remove} variant="danger" disabled={saving} />
+        : <FromPack note={t('fromPack.crag')} name={name} onReport={() => reportDeletion(db, 'crag', id)} />}
     </ScrollView>
   );
 }
