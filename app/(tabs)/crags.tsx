@@ -59,6 +59,7 @@ export default function Crags() {
       {modeSwitch}
       <Field value={query} onChangeText={setQuery} placeholder={t('areas.search')} accessibilityLabel={t('areas.search')} returnKeyType="search" />
       <Button label={t('routeSearch.open')} variant="plain" onPress={() => router.push('/route/search')} />
+      <Button label={t('mine.open')} variant="plain" onPress={() => router.push('/mine')} />
       {query.trim() ? (
         <PlaceSearch query={query} crags={crags} areaIds={null} path={path} onOpenCrag={openCrag} />
       ) : (

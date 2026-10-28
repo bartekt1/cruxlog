@@ -275,6 +275,12 @@ Since the automatic backup (§6a) these buttons are under Settings › "Other wa
 3. Once the sheet is set up (docs/PROPOZYCJE.md): on the next start a one-time note explains what is sent; "OK" sends, "Don't send" switches it off. Within about 2 minutes the rows appear in the sheet with Kiedy, Zmiana, Co zmieniono, Urządzenie and the template columns; the waiting count drops to 0.
 4. Without internet changes wait; "Send now" says it could not connect. Switching sending off: nothing is sent; the changes keep waiting.
 
+## 6j. My crags and routes (cleaning up test entries)
+1. Crags tab › "My crags and routes" (also in Settings › Shared crag base). Expected: only crags and routes you added yourself; pack and imported ones are not listed. Tapping a row opens it.
+2. Hold a row (or "Select"): ticks appear; "Select all"; "Delete selected: N". The question lists crags, routes and, in a warning, ascents that go with them. After deleting they are gone from the app.
+3. Add a test crag with a route and delete it before it is sent (e.g. without internet): "Waiting to be sent" goes back to what it was; nothing about it reaches the sheet.
+4. Something already sent and then deleted: a "usunięcie …" row reaches the sheet; in the sheet, Cruxlog › Posprzątaj wycofane removes the addition, its edits and the deletion (for a crag also its sectors and routes) and TEST rows.
+
 ## 7. Robustness
 1. Change the language and the route grade system, close the app completely (swipe away) and reopen it. Expected: all data is still there, and the language and grade system are the ones you chose.
 2. Rotate the phone, switch to dark mode and back. Expected: readable text and no layout breaks.

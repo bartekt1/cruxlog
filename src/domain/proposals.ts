@@ -62,16 +62,17 @@ export function describeChanges(before: ProposalRow | null, after: ProposalRow |
     .join('; ');
 }
 
-/** A row of the sheet: when, what kind, what changed, the device's code, then the template columns. */
-export type SheetRow = { at: string; kind: string; changes: string; device: string } & ProposalRow;
+/** A row of the sheet: when, what kind, what changed, the device's code, the app's ids of the thing and its crag, then the template columns. */
+export type SheetRow = { at: string; kind: string; changes: string; device: string; appId: string; appCragId: string } & ProposalRow;
 
-export type OutboxEntry = { id: string; created_at: number; kind: ProposalKind; row: ProposalRow; changes: string };
+/** A waiting change; `entityId` and `cragId` are the app's own ids of the thing and of its crag ('' for changes recorded before they were kept). */
+export type OutboxEntry = { id: string; created_at: number; kind: ProposalKind; row: ProposalRow; changes: string; entityId: string; cragId: string };
 
 /** The body sent to the sheet: at most `limit` oldest entries. */
 export function proposalBody(entries: OutboxEntry[], device: string, limit = 200): { app: 'cruxlog'; v: 1; rows: SheetRow[] } {
   return {
     app: 'cruxlog', v: 1,
-    rows: entries.slice(0, limit).map((e) => ({ at: new Date(e.created_at).toISOString(), kind: KIND_LABEL[e.kind], changes: e.changes, device, ...e.row })),
+    rows: entries.slice(0, limit).map((e) => ({ at: new Date(e.created_at).toISOString(), kind: KIND_LABEL[e.kind], changes: e.changes, device, appId: e.entityId, appCragId: e.cragId, ...e.row })),
   };
 }
 

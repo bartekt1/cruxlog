@@ -6,7 +6,7 @@ import { MIGRATIONS, migrate } from '../src/db/migrate';
 import {
   addAscent, addGoal, addUserRoute, saveAscent, installPack, listInstalledPacks, removePack, saveTrip, getTrip, listTrips, deleteTrip, tripRoutesOn, listAscentsBetween, applyImport, cragUsage, deleteAscent, deleteCrag, deleteGoal, deleteArea, deleteRoute, deleteSector,
   getAscent, getCrag, getArea, getRoute, getSector, listAscents, listCragRoutes, listCrags, listGoals, listAreas, listSectorNames, addArea, areaIdFor,
-  renameArea, renameSector, routeUsage, countOutbox, deleteOutbox, listOutbox, saveCrag, searchRoutes, sectorUsage, setGoalDone, updateAscent, updateRoute, type NewRoute, type RouteFilter,
+  renameArea, renameSector, routeUsage, countOutbox, deleteOutbox, listOutbox, listMyCrags, listMyRoutes, deleteMine, saveCrag, searchRoutes, sectorUsage, setGoalDone, updateAscent, updateRoute, type NewRoute, type RouteFilter,
   listCragChoices, listPartners, applyCragPositions, addRouteGoal, routeGoalKinds, addPhotos, listPhotos, listPhotosOf, removePhotos, activePhotos, latestPhotoChange, getPhoto, listTopoLines, topoRoutes, saveTopoLine, deleteTopoLine, routeTopos, setCragLocation, listRouteAscents, recentRoutes, listSectors, addSector, createRoute, importedUsage, removeImported, findRoutes, getGoal, updateGoal, routeGoals,
 } from '../src/db/repo';
 import { descendantIds } from '../src/domain/areas';
@@ -1031,22 +1031,77 @@ describe('proposals outbox', () => {
     await addSector(db, cragId, 'wschod'); // the same sector: not new
     const sectorId = (await listSectors(db, cragId)).find((s) => s.name === 'Wschód')!.id;
     await renameSector(db, sectorId, 'Wschodnia');
-    await deleteRoute(db, routeId);
     await addAscent(db, ascent((await addUserRoute(db, route({ cragName: 'Krowia', sectorName: 'Zachód', name: 'Nowa' }))))); // a new route from the ascent form
     await applyImport(db, samples()); // an import is not a proposal
 
     const out = await listOutbox(db);
-    expect(out.map((e) => e.kind)).toEqual(['crag_new', 'route_new', 'route_edit', 'crag_position', 'sector_new', 'sector_edit', 'route_delete', 'route_new']);
-    expect(out[0].row).toMatchObject({ Region: 'Pogórze', Rejon: 'Czarnorzeki', Skała: 'Krowia' });
-    expect(out[1].row).toMatchObject({ Skała: 'Krowia', Sektor: 'Zachód', Nazwa: 'Rysa', Wycena: 'VI.2', Długość: '18', Przeloty: '5' });
+    expect(out.map((e) => e.kind)).toEqual(['crag_new', 'route_new', 'route_edit', 'crag_position', 'sector_new', 'sector_edit', 'route_new']);
+    expect(out[0]).toMatchObject({ entityId: cragId, cragId, row: { Region: 'Pogórze', Rejon: 'Czarnorzeki', Skała: 'Krowia' } });
+    expect(out[1]).toMatchObject({ entityId: routeId, cragId, row: { Skała: 'Krowia', Sektor: 'Zachód', Nazwa: 'Rysa', Wycena: 'VI.2', Długość: '18', Przeloty: '5' } });
     expect(out[2].changes).toBe('Wycena: VI.2 → VI.3; Przeloty: 5 → 6');
     expect(out[3].changes).toBe('Lat: – → 49.7; Lng: – → 21.8');
-    expect(out[5]).toMatchObject({ changes: 'Sektor: Wschód → Wschodnia' });
-    expect(out[6].row).toMatchObject({ Nazwa: 'Rysa', Wycena: 'VI.3' });
-    expect(await countOutbox(db)).toBe(8);
+    expect(out[5]).toMatchObject({ entityId: sectorId, changes: 'Sektor: Wschód → Wschodnia' });
+    expect(await countOutbox(db)).toBe(7);
 
     await deleteOutbox(db, out.slice(0, 3).map((e) => e.id));
-    expect(await countOutbox(db)).toBe(5);
+    expect(await countOutbox(db)).toBe(4);
     expect((await exportBackup(db)).tables).not.toHaveProperty('outbox');
+  });
+
+  it('drops the unsent changes of a deleted thing; sends a deletion only when its addition went out', async () => {
+    const db = await freshDb();
+    const grade = { type: 'sport' as const, gradeLabel: 'VI', gradeSystem: 'kr' as const, gradeIndex: parseGrade('VI', 'kr')! };
+    const test = await saveCrag(db, null, { name: 'Testowa', areas: A('R', 'A'), description: '', approach: '' });
+    const r1 = await createRoute(db, test, { sectorName: 'S', name: 'T1', ...grade });
+    await createRoute(db, test, { sectorName: 'S', name: 'T2', ...grade });
+    await deleteRoute(db, r1);
+    expect((await listOutbox(db)).map((e) => e.row.Nazwa ?? e.kind)).toEqual(['crag_new', 'T2']); // T1 never reached the sheet
+    await deleteCrag(db, test);
+    expect(await countOutbox(db)).toBe(0); // nothing about the test crag goes out
+
+    const kept = await saveCrag(db, null, { name: 'Wysłana', areas: A('R', 'A'), description: '', approach: '' });
+    const r2 = await createRoute(db, kept, { sectorName: 'S', name: 'W1', ...grade });
+    await deleteOutbox(db, (await listOutbox(db)).map((e) => e.id)); // sent
+    await updateRoute(db, r2, { sectorName: 'S', name: 'W1', ...grade, bolts: 4 });
+    await deleteRoute(db, r2);
+    const out = await listOutbox(db);
+    expect(out.map((e) => e.kind)).toEqual(['route_delete']); // the unsent edit is dropped, the deletion goes out
+    expect(out[0]).toMatchObject({ entityId: r2, cragId: kept, row: { Nazwa: 'W1' } });
+
+    // A sector deleted with its routes drops their unsent changes too.
+    const s = await addSector(db, kept, 'Nowy');
+    await createRoute(db, kept, { sectorName: 'Nowy', name: 'W2', ...grade });
+    await deleteSector(db, s);
+    expect((await listOutbox(db)).map((e) => e.kind)).toEqual(['route_delete']);
+  });
+
+  it('migration 13 keeps the changes waiting from version 12', async () => {
+    const db = openTestDb();
+    await db.execAsync(MIGRATIONS.slice(0, 12).join('\n') + 'PRAGMA user_version = 12;');
+    await db.runAsync("INSERT INTO outbox (id, created_at, kind, row, changes) VALUES ('o1', 1, 'route_new', '{\"Nazwa\":\"Stara\"}', '')");
+    await migrate(db);
+    expect(await listOutbox(db)).toEqual([{ id: 'o1', created_at: 1, kind: 'route_new', row: { Nazwa: 'Stara' }, changes: '', entityId: '', cragId: '' }]);
+  });
+});
+
+describe('my crags and routes', () => {
+  it('lists only what the user added and deletes several at once', async () => {
+    const db = await freshDb();
+    await applyImport(db, samples()); // a crag from a file: not mine
+    const imported = (await listCrags(db)).find((c) => c.name === 'Example crag')!.id;
+    const grade = { type: 'sport' as const, gradeLabel: 'VI', gradeSystem: 'kr' as const, gradeIndex: parseGrade('VI', 'kr')! };
+    const mine = await saveCrag(db, null, { name: 'Moja', areas: A('R', 'A'), description: '', approach: '' });
+    const r1 = await createRoute(db, mine, { sectorName: '', name: 'M1', ...grade });
+    await addAscent(db, ascent(r1));
+    const onImported = await createRoute(db, imported, { sectorName: '', name: 'Dopisana', ...grade });
+
+    expect(await listMyCrags(db)).toEqual([{ id: mine, name: 'Moja', region_id: expect.any(String), routes: 1, ascents: 1 }]);
+    expect((await listMyRoutes(db)).map((r) => [r.name, r.crag_name, r.ascents])).toEqual([['Dopisana', 'Example crag', 0]]);
+
+    await deleteMine(db, [mine], [onImported]);
+    expect(await listMyCrags(db)).toEqual([]);
+    expect(await listMyRoutes(db)).toEqual([]);
+    expect(await listAscents(db)).toEqual([]);
+    expect((await listCragRoutes(db, imported)).map((r) => r.name).sort()).toEqual(['Example multipitch', 'Example sport route']);
   });
 });

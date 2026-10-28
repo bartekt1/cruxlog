@@ -5,6 +5,7 @@ Aplikacja wysyła poprawki skał, sektorów i dróg (dodanie, zmiana, usunięcie
 - Wysyłane: dane skał i dróg w kolumnach wzoru Cruxlog oraz kolumny Kiedy, Zmiana, Co zmieniono, Urządzenie (losowy kod telefonu, bez imienia).
 - Nigdy nie są wysyłane: przejścia, partnerzy, cele, zdjęcia, pozycja użytkownika. Import z pliku i paczki też nie.
 - W aplikacji: Ustawienia › Wspólna baza skał (domyślnie włączone; przed pierwszą wysyłką jednorazowa informacja z możliwością wyłączenia). Zmiany czekają w telefonie (tabela `outbox`) i wychodzą przy otwarciu aplikacji, po powrocie do niej i co 2 minuty.
+- Usunięcie w aplikacji (np. testowej skały, ekran „Moje skały i drogi”) kasuje jej zmiany, które jeszcze czekają: gdy dodanie nie zostało wysłane, do arkusza nie trafia nic. Gdy już było wysłane, idzie wiersz „usunięcie …”, a menu **Cruxlog › Posprzątaj wycofane** w arkuszu usuwa całą parę (dodanie, poprawki i usunięcie; dla skały także jej sektory i drogi) oraz wiersze TEST.
 - Kod: `src/domain/proposals.ts` (adres `PROPOSALS_URL`, kolumny), `src/db/proposals.ts` (kolejka), `src/ui/proposals.ts` (wysyłka), skrypt arkusza: `docs/propozycje.gs`.
 
 ## Uruchomienie (raz, około 10 minut)
@@ -20,11 +21,13 @@ Aplikacja wysyła poprawki skał, sektorów i dróg (dodanie, zmiana, usunięcie
 6. Skopiuj **Adres URL aplikacji internetowej** (kończy się na `/exec`) i wyślij go Claude'owi; trafi do `PROPOSALS_URL` w aplikacji.
 7. Sprawdzenie: otwórz ten adres w przeglądarce. Powinno się pokazać `{"ok":true,"app":"cruxlog-propozycje"}`, a w arkuszu pojawi się karta **Propozycje** z nagłówkami.
 
-Zmiana skryptu później: wklej nowy kod, potem **Wdróż › Zarządzaj wdrożeniami › ołówek › Wersja: Nowa wersja › Wdróż** (adres zostaje ten sam).
+Zmiana skryptu później (np. wersja z menu sprzątania): wklej nowy kod, potem **Wdróż › Zarządzaj wdrożeniami › ołówek › Wersja: Nowa wersja › Wdróż** (adres zostaje ten sam).
 
 ## Sprzątanie
 
 - Kolumny od **Region** do **ID_drogi** są takie jak w `baza.csv`: dobre wiersze kopiuje się prosto do bazy (bez czterech pierwszych kolumn).
 - **ID_skały / ID_drogi** wypełnione: zmiana dotyczy skały lub drogi, która już jest w paczkach (poprawka albo usunięcie). Puste: coś nowego.
 - **Urządzenie**: wiersze z jednego telefonu mają ten sam kod, co pomaga znaleźć duplikaty.
+- **ID w aplikacji / ID skały w aplikacji** (dwie ostatnie kolumny): losowe numery rzeczy i jej skały w telefonie; łączą dodanie z późniejszym usunięciem. Wiersze sprzed tej wersji ich nie mają – takie testowe wpisy trzeba usunąć ręcznie.
+- **Cruxlog › Posprzątaj wycofane** (menu u góry arkusza, pojawia się po odświeżeniu strony): usuwa rzeczy dodane i potem usunięte oraz wiersze TEST. Pierwsze użycie prosi o zgodę na dostęp – jak przy wdrożeniu.
 - Przeniesione albo odrzucone wiersze usuwa się z arkusza.

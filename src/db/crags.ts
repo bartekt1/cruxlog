@@ -1,9 +1,10 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
+import type { GradeSystem, RouteType } from '../domain/grades';
 import { sameName } from '../domain/text';
 import { areaIdFor, type AreaNames } from './areas';
 import { AppError } from '../domain/errors';
 import { newId, now } from './ids';
-import { cragSnapshot, recordChange, routeSnapshot, sectorSnapshot } from './proposals';
+import { cragSnapshot, recordChange, recordDeletion, routeSnapshot, sectorSnapshot } from './proposals';
 import { count, findByName, sectorIdFor, type NamedRow, type PosSource } from './shared';
 
 export type CragChoice = { id: string; name: string; region_id: string | null; region_name: string | null; routes: number; lat: number | null; lng: number | null; pos_source: PosSource };
@@ -112,18 +113,27 @@ async function deleteRoutesWhere(db: SQLiteDatabase, routeFilter: string, id: st
   await db.runAsync(`UPDATE route SET deleted_at = ?, updated_at = ? WHERE deleted_at IS NULL AND id IN (${routeIds})`, [t, t, id]);
 }
 
+async function removeRoute(db: SQLiteDatabase, id: string, t: number) {
+  await recordDeletion(db, 'route', await routeSnapshot(db, id));
+  await deleteRoutesWhere(db, 'r.id = ?', id, t);
+}
+
+async function removeCrag(db: SQLiteDatabase, id: string, t: number) {
+  await recordDeletion(db, 'crag', await cragSnapshot(db, id));
+  await deleteRoutesWhere(db, 's.crag_id = ?', id, t);
+  await db.runAsync('UPDATE sector SET deleted_at = ?, updated_at = ? WHERE deleted_at IS NULL AND crag_id = ?', [t, t, id]);
+  await db.runAsync('UPDATE crag SET deleted_at = ?, updated_at = ? WHERE id = ?', [t, t, id]);
+}
+
 export async function deleteRoute(db: SQLiteDatabase, id: string): Promise<void> {
   const t = now();
-  await db.withTransactionAsync(async () => {
-    await recordChange(db, 'route_delete', null, await routeSnapshot(db, id));
-    await deleteRoutesWhere(db, 'r.id = ?', id, t);
-  });
+  await db.withTransactionAsync(() => removeRoute(db, id, t));
 }
 
 export async function deleteSector(db: SQLiteDatabase, id: string): Promise<void> {
   const t = now();
   await db.withTransactionAsync(async () => {
-    await recordChange(db, 'sector_delete', null, await sectorSnapshot(db, id));
+    await recordDeletion(db, 'sector', await sectorSnapshot(db, id));
     await deleteRoutesWhere(db, 's.id = ?', id, t);
     await db.runAsync('UPDATE sector SET deleted_at = ?, updated_at = ? WHERE id = ?', [t, t, id]);
   });
@@ -131,12 +141,7 @@ export async function deleteSector(db: SQLiteDatabase, id: string): Promise<void
 
 export async function deleteCrag(db: SQLiteDatabase, id: string): Promise<void> {
   const t = now();
-  await db.withTransactionAsync(async () => {
-    await recordChange(db, 'crag_delete', null, await cragSnapshot(db, id));
-    await deleteRoutesWhere(db, 's.crag_id = ?', id, t);
-    await db.runAsync('UPDATE sector SET deleted_at = ?, updated_at = ? WHERE deleted_at IS NULL AND crag_id = ?', [t, t, id]);
-    await db.runAsync('UPDATE crag SET deleted_at = ?, updated_at = ? WHERE id = ?', [t, t, id]);
-  });
+  await db.withTransactionAsync(() => removeCrag(db, id, t));
 }
 
 export type CragInput = { name: string; areas: AreaNames; description: string; approach: string; sectorNames?: string[] };
@@ -198,4 +203,35 @@ export async function renameSector(db: SQLiteDatabase, id: string, name: string)
 export async function listSectorNames(db: SQLiteDatabase, cragId: string): Promise<string[]> {
   const rows = await db.getAllAsync<{ name: string }>('SELECT name FROM sector WHERE crag_id = ? AND deleted_at IS NULL ORDER BY name', [cragId]);
   return rows.map((r) => r.name);
+}
+
+export type MyCrag = { id: string; name: string; region_id: string | null; routes: number; ascents: number };
+export type MyRoute = { id: string; name: string; crag_id: string; crag_name: string; sector_name: string; grade_label: string; grade_system: GradeSystem; grade_index: number; type: RouteType; ascents: number };
+
+/** Crags the user added (not from a pack or a file), with how many routes and ascents each has. */
+export async function listMyCrags(db: SQLiteDatabase): Promise<MyCrag[]> {
+  return db.getAllAsync<MyCrag>(
+    `SELECT c.id, c.name, c.region_id,
+       (SELECT COUNT(*) FROM route r JOIN sector s ON s.id = r.sector_id WHERE s.crag_id = c.id AND r.deleted_at IS NULL) AS routes,
+       (SELECT COUNT(*) FROM ascent a JOIN route r ON r.id = a.route_id JOIN sector s ON s.id = r.sector_id WHERE s.crag_id = c.id AND a.deleted_at IS NULL AND r.deleted_at IS NULL) AS ascents
+     FROM crag c WHERE c.deleted_at IS NULL AND c.source = 'user' ORDER BY c.name`);
+}
+
+/** Routes the user added on crags that are not their own (e.g. on a pack's crag), with their ascents. */
+export async function listMyRoutes(db: SQLiteDatabase): Promise<MyRoute[]> {
+  return db.getAllAsync<MyRoute>(
+    `SELECT r.id, r.name, c.id AS crag_id, c.name AS crag_name, s.name AS sector_name, r.grade_label, r.grade_system, r.grade_index, r.type,
+       (SELECT COUNT(*) FROM ascent a WHERE a.route_id = r.id AND a.deleted_at IS NULL) AS ascents
+     FROM route r JOIN sector s ON s.id = r.sector_id JOIN crag c ON c.id = s.crag_id
+     WHERE r.deleted_at IS NULL AND s.deleted_at IS NULL AND c.deleted_at IS NULL AND r.source = 'user' AND c.source <> 'user'
+     ORDER BY c.name, r.name`);
+}
+
+/** Deletes several of the user's crags and routes at once (with their sectors, routes and ascents), in one transaction. */
+export async function deleteMine(db: SQLiteDatabase, cragIds: string[], routeIds: string[]): Promise<void> {
+  const t = now();
+  await db.withTransactionAsync(async () => {
+    for (const id of routeIds) await removeRoute(db, id, t);
+    for (const id of cragIds) await removeCrag(db, id, t);
+  });
 }

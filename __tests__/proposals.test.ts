@@ -18,11 +18,11 @@ describe('proposals', () => {
     expect(describeChanges(null, before)).toBe('');
   });
   it('builds the body with the oldest entries first, at most the limit', () => {
-    const e = (n: number) => ({ id: String(n), created_at: Date.UTC(2026, 9, n), kind: 'route_edit' as const, row: { Nazwa: `R${n}` }, changes: 'x' });
+    const e = (n: number) => ({ id: String(n), created_at: Date.UTC(2026, 9, n), kind: 'route_edit' as const, row: { Nazwa: `R${n}` }, changes: 'x', entityId: `r${n}`, cragId: 'c1' });
     const body = proposalBody([e(1), e(2), e(3)], 'abc123', 2);
     expect(body.rows).toEqual([
-      { at: '2026-10-01T00:00:00.000Z', kind: 'poprawka drogi', changes: 'x', device: 'abc123', Nazwa: 'R1' },
-      { at: '2026-10-02T00:00:00.000Z', kind: 'poprawka drogi', changes: 'x', device: 'abc123', Nazwa: 'R2' },
+      { at: '2026-10-01T00:00:00.000Z', kind: 'poprawka drogi', changes: 'x', device: 'abc123', appId: 'r1', appCragId: 'c1', Nazwa: 'R1' },
+      { at: '2026-10-02T00:00:00.000Z', kind: 'poprawka drogi', changes: 'x', device: 'abc123', appId: 'r2', appCragId: 'c1', Nazwa: 'R2' },
     ]);
   });
   it('makes a 6-letter device code', () => {
