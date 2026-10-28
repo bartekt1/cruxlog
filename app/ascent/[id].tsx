@@ -1,4 +1,4 @@
-import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -8,6 +8,7 @@ import { addRouteGoal, deleteAscent, getAscent, listPhotos, routeGoals, type Asc
 import { formatDay, isoDate } from '../../src/domain/dates';
 import { feltGrade, formatGrade, routeGrade } from '../../src/domain/grades';
 import { Button, EmptyState, GradeBadge, Label, Title } from '../../src/ui/kit';
+import { IconButton } from '../../src/ui/icons';
 import { PhotoStrip } from '../../src/ui/PhotoViews';
 import { useSettings } from '../../src/ui/settingsStore';
 import { useTheme } from '../../src/ui/theme';
@@ -52,6 +53,14 @@ export default function AscentScreen() {
 
   return (
     <ScrollView style={{ backgroundColor: th.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 48 }}>
+      <Stack.Screen options={{
+        headerRight: () => (
+          <View style={{ flexDirection: 'row' }}>
+            <IconButton name="share-social-outline" size={26} label={t('share.title')} onPress={() => router.push({ pathname: '/share', params: { kind: 'ascent', id: a.id } })} />
+            <IconButton name="create-outline" size={26} label={t('ascent.editTitle')} onPress={() => router.push({ pathname: '/ascent/new', params: { id: a.id } })} />
+          </View>
+        ),
+      }} />
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <Pressable style={{ flex: 1 }} onPress={() => router.push(`/route/${a.route_id}`)} accessibilityRole="link" accessibilityHint={t('route.openHint')}>
           <Title size={32}>{a.route_name}</Title>
@@ -82,8 +91,6 @@ export default function AscentScreen() {
           <Button label={t('goals.addAsProject')} variant="plain" onPress={() => runOrAlert(async () => { await addRouteGoal(db, a.route_id, 'project'); setIsProject(true); })} />
         )
       ) : null}
-      <Button label={t('share.brag')} variant="plain" onPress={() => router.push({ pathname: '/share', params: { kind: 'ascent', id: a.id } })} />
-      <Button label={t('common.edit')} onPress={() => router.push({ pathname: '/ascent/new', params: { id: a.id } })} />
       <Button label={t('common.delete')} onPress={confirmDelete} variant="danger" />
     </ScrollView>
   );

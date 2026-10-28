@@ -323,6 +323,16 @@ Since the automatic backup (§6a) these buttons are under Settings › "Other wa
 5. Settings: "Moje skały i drogi" is a row right under the look section. It is no longer inside "Udostępnianie zmian".
 6. The add-region and add-rejon screens are titled "Dodaj region" / "Dodaj rejon" (no "+").
 
+## 6o. UX stage 5 (sharing and accent)
+
+1. Ascent screen: share and pencil at the top right; at the bottom only "Usuń" (and "Dodaj jako projekt" for an attempt). The pencil opens the edit form.
+2. Share screens (ascent, route, crag, day, year, goals, trip): "Udostępnij obrazek" right under the card preview. "Udostępnij jako tekst…" is at the bottom, under the options.
+3. Wording: "Udostępnij rok / dzień / cele / podsumowanie"; no "Pochwal się" anywhere. The trip invitation stays "Zaproś na wyprawę".
+4. Journal: the share icons by the days are grey. Progress: the share icon by the year is unchanged.
+5. Plany tab: a share icon beside "Cele" (shown when there are goals) instead of the text link.
+6. Trip: before it starts, "Zaproś na wyprawę" is orange. Once it is ongoing or done, "Zaproś" is outlined and "Udostępnij podsumowanie" is orange (when there are ascents).
+7. Settings › Import: "Paczki" orange, "Import CSV" outlined.
+
 ## 7. Robustness
 1. Change the language and the route grade system, close the app completely (swipe away) and reopen it. Expected: all data is still there, and the language and grade system are the ones you chose.
 2. Rotate the phone, switch to dark mode and back. Expected: readable text and no layout breaks.

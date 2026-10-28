@@ -87,6 +87,7 @@ export default function GoalsShare() {
           <GoalsCard data={card} width={cardWidth} look={look} />
         </View>
       </View>
+      <Button label={t('share.sendImage')} onPress={sendImage} disabled={busy || !items.length} />
       <Label>{t('goalsShare.which', { max: MAX })}</Label>
       {goals.map((g) => <SwitchRow key={g.id} label={g.title} value={chosen.includes(g.id)} onChange={(on) => toggle(g.id, on)} marginTop={4} />)}
       {!items.length ? <Text style={{ color: th.warn, marginTop: 6 }}>{t('goalsShare.none')}</Text> : null}
@@ -98,7 +99,6 @@ export default function GoalsShare() {
       <Label>{t('share.message')}</Label>
       <Field value={message} onChangeText={setMessage} maxLength={120} placeholder={t('goalsShare.messagePlaceholder')} accessibilityLabel={t('share.message')} />
       <View style={{ marginTop: 12 }}>
-        <Button label={t('share.sendImage')} onPress={sendImage} disabled={busy || !items.length} />
         <Button label={t('statsShare.sendText')} variant="plain" onPress={sendText} disabled={busy || !items.length} />
       </View>
     </ScrollView>

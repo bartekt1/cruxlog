@@ -116,6 +116,7 @@ export default function TripShare() {
           <TripCard data={card} width={cardWidth} />
         </View>
       </View>
+      <Button label={t('share.sendImage')} onPress={sendImage} disabled={busy} />
       {mode === 'summary' && !summary.sends ? <Text style={{ color: th.muted, marginTop: 10 }}>{t('trip.nothingYet')}</Text> : null}
 
       <Label>{t('share.message')}</Label>
@@ -132,7 +133,6 @@ export default function TripShare() {
       )}
 
       <View style={{ marginTop: 12 }}>
-        <Button label={t('share.sendImage')} onPress={sendImage} disabled={busy} />
         <Button label={t('share.sendText')} variant="plain" onPress={sendText} disabled={busy} />
       </View>
     </ScrollView>

@@ -60,7 +60,12 @@ export default function TripScreen() {
       <ChipRow>{trip.crags.map((c) => <Chip key={c.id} label={c.name} onPress={() => router.push(`/crag/${c.id}`)} />)}</ChipRow>
       {trip.message ? <Text style={{ color: th.ink, borderLeftWidth: 3, borderLeftColor: th.accent, paddingLeft: 10, marginTop: 4 }}>{trip.message}</Text> : null}
 
-      <CtaButton label={t('trip.invite')} style={{ marginTop: 16 }} onPress={() => router.push({ pathname: '/trip/share', params: { id: trip.id, mode: 'invite' } })} />
+      {/* Orange only for the screen's main action: the invitation before the trip, the summary once it has ascents. */}
+      {status === 'planned' ? (
+        <CtaButton label={t('trip.invite')} style={{ marginTop: 16 }} onPress={() => router.push({ pathname: '/trip/share', params: { id: trip.id, mode: 'invite' } })} />
+      ) : (
+        <Button label={t('trip.invite')} variant="plain" onPress={() => router.push({ pathname: '/trip/share', params: { id: trip.id, mode: 'invite' } })} />
+      )}
 
       {status !== 'planned' ? (
         <>

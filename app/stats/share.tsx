@@ -75,6 +75,7 @@ export default function StatsShare() {
           <StatsCard data={card} width={cardWidth} look={look} />
         </View>
       </View>
+      <Button label={t('share.sendImage')} onPress={sendImage} disabled={busy} />
       <Label>{t('cards.look')}</Label>
       <ChipRow>
         <Chip label={t('cards.styles.guide')} on={look === 'paper'} onPress={() => setLook('paper')} />
@@ -84,7 +85,6 @@ export default function StatsShare() {
       <Label>{t('share.message')}</Label>
       <Field value={message} onChangeText={setMessage} maxLength={120} placeholder={t('statsShare.messagePlaceholder')} accessibilityLabel={t('share.message')} />
       <View style={{ marginTop: 12 }}>
-        <Button label={t('share.sendImage')} onPress={sendImage} disabled={busy} />
         <Button label={t('statsShare.sendText')} variant="plain" onPress={sendText} disabled={busy} />
       </View>
     </ScrollView>

@@ -98,6 +98,7 @@ export default function DayShare() {
           <TripCard data={card} width={cardWidth} night={night} />
         </View>
       </View>
+      <Button label={t('share.sendImage')} onPress={sendImage} disabled={busy} />
       {!summary.sends ? <Text style={{ color: th.muted, marginTop: 10 }}>{t('dayShare.noSends')}</Text> : null}
       <Label>{t('cards.look')}</Label>
       <ChipRow>
@@ -116,7 +117,6 @@ export default function DayShare() {
         <Text style={{ color: th.muted, marginTop: 10 }}>{t('share.noPlace')}</Text>
       )}
       <View style={{ marginTop: 12 }}>
-        <Button label={t('share.sendImage')} onPress={sendImage} disabled={busy} />
         <Button label={t('share.sendText')} variant="plain" onPress={sendText} disabled={busy} />
       </View>
     </ScrollView>
