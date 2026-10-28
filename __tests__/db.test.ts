@@ -6,7 +6,7 @@ import { MIGRATIONS, migrate } from '../src/db/migrate';
 import {
   addAscent, addGoal, addUserRoute, saveAscent, installPack, listInstalledPacks, removePack, saveTrip, getTrip, listTrips, deleteTrip, tripRoutesOn, listAscentsBetween, applyImport, cragUsage, deleteAscent, deleteCrag, deleteGoal, deleteArea, deleteRoute, deleteSector,
   getAscent, getCrag, getArea, getRoute, getSector, listAscents, listCragRoutes, listCrags, listGoals, listAreas, listSectorNames, addArea, areaIdFor,
-  renameArea, renameSector, routeUsage, countOutbox, deleteOutbox, listOutbox, listMyCrags, listMyRoutes, deleteMine, saveCrag, searchRoutes, sectorUsage, setGoalDone, updateAscent, updateRoute, type NewRoute, type RouteFilter,
+  renameArea, renameSector, routeUsage, countOutbox, deleteOutbox, listOutbox, listMyCrags, listMyRoutes, deleteMine, listEmptyAreas, saveCrag, searchRoutes, sectorUsage, setGoalDone, updateAscent, updateRoute, type NewRoute, type RouteFilter,
   listCragChoices, listPartners, applyCragPositions, addRouteGoal, routeGoalKinds, addPhotos, listPhotos, listPhotosOf, removePhotos, activePhotos, latestPhotoChange, getPhoto, listTopoLines, topoRoutes, saveTopoLine, deleteTopoLine, routeTopos, setCragLocation, listRouteAscents, recentRoutes, listSectors, addSector, createRoute, importedUsage, removeImported, findRoutes, getGoal, updateGoal, routeGoals,
 } from '../src/db/repo';
 import { descendantIds } from '../src/domain/areas';
@@ -1103,5 +1103,24 @@ describe('my crags and routes', () => {
     expect(await listMyRoutes(db)).toEqual([]);
     expect(await listAscents(db)).toEqual([]);
     expect((await listCragRoutes(db, imported)).map((r) => r.name).sort()).toEqual(['Example multipitch', 'Example sport route']);
+  });
+});
+
+describe('empty areas', () => {
+  it('deleting a crag removes the areas left empty above it; empty branches can be deleted on /mine', async () => {
+    const db = await freshDb();
+    const keep = await saveCrag(db, null, { name: 'Zostaje', areas: A('Jura', 'Dolina', ''), description: '', approach: '' });
+    const test = await saveCrag(db, null, { name: 'Testowa', areas: A('Jura', 'Testy', 'Grupa testowa'), description: '', approach: '' });
+    await deleteCrag(db, test);
+    expect((await listAreas(db)).map((a) => a.name).sort()).toEqual(['Dolina', 'Jura']); // Testy and its group went, Jura stays for Zostaje
+    expect(keep).toBeTruthy();
+
+    // A region added on purpose stays until deleted; a leftover empty branch is listed and deleted with what is below it.
+    const region = await addArea(db, null, 'Na zapas');
+    const leftover = await addArea(db, region, 'Pusty rejon');
+    await addArea(db, leftover, 'Pusta grupa');
+    expect((await listEmptyAreas(db)).map((a) => a.name)).toEqual(['Na zapas']);
+    await deleteMine(db, [], [], [region, (await listAreas(db)).find((a) => a.name === 'Jura')!.id]); // Jura has a crag: left alone
+    expect((await listAreas(db)).map((a) => a.name).sort()).toEqual(['Dolina', 'Jura']);
   });
 });

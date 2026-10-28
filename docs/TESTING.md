@@ -279,6 +279,7 @@ Since the automatic backup (§6a) these buttons are under Settings › "Other wa
 1. Crags tab › "My crags and routes" (also in Settings › Shared crag base). Expected: only crags and routes you added yourself; pack and imported ones are not listed. Tapping a row opens it.
 2. Hold a row (or "Select"): ticks appear; "Select all"; "Delete selected: N". The question lists crags, routes and, in a warning, ascents that go with them. After deleting they are gone from the app.
 3. Add a test crag with a route and delete it before it is sent (e.g. without internet): "Waiting to be sent" goes back to what it was; nothing about it reaches the sheet.
+5. Deleting a crag removes the region, area and group above it that are left with no crag (from the bottom up); a region that still has another crag stays. Leftover empty regions, areas and groups (e.g. from earlier tests) are listed in a third part, "Empty regions, areas and groups", and are deleted the same way, with what is below them.
 4. Something already sent and then deleted: a "usunięcie …" row reaches the sheet; in the sheet, Cruxlog › Posprzątaj wycofane removes the addition, its edits and the deletion (for a crag also its sectors and routes) and TEST rows.
 
 ## 7. Robustness

@@ -1,5 +1,5 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
-import { areaChain, childLevel, levelAt, type Area, type AreaLevel, type AreaNames } from '../domain/areas';
+import { areaChain, childLevel, descendantIds, emptyAreaRoots, levelAt, type Area, type AreaLevel, type AreaNames } from '../domain/areas';
 import { fold } from '../domain/text';
 import { AppError } from '../domain/errors';
 import { newId, now } from './ids';
@@ -85,5 +85,36 @@ async function relevelAreas(db: SQLiteDatabase, t: number): Promise<void> {
   for (const a of areas) {
     const want = levelAt(depth(a));
     if (a.level !== want) await db.runAsync('UPDATE region SET level = ?, updated_at = ? WHERE id = ?', [want, t, a.id]);
+  }
+}
+
+const isEmptyArea = async (db: SQLiteDatabase, id: string) => !(await db.getFirstAsync(
+  `SELECT 1 FROM crag WHERE region_id = ? AND deleted_at IS NULL
+   UNION ALL SELECT 1 FROM region WHERE parent_id = ? AND deleted_at IS NULL LIMIT 1`, [id, id]));
+
+/** After a crag was deleted: its area, then the ones above, are deleted while they have no crag and no sub-area left. */
+export async function pruneEmptyAreas(db: SQLiteDatabase, id: string | null, t: number): Promise<void> {
+  for (let cur = id; cur && await isEmptyArea(db, cur);) {
+    const parent = await db.getFirstAsync<{ parent_id: string | null }>('SELECT parent_id FROM region WHERE id = ?', [cur]);
+    await db.runAsync('UPDATE region SET deleted_at = ?, updated_at = ? WHERE id = ?', [t, t, cur]);
+    cur = parent?.parent_id ?? null;
+  }
+}
+
+/** Areas with no crags in them or below, the topmost of each empty branch, with their path for showing. */
+export async function listEmptyAreas(db: SQLiteDatabase): Promise<Area[]> {
+  const areas = await listAreas(db);
+  const crags = await db.getAllAsync<{ region_id: string | null }>('SELECT region_id FROM crag WHERE deleted_at IS NULL');
+  return emptyAreaRoots(areas, crags.map((c) => c.region_id));
+}
+
+/** Deletes empty areas with everything below them; an area that has a crag somewhere below is left alone. Runs in the caller's transaction. */
+export async function deleteEmptyAreaBranches(db: SQLiteDatabase, ids: string[], t: number): Promise<void> {
+  const areas = await listAreas(db);
+  const crags = new Set((await db.getAllAsync<{ region_id: string | null }>('SELECT region_id FROM crag WHERE deleted_at IS NULL')).map((c) => c.region_id));
+  for (const id of ids) {
+    const branch = [...descendantIds(areas, id)];
+    if (branch.some((b) => crags.has(b))) continue;
+    for (const b of branch) await db.runAsync('UPDATE region SET deleted_at = ?, updated_at = ? WHERE id = ? AND deleted_at IS NULL', [t, t, b]);
   }
 }

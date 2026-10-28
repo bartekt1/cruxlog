@@ -111,3 +111,13 @@ export function areaChain(names: AreaNames): string[] {
   const area = names.area.trim();
   return area ? [region, area, ...splitPath(names.group)] : [region];
 }
+
+/** Areas with no crag in them or below them, only the topmost of each empty branch (deleting it takes the branch). */
+export function emptyAreaRoots(areas: Area[], cragAreaIds: (string | null)[]): Area[] {
+  const counts = cragCounts(areas, cragAreaIds);
+  const ids = new Set(areas.map((a) => a.id));
+  const empty = (a: Area) => !counts.get(a.id);
+  return areas
+    .filter((a) => empty(a) && !(a.parent_id && ids.has(a.parent_id) && empty(areas.find((p) => p.id === a.parent_id)!)))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}

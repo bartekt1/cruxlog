@@ -1,7 +1,7 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 import type { GradeSystem, RouteType } from '../domain/grades';
 import { sameName } from '../domain/text';
-import { areaIdFor, type AreaNames } from './areas';
+import { areaIdFor, deleteEmptyAreaBranches, pruneEmptyAreas, type AreaNames } from './areas';
 import { AppError } from '../domain/errors';
 import { newId, now } from './ids';
 import { cragSnapshot, recordChange, recordDeletion, routeSnapshot, sectorSnapshot } from './proposals';
@@ -119,10 +119,12 @@ async function removeRoute(db: SQLiteDatabase, id: string, t: number) {
 }
 
 async function removeCrag(db: SQLiteDatabase, id: string, t: number) {
+  const area = await db.getFirstAsync<{ region_id: string | null }>('SELECT region_id FROM crag WHERE id = ?', [id]);
   await recordDeletion(db, 'crag', await cragSnapshot(db, id));
   await deleteRoutesWhere(db, 's.crag_id = ?', id, t);
   await db.runAsync('UPDATE sector SET deleted_at = ?, updated_at = ? WHERE deleted_at IS NULL AND crag_id = ?', [t, t, id]);
   await db.runAsync('UPDATE crag SET deleted_at = ?, updated_at = ? WHERE id = ?', [t, t, id]);
+  await pruneEmptyAreas(db, area?.region_id ?? null, t);
 }
 
 export async function deleteRoute(db: SQLiteDatabase, id: string): Promise<void> {
@@ -227,11 +229,15 @@ export async function listMyRoutes(db: SQLiteDatabase): Promise<MyRoute[]> {
      ORDER BY c.name, r.name`);
 }
 
-/** Deletes several of the user's crags and routes at once (with their sectors, routes and ascents), in one transaction. */
-export async function deleteMine(db: SQLiteDatabase, cragIds: string[], routeIds: string[]): Promise<void> {
+/**
+ * Deletes several of the user's crags and routes at once (with their sectors, routes and ascents) and empty areas (with the
+ * empty areas below them), in one transaction.
+ */
+export async function deleteMine(db: SQLiteDatabase, cragIds: string[], routeIds: string[], areaIds: string[] = []): Promise<void> {
   const t = now();
   await db.withTransactionAsync(async () => {
     for (const id of routeIds) await removeRoute(db, id, t);
     for (const id of cragIds) await removeCrag(db, id, t);
+    await deleteEmptyAreaBranches(db, areaIds, t);
   });
 }
