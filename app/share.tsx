@@ -200,6 +200,7 @@ export default function ShareScreen() {
           <ShareCard look={cardStyle} data={card} width={cardWidth} onPhotoLoaded={setLoadedPhoto} />
         </View>
       </View>
+      <Button label={t('share.sendImage')} onPress={sendImage} disabled={busy || photoPending} />
 
       <Label>{t('cards.look')}</Label>
       <ChipRow>{CARD_STYLES.map((s) => <Chip key={s} label={t(`cards.styles.${s}`)} on={cardStyle === s} onPress={() => setCardStyle(s)} />)}</ChipRow>
@@ -236,7 +237,6 @@ export default function ShareScreen() {
       )}
 
       <View style={{ marginTop: 12 }}>
-        <Button label={t('share.sendImage')} onPress={sendImage} disabled={busy || photoPending} />
         <Button label={t('share.sendText')} variant="plain" onPress={sendText} disabled={busy} />
       </View>
     </ScrollView>

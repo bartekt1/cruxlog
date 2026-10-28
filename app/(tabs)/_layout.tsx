@@ -1,9 +1,9 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { Link, Tabs, useRouter } from 'expo-router';
+import { Tabs, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
-import { HIT } from '../../src/ui/kit';
 import { F } from '../../src/ui/fonts';
+import { SettingsButton } from '../../src/ui/Menu';
 import { useTheme } from '../../src/ui/theme';
 
 export default function TabsLayout() {
@@ -21,13 +21,7 @@ export default function TabsLayout() {
         headerShadowVisible: false,
         headerTintColor: th.ink,
         headerTitleStyle: { fontFamily: F.display, fontSize: 30, color: th.ink },
-        headerRight: () => (
-          <Link href="/settings" asChild>
-            <Pressable hitSlop={HIT} accessibilityRole="button" accessibilityLabel={t('settings.title')} style={({ pressed }) => ({ marginRight: 8, padding: 8, opacity: pressed ? 0.6 : 1 })}>
-              <Ionicons name="settings-outline" size={28} color={th.ink} />
-            </Pressable>
-          </Link>
-        ),
+        headerRight: () => <SettingsButton />,
       }}
     >
       <Tabs.Screen
@@ -68,7 +62,7 @@ export default function TabsLayout() {
       />
       <Tabs.Screen
         name="goals"
-        options={{ title: t('tabs.goals'), tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'flag' : 'flag-outline'} size={size} color={color} /> }}
+        options={{ title: t('tabs.plans'), tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'flag' : 'flag-outline'} size={size} color={color} /> }}
       />
     </Tabs>
   );

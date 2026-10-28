@@ -13,6 +13,11 @@ export function routeStatus(t: TFunction, r: { sends: number; ascents: number })
   return r.sends > 0 ? `✓ ${t('crags.sends', { count: r.sends })}` : r.ascents > 0 ? t('crags.tried', { count: r.ascents }) : '';
 }
 
+/** The muted line under a route in a crag's list: its type when not sport, its length, then the status. */
+export function routeFacts(t: TFunction, r: { type: string; length_m: number | null; sends: number; ascents: number }): string {
+  return [r.type !== 'sport' ? t(`types.${r.type}`) : '', r.length_m ? t('route.length', { m: r.length_m }) : '', routeStatus(t, r)].filter(Boolean).join(' · ');
+}
+
 /** A route as a card: grade square, name, a muted line and an optional third line (e.g. the status, in rust once sent). */
 export function RouteCard({ grade, name, subtitle, note, noteAccent, onPress }: {
   grade: string; name: string; subtitle?: string; note?: string; noteAccent?: boolean; onPress: () => void;

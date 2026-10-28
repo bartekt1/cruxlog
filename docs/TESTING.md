@@ -282,6 +282,65 @@ Since the automatic backup (§6a) these buttons are under Settings › "Other wa
 5. Deleting a crag removes the region, area and group above it that are left with no crag (from the bottom up); a region that still has another crag stays. Leftover empty regions, areas and groups (e.g. from earlier tests) are listed in a third part, "Empty regions, areas and groups", and are deleted the same way, with what is below them.
 4. Something already sent and then deleted: a "usunięcie …" row reaches the sheet; in the sheet, Cruxlog › Posprzątaj wycofane removes the addition, its edits and the deletion (for a crag also its sectors and routes) and TEST rows.
 
+## 6k. UX stage 1 (small fixes)
+
+1. Chips (style, date, grade, card look) are a bit taller and easy to hit with a thumb.
+2. Journal and Progress: the tile labels stay on one line (no word broken in two); check with a large system font too.
+3. Every tab: scroll to the end, and the last row is not covered by the [+] button.
+4. Crag screen: type in the search box, then tap a route. It opens on the first tap, with the keyboard still up.
+5. New plan: the title, routes-count and target fields have labels above them.
+6. New ascent: the partner and conditions fields show hints ("np. Ania", "np. słońce, sucho"). "Twoja wycena" opens scrolled so the route's grade is in view.
+7. The bottom tab reads "Plany". Route details say "Ringi". The Crags tab has "+ Dodaj skałę".
+8. Light theme: the stars are a darker gold and readable in sunlight.
+9. Settings › Udostępnianie zmian: "Czeka na wysłanie" shows only once (only when sending is off). The first-time notice has the button "Wysyłaj".
+
+## 6l. UX stage 2 (ascent form)
+
+1. New ascent: the Save button is always at the bottom, also before scrolling. With the keyboard up it sits just above the keyboard.
+2. Save with no route picked: the error shows right above Save.
+3. Date: "Dziś" is on by default. "Wczoraj" works. "Inny dzień…" opens the calendar, and the picked day shows on that chip (e.g. "pt, 10 października"). Future days cannot be picked.
+4. A new ascent shows only route, date, style, attempts, rating and partner. "Więcej szczegółów" opens own grade, conditions, notes and photos.
+5. Edit an ascent that has a note, conditions, an own grade or a photo: the details are already open. With none of them, they are folded.
+6. Own grade appears inside the details only once a route is chosen (or a grade is typed for a new route).
+7. Trip dates still use the old date field (future days allowed).
+
+## 6m. UX stage 3 (crag screen)
+
+1. Crag header: only share and "⋯". "⋯" opens a list from the bottom: Edytuj skałę, Zaplanuj wyprawę na tę skałę, Dodaj sektor, Anuluj. Tapping outside the list or the Back button closes it.
+2. Route rows have no pencil. Tapping a route opens it, and the route screen's pencil edits it.
+3. Under a route: the length (e.g. "25 m") and "✓ przejścia: 2" or "próby: 1". "Sport" is gone; "Wielowyciąg" still shows. A sport route with no length and no ascents shows only its name.
+4. Sector header: camera (until 10 photos) and "⋯" with "Dodaj drogę w tym sektorze" (the sector already filled in) and "Edytuj sektor".
+5. A crag whose only sector has the crag's name (e.g. imported routes): the header reads "DROGI" instead of repeating the name.
+6. "+ Dodaj drogi" is an outlined button, not orange.
+7. TalkBack: "⋯" reads the crag's name or "Sektor …".
+
+## 6n. UX stage 4 (Crags tab and search)
+
+1. Crags tab: one search field, with a filters icon (sliders) beside it that opens "Szukaj dróg" with its filters. The old "Szukaj dróg" and "Moje skały i drogi" buttons are gone.
+2. Type a region's or rejon's name: it shows under "Regiony i rejony" (with its level and the path above it), then crags, then routes.
+3. Header of the Crags tab: "+" and the gear. "+" opens Dodaj skałę / Dodaj region. The other tabs show only the gear.
+4. Region or rejon screen: "+" opens Dodaj skałę and Dodaj rejon (or Dodaj grupę). On a group, "+" adds a crag at once (no menu). The pencil still edits the area. The search there finds sub-areas, crags and routes inside it, and the filters icon opens the route search limited to that area.
+5. Settings: "Moje skały i drogi" is a row right under the look section. It is no longer inside "Udostępnianie zmian".
+6. The add-region and add-rejon screens are titled "Dodaj region" / "Dodaj rejon" (no "+").
+
+## 6o. UX stage 5 (sharing and accent)
+
+1. Ascent screen: share and pencil at the top right; at the bottom only "Usuń" (and "Dodaj jako projekt" for an attempt). The pencil opens the edit form.
+2. Share screens (ascent, route, crag, day, year, goals, trip): "Udostępnij obrazek" right under the card preview. "Udostępnij jako tekst…" is at the bottom, under the options.
+3. Wording: "Udostępnij rok / dzień / cele / podsumowanie"; no "Pochwal się" anywhere. The trip invitation stays "Zaproś na wyprawę".
+4. Journal: the share icons by the days are grey. Progress: the share icon by the year is unchanged.
+5. Plany tab: a share icon beside "Cele" (shown when there are goals) instead of the text link.
+6. Trip: before it starts, "Zaproś na wyprawę" is orange. Once it is ongoing or done, "Zaproś" is outlined and "Udostępnij podsumowanie" is orange (when there are ascents).
+7. Settings › Import: "Paczki" orange, "Import CSV" outlined.
+
+## 6p. UX stage 6 (finishing touches)
+
+1. Topo editor: one short line of instructions under the mode chips, with "Więcej ›" for the full text. It changes with the mode (bolts, freehand, points placed).
+2. Lists (journal, crag, route search): grade squares all have the same width, and the route names start in one column. A long grade such as "VI.1+/2" is smaller but whole.
+3. Day share with 1–2 routes: the card is 4:5 with no empty lower half. With 8 routes and a long message the card is taller and the footer (coordinates, CRUXLOG) is fully visible. The sent image has the same shape as the preview.
+4. Trip share (invitation with 10 routes): the footer is visible.
+5. Opening a crag, route, ascent, trip or region shows a spinner for a moment instead of an empty screen.
+
 ## 7. Robustness
 1. Change the language and the route grade system, close the app completely (swipe away) and reopen it. Expected: all data is still there, and the language and grade system are the ones you chose.
 2. Rotate the phone, switch to dark mode and back. Expected: readable text and no layout breaks.

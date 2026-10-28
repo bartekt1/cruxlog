@@ -13,6 +13,7 @@ import {
 import { F } from '../src/ui/fonts';
 import { IconButton, type IconName } from '../src/ui/icons';
 import { Chip, ChipRow, EmptyState, GradeBadge, LinkButton } from '../src/ui/kit';
+import { MoreText } from '../src/ui/Fold';
 import { photoUri } from '../src/ui/photos';
 import { useSettings } from '../src/ui/settingsStore';
 import { Text } from '../src/ui/Text';
@@ -184,9 +185,11 @@ export default function TopoEditor() {
           <Chip label={t('topo.modeFree')} on={mode === 'free'} onPress={() => { if (mode !== 'free') { setMode('free'); setSelected(-1); setDirty(true); } }} />
         </ChipRow>
       </View>
-      <Text style={{ color: th.muted, fontSize: 12, paddingHorizontal: 16 }}>
-        {mode === 'free' ? t('topo.hintFree') : points.length ? t('topo.points', { count: points.length }) : t('topo.hint')}
-      </Text>
+      <View style={{ paddingHorizontal: 16 }}>
+        {mode === 'free' ? <MoreText key="free" short={t('topo.hintFreeShort')} long={t('topo.hintFree')} />
+          : points.length ? <MoreText key="points" short={t('topo.pointsShort', { count: points.length })} long={t('topo.points', { count: points.length })} />
+          : <MoreText key="start" short={t('topo.hintShort')} long={t('topo.hint')} />}
+      </View>
       <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', paddingHorizontal: 8, paddingTop: 4 }}>
         {tool('remove-circle-outline', t('topo.zoomOut'), () => zoomBy(1 / BUTTON_ZOOM), zoom.scale <= 1)}
         {tool('scan-outline', t('topo.fit'), () => setZoom(FIT), zoom.scale <= 1)}

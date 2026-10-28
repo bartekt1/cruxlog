@@ -6,7 +6,7 @@ import { useSettings } from './settingsStore';
 // onAccent on accent and onBadge on badge ≥ 4.5:1. line and contour are decorative only.
 const light = {
   bg: '#f3eee3', surface: '#fbf8f1', ink: '#1e1c18', muted: '#6a6152', line: '#d6ccb8', outline: '#8a7f6c',
-  accent: '#9a3f22', onAccent: '#ffffff', soft: '#e9e1d1', warn: '#b3261e', sun: '#b07a12',
+  accent: '#9a3f22', onAccent: '#ffffff', soft: '#e9e1d1', warn: '#b3261e', sun: '#8c600b',
   cta: '#9a3f22', onCta: '#ffffff', badge: '#1e1c18', onBadge: '#f3eee3', contour: '#ddd3bf',
   // Topo lines are drawn on photos, not on the page, so they are the same by day and by night: one strong red with a white edge.
   topo: '#e0261b', topoHalo: '#ffffff',

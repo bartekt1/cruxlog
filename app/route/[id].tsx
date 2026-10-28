@@ -12,7 +12,7 @@ import { routeSummary } from '../../src/domain/history';
 import { IconButton } from '../../src/ui/icons';
 import { Contours } from '../../src/ui/Contours';
 import { F } from '../../src/ui/fonts';
-import { Card, EmptyState, GradeBadge, LinkButton, Screen, Title, Label } from '../../src/ui/kit';
+import { Card, EmptyState, GradeBadge, LinkButton, Loading, Screen, Title, Label } from '../../src/ui/kit';
 import { TopoPreview } from '../../src/ui/TopoLines';
 import { PhotoBadge } from '../../src/ui/PhotoViews';
 import { useSettings } from '../../src/ui/settingsStore';
@@ -70,7 +70,7 @@ export default function RouteScreen() {
   const today = isoDate(new Date());
   const day = (iso: string) => formatDay(iso, i18n.language, today);
 
-  if (!route) return <View style={{ flex: 1, backgroundColor: th.bg }} />;
+  if (!route) return <Loading />;
   const grade = routeGrade(route, routeSystem);
 
   let status: string;

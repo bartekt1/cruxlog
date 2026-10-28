@@ -48,6 +48,11 @@ export function validateAscentDraft(a: AscentDraft): Result<{ date: string; atte
   return { ok: true, value: { date: a.date.trim(), attempts } };
 }
 
+/** Whether the folded part of the ascent form (own grade, conditions, notes, photos) holds anything, so it starts open. */
+export function hasAscentDetails(d: { felt: number | null; weather: string; notes: string; photos: number }): boolean {
+  return d.felt != null || d.weather.trim() !== '' || d.notes.trim() !== '' || d.photos > 0;
+}
+
 /** Onsight and flash are first-try ascents by definition. */
 export function isFirstTry(style: AscentStyle): boolean {
   return style === 'os' || style === 'flash';

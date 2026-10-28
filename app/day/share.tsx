@@ -36,6 +36,8 @@ export default function DayShare() {
   const [withPlace, setWithPlace] = useState(true);
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
+  // The card's shape: it grows with its list (TripCard measures it).
+  const [ratio, setRatio] = useState(TRIP_CARD_RATIO);
 
   useEffect(() => {
     let live = true;
@@ -80,7 +82,7 @@ export default function DayShare() {
   };
   const cardWidth = Math.min(screenWidth - 32, 380);
 
-  const sendImage = async () => { setBusy(true); await shareCardImage(cardRef, TRIP_CARD_RATIO); setBusy(false); };
+  const sendImage = async () => { setBusy(true); await shareCardImage(cardRef, ratio); setBusy(false); };
   const sendText = async () => {
     const body = shareMessage({
       headline: `${card.tag}: ${title}`,
@@ -95,9 +97,10 @@ export default function DayShare() {
       <Stack.Screen options={{ title: t('dayShare.title') }} />
       <View style={{ alignItems: 'center' }}>
         <View ref={cardRef} collapsable={false} style={{ borderWidth: 1, borderColor: th.line }}>
-          <TripCard data={card} width={cardWidth} night={night} />
+          <TripCard data={card} width={cardWidth} night={night} onRatio={setRatio} />
         </View>
       </View>
+      <Button label={t('share.sendImage')} onPress={sendImage} disabled={busy} />
       {!summary.sends ? <Text style={{ color: th.muted, marginTop: 10 }}>{t('dayShare.noSends')}</Text> : null}
       <Label>{t('cards.look')}</Label>
       <ChipRow>
@@ -116,7 +119,6 @@ export default function DayShare() {
         <Text style={{ color: th.muted, marginTop: 10 }}>{t('share.noPlace')}</Text>
       )}
       <View style={{ marginTop: 12 }}>
-        <Button label={t('share.sendImage')} onPress={sendImage} disabled={busy} />
         <Button label={t('share.sendText')} variant="plain" onPress={sendText} disabled={busy} />
       </View>
     </ScrollView>

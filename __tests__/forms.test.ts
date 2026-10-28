@@ -1,4 +1,4 @@
-import { isFirstTry, validateAreas, validateNewRoute, validateAscentDraft, validateOptionalNumber, validateCragDraft, validateGoalDraft, type GoalDraft, validateName, validateRouteDraft, type RouteDraft } from '../src/domain/forms';
+import { hasAscentDetails, isFirstTry, validateAreas, validateNewRoute, validateAscentDraft, validateOptionalNumber, validateCragDraft, validateGoalDraft, type GoalDraft, validateName, validateRouteDraft, type RouteDraft } from '../src/domain/forms';
 import { parseGrade } from '../src/domain/grades';
 
 const route: RouteDraft = { crag: ' Test Crag ', sector: '', name: 'Route 1', type: 'sport', system: 'kr', grade: 'VI.3' };
@@ -101,5 +101,19 @@ describe('validateNewRoute', () => {
     expect(validateNewRoute({ ...draft, areas: { region: '', area: '', group: '' }, cragHasArea: true }).ok).toBe(true);
     expect(validateNewRoute({ ...draft, areas: { region: 'Czarnorzeki', area: 'Kamieniec', group: '' }, cragHasArea: false }).ok).toBe(true);
     expect(validateNewRoute({ ...draft, name: '', areas: { region: '', area: '', group: '' }, cragHasArea: false })).toEqual({ ok: false, error: 'ascent.errors.name' });
+  });
+});
+
+describe('hasAscentDetails', () => {
+  const empty = { felt: null, weather: '', notes: '', photos: 0 };
+  it('is false for an empty form, also with only spaces', () => {
+    expect(hasAscentDetails(empty)).toBe(false);
+    expect(hasAscentDetails({ ...empty, weather: '  ', notes: '\n' })).toBe(false);
+  });
+  it('is true when any detail is filled', () => {
+    expect(hasAscentDetails({ ...empty, felt: 0 })).toBe(true);
+    expect(hasAscentDetails({ ...empty, weather: 'sucho' })).toBe(true);
+    expect(hasAscentDetails({ ...empty, notes: 'crux' })).toBe(true);
+    expect(hasAscentDetails({ ...empty, photos: 1 })).toBe(true);
   });
 });

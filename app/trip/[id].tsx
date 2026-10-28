@@ -10,7 +10,7 @@ import { sectorLine } from '../../src/domain/text';
 import { formatTripDates, tripStatus, tripSummary } from '../../src/domain/trips';
 import { runOrAlert } from '../../src/ui/errors';
 import { IconButton } from '../../src/ui/icons';
-import { Button, Chip, ChipRow, EmptyState, Label, StatTile, Title } from '../../src/ui/kit';
+import { Button, Chip, ChipRow, EmptyState, Label, Loading, StatTile, Title } from '../../src/ui/kit';
 import { CtaButton, RouteCard } from '../../src/ui/rows';
 import { useSettings } from '../../src/ui/settingsStore';
 import { Text } from '../../src/ui/Text';
@@ -37,7 +37,7 @@ export default function TripScreen() {
     return () => { live = false; };
   }, [db, id]));
 
-  if (trip === undefined) return <View style={{ flex: 1, backgroundColor: th.bg }} />;
+  if (trip === undefined) return <Loading />;
   if (trip === null) return <View style={{ flex: 1, backgroundColor: th.bg, padding: 16 }}><EmptyState title={t('trip.notFound')} /></View>;
 
   const status = tripStatus(trip, isoDate(new Date()));
@@ -60,7 +60,12 @@ export default function TripScreen() {
       <ChipRow>{trip.crags.map((c) => <Chip key={c.id} label={c.name} onPress={() => router.push(`/crag/${c.id}`)} />)}</ChipRow>
       {trip.message ? <Text style={{ color: th.ink, borderLeftWidth: 3, borderLeftColor: th.accent, paddingLeft: 10, marginTop: 4 }}>{trip.message}</Text> : null}
 
-      <CtaButton label={t('trip.invite')} style={{ marginTop: 16 }} onPress={() => router.push({ pathname: '/trip/share', params: { id: trip.id, mode: 'invite' } })} />
+      {/* Orange only for the screen's main action: the invitation before the trip, the summary once it has ascents. */}
+      {status === 'planned' ? (
+        <CtaButton label={t('trip.invite')} style={{ marginTop: 16 }} onPress={() => router.push({ pathname: '/trip/share', params: { id: trip.id, mode: 'invite' } })} />
+      ) : (
+        <Button label={t('trip.invite')} variant="plain" onPress={() => router.push({ pathname: '/trip/share', params: { id: trip.id, mode: 'invite' } })} />
+      )}
 
       {status !== 'planned' ? (
         <>

@@ -153,7 +153,7 @@ export default function Progress() {
 
   return (
     <Screen>
-      <ScrollView contentContainerStyle={{ paddingVertical: 16 }}>
+      <ScrollView contentContainerStyle={{ paddingTop: 16, paddingBottom: 88 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 24 }}>
           <YearArrow label="‹" hint={t('progress.prevYear')} target={years[years.indexOf(year) + 1]} onPress={setYear} />
           <Text accessibilityRole="header" style={{ color: th.ink, fontSize: 32, fontFamily: F.display, minWidth: 80, textAlign: 'center' }}>{year}</Text>

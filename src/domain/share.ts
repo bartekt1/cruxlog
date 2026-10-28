@@ -26,3 +26,13 @@ export function shareMessage(x: {
   if (x.place) text.push(`${x.mapLabel}${x.place.approx ? ` (${x.approxLabel})` : ''}: ${mapLink(x.place)}`);
   return text.join('\n\n');
 }
+
+/**
+ * Height-to-width ratio of a trip or day card from the height its content needs: at least 4:5 (like the route card),
+ * so a day with one route has no empty half, and at most 9:16 (a phone story). Rounded up to 0.01.
+ */
+export const TRIP_RATIO = { min: 1.25, max: 16 / 9 };
+export function tripCardRatio(contentHeight: number, width: number): number {
+  if (!(width > 0) || !(contentHeight > 0)) return TRIP_RATIO.min;
+  return Math.min(TRIP_RATIO.max, Math.max(TRIP_RATIO.min, Math.ceil((contentHeight / width) * 100) / 100));
+}

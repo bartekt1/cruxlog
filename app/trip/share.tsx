@@ -38,6 +38,8 @@ export default function TripShare() {
   const [message, setMessage] = useState<string | null>(null); // null until the trip's own message is filled in
   const [withPlace, setWithPlace] = useState(true);
   const [busy, setBusy] = useState(false);
+  // The card's shape: it grows with its list (TripCard measures it).
+  const [ratio, setRatio] = useState(TRIP_CARD_RATIO);
 
   useEffect(() => {
     let live = true;
@@ -90,7 +92,7 @@ export default function TripShare() {
   const sendImage = async () => {
     setBusy(true);
     try {
-      const uri = await captureRef(cardRef, { format: 'png', quality: 1, result: 'tmpfile', width: OUT_WIDTH, height: OUT_WIDTH * TRIP_CARD_RATIO });
+      const uri = await captureRef(cardRef, { format: 'png', quality: 1, result: 'tmpfile', width: OUT_WIDTH, height: OUT_WIDTH * ratio });
       await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: t('share.title') });
     } catch {
       Alert.alert(t('share.title'), t('share.failed'));
@@ -113,9 +115,10 @@ export default function TripShare() {
       <Stack.Screen options={{ title: mode === 'invite' ? t('trip.invite') : t('trip.brag') }} />
       <View style={{ alignItems: 'center' }}>
         <View ref={cardRef} collapsable={false} style={{ borderWidth: 1, borderColor: th.line }}>
-          <TripCard data={card} width={cardWidth} />
+          <TripCard data={card} width={cardWidth} onRatio={setRatio} />
         </View>
       </View>
+      <Button label={t('share.sendImage')} onPress={sendImage} disabled={busy} />
       {mode === 'summary' && !summary.sends ? <Text style={{ color: th.muted, marginTop: 10 }}>{t('trip.nothingYet')}</Text> : null}
 
       <Label>{t('share.message')}</Label>
@@ -132,7 +135,6 @@ export default function TripShare() {
       )}
 
       <View style={{ marginTop: 12 }}>
-        <Button label={t('share.sendImage')} onPress={sendImage} disabled={busy} />
         <Button label={t('share.sendText')} variant="plain" onPress={sendText} disabled={busy} />
       </View>
     </ScrollView>

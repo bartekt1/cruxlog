@@ -87,7 +87,7 @@ export function ImportSection({ run, busy }: { run: Run; busy: boolean }) {
       <Button label={t('packs.open')} onPress={() => router.push('/packs')} disabled={busy} />
       <Label>{t('settings.csv')}</Label>
       <MoreText short={t('settings.csvShort')} long={t('settings.csvHelp')} />
-      <Button label={t('settings.csv')} onPress={doCsv} disabled={busy} />
+      <Button label={t('settings.csv')} variant="plain" onPress={doCsv} disabled={busy} />
       <View style={{ marginTop: 8 }}><MoreText short={t('settings.removeImportedShort')} long={t('settings.removeImportedHelp')} /></View>
       <Button label={t('settings.removeImported')} onPress={doRemoveImported} disabled={busy} variant="plain" />
     </FoldSection>

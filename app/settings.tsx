@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, ScrollView } from 'react-native';
@@ -7,6 +8,7 @@ import i18n from '../src/i18n';
 import { showError } from '../src/ui/errors';
 import { FoldSection } from '../src/ui/Fold';
 import { Chip, ChipRow, Label } from '../src/ui/kit';
+import { NavRow } from '../src/ui/NavRow';
 import { BackupSection } from '../src/ui/settings/BackupSection';
 import { ImportSection } from '../src/ui/settings/ImportSection';
 import { ProposalSection } from '../src/ui/settings/ProposalSection';
@@ -17,6 +19,7 @@ import { useTheme } from '../src/ui/theme';
 
 export default function Settings() {
   const { t } = useTranslation();
+  const router = useRouter();
   const th = useTheme();
   const s = useSettings();
   const [busy, setBusy] = useState(false);
@@ -57,6 +60,7 @@ export default function Settings() {
         {ROUTE_SYSTEMS.map((x) => <Chip key={x} label={x.toUpperCase()} on={s.routeSystem === x} onPress={() => s.setRouteSystem(x)} />)}
       </ChipRow>
       </FoldSection>
+      <NavRow title={t('mine.open')} subtitle={t('mine.rowHint')} onPress={() => router.push('/mine')} />
       <ImportSection run={run} busy={busy} />
       <ProposalSection run={run} busy={busy} />
       <BackupSection run={run} busy={busy} />

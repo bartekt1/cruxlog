@@ -1,234 +1,182 @@
-# UX audit
+# Przegląd wygody (UX) – 2026-10-28, po fali nowych funkcji
 
-Date: 2026-10-10. Method: code review of every screen and `src/ui/kit.tsx` (the app cannot run in the cloud sandbox), plus WCAG contrast calculation for `src/ui/theme.ts`. Items marked "device" need a check on a phone (`docs/TESTING.md`). Re-run with the `ux-audit` skill.
+Przegląd na podstawie kodu (aplikacji nie da się uruchomić w chmurze). Rzeczy oznaczone „sprawdzić na telefonie” wymagają zrzutów ekranu albo próby w ręku. Status: **otwarte** – nic jeszcze nie zmienione; decyzje właściciela.
 
-Severity: **H** blocks a task or loses/corrupts data, **M** slows a task or confuses, **L** polish.
+## 1. Mapa aplikacji
 
-## Whole app
+Dolny pasek: **Dziennik · Postępy · [+] · Skały · Cele**; zębatka Ustawień w prawym górnym rogu każdej zakładki.
 
-| # | Issue | Sev | Status |
+| Ekran | Co jest na nim | Dokąd prowadzi |
+|---|---|---|
+| **Dziennik** | 3 liczby sezonu, baner zaległej kopii, przejścia pogrupowane po dniach; przy każdym dniu ikona udostępniania | przejście, „Pochwal się dniem”, Ustawienia |
+| **Postępy** | wybór roku, liczby, piramida, wykresy, kalendarz, skały, partnerzy; ikona udostępniania przy roku | „Pochwal się rokiem” |
+| **[+]** (środek paska) | formularz przejścia | – |
+| **Skały** | przełącznik Lista/Mapa, pole „Szukaj skały”, przycisk **Szukaj drogi**, przycisk **Moje skały i drogi**, skały w pobliżu, regiony, skały bez regionu, na dole **Dodaj region** i **Nowa skała** | region, skała, wyszukiwarka dróg, Moje skały i drogi |
+| Region / rejon / grupa | pole szukania, „Szukaj drogi tutaj”, podrejony, skały, dodawanie | niżej, skała, edycja |
+| **Skała** | w nagłówku 3 ikony (kalendarz = zaplanuj wyprawę, udostępnij, edytuj); położenie, opis, dojście, zdjęcia skały, podpowiedź, **Dodaj drogi** + **Dodaj sektor**, szukaj drogi; sektory z 3 ikonami każdy (aparat, +, ołówek); każda droga z ikoną ołówka | droga, edycja drogi, sektor, wyprawa, udostępnianie, położenie, zdjęcia |
+| **Droga** | w nagłówku udostępnij + edytuj; nazwa, wycena, długość, przeloty, cel/projekt, stan, **Zapisz przejście tej drogi**, topo, historia przejść | skała, przejście, cel, zdjęcie topo |
+| **Przejście** | szczegóły; na dole 3–4 przyciski jeden pod drugim: (projekt), **Pochwal się**, **Edytuj**, **Usuń** | droga, udostępnianie, edycja |
+| **Cele** | **Wyprawy** (lista + „Nowa wyprawa”), potem **Cele** („Pochwal się celami”, „Dodaj cel”, lista) | wyprawa, cel, udostępnianie celów |
+| Wyprawa | szczegóły, zaproszenie, podsumowanie | skała, droga, udostępnianie |
+| **Ustawienia** | 5 zwijanych działów: Wygląd i język; Skały i paczki (paczki, import CSV, usuń zaimportowane); Wspólna baza skał (przełącznik, kolejka, Moje skały i drogi, Wyślij teraz); Kopia zapasowa; Wersja aplikacji | Paczki skał, Moje skały i drogi |
+| Udostępnianie (6 ekranów) | przejście/droga/skała, dzień, rok, cele, wyprawa (zaproszenie, podsumowanie) | – |
+
+**Udostępnianie – 6 wejść, 4 różne sposoby:** ikona w nagłówku (droga, skała), zwykły przycisk na dole (przejście), mała ikona przy nagłówku dnia (Dziennik), ikona przy roku (Postępy), napis-link (Cele), przyciski na ekranie wyprawy.
+
+## 2. Pięć najważniejszych zadań
+
+| Zadanie | Droga w aplikacji | Stuknięcia* | Problemy |
 |---|---|---|---|
-| A1 | Language and grade systems reset on every app start | H | Fixed: saved in `expo-sqlite/kv-store`, validated by `parseSettings` |
-| A2 | Input and chip borders and empty rating stars used `line` (contrast 1.2–1.5:1, needs 3:1) | M | Fixed: new `outline` token (≥ 3:1) |
-| A3 | `warn` (error text) in light theme 4.27:1, below 4.5:1 | M | Fixed: `#b33a32` (5.0:1) |
-| A4 | Chips 30 pt high and the gear icon ~16 pt: touch targets below 44 pt | M | Fixed: `minHeight` + `hitSlop` (`HIT`) |
-| A5 | No `accessibilityRole` / `accessibilityState` on chips, buttons, stars; icon-only buttons (gear, `+`) had no label | M | Fixed in `kit.tsx` and screens |
-| A6 | Buttons had no pressed or disabled state | L | Fixed |
-| A7 | Field text 14 pt and fields ~36 pt high | L | Fixed: 16 pt, min 44 pt |
+| **Zapisać przejście** (najczęstsze) | [+] → skała w pobliżu albo wpisanie nazwy → droga → styl (domyślnie RP) → przewinąć → Zapisz | 3–4 + pisanie + przewijanie | Formularz ma 11 części (droga, data, styl, próby, projekt, odczuta wycena, ocena, partner, pogoda, notatki, zdjęcia); **Zapisz jest na samym dole**, trzeba przewijać; data = 2 chipy + pole daty (dubel) |
+| **Znaleźć drogę** | Skały → **Szukaj drogi** → wpisać | 1 + pisanie | Dwie różne wyszukiwarki obok siebie (pole „Szukaj skały” i przycisk „Szukaj drogi”), trzecia na ekranie skały, czwarta w regionie; trudno zgadnąć, której użyć |
+| **Pochwalić się przejściem** | Dziennik → przejście → przewinąć → **Pochwal się** → wygląd → Wyślij | 3–4 + przewijanie | Przycisk na dole, wśród Edytuj/Usuń; na ekranie udostępniania długa lista opcji (7 wyglądów, zdjęcie, dopasowanie, numer zdjęcia, topo, wiadomość, miejsce) przed przyciskiem Wyślij |
+| **Dodać skałę z drogami** | Skały → przewinąć listę regionów do końca → **Nowa skała** → formularz → Zapisz → **Dodaj drogi** | 4+ + przewijanie | „Nowa skała” na samym dole długiej listy; nie ma „+” w nagłówku |
+| **Kopia zapasowa** | automatyczna; zaległa → baner w Dzienniku → Ustawienia | 1–2 | Dobrze; ewentualnie baner mógłby od razu otwierać dział kopii |
 
-## Journal
+\* liczone od ekranu startowego; „sprawdzić na telefonie”.
 
-| # | Issue | Sev | Status |
+## 3. Znalezione problemy (od najważniejszych)
+
+| # | Problem | Waga | Propozycja |
 |---|---|---|---|
-| J1 | Day headers were raw ISO dates (`2026-10-10`) | M | Fixed: "Today", "Yesterday", else localized day; year only when different (device: Hermes `Intl`) |
-| J2 | The `+` button covered the last entry | M | Fixed: bottom padding |
-| J3 | Plain one-line empty state | L | Fixed: `EmptyState` with hint |
-| J4 | Partner not visible; attempts looked like sends | L | Fixed: partner shown, "Attempt" in muted color |
-| J5 | Entries cannot be opened, edited or deleted | H | Fixed: tap an entry → detail with Edit and Delete (with confirmation; soft delete, carried by backups) |
+| 1 | **Formularz przejścia za długi, Zapisz na dole** | wysoka | Przycisk Zapisz zawsze widoczny na dole ekranu; rzadziej używane pola (odczuta wycena, pogoda, notatki, zdjęcia) pod „Więcej szczegółów”; jedna kontrolka daty |
+| 2 | **Zakładka Skały: 2 duże przyciski nad treścią** (Szukaj drogi, Moje skały i drogi) | wysoka | Jedna wyszukiwarka (skały, rejony i drogi naraz); „Moje skały i drogi” przenieść do Ustawień / menu „⋯”; „+” w nagłówku zamiast przycisków na dole |
+| 3 | **Ekran skały przeładowany ikonami** (3 w nagłówku, 3 przy każdym sektorze, ołówek przy każdej drodze) | wysoka | Akcje sektora w jednym menu „⋯”; bez ołówka przy drogach (edycja z ekranu drogi); „Zaplanuj wyprawę” do menu „⋯” (ikona kalendarza jest niejasna) |
+| 4 | **Udostępnianie w 6 miejscach i 4 stylach** | średnia | Wszędzie ta sama ikona udostępniania w nagłówku ekranu; na ekranie udostępniania podgląd i „Wyślij” na górze, opcje niżej (zwinięte) |
+| 5 | **Przejście: 4 przyciski jeden pod drugim** | średnia | Udostępnij i Edytuj jako ikony w nagłówku (jak na drodze i skale); na dole tylko Usuń |
+| 6 | **Zakładka „Cele” zawiera też wyprawy** | średnia | Nazwa zakładki „Plany” (Wyprawy + Cele) albo wyprawy osobno; dziś wyprawy łatwo przeoczyć |
+| 7 | **Ikona udostępniania przy każdym dniu w Dzienniku** | niska | Mniej widoczna (szara) albo tylko dla dni z przejściami; ewentualnie przytrzymanie nagłówka dnia |
+| 8 | **Różne słowa na to samo**: „Udostępnij”, „Pochwal się”, „Zaproś” | niska | Ujednolicić: „Udostępnij” wszędzie, „Pochwal się …” tylko jako tytuł ekranu |
+| 9 | Region: pole szukania + „Szukaj drogi tutaj” + przyciski dodawania | niska | Jak w #2 – jedna wyszukiwarka, dodawanie w „+” |
 
-## New ascent
+## 4. Do sprawdzenia na telefonie (zrzuty ekranu)
 
-| # | Issue | Sev | Status |
+Dziennik, Skały (lista), ekran skały z kilkoma sektorami, formularz nowego przejścia (cały, z przewijaniem), Ustawienia, ekran udostępniania przejścia. Także: duża czcionka systemowa, tryb ciemny, TalkBack (`docs/TESTING.md` §8).
+
+## 5. Lista kontrolna `ux-audit` (cała aplikacja, kod)
+
+Zrobione umiejętnością `ux-audit` ze sprawdzeniami automatycznymi (każdy przycisk, pole, lista, kolory motywu). „✓” = w porządku.
+
+| Obszar | Wynik | Waga | Propozycja |
 |---|---|---|---|
-| N1 | Date was free text; invalid dates (`2026-02-30`, `10.10.2026`) were saved and broke grouping | H | Fixed: `validateAscentDraft`, Today/Yesterday chips |
-| N2 | Double tap on Save created duplicate ascents | H | Fixed: Save disabled while saving |
-| N3 | Database errors were unhandled (silent failure) | H | Fixed: error message shown |
-| N4 | Every new-route error said "Choose a route first", even for a wrong grade | M | Fixed: specific message per field, invalid field highlighted, grade example shown |
-| N5 | Search matched route names only; no "no results" message | M | Fixed: matches route, sector, crag; message; "Create route "<query>"" prefills the name |
-| N6 | Selected route looked like plain text; tapping it cleared it unexpectedly | M | Fixed: card with a "Change" button |
-| N7 | New-route grade system always started at KR, ignoring settings | L | Fixed: uses the preferred system |
-| N8 | Attempts field shown for OS/Flash (always 1) | L | Fixed: hidden and set to 1 |
-| N9 | Keyboard could cover lower fields (iOS) | L | Fixed: `automaticallyAdjustKeyboardInsets` (device) |
-| N10 | Sector placeholder did not say it is optional | L | Fixed |
+| **Przebieg: ustawienia domyślne** | ✓ przejście: dziś, styl RP, ostatnie drogi, skały w pobliżu, drogi z wyprawy | – | – |
+| **Przebieg: informacja po akcji** | ✓ zapis zamyka ekran, błędy pokazywane (`runOrAlert`, `ErrorText`) | – | – |
+| **Przebieg: podwójne zapisanie** | ✓ każdy formularz blokuje przycisk na czas zapisu | – | – |
+| **Przebieg: potwierdzenia usuwania** | ✓ przejście, skała, sektor, droga, cel, wyprawa, zdjęcie, linia topo, paczka, „Moje…”, import, przywracanie kopii | – | – |
+| **Stany: puste listy, brak wyników** | ✓ Dziennik, Cele, skała, droga, wyszukiwarki, „Moje…” | – | – |
+| **Stany: ładowanie** | Ekrany udostępniania, skała, droga pokazują przez chwilę pusty ekran (bez kółka ładowania) | niska | Kółko ładowania; sprawdzić na telefonie, czy przerwa w ogóle jest widoczna |
+| **Formularze: widoczne etykiety** | Formularz celu: pola „Nazwa”, „Ile dróg” i „Liczba przejść” mają tylko podpowiedź w polu, która znika po wpisaniu | średnia | Dodać etykiety nad polami |
+| **Formularze: klawiatury** | ✓ liczby (próby, długość, przeloty, cele) | – | – |
+| **Formularze: komunikaty błędów** | ✓ nazywają pole i co poprawić; złe dane nie trafiają do bazy | – | – |
+| **Formularze: klawiatura zasłania pole** | Ekrany udostępniania: pole wiadomości na dole długiej strony | niska | Sprawdzić na telefonie (Android zwykle przesuwa ekran sam) |
+| **Formularze: wyszukiwarka na ekranie skały** | Przy otwartej klawiaturze pierwsze stuknięcie w drogę tylko chowa klawiaturę | średnia | Pierwsze stuknięcie od razu otwiera drogę (jedna linijka) |
+| **Dostępność: wielkość przycisków** | ✓ ikony i chipy (z zapasem) ≥ 44 pt. Korekta: chipy mają zapas 4 pt, który początkowo przeoczono | – | Chipy ≥ 44 pt (wyższe albo z zapasem na dotyk) – ważne przy zimnych palcach |
+| **Dostępność: opisy dla czytnika (TalkBack)** | ✓ każdy przycisk-ikona ma opis i rolę | – | – |
+| **Dostępność: kontrast** | ✓ tekst ≥ 4,5:1 w obu motywach (np. szary tekst 5,3:1). Gwiazdki oceny w jasnym motywie 3,2:1 – dobre dla dużych gwiazdek w formularzu, słabe dla małych na kartach | niska | Ciemniejszy złoty w jasnym motywie |
+| **Dostępność: znaczenie tylko kolorem** | ✓ przejścia mają „✓” i nazwę stylu, kalendarz ma legendę | – | – |
+| **Dostępność: duża czcionka** | Kwadraty z wyceną mają stały rozmiar (46 pt) – długie wyceny („VI.4/4+”) przy dużej czcionce mogą się nie zmieścić | niska | Sprawdzić na telefonie (§8) |
+| **Spójność: kolory, komponenty** | ✓ żadnych kolorów wpisanych na sztywno w ekranach, wspólne komponenty | – | – |
+| **Spójność: teksty** | zob. §6 | – | – |
 
-## Progress
+## 6. Teksty (`design:ux-copy`, 616 tekstów po polsku)
 
-| # | Issue | Sev | Status |
-|---|---|---|---|
-| P1 | With no data: zeros and empty headings, no guidance | M | Fixed: empty state; "No sends this year" under each pyramid |
-| P2 | Calendar had no legend and relied on color only | M | Fixed: legend; light cells also get an outline |
-| P3 | Tiles were read as two separate texts by screen readers | L | Fixed: one label "Sends: 12" |
-| P4 | Only the current year; no way to look back | M | Fixed: ‹ year › switcher over years with ascents |
+| # | Problem | Przykłady | Waga | Propozycja |
+|---|---|---|---|---|
+| T1 | **Teksty tylko w rodzaju męskim** – kobieta czyta „dodałeś”, „ustawiłeś” | „Tylko to, co dodałeś sam”, „Nie dodałeś jeszcze własnych skał”, „wszystko, co dodałeś sam, zostaje”, „ustawiłeś je sam w telefonie” (6 tekstów) | średnia | Formy bezosobowe: „Tylko to, co dodano w telefonie”, „Brak własnych skał i dróg”, „Twoje własne skały i drogi zostają”, „ustawione w telefonie” |
+| T2 | **Udostępnianie: trzy różne słowa** | „Udostępnij”, „Pochwal się”, „Zaproś”; przyciski „Wyślij obrazek” / „Wyślij jako tekst” / „Wyślij tekst z linkiem do mapy” | średnia | Ikona i tytuł „Udostępnij” wszędzie; „Pochwal się …” tylko w nagłówku ekranu; przyciski zawsze „Wyślij obrazek” i „Wyślij tekst” |
+| T3 | **Za długie instrukcje stale widoczne na ekranie** | Topo: 188 i 131 znaków pod zdjęciem; ustawianie położenia: 154 znaki | średnia | Krótko + „Więcej ›”, np. topo: „Stuknij start, ringi od dołu i stanowisko. Przytrzymaj palec, by zobaczyć lupę.” |
+| T4 | **Aplikacja raz mówi „ja”, raz bezosobowo** | „nie dołączę mapy”, „Twojej pozycji nie wysyłam”, „Nie wysyłam przejść”, „Najpierw sprawdzę” vs reszta bezosobowo | niska | Wszędzie bezosobowo: „Mapa nie zostanie dołączona”, „Twoja pozycja nie jest wysyłana” |
+| T5 | **„Ringi” i „Przeloty” na to samo** | Topo: tryb „Ringi”; droga: „Przeloty” | niska | Ujednolicić (np. „Przeloty” wszędzie albo świadomie zostawić „Ringi” jako żargon w topo) |
+| T6 | **Przycisk „OK” w informacji o wysyłaniu** | „OK” / „Nie wysyłaj” | niska | „Wysyłaj” / „Nie wysyłaj” – przycisk mówi, co się stanie |
+| ✓ | Potwierdzenia | „Usunąć przejście?”, „Usunąć „Krowia”?” – mówią, co zostanie usunięte; długie opisy w Ustawieniach są już pod „Więcej ›” | – | – |
 
-## Crags
+## 7. Podsumowanie wag (§3, §5, §6)
 
-| # | Issue | Sev | Status |
-|---|---|---|---|
-| C1 | "1 routes" in English | L | Fixed: "Routes: 1" (plural rules not verified on Hermes) |
-| C2 | Crags cannot be opened | M | Fixed: crag screen with routes by sector and your sends; tap a route to log it |
+- **Wysoka (3):** formularz przejścia (Zapisz na dole), zakładka Skały (przyciski nad treścią, wiele wyszukiwarek), ekran skały (za dużo ikon).
+- **Średnia (8):** udostępnianie w 6 miejscach, przyciski na ekranie przejścia, zakładka „Cele” z wyprawami, etykiety w formularzu celu, wyszukiwarka na ekranie skały (podwójne stuknięcie), chipy 36 pt, teksty w rodzaju męskim, słowa przy udostępnianiu, długie instrukcje topo.
+- **Niska (9):** pozostałe.
 
-## Goals
+Do zrobienia po zrzutach ekranu: `design:design-critique` i `design:accessibility-review`.
 
-| # | Issue | Sev | Status |
-|---|---|---|---|
-| G1 | Non-numeric target (`abc`) was stored as NaN | H | Fixed: `validateGoalDraft` |
-| G2 | Empty title: Add did nothing, no feedback | M | Fixed: button disabled, message |
-| G3 | Keyboard stayed open after Add; no "done" key | L | Fixed |
-| G4 | Goals cannot be completed, edited or deleted; no progress | H | Fixed: progress bar for count goals (sends this year), mark done / reopen, delete; editing came in round 11 |
+## 8. Krytyka na zrzutach z telefonu (`design:design-critique` + `design:accessibility-review`, 2026-10-28)
 
-## Settings
+Zrzuty: Dziennik, Skały, skała (Bąbel, Marta), nowe przejście, Ustawienia (4 stany), Pochwal się dniem. Android, motyw ciemny. Skala zrzutu ok. 2,16 px na punkt ekranu.
 
-| # | Issue | Sev | Status |
-|---|---|---|---|
-| S1 | Chips were stacked full width, one per line | M | Fixed: `ChipRow` |
-| S2 | Result message appeared at the bottom, often off screen | M | Fixed: alert |
-| S3 | Buttons could be pressed again during import | M | Fixed: disabled + spinner |
-| S4 | A wrong file gave a raw JSON parse error | M | Fixed: "This file is not a Cruxlog backup." |
-| S5 | Missing crags.csv or routes.csv gave confusing parser errors | M | Fixed; the three-file import was removed on 2026-10-21 |
-| S6 | Import behavior (merge, newer wins) was not explained | L | Fixed: help text |
+### Pierwsze wrażenie
+Styl jest spójny i charakterystyczny (granat, krem, rdza, wąski krój nagłówków). Główny problem nie leży w wyglądzie, tylko w **liczbie rzeczy wołających o uwagę naraz**: na ekranie skały jest 12 pomarańczowych elementów (ikony, ołówki, przyciski), a w Dzienniku po jednej pomarańczowej ikonie przy każdym dniu. Przez to wzrok nie wie, co jest najważniejsze. To potwierdza odczucie właściciela.
 
-| N11 | Dates other than today or yesterday had to be typed as YYYY-MM-DD | M | Fixed: system calendar (`@react-native-community/datetimepicker`), future days blocked |
+### Użyteczność
+| # | Ekran | Co widać | Waga | Propozycja |
+|---|---|---|---|---|
+| K1 | Skała | **Ołówek przy każdej drodze** (5–7 pomarańczowych ikon) + 3 ikony przy sektorze + 3 w nagłówku. Wiersz drogi ma dwa cele dotyku obok siebie | 🔴 | Bez ołówków przy drogach (edycja z ekranu drogi); akcje sektora w jednym „⋯”; w nagłówku: udostępnij + „⋯” (edycja, zaplanuj wyprawę) |
+| K2 | Skała | **„+ DODAJ DROGI” jako główny pomarańczowy przycisk** – na skale z paczki dodaje się drogi rzadko; najważniejsza jest lista dróg | 🔴 | „Dodaj drogę” i „Dodaj sektor” jako zwykłe przyciski pod listą albo w „⋯”; lista dróg wyżej |
+| K3 | Skały | Pole **„Szukaj skały lub drogi”** i zaraz pod nim przycisk **„Szukaj dróg”** – wyglądają na to samo | 🔴 | Jedno pole; filtry (wycena, typ) jako przycisk obok pola |
+| K4 | Skały | **„Moje skały i drogi”** jako duży przycisk na górze – narzędzie do sprzątania, rzadko potrzebne | 🟡 | Tylko w Ustawieniach (już tam jest) |
+| K5 | Nowe przejście | Na pierwszym ekranie nie widać **Zapisz**; **data podwójnie** (chipy Dziś/Wczoraj + pole „Dziś, śr., 28 października · Zmień”) | 🔴 | Zapisz przyklejony do dołu; tylko chipy Dziś / Wczoraj / „Inny dzień…” |
+| K6 | Nowe przejście | **„Twoja wycena”**: zaznaczony chip „VI.5 (jak droga)” ucięty przy prawej krawędzi | 🟡 | Przewinąć listę do zaznaczonego albo zaznaczony na środku |
+| K7 | Dziennik | **Przycisk [+] zasłania ostatni wiersz** listy („PRZEJŚCIA: 3” pod przyciskiem) | 🟡 | Większy margines na dole listy |
+| K8 | Dziennik | Pomarańczowa ikona udostępniania przy każdym dniu | 🟡 | Szara albo tylko przy dniach z przejściem, albo w menu dnia |
+| K9 | Skała | Nagłówek sektora „BĄBEL” = nazwa skały (skała bez sektorów) | 🟢 | Nie pokazywać nagłówka, gdy sektor nazywa się jak skała |
+| K10 | Skała | Pod każdą drogą „Sport” – mało przydatne, powtarza się | 🟢 | Pokazywać typ tylko dla wielowyciągów; miejsce na stan („✓ RP”, długość) |
+| K11 | Ustawienia › Skały i paczki | **Dwa duże pomarańczowe przyciski** jeden pod drugim (paczki i import CSV) – import CSV to narzędzie zaawansowane | 🟡 | Import CSV i „Usuń zaimportowane” jako zwykłe przyciski |
+| K12 | Ustawienia › Wspólna baza | „Czeka na wysłanie: 0 zmian” dwa razy (w nagłówku i w środku) | 🟢 | Raz |
+| K13 | Pochwal się dniem | Przy jednej drodze karta jest w ⅔ pusta | 🟢 | Karta niższa przy krótkiej liście albo większe elementy |
 
-## Round 3 (user feedback)
+### Hierarchia wizualna
+- **Co przyciąga wzrok najpierw:** na ekranie skały to „+ DODAJ DROGI” i rząd pomarańczowych ołówków, a powinna to być nazwa skały i lista dróg. W Dzienniku kafelki liczb (dobrze) i rząd ikon udostępniania (źle).
+- **Kolor akcentu użyty do wszystkiego:** pomarańczowy oznacza naraz główny przycisk, linki, ikony, styl przejścia (OS/RP) i ołówki, więc traci znaczenie. Propozycja: pomarańczowy tylko dla głównej akcji ekranu i stylu przejścia, ikony pomocnicze szare.
+- **Wielkie litery:** nagłówki działów, przyciski główne i daty dni w Dzienniku są wszystkie WIELKIMI LITERAMI – trudniej wyłowić, co jest przyciskiem.
 
-| # | Issue | Sev | Status |
-|---|---|---|---|
-| R1 | Own crags, sectors, routes and regions could not be edited or deleted | H | Fixed: pencil buttons on own items, delete with a count of what goes with it; imported items show a note |
-| R2 | Bottom tab bar showed empty placeholder squares instead of icons | H | Fixed: Ionicons / MaterialCommunityIcons (`@expo/vector-icons`) |
-| R3 | The `+` button was hard to see | M | Fixed: larger "Add" button with icon and label, stronger shadow |
-| R4 | Settings "⚙" glyph too small and unclear | M | Fixed: 28 pt gear icon, 44 pt touch target |
-| R5 | No way to add a crag without logging an ascent | L | Fixed: "Add a crag" on the Crags tab |
+### Spójność
+| Element | Niespójność | Propozycja |
+|---|---|---|
+| Przyciski dodawania | „+ Dodaj region” z plusem, „Dodaj skałę” bez | Jednakowo (z plusem albo bez) |
+| Przyciski główne | Raz WIELKIE LITERY w pomarańczu, raz zwykłe w ramce – na jednym ekranie bywają dwa „główne” | Jeden główny przycisk na ekran |
+| Kwadraty wycen | Różna szerokość („VI.5+/6” szerszy) – nazwy dróg nie zaczynają się w jednej linii | Stała szerokość kwadratu, dłuższa wycena mniejszą czcionką |
 
-## Round 4 (user feedback and review)
+### Dostępność (WCAG 2.1 AA)
+| # | Problem | Kryterium | Waga | Propozycja |
+|---|---|---|---|---|
+| A1 | Chipy ok. 35 pt widoczne – **korekta:** mają już po 4 pt zapasu na dotyk (razem 44 pt), więc norma była spełniona | 2.5.5 | ✓ | Mimo to powiększone do 40 pt (48 pt z zapasem) – etap 1 |
+| A2 | **Kafelek „NAJTRUDNIEJSZ‑A”** w Dzienniku łamie słowo w połowie już przy zwykłej czcionce; przy dużej będzie gorzej | 1.4.4 / 1.4.10 | 🟡 | Krótszy podpis („Max”, „Najtrudn.”) albo zmniejszanie czcionki do szerokości |
+| A3 | Formularz przejścia: pola **Partner, Warunki** bez podpowiedzi, co wpisać | 3.3.2 | 🟢 | Podpowiedź w polu („np. Ania”, „np. słońce, sucho”) |
+| A4 | Puste gwiazdki oceny szare na granacie – kontrast ok. 3,9:1, wystarcza dla grafiki | 1.4.11 | ✓ | – |
+| A5 | Tekst główny i szary: ok. 14:1 i 6–7:1 | 1.4.3 | ✓ | – |
+| A6 | Wyłączony „Wyślij teraz” jest blady – przyciski wyłączone są zwolnione z wymogu kontrastu | 1.4.3 | ✓ | – |
+| A7 | Każda ikona ma opis dla TalkBack (sprawdzone w kodzie) | 4.1.2 | ✓ | Sprawdzić TalkBackiem na telefonie (§8 testów) |
 
-| # | Issue | Sev | Status |
-|---|---|---|---|
-| F1 | Route search missed Polish letters and case ("łysa" did not find "Łysa"; SQLite LIKE is ASCII-only) | H | Fixed: matching in `src/domain/text.ts` |
-| F2 | "okiennik" and "Okiennik" became two crags; same for sectors, regions, partners | H | Fixed: names matched ignoring case and Polish letters |
-| F3 | Empty route search showed 6 arbitrary routes | M | Fixed: "Recently climbed"; list narrows while typing |
-| F4 | New-route form had no region and no crag/sector suggestions | M | Fixed: crag and sector suggestions; region field (with suggestions) for a new crag |
-| F5 | Same route could be created twice on a crag | M | Fixed: warning with "Use this route" |
-| F6 | No history per route | M | Fixed: route screen with summary, ascents and "Log an ascent" |
-| F7 | Partner typed every time | L | Fixed: partner suggestions, most frequent first |
-| F8 | No reminder to back up; data lives only on the phone | H | Fixed: Journal reminder after 30 days or when never backed up; last backup shown in Settings |
-| F9 | Year arrows could break after deleting all ascents of the shown year | L | Fixed |
+### Co działa dobrze
+- **Ustawienia po zwinięciu**: pięć działów z jedną linijką stanu – czytelne, wszystko na jednym ekranie.
+- **Dziennik**: dni jako karty, styl przejścia kolorem i literami, liczby sezonu na górze – szybki przegląd.
+- **Formularz przejścia**: rozsądne ustawienia domyślne (dziś, RP), droga wybrana na górze z „Zmień”.
+- **Spójny, rozpoznawalny styl** (kolory, krój, poziomice w tle).
 
-## Round 5 (crag building, after comparing other climbing apps)
+### Najważniejsze zmiany (kolejność)
+1. **Ekran skały odchudzony** (K1, K2, K9, K10): lista dróg na pierwszym planie, akcje w „⋯”.
+2. **Formularz przejścia** (K5, K6, A1): Zapisz zawsze widoczny, jedna data, chipy 44 pt.
+3. **Zakładka Skały** (K3, K4): jedno pole szukania, bez „Moje skały i drogi”, „+” w nagłówku.
+4. **Pomarańczowy tylko dla najważniejszego** (K8, K11, hierarchia): ikony pomocnicze szare, jeden główny przycisk na ekran.
+5. **Drobne** (K7, K12, K13, A2, A3, spójność przycisków i wycen).
 
-| # | Issue | Sev | Status |
-|---|---|---|---|
-| B1 | Routes and sectors could only be created while logging an ascent | H | Fixed: "+ Add routes" (several in a row) and "+ Add sector" on the crag screen, "+" per sector |
-| B2 | New crag form had no sectors; region optional | M | Fixed: region required, optional sectors in the form |
-| B3 | Crags without routes not found when logging | M | Fixed: search lists matching crags; tap opens the new-route form on that crag |
-| B4 | Empty sectors were invisible on the crag screen | M | Fixed: all sectors shown, empty ones with a hint |
-| B5 | "Add" button hard to see, especially in dark mode | H | Fixed: raised orange "+" in the middle of the tab bar, the only orange in the UI |
+## 9. Plan zmian (całość: §3, §5, §6, §8)
 
-## Round 6 (guidebook data)
+Każdy etap to osobna wersja do sprawdzenia na telefonie i osobne „scalaj”. Nic z tego nie jest jeszcze zrobione.
 
-| # | Issue | Sev | Status |
-|---|---|---|---|
-| G1 | Guidebook grades VI+, VI-, V-, IV+, IV-, II, ranges (VI.4/4+), "?" and Font 4+, 8A+ were rejected by the importer | H | Fixed: mapped to the nearest lower ladder step, original label kept and shown |
-| G2 | Imported data was read-only, so routes could not be moved to sectors or corrected | M | Fixed: everything editable; the import asks first and warns that re-importing overwrites changes |
+| Etap | Co | Problemy |
+|---|---|---|
+| **1. Szybkie poprawki** (bez zmiany układu) | chipy 44 pt; kafelek „Najtrudniejsza” bez łamania słowa; margines pod [+]; wyszukiwarka na skale otwiera drogę pierwszym stuknięciem; etykiety w formularzu celu; podpowiedzi w polach Partner i Warunki; „Twoja wycena” przewinięta do zaznaczonej; teksty bez rodzaju męskiego i bez „ja”; „Wysyłaj” zamiast „OK”; „Czeka na wysłanie” raz; jednakowe „+ Dodaj …”; ciemniejsze gwiazdki w jasnym motywie | A1, A2, K6, K7, K12, §5, T1, T4, T6, A3 |
+| **2. Formularz przejścia** | „Zapisz” przyklejony do dołu ekranu; data: chipy Dziś / Wczoraj / Inny dzień…; rzadziej używane pola pod „Więcej szczegółów” (rozwinięte, gdy coś w nich jest) | K5, §3 #1 |
+| **3. Ekran skały** | nagłówek: udostępnij + „⋯” (edytuj skałę, zaplanuj wyprawę, dodaj sektor); bez ołówków przy drogach; sektor: aparat + „⋯” (dodaj drogę, edytuj sektor); bez nagłówka sektora o nazwie skały; pod drogą stan i długość zamiast „Sport”; „Dodaj drogę” jako zwykły przycisk, nie główny | K1, K2, K9, K10, §3 #3 |
+| **4. Zakładka Skały i wyszukiwanie** | jedno pole szukania (skały, rejony, drogi) z ikoną filtrów obok zamiast przycisku „Szukaj dróg”; „Moje skały i drogi” tylko w Ustawieniach; „+” w nagłówku (Dodaj skałę / region); to samo w regionie | K3, K4, §3 #2, #9 |
+| **5. Udostępnianie i kolor akcentu** | ta sama ikona udostępniania w nagłówku wszędzie (także przejście: udostępnij + edytuj w nagłówku, na dole tylko Usuń); słowo „Udostępnij” wszędzie; na ekranie udostępniania „Wyślij” zaraz pod podglądem; ikony przy dniach w Dzienniku szare; pomarańczowy tylko dla głównej akcji ekranu (import CSV i inne poboczne jako zwykłe przyciski) | §3 #4, #5, K8, K11, T2, hierarchia |
+| **6. Reszta** | zakładka „Cele” → nazwa obejmująca wyprawy; krótkie instrukcje topo z „Więcej ›”; kwadraty wycen jednej szerokości; karta dnia niższa przy krótkiej liście; kółko ładowania | §3 #6, T3, K13, spójność, §5 |
 
-## Round 7 (crag hierarchy)
+### Stan etapów
 
-| # | Issue | Sev | Status |
-|---|---|---|---|
-| H1 | One flat "region" level could not express region › rejon › group, so 70 crags sat in one long list | H | Fixed: areas nest (region, rejon, optional group); Crags tab drills down with counts and search |
-| H2 | Guidebook needed converting to three CSV files on a computer | M | Fixed: the guidebook export or a simple one-row-per-route file imports directly; three-file import kept |
-| H3 | Rock names like "Krowia (ściana zachodnia)" became separate crags | M | Fixed: the bracketed wall becomes a sector of the crag |
-
-## Round 8 (scope: roped climbing only)
-
-| # | Issue | Sev | Status |
-|---|---|---|---|
-| S1 | Boulders not used by the owner; extra type, grade systems, setting, tile and pyramid added noise | M | Removed: types Sport and Multipitch only, grades KR/UIAA/FR; old boulder data hidden (migration 4) and skipped on import |
-| S2 | Re-import left routes that were deleted from the file | M | Fixed: the file decides the imported routes of its crags; routes with ascents and your own routes stay |
-| S3 | Renaming a crag in the file made a second crag | L | Fixed: optional crag key column (`key_skaly` / `crag_key`) |
-
-## Round 9 (big import)
-
-| # | Issue | Sev | Status |
-|---|---|---|---|
-| T1 | Three area levels could not hold deep paths (up to 7 levels) | H | Fixed: groups nest at any depth; the group field takes several levels ("A › B") |
-| T2 | 15 000 routes: route search loaded and folded every route on each keystroke; path labels and crag counts recomputed per row | H | Fixed: search index kept in memory until the next write; labels and counts computed once per list |
-| T3 | Length and bolts imported but never shown | M | Fixed: shown on the route screen and editable |
-| T4 | Replacing one imported file with another left the old crags | M | Fixed: "Remove imported crags and routes" in Settings (keeps routes with ascents and own data) |
-
-## Round 10 (visual refresh: "przewodnik kredą")
-
-| # | Issue | Sev | Status |
-|---|---|---|---|
-| V1 | The look felt plain (system font, flat green lists) | M | New look chosen by the owner from 4 concepts: paper and ink with one rust accent, Barlow and Barlow Condensed bundled, grades in ink squares, day and sector cards, faint contour lines in headers |
-| V2 | Dark mode followed the phone only | L | Settings › Appearance: like the phone, light or dark; the dark theme is deep green, not black |
-| V3 | Journal had no summary | L | Three season tiles (sends, days out, hardest) on top of the journal |
-
-## Round 11 (goals and progress)
-
-| # | Issue | Sev | Status |
-|---|---|---|---|
-| P1 | Goals could not be edited | M | Fixed: tap a goal to edit it, mark it done or reopen it, delete it |
-| P2 | No goal for a grade; projects were plain text | M | Grade goal (distinct led routes at or above a grade this year); project and wishlist linked to a route, with tries and days, ticked off by a led send |
-| P3 | Activity only for the current year, few stats | L | Whole-year calendar for any year; hardest per month and per year, styles, top crags, partners |
-
-## Round 12 (map and nearby crags)
-
-| # | Issue | Sev | Status |
-|---|---|---|---|
-| M1 | No way to see crags on a map | M | Crags › List/Map: crag pins on OpenFreeMap, switch to the tourist map (OpenTopoMap), "Show me" |
-| M2 | Imported crags have no coordinates | M | Crag screen › "Set crag position": a pin under a moving map, or "here" from the phone's GPS; positions file import; re-imports keep positions |
-| M3 | Logging at the crag meant searching by name | L | Nearby crags (3 km) as chips in the ascent form; "Nearby" list with distances in Crags |
-| M5 | Many crags have no position in OSM | L | Approximate positions from the crag's group, marked as such (hollow dot, "approximate", "about" distances); a position set on the phone is never overwritten by a file |
-| M4 | Location privacy | L | Permission asked only on a tap; the position is never stored or sent, only shown on the map and used for distances |
-
-## Round 13 (goals where you are, search everywhere)
-
-| # | Issue | Sev | Status |
-|---|---|---|---|
-| G1 | A route could only become a goal from the Goals tab | M | "Add to goals" on the route screen (project or wishlist), a project switch for attempts in the ascent form, "Add as a project" on a saved attempt; labels in the crag's route list |
-| S1 | The search disappeared below the top level of the Crags tab | M | "Search in: <place>" on every region, area and group (crags and routes inside it), a route search on the crag screen, and the Crags tab search also finds routes; the filtered finder opens limited to the place |
-| S2 | Tapping a crag dot on the map did nothing | H | The dot press also reached the map, which closed the card at once; fixed |
-
-## Round 14 (sharing)
-
-| # | Issue | Sev | Status |
-|---|---|---|---|
-| H1 | No way to show an ascent or invite a friend | M | Share screen: a card in the guidebook look and a text with a map link, from the ascent, route and crag screens. The crag's position is on by default (a switch turns it off); an approximate one is labelled; the user's own position is never sent |
-
-## Round 15 (automatic backup)
-
-| # | Issue | Sev | Status |
-|---|---|---|---|
-| B1 | The backup was manual; the data lives only on the phone | H | A folder is chosen once (Google Drive). A gzipped copy (a few hundred KB) is written when the app opens, 7 days after the last one and only if something changed; the 5 newest stay; a status line, "Back up now", a list with restore; a failure shows in red and the old reminder stays |
-
-## Round 16 (photos on an ascent)
-
-| # | Issue | Sev | Status |
-|---|---|---|---|
-| F1 | No way to keep a picture of a climb | M | Up to 5 photos per ascent from the gallery (the system picker, no permission), shrunk to 1600 px; strip and full-screen view on the ascent; a small camera with the count in the Journal and the route history (no thumbnails); optional photo on the share card, off by default; copied once each into the backup folder and restored with it |
-
-## Round 17 (photos of crags and walls; sharing with a photo)
-
-| # | Issue | Sev | Status |
-|---|---|---|---|
-| F2 | No place for photos of a crag or a wall | M | Crag screen: "Photos of the crag" (up to 10, 2000 px) and a camera icon on each sector with a strip of its photos; full-screen view with delete; photos copied and restored with the backup |
-| F3 | The photo on the share card was a thin strip | M | With a photo the card puts it first: it fills the upper half, the grade and style sit on it like a label, the text is below |
-| F4 | Backups on Google Drive: a new photo folder and all photos again on every copy; old copies never removed | H | Drive gives no readable file names, so the app now remembers the addresses of what it wrote, recognises its own files by their content (backups) and by an id written in the photo (photos), and removes old copies by address |
-
-## Round 18 (topo lines, first delivery)
-
-| # | Issue | Sev | Status |
-|---|---|---|---|
-| T1 | No way to show where a route goes | M | Topo editor on a wall or crag photo: tap the start, the bolts and the anchor, the app draws a smooth curve through them; zoom with two fingers or buttons; drag, select and delete points; undo/redo; one line per route and photo; lines with numbers (left to right) on the full-screen photo |
-
-## Round 19 (topo lines, second delivery)
-
-| # | Issue | Sev | Status |
-|---|---|---|---|
-| T2 | Routes without bolts, or with a winding line, could not be drawn | M | "By hand" mode: draw with a finger, in pieces, smoothed; undo per piece |
-| T3 | A drawn line was only visible on the photo | M | Route screen "Topo" section (this route in full, the others dimmed), route numbers on the photo open the route, "Draw this route" from the route screen, the line on the share card |
-
-## Round 20 (owner's test of topo and backup)
-
-| # | Issue | Sev | Status |
-|---|---|---|---|
-| T4 | The app closed when zooming the topo editor to the maximum | H | On Android the line drawing keeps its whole surface as one picture in memory; at 8× that was hundreds of MB. The lines are now drawn on the visible canvas only |
-| L1 | "Save line" (and the buttons at the bottom of the crag position screen) sat under Android's navigation bar | H | Every stacked screen keeps the strip of the navigation bar free (safe-area inset); the photo viewer sizes its photos by its own area |
-| B3 | Manual and automatic backup side by side were confusing | L | The manual copy (one file, no photos) is folded under "Other ways to back up"; the automatic one is the main way |
-| B2 | Restoring an automatic copy was hard to find | M | "Restore from a copy in the folder…" with a Restore button on each row; "Import backup" also reads the automatic `.json.gz` copies; help text says what to do on a new phone |
-
-## Open items
-
-1. Device checks: localized dates on Hermes, calendar picker, keyboard behavior, large font sizes, TalkBack labels.
-2. The map needs internet; offline download of an area is planned (`docs/NEXT.md`).
-3. Multipitch ascents cannot record pitches yet.
+- **Etap 1 – zrobione (2026-10-28, gałąź robocza):** chipy 40 pt (48 z zapasem); podpisy kafelków w Dzienniku i Postępach mieszczą się w jednej linii; margines pod [+] na wszystkich zakładkach; wyszukiwarka na skale otwiera drogę pierwszym stuknięciem; etykiety w formularzu celu; podpowiedzi „np. Ania”, „np. słońce, sucho”; „Twoja wycena” startuje przewinięta tak, że wycena drogi jest widoczna; teksty bez rodzaju męskiego i bez „ja” (T1, T4); „Wysyłaj” zamiast „OK” (T6); „Czeka na wysłanie” raz (K12); „+ Dodaj skałę” jak „+ Dodaj region”; ciemniejsze gwiazdki w jasnym motywie (4,8:1); „Ringi” zamiast „Przeloty” w aplikacji (decyzja właściciela; kolumna `Przeloty` w plikach CSV bez zmian); zakładka „Cele” nazywa się „Plany”.
+- **Etap 2 – zrobione (2026-10-28, gałąź robocza):** formularz przejścia – „Zapisz” stale widoczny na dole (z błędem nad nim); data: chipy Dziś / Wczoraj / Inny dzień… (wybrany dzień widać na trzecim chipie, kalendarz systemowy); na wierzchu droga, data, styl, podejścia, ocena, partner; „Więcej szczegółów” chowa Twoją wycenę, warunki, notatki i zdjęcia i jest rozwinięte samo, gdy coś z tego jest wypełnione.
+- **Etap 3 – zrobione (2026-10-28, gałąź robocza):** ekran skały – w nagłówku udostępnij + „⋯” (edytuj skałę, zaplanuj wyprawę, dodaj sektor; menu wysuwane od dołu, `src/ui/Menu.tsx`); bez ołówków przy drogach (edycja z ekranu drogi); przy sektorze aparat + „⋯” (dodaj drogę w tym sektorze, edytuj sektor); sektor o nazwie skały ma nagłówek „Drogi”; pod drogą typ (gdy nie sportowa), długość i stan zamiast „Sport”; „+ Dodaj drogi” zwykłym przyciskiem.
+- **Etap 4 – zrobione (2026-10-28, gałąź robocza):** zakładka Skały i ekran regionu – jedno pole szukania (regiony i rejony, skały, drogi) z ikoną filtrów obok (wyszukiwarka dróg z filtrami); „+” w nagłówku (Dodaj skałę / Dodaj region, w regionie: Dodaj skałę / Dodaj rejon lub grupę) zamiast przycisków na dole; „Moje skały i drogi” jako widoczny wiersz na górze Ustawień, nie w zakładce Skały.
+- **Etap 5 – zrobione (2026-10-28, gałąź robocza):** przejście – udostępnij i edytuj w nagłówku, na dole tylko Usuń (i „Dodaj jako projekt”); „Udostępnij …” zamiast „Pochwal się …”, „Wyślij obrazek/tekst” (zaproszenie na wyprawę zostaje „Zaproś”); na ekranach udostępniania „Udostępnij obrazek” zaraz pod podglądem, tekst na dole; ikony przy dniach w Dzienniku szare; cele w Planach – ikona udostępniania przy nagłówku; wyprawa – pomarańczowe „Zaproś” tylko przed wyprawą, potem zwykłe; import CSV zwykłym przyciskiem (pomarańczowe zostają Paczki).
+- **Etap 6 – zrobione (2026-10-28, gałąź robocza):** topo – instrukcja w jednej linii z „Więcej ›”; kwadraty wycen jednej szerokości (długa wycena mniejszą czcionką); karta wyprawy i dnia mierzy swoją treść i ma wysokość od 4:5 do 9:16 (`tripCardRatio`) – krótki dzień bez pustej połowy, a długa lista z wiadomością nie ucina już stopki (błąd znaleziony w podglądzie); kółko ładowania na ekranach skały, drogi, przejścia, wyprawy i regionu. Zakładka „Plany” – w etapie 1.
+- **Plan z §9 zrealizowany w całości.**

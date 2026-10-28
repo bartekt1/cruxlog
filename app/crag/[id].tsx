@@ -10,8 +10,9 @@ import { routeGrade } from '../../src/domain/grades';
 import { IconButton } from '../../src/ui/icons';
 import { Contours } from '../../src/ui/Contours';
 import { F } from '../../src/ui/fonts';
-import { Button, EmptyState, Field, GradeBadge, LinkButton, Screen, Label } from '../../src/ui/kit';
-import { matches } from '../../src/domain/text';
+import { Button, EmptyState, Field, GradeBadge, LinkButton, Loading, Screen, Label } from '../../src/ui/kit';
+import { matches, sameName } from '../../src/domain/text';
+import { MenuButton } from '../../src/ui/Menu';
 import { useLocation } from '../../src/ui/useLocation';
 import { distanceM, formatDistance, isLatLng } from '../../src/domain/geo';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,7 +22,7 @@ import { addPhotosTo } from '../../src/ui/photos';
 import { useSettings } from '../../src/ui/settingsStore';
 import { useTheme } from '../../src/ui/theme';
 import { errorMessage } from '../../src/ui/errors';
-import { GroupedRow, routeStatus } from '../../src/ui/rows';
+import { GroupedRow, routeFacts } from '../../src/ui/rows';
 
 export default function CragScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -86,7 +87,8 @@ export default function CragScreen() {
       .filter((sec) => !query.trim() || sec.data.length);
   }, [routes, sectorRows, sectorPhotos, query]);
 
-  const status = (r: CragRouteRow) => routeStatus(t, r);
+
+  if (!crag) return <Loading />;
 
   return (
     <Screen>
@@ -96,9 +98,12 @@ export default function CragScreen() {
             title: crag.name,
             headerRight: () => (
               <View style={{ flexDirection: 'row' }}>
-                <IconButton name="calendar-outline" size={26} label={t('trip.planHere')} onPress={() => router.push({ pathname: '/trip/edit', params: { cragId: crag.id } })} />
                 <IconButton name="share-social-outline" size={26} label={t('share.title')} onPress={() => router.push({ pathname: '/share', params: { kind: 'crag', id: crag.id } })} />
-                <IconButton name="create-outline" size={26} label={t('edit.cragTitle')} onPress={() => router.push({ pathname: '/crag/edit', params: { id: crag.id } })} />
+                <MenuButton size={26} label={crag.name} items={[
+                  { icon: 'create-outline', label: t('edit.editCrag'), onPress: () => router.push({ pathname: '/crag/edit', params: { id: crag.id } }) },
+                  { icon: 'calendar-outline', label: t('trip.planHere'), onPress: () => router.push({ pathname: '/trip/edit', params: { cragId: crag.id } }) },
+                  { icon: 'add-circle-outline', label: t('edit.addSectorItem'), onPress: () => router.push({ pathname: '/sector/new', params: { cragId: crag.id } }) },
+                ]} />
               </View>
             ),
           }}
@@ -107,6 +112,7 @@ export default function CragScreen() {
       <SectionList
         sections={sections}
         keyExtractor={(r) => r.id}
+        keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ paddingBottom: 32 }}
         ListHeaderComponent={
           crag ? (
@@ -132,14 +138,7 @@ export default function CragScreen() {
               <PhotoSection owner="crag" ids={cragPhotos.map((p) => p.id)} busy={photoBusy === `crag:${crag.id}`}
                 onAdd={() => addPhotoTo('crag', crag.id, cragPhotos.length)} onOpen={(i) => openPhotos('crag', crag.id, i)} />
               <Text style={{ color: th.muted, fontSize: 12, marginTop: 4 }}>{t('crags.tapRoute')}</Text>
-              <View style={{ flexDirection: 'row', gap: 8 }}>
-                <View style={{ flex: 1 }}>
-                  <Button label={t('edit.addRoutes')} onPress={() => router.push({ pathname: '/route/new', params: { cragId: crag.id } })} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Button label={t('edit.addSector')} variant="plain" onPress={() => router.push({ pathname: '/sector/new', params: { cragId: crag.id } })} />
-                </View>
-              </View>
+              <Button label={t('edit.addRoutes')} variant="plain" onPress={() => router.push({ pathname: '/route/new', params: { cragId: crag.id } })} />
               {routes.length ? (
                 <Field value={query} onChangeText={setQuery} placeholder={t('crags.searchRoutes')} accessibilityLabel={t('crags.searchRoutes')} returnKeyType="search" style={{ marginTop: 8 }} />
               ) : null}
@@ -150,14 +149,16 @@ export default function CragScreen() {
         renderSectionHeader={({ section }) => (
           <View style={{ paddingTop: 16, paddingBottom: 2, paddingLeft: 4, backgroundColor: th.bg }}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Label style={{ flex: 1, marginTop: 0, marginBottom: 0 }}>{section.sector}</Label>
+            {/* A sector named like the crag (routes imported without a sector) is headed just "Routes". */}
+            <Label style={{ flex: 1, marginTop: 0, marginBottom: 0 }}>{crag && sameName(section.sector, crag.name) ? t('ascent.routesHeader') : section.sector}</Label>
             {section.photos.length < PHOTO_LIMIT.sector ? (
               <IconButton name={photoBusy === `sector:${section.sectorId}` ? 'hourglass-outline' : 'camera-outline'} size={22} label={t('photos.addWall', { sector: section.sector })}
                 onPress={() => addPhotoTo('sector', section.sectorId, section.photos.length)} />
             ) : null}
-            <IconButton name="add-circle-outline" size={22} label={t('edit.addRouteInSector', { sector: section.sector })}
-              onPress={() => router.push({ pathname: '/route/new', params: { cragId: id, sector: section.sector } })} />
-            <IconButton name="create-outline" size={20} label={t('edit.sectorTitle')} onPress={() => router.push(`/sector/${section.sectorId}`)} />
+            <MenuButton size={22} label={t('edit.sectorMenu', { sector: section.sector })} items={[
+              { icon: 'add-circle-outline', label: t('edit.addRouteHere'), onPress: () => router.push({ pathname: '/route/new', params: { cragId: id, sector: section.sector } }) },
+              { icon: 'create-outline', label: t('edit.editSector'), onPress: () => router.push(`/sector/${section.sectorId}`) },
+            ]} />
           </View>
           {section.photos.length ? <PhotoStrip ids={section.photos.map((p) => p.id)} onOpen={(i) => openPhotos('sector', section.sectorId, i)} /> : null}
           </View>
@@ -172,9 +173,7 @@ export default function CragScreen() {
             <GradeBadge text={routeGrade(item, routeSystem)} />
             <View style={{ flex: 1 }}>
               <Text style={{ color: th.ink, fontFamily: F.semi, fontSize: 16 }}>{item.name}</Text>
-              <Text style={{ color: item.sends > 0 ? th.accent : th.muted, fontSize: 13 }}>
-                {t(`types.${item.type}`)}{status(item) ? ` · ${status(item)}` : ''}
-              </Text>
+              {routeFacts(t, item) ? <Text style={{ color: item.sends > 0 ? th.accent : th.muted, fontSize: 13 }}>{routeFacts(t, item)}</Text> : null}
               {goalKinds.has(item.id) ? (
                 <View style={{ alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2, paddingHorizontal: 8, borderRadius: 10, backgroundColor: th.badge }}>
                   <Ionicons name="flag" size={11} color={th.onBadge} />
@@ -182,7 +181,6 @@ export default function CragScreen() {
                 </View>
               ) : null}
             </View>
-            <IconButton name="create-outline" size={20} label={t('edit.routeTitleNamed', { name: item.name })} onPress={() => router.push({ pathname: '/route/edit', params: { id: item.id } })} />
           </GroupedRow>
         )}
       />

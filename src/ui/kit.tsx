@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react';
-import { Pressable, TextInput, type TextInputProps, type TextStyle, View, type ViewStyle } from 'react-native';
+import { ActivityIndicator, Pressable, TextInput, type TextInputProps, type TextStyle, View, type ViewStyle } from 'react-native';
 import { F } from './fonts';
 import { Text } from './Text';
 import { useTheme } from './theme';
@@ -53,7 +53,7 @@ export function Chip({ label, on, onPress }: { label: string; on?: boolean; onPr
       hitSlop={{ top: 4, bottom: 4 }}
       accessibilityRole="button"
       accessibilityState={{ selected: !!on }}
-      style={({ pressed }) => ({ borderWidth: 1, borderColor: on ? t.badge : t.outline, backgroundColor: on ? t.badge : t.surface, borderRadius: 18, paddingHorizontal: 14, minHeight: 36, justifyContent: 'center', marginRight: 8, marginBottom: 8, opacity: pressed ? 0.7 : 1 })}
+      style={({ pressed }) => ({ borderWidth: 1, borderColor: on ? t.badge : t.outline, backgroundColor: on ? t.badge : t.surface, borderRadius: 18, paddingHorizontal: 14, minHeight: 40, justifyContent: 'center', marginRight: 8, marginBottom: 8, opacity: pressed ? 0.7 : 1 })}
     >
       <Text style={{ color: on ? t.onBadge : t.ink, fontFamily: F.medium }}>{label}</Text>
     </Pressable>
@@ -107,11 +107,19 @@ export function ErrorText({ children }: { children: ReactNode }) {
 export function GradeBadge({ text, size = 'md' }: { text: string; size?: 'sm' | 'md' | 'lg' }) {
   const t = useTheme();
   const box = size === 'lg' ? 62 : size === 'sm' ? 32 : 46;
+  // One width for every grade, so the names beside them line up; a long grade (e.g. "VI.1+/2") shrinks to fit.
   return (
-    <View style={{ minWidth: box, height: box, paddingHorizontal: 6, borderRadius: size === 'lg' ? 10 : 8, backgroundColor: t.badge, alignItems: 'center', justifyContent: 'center' }}>
-      <Text style={{ color: t.onBadge, fontFamily: F.display, fontSize: size === 'lg' ? 28 : size === 'sm' ? 15 : 19, fontVariant: ['tabular-nums'] }}>{text}</Text>
+    <View style={{ width: Math.round(box * 1.3), height: box, paddingHorizontal: 4, borderRadius: size === 'lg' ? 10 : 8, backgroundColor: t.badge, alignItems: 'center', justifyContent: 'center' }}>
+      <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}
+        style={{ color: t.onBadge, fontFamily: F.display, fontSize: (size === 'lg' ? 28 : size === 'sm' ? 15 : 19) * Math.min(1, 5 / Math.max(5, text.length)), fontVariant: ['tabular-nums'] }}>{text}</Text>
     </View>
   );
+}
+
+/** The whole screen while its data is read: a spinner on the screen's background. */
+export function Loading() {
+  const t = useTheme();
+  return <View style={{ flex: 1, backgroundColor: t.bg, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator size="large" color={t.accent} /></View>;
 }
 
 /** A paper card: rounded, with a thin border. */
@@ -127,7 +135,8 @@ export function StatTile({ value, label, strong }: { value: string; label: strin
     <View accessible accessibilityLabel={`${label}: ${value}`}
       style={{ flex: 1, borderRadius: 12, padding: 10, backgroundColor: strong ? t.badge : t.surface, borderWidth: strong ? 0 : 1, borderColor: t.line }}>
       <Text style={{ color: strong ? t.onBadge : t.ink, fontFamily: F.display, fontSize: 28, lineHeight: 30 }}>{value}</Text>
-      <Text style={{ color: strong ? t.onBadge : t.muted, fontFamily: F.semi, fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', opacity: strong ? 0.85 : 1 }}>{label}</Text>
+      <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}
+        style={{ color: strong ? t.onBadge : t.muted, fontFamily: F.semi, fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', opacity: strong ? 0.85 : 1 }}>{label}</Text>
     </View>
   );
 }

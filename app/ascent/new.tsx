@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -5,15 +6,17 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, View } from 'react-native';
 import { getAscent, getRoute, listAreas, listCragChoices, listPartners, routeGoals, saveAscent, tripRoutesOn, type AreaRow, type CragChoice, type RouteRow } from '../../src/db/repo';
 import { pathLabels, pathNames } from '../../src/domain/areas';
-import { isoDate, shiftDay } from '../../src/domain/dates';
-import { isFirstTry, validateAscentDraft, validateNewRoute } from '../../src/domain/forms';
+import { isoDate } from '../../src/domain/dates';
+
+import { hasAscentDetails, isFirstTry, validateAscentDraft, validateNewRoute } from '../../src/domain/forms';
 import { ASCENT_STYLES, feltGrade, formatGrade, gradeExample, nearbyGrades, parseGrade, routeGrade, type AscentStyle } from '../../src/domain/grades';
 import { sameName, sectorLine, suggest } from '../../src/domain/text';
 import { NewRouteForm, type NewRouteDraft } from '../../src/ui/ascent/NewRouteForm';
 import { RouteChooser } from '../../src/ui/ascent/RouteChooser';
 import { useAscentPhotos } from '../../src/ui/ascent/useAscentPhotos';
-import { DateField } from '../../src/ui/DateField';
+import { DateChips } from '../../src/ui/DateField';
 import { errorMessage } from '../../src/ui/errors';
+import { F } from '../../src/ui/fonts';
 import { Button, Chip, ChipRow, ErrorText, Field, HIT, Label, LinkButton, Suggestions, type SuggestionItem } from '../../src/ui/kit';
 import { PhotoEditor } from '../../src/ui/PhotoViews';
 import { storePhoto } from '../../src/ui/photos';
@@ -63,6 +66,10 @@ export default function NewAscent() {
   const [asProject, setAsProject] = useState(false);
   const [isProject, setIsProject] = useState(false);
   const photos = useAscentPhotos(db, id);
+  // Own grade, conditions, notes and photos sit behind "More details"; open when any of them is filled (e.g. editing).
+  const [moreOpen, setMoreOpen] = useState(false);
+  const hasDetails = hasAscentDetails({ felt, weather, notes, photos: photos.photos.length });
+  const showMore = moreOpen || hasDetails;
 
   useEffect(() => {
     let live = true;
@@ -118,6 +125,8 @@ export default function NewAscent() {
 
   const fail = (key: string) => setError({ key, field: FIELD_OF[key] });
   const scrollRef = useRef<ScrollView>(null);
+  const feltRef = useRef<ScrollView>(null);
+  const feltWidth = useRef(0);
 
   async function save() {
     if (saving) return;
@@ -169,101 +178,117 @@ export default function NewAscent() {
   const bad = (f: FieldName) => error?.field === f;
 
   return (
-    <ScrollView
-      ref={scrollRef}
-      style={{ backgroundColor: th.bg }}
-      contentContainerStyle={{ padding: 16, paddingBottom: 48 }}
-      keyboardShouldPersistTaps="handled"
-      automaticallyAdjustKeyboardInsets
-    >
-      {id ? <Stack.Screen options={{ title: t('ascent.editTitle') }} /> : null}
-      <Label>{t('ascent.route')}</Label>
-      {route ? (
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, padding: 12, borderRadius: 14, backgroundColor: th.surface, borderWidth: 1, borderColor: th.line }}>
-          <View style={{ flex: 1 }}>
-            <Text style={{ color: th.ink, fontWeight: '600' }}>{route.name}</Text>
-            <Text style={{ color: th.muted, fontSize: 12 }}>{sectorLine(route.crag_name, route.sector_name)} · {routeGrade(route, route.grade_system)}</Text>
+    <View style={{ flex: 1, backgroundColor: th.bg }}>
+      <ScrollView
+        ref={scrollRef}
+        style={{ flex: 1 }}
+        contentContainerStyle={{ padding: 16, paddingBottom: 24 }}
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets
+      >
+        {id ? <Stack.Screen options={{ title: t('ascent.editTitle') }} /> : null}
+        <Label>{t('ascent.route')}</Label>
+        {route ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, padding: 12, borderRadius: 14, backgroundColor: th.surface, borderWidth: 1, borderColor: th.line }}>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: th.ink, fontWeight: '600' }}>{route.name}</Text>
+              <Text style={{ color: th.muted, fontSize: 12 }}>{sectorLine(route.crag_name, route.sector_name)} · {routeGrade(route, route.grade_system)}</Text>
+            </View>
+            <LinkButton label={t('common.change')} onPress={() => setRoute(null)} />
           </View>
-          <LinkButton label={t('common.change')} onPress={() => setRoute(null)} />
-        </View>
-      ) : creating ? (
-        <NewRouteForm value={newRoute} onChange={setNewRoute} crags={crags} areaRows={areaRows} cragPath={cragPath} existingCrag={existingCrag}
-          bad={bad} onUseExisting={pickRoute} onCancel={() => setCreating(false)}
-          scrollTo={(y) => scrollRef.current?.scrollTo({ y, animated: true })} />
-      ) : (
-        <RouteChooser crags={crags} cragPath={cragPath} invalid={bad('route')} trip={tripRoutes} onPick={pickRoute} onNewRoute={startCreating} onCragHit={startOnCrag} />
-      )}
-
-      <Label>{t('ascent.date')}</Label>
-      <ChipRow>
-        <Chip label={t('common.today')} on={date === today} onPress={() => setDate(today)} />
-        <Chip label={t('common.yesterday')} on={date === shiftDay(today, -1)} onPress={() => setDate(shiftDay(today, -1))} />
-      </ChipRow>
-      <DateField value={date} onChange={setDate} label={t('ascent.date')} />
-
-      <Label>{t('ascent.style')}</Label>
-      <ChipRow>
-        {ASCENT_STYLES.map((s) => <Chip key={s} label={t(`styles.${s}`)} on={style === s} onPress={() => pickStyle(s)} />)}
-      </ChipRow>
-
-      {isFirstTry(style) ? null : (
-        <>
-          <Label>{t('ascent.attempts')}</Label>
-          <Field value={attempts} onChangeText={setAttempts} keyboardType="number-pad" accessibilityLabel={t('ascent.attempts')} invalid={bad('attempts')} style={{ width: 96 }} />
-        </>
-      )}
-
-      {!id && style === 'attempt' ? (
-        isProject ? (
-          <Text style={{ color: th.muted, marginTop: 10 }}>{t('goals.isProject')}</Text>
+        ) : creating ? (
+          <NewRouteForm value={newRoute} onChange={setNewRoute} crags={crags} areaRows={areaRows} cragPath={cragPath} existingCrag={existingCrag}
+            bad={bad} onUseExisting={pickRoute} onCancel={() => setCreating(false)}
+            scrollTo={(y) => scrollRef.current?.scrollTo({ y, animated: true })} />
         ) : (
-          <SwitchRow label={t('goals.asProject')} value={asProject} onChange={setAsProject} />
-        )
-      ) : null}
+          <RouteChooser crags={crags} cragPath={cragPath} invalid={bad('route')} trip={tripRoutes} onPick={pickRoute} onNewRoute={startCreating} onCragHit={startOnCrag} />
+        )}
 
-      {baseGrade != null ? (
-        <>
-          <Label>{t('ascent.felt')}</Label>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingRight: 8 }}>
-            {nearbyGrades(baseGrade, 4, 4).map((i) => (
-              <Chip key={i} label={i === baseGrade ? t('ascent.feltSame', { grade: formatGrade(i, settings.routeSystem) }) : formatGrade(i, settings.routeSystem)}
-                on={(feltGrade(felt, baseGrade) ?? baseGrade) === i} onPress={() => setFelt(i === baseGrade ? null : i)} />
-            ))}
-          </ScrollView>
-        </>
-      ) : null}
+        <Label>{t('ascent.date')}</Label>
+        <DateChips value={date} onChange={setDate} />
 
-      <Label>{t('ascent.rating')}</Label>
-      <View style={{ flexDirection: 'row', gap: 4 }}>
-        {[1, 2, 3, 4, 5].map((n) => (
-          <Pressable
-            key={n}
-            onPress={() => setRating(rating === n ? null : n)}
-            hitSlop={HIT}
-            accessibilityRole="button"
-            accessibilityLabel={t('ascent.ratingStar', { n })}
-            accessibilityState={{ selected: rating === n }}
-          >
-            <Text style={{ fontSize: 32, color: rating != null && n <= rating ? th.sun : th.outline }}>★</Text>
+        <Label>{t('ascent.style')}</Label>
+        <ChipRow>
+          {ASCENT_STYLES.map((s) => <Chip key={s} label={t(`styles.${s}`)} on={style === s} onPress={() => pickStyle(s)} />)}
+        </ChipRow>
+
+        {isFirstTry(style) ? null : (
+          <>
+            <Label>{t('ascent.attempts')}</Label>
+            <Field value={attempts} onChangeText={setAttempts} keyboardType="number-pad" accessibilityLabel={t('ascent.attempts')} invalid={bad('attempts')} style={{ width: 96 }} />
+          </>
+        )}
+
+        {!id && style === 'attempt' ? (
+          isProject ? (
+            <Text style={{ color: th.muted, marginTop: 10 }}>{t('goals.isProject')}</Text>
+          ) : (
+            <SwitchRow label={t('goals.asProject')} value={asProject} onChange={setAsProject} />
+          )
+        ) : null}
+
+        <Label>{t('ascent.rating')}</Label>
+        <View style={{ flexDirection: 'row', gap: 4 }}>
+          {[1, 2, 3, 4, 5].map((n) => (
+            <Pressable
+              key={n}
+              onPress={() => setRating(rating === n ? null : n)}
+              hitSlop={HIT}
+              accessibilityRole="button"
+              accessibilityLabel={t('ascent.ratingStar', { n })}
+              accessibilityState={{ selected: rating === n }}
+            >
+              <Text style={{ fontSize: 32, color: rating != null && n <= rating ? th.sun : th.outline }}>★</Text>
+            </Pressable>
+          ))}
+        </View>
+
+        <Label>{t('ascent.partner')}</Label>
+        <Field
+          value={partner} onChangeText={setPartner} accessibilityLabel={t('ascent.partner')} placeholder={t('ascent.partnerPlaceholder')} autoCapitalize="words"
+          onFocus={() => setPartnerFocus(true)} onBlur={() => setPartnerFocus(false)}
+        />
+        {partnerFocus ? <Suggestions items={nameItems(partners, partner)} onPick={(p) => { setPartner(p); setPartnerFocus(false); }} /> : null}
+
+        {showMore ? null : (
+          <Pressable onPress={() => setMoreOpen(true)} accessibilityRole="button" accessibilityState={{ expanded: false }} accessibilityHint={t('ascent.moreDetailsHint')}
+            style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 16, padding: 14, minHeight: 56, borderRadius: 14, borderWidth: 1, borderColor: th.line, backgroundColor: th.surface, opacity: pressed ? 0.7 : 1 })}>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: th.ink, fontFamily: F.semi, fontSize: 16 }}>{t('ascent.moreDetails')}</Text>
+              <Text style={{ color: th.muted, fontSize: 13 }}>{t('ascent.moreDetailsHint')}</Text>
+            </View>
+            <Ionicons name="chevron-down" size={20} color={th.muted} />
           </Pressable>
-        ))}
+        )}
+        {showMore ? (
+          <>
+            {baseGrade != null ? (
+              <>
+                <Label>{t('ascent.felt')}</Label>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingRight: 8 }}
+                  ref={feltRef} onLayout={(e) => { feltWidth.current = e.nativeEvent.layout.width; }}
+                  onContentSizeChange={(w) => feltRef.current?.scrollTo({ x: Math.max(0, (w - feltWidth.current) / 2), animated: false })}>
+                  {nearbyGrades(baseGrade, 4, 4).map((i) => (
+                    <Chip key={i} label={i === baseGrade ? t('ascent.feltSame', { grade: formatGrade(i, settings.routeSystem) }) : formatGrade(i, settings.routeSystem)}
+                      on={(feltGrade(felt, baseGrade) ?? baseGrade) === i} onPress={() => setFelt(i === baseGrade ? null : i)} />
+                  ))}
+                </ScrollView>
+              </>
+            ) : null}
+            <Label>{t('ascent.weather')}</Label>
+            <Field value={weather} onChangeText={setWeather} accessibilityLabel={t('ascent.weather')} placeholder={t('ascent.weatherPlaceholder')} />
+            <Label>{t('ascent.notes')}</Label>
+            <Field value={notes} onChangeText={setNotes} accessibilityLabel={t('ascent.notes')} multiline textAlignVertical="top" style={{ minHeight: 80 }} />
+            <Label>{t('photos.title')}</Label>
+            <PhotoEditor photos={photos.photos} busy={photos.busy} onAdd={photos.add} onRemove={photos.remove} />
+          </>
+        ) : null}
+      </ScrollView>
+      {/* Save stays in view at the bottom, with the error above it. */}
+      <View style={{ paddingHorizontal: 16, paddingBottom: 12, borderTopWidth: 1, borderTopColor: th.line, backgroundColor: th.bg }}>
+        {error ? <ErrorText>{errorText}</ErrorText> : null}
+        <Button label={saving ? t('common.saving') : t('common.save')} onPress={save} disabled={saving} />
       </View>
-
-      <Label>{t('ascent.partner')}</Label>
-      <Field
-        value={partner} onChangeText={setPartner} accessibilityLabel={t('ascent.partner')} autoCapitalize="words"
-        onFocus={() => setPartnerFocus(true)} onBlur={() => setPartnerFocus(false)}
-      />
-      {partnerFocus ? <Suggestions items={nameItems(partners, partner)} onPick={(p) => { setPartner(p); setPartnerFocus(false); }} /> : null}
-      <Label>{t('ascent.weather')}</Label>
-      <Field value={weather} onChangeText={setWeather} accessibilityLabel={t('ascent.weather')} />
-      <Label>{t('ascent.notes')}</Label>
-      <Field value={notes} onChangeText={setNotes} accessibilityLabel={t('ascent.notes')} multiline textAlignVertical="top" style={{ minHeight: 80 }} />
-      <Label>{t('photos.title')}</Label>
-      <PhotoEditor photos={photos.photos} busy={photos.busy} onAdd={photos.add} onRemove={photos.remove} />
-
-      {error ? <ErrorText>{errorText}</ErrorText> : null}
-      <Button label={saving ? t('common.saving') : t('common.save')} onPress={save} disabled={saving} />
-    </ScrollView>
+    </View>
   );
 }

@@ -54,7 +54,7 @@ export default function Journal() {
       <SectionList
         sections={sections}
         keyExtractor={(r) => r.id}
-        contentContainerStyle={{ paddingBottom: 32 }}
+        contentContainerStyle={{ paddingBottom: 88 }}
         ListHeaderComponent={<>
           {rows.length ? (
             <View style={{ paddingTop: 4, paddingBottom: 4 }}>
@@ -89,7 +89,7 @@ export default function Journal() {
             </Label>
             <Pressable onPress={() => router.push(`/day/share?date=${section.day}`)} hitSlop={HIT} accessibilityRole="button"
               accessibilityLabel={t('dayShare.a11y', { day: dayTitle(section.day) })} style={{ paddingHorizontal: 6, paddingBottom: 4 }}>
-              <Ionicons name="share-social-outline" size={20} color={th.accent} />
+              <Ionicons name="share-social-outline" size={20} color={th.muted} />
             </Pressable>
           </View>
         )}
