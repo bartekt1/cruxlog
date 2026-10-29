@@ -15,7 +15,7 @@ import { Text } from '../Text';
 import { useTheme } from '../theme';
 import type { Run } from './run';
 
-/** Settings › importing crags and routes from CSV files (route lists or crag positions), and removing imported ones. */
+/** Settings › crags and routes: packs, the user's own crags and routes, importing CSV files (route lists or crag positions) and removing imported ones. */
 export function ImportSection({ run, busy }: { run: Run; busy: boolean }) {
   const db = useSQLiteContext();
   const router = useRouter();
@@ -85,6 +85,9 @@ export function ImportSection({ run, busy }: { run: Run; busy: boolean }) {
       <Label>{t('packs.title')}</Label>
       <Text style={{ color: th.muted }}>{t('packs.settingsHelp')}</Text>
       <Button label={t('packs.open')} onPress={() => router.push('/packs')} disabled={busy} />
+      <Label>{t('mine.title')}</Label>
+      <Text style={{ color: th.muted }}>{t('mine.rowHint')}</Text>
+      <Button label={t('mine.open')} variant="plain" onPress={() => router.push('/mine')} disabled={busy} />
       <Label>{t('settings.csv')}</Label>
       <MoreText short={t('settings.csvShort')} long={t('settings.csvHelp')} />
       <Button label={t('settings.csv')} variant="plain" onPress={doCsv} disabled={busy} />

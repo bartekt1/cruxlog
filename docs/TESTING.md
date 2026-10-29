@@ -276,7 +276,7 @@ Since the automatic backup (§6a) these buttons are under Settings › "Other wa
 4. Without internet changes wait; "Send now" says it could not connect. Switching sending off: nothing is sent; the changes keep waiting.
 
 ## 6j. My crags and routes (cleaning up test entries)
-1. Crags tab › "My crags and routes" (also in Settings › Shared crag base). Expected: only crags and routes you added yourself; pack and imported ones are not listed. Tapping a row opens it.
+1. Crags tab › "My crags and routes" (also in Settings › Skały i drogi). Expected: only crags and routes you added yourself; pack and imported ones are not listed. Tapping a row opens it.
 2. Hold a row (or "Select"): ticks appear; "Select all"; "Delete selected: N". The question lists crags, routes and, in a warning, ascents that go with them. After deleting they are gone from the app.
 3. Add a test crag with a route and delete it before it is sent (e.g. without internet): "Waiting to be sent" goes back to what it was; nothing about it reaches the sheet.
 5. Deleting a crag removes the region, area and group above it that are left with no crag (from the bottom up); a region that still has another crag stays. Leftover empty regions, areas and groups (e.g. from earlier tests) are listed in a third part, "Empty regions, areas and groups", and are deleted the same way, with what is below them.
@@ -320,7 +320,7 @@ Since the automatic backup (§6a) these buttons are under Settings › "Other wa
 2. Type a region's or rejon's name: it shows under "Regiony i rejony" (with its level and the path above it), then crags, then routes.
 3. Header of the Crags tab: "+" and the gear. "+" opens Dodaj skałę / Dodaj region. The other tabs show only the gear.
 4. Region or rejon screen: "+" opens Dodaj skałę and Dodaj rejon (or Dodaj grupę). On a group, "+" adds a crag at once (no menu). The pencil still edits the area. The search there finds sub-areas, crags and routes inside it, and the filters icon opens the route search limited to that area.
-5. Settings: "Moje skały i drogi" is a row right under the look section. It is no longer inside "Udostępnianie zmian".
+5. Settings: "Moje skały i drogi" is in the "Skały i drogi" section, between "Paczki skał" and the CSV import. It is no longer inside "Udostępnianie zmian".
 6. The add-region and add-rejon screens are titled "Dodaj region" / "Dodaj rejon" (no "+").
 
 ## 6o. UX stage 5 (sharing and accent)
