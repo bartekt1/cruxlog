@@ -1,6 +1,6 @@
 # Publikacja w sklepach – plan (wstrzymany)
 
-Stan: **wstrzymane** decyzją właściciela (2026-10-28). Aplikacja jest rozprowadzana jako APK z wydań GitHuba (`releases/latest`) z samoaktualizacją. Ten plik zbiera ustalenia, żeby można było wrócić do tematu bez zaczynania od nowa.
+Stan: **w toku** (2026-10-29): konto Google Play w weryfikacji; polityka prywatności (`docs/privacy.html`) i ściąga do konsoli (`docs/GOOGLE_PLAY.md`, grafiki w `docs/sklep/`) gotowe. Następnie: wersja sklepowa i klucz podpisywania (kroki 1–2). Wcześniej wstrzymane decyzją właściciela (2026-10-28). Aplikacja jest rozprowadzana jako APK z wydań GitHuba (`releases/latest`) z samoaktualizacją. Ten plik zbiera ustalenia, żeby można było wrócić do tematu bez zaczynania od nowa.
 
 ## Google Play
 
@@ -40,8 +40,9 @@ Stan: **wstrzymane** decyzją właściciela (2026-10-28). Aplikacja jest rozprow
 
 ### Otwarte pytania
 
-- E-mail kontaktowy do polityki prywatności i sklepu (publiczny; może być osobny adres).
-- Nazwa w sklepie: „Cruxlog” czy z dopiskiem, np. „Cruxlog – dziennik wspinaczkowy”.
+- ~~E-mail kontaktowy~~: cruxlogger@gmail.com.
+- ~~Nazwa w sklepie~~: „Cruxlog – dziennik wspinacza” / „Cruxlog – climbing logbook” (limit 30 znaków).
+- Administrator danych w polityce: imię i nazwisko właściciela (do wpisania w `docs/privacy.html` w miejsce [IMIĘ I NAZWISKO] / [FULL NAME]).
 
 ## iPhone (iOS)
 
