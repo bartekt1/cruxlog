@@ -43,3 +43,14 @@ export function boundsOf(points: LatLng[], margin = 0.01): [number, number, numb
   const lngs = points.map((p) => p.lng);
   return [Math.min(...lngs) - margin, Math.min(...lats) - margin, Math.max(...lngs) + margin, Math.max(...lats) + margin];
 }
+
+/**
+ * The address that opens the phone's navigation app with the crag as the destination: a geo: link on Android (the user picks
+ * Google Maps, Mapy.cz, OsmAnd…), Apple Maps on iOS. Only the crag's coordinates and name go in it, never the user's position.
+ */
+export function navigationUrl(at: LatLng, name: string, platform: 'android' | 'ios'): string {
+  const lat = at.lat.toFixed(6);
+  const lng = at.lng.toFixed(6);
+  const label = encodeURIComponent(name.replace(/[()]/g, ' ').trim());
+  return platform === 'ios' ? `maps://?daddr=${lat},${lng}&q=${label}` : `geo:${lat},${lng}?q=${lat},${lng}(${label})`;
+}

@@ -1,4 +1,4 @@
-import { boundsOf, distanceM, formatDistance, isLatLng, nearest } from '../src/domain/geo';
+import { boundsOf, distanceM, formatDistance, isLatLng, navigationUrl, nearest } from '../src/domain/geo';
 
 describe('geo', () => {
   it('measures distances on the ground', () => {
@@ -33,5 +33,18 @@ describe('geo', () => {
   it('frames points with a margin', () => {
     expect(boundsOf([])).toBeNull();
     expect(boundsOf([{ lat: 49, lng: 21 }, { lat: 50, lng: 20 }], 0)).toEqual([20, 49, 21, 50]);
+  });
+});
+
+describe('navigationUrl', () => {
+  const at = { lat: 49.7444, lng: 21.7833 };
+  it('opens the chosen navigation app on Android with the crag as the pin', () => {
+    expect(navigationUrl(at, 'Krowia Turnia', 'android')).toBe('geo:49.744400,21.783300?q=49.744400,21.783300(Krowia%20Turnia)');
+  });
+  it('opens Apple Maps on iOS', () => {
+    expect(navigationUrl(at, 'Bąbel', 'ios')).toBe('maps://?daddr=49.744400,21.783300&q=B%C4%85bel');
+  });
+  it('keeps brackets in a name from breaking the label', () => {
+    expect(navigationUrl(at, 'Krowia (ściana)', 'android')).toBe('geo:49.744400,21.783300?q=49.744400,21.783300(Krowia%20%20%C5%9Bciana)');
   });
 });
