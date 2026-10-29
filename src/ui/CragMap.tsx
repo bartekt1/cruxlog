@@ -7,6 +7,7 @@ import { F } from './fonts';
 import { IconButton } from './icons';
 import { Button } from './kit';
 import { DEFAULT_VIEW, LABEL_FONT, mapStyle } from './mapStyles';
+import { navigateTo } from './navigate';
 import { useSettings } from './settingsStore';
 import { Text } from './Text';
 import { useTheme } from './theme';
@@ -100,7 +101,10 @@ export function CragMap({ crags, onOpen }: { crags: MapCrag[]; onOpen: (id: stri
               .filter(Boolean).join(' · ')}
           </Text>
           {crag.approx ? <Text style={{ color: th.muted, fontSize: 13 }}>{t('map.approx')}</Text> : null}
-          <Button label={t('map.openCrag')} onPress={() => onOpen(crag.id)} />
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <View style={{ flex: 1 }}><Button label={t('map.openCrag')} onPress={() => onOpen(crag.id)} /></View>
+            <View style={{ flex: 1 }}><Button label={t('map.navigateShort')} variant="plain" onPress={() => { void navigateTo({ lat: crag.lat!, lng: crag.lng! }, crag.name, crag.approx); }} /></View>
+          </View>
         </View>
       ) : null}
     </View>

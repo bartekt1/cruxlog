@@ -341,6 +341,15 @@ Since the automatic backup (§6a) these buttons are under Settings › "Other wa
 4. Trip share (invitation with 10 routes): the footer is visible.
 5. Opening a crag, route, ascent, trip or region shows a spinner for a moment instead of an empty screen.
 
+## 6r. Navigate to the crag
+
+1. A crag with a position: its screen has "Prowadź do skały" under the position line. Tapping it opens Android's app choice (Google Maps, Mapy.cz, OsmAnd…), with the crag as the destination and its name as the label. Start the navigation there.
+2. A crag with an approximate position: a warning comes first ("Położenie przybliżone…"). "Anuluj" opens nothing.
+3. A crag without a position: no button, only "Ustaw położenie".
+4. Crags tab › Mapa › tap a pin: the card has "Otwórz skałę" and "Prowadź".
+5. A phone with no navigation app: a message suggests installing one.
+6. Cruxlog does not send your position anywhere; only the crag's coordinates go to the chosen app.
+
 ## 7. Robustness
 1. Change the language and the route grade system, close the app completely (swipe away) and reopen it. Expected: all data is still there, and the language and grade system are the ones you chose.
 2. Rotate the phone, switch to dark mode and back. Expected: readable text and no layout breaks.

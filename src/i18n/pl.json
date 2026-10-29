@@ -97,7 +97,7 @@
     "delete": { "region": "Usuń region", "area": "Usuń rejon", "group": "Usuń grupę" },
     "addItem": { "region": "Dodaj region", "area": "Dodaj rejon", "group": "Dodaj grupę" }, "placeholder": { "region": "np. Czarnorzeki", "area": "np. Kamieniec", "group": "np. Krowia Turnia" }
   },
-  "map": {
+  "map": { "navigateShort": "Prowadź", "navigate": "Prowadź do skały", "navigateApproxTitle": "Położenie przybliżone", "navigateApprox": "Ta skała ma tylko przybliżone położenie, więc nawigacja doprowadzi w okolicę, nie pod samą ścianę. Dalej pomoże opis dojścia.", "navigateNoApp": "W telefonie nie ma aplikacji do nawigacji. Zainstaluj np. Google Maps, Mapy.cz albo OsmAnd.",
     "title": "Mapa", "list": "Lista", "standard": "Mapa", "topo": "Turystyczna", "switchBase": "Zmień podkład mapy",
     "showMe": "Pokaż mnie", "denied": "Brak zgody na położenie. Możesz ją dać w ustawieniach telefonu.",
     "noPositions": "Żadna skała nie ma jeszcze zapisanego położenia.", "noPositionsHint": "Otwórz skałę i wybierz „Ustaw położenie skały”.",

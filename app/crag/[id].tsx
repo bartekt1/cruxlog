@@ -18,6 +18,7 @@ import { distanceM, formatDistance, isLatLng } from '../../src/domain/geo';
 import { Ionicons } from '@expo/vector-icons';
 import { PHOTO_LIMIT } from '../../src/domain/photos';
 import { PhotoSection, PhotoStrip } from '../../src/ui/PhotoViews';
+import { navigateTo } from '../../src/ui/navigate';
 import { addPhotosTo } from '../../src/ui/photos';
 import { useSettings } from '../../src/ui/settingsStore';
 import { useTheme } from '../../src/ui/theme';
@@ -129,6 +130,9 @@ export default function CragScreen() {
                   </Text>
                   <Text style={{ color: th.accent, fontFamily: F.semi }}>{approx ? t('map.improve') : t('common.change')}</Text>
                 </Pressable>
+              ) : null}
+              {isLatLng(crag.lat, crag.lng) ? (
+                <Button label={t('map.navigate')} variant="plain" onPress={() => { void navigateTo({ lat: crag.lat!, lng: crag.lng! }, crag.name, approx); }} />
               ) : (
                 <LinkButton label={t('map.setPosition')} onPress={() => router.push({ pathname: '/crag/locate', params: { id: crag.id } })} />
               )}
