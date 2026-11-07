@@ -350,6 +350,13 @@ Since the automatic backup (§6a) these buttons are under Settings › "Other wa
 5. A phone with no navigation app: a message suggests installing one.
 6. Cruxlog does not send your position anywhere; only the crag's coordinates go to the chosen app.
 
+## 6s. Camera permission
+
+1. After the update, add a photo (to an ascent, a crag or a wall) › "Zrób zdjęcie". Android asks once for the camera. Allow, and the camera opens.
+2. Settings › Apps › Cruxlog › Permissions lists "Aparat".
+3. Refuse twice (or turn it off in the settings), then "Zrób zdjęcie" again: a message with "Otwórz ustawienia" opens the app's system settings. "Anuluj" closes it without a photo.
+4. Photos from the gallery work without any permission, as before.
+
 ## 7. Robustness
 1. Change the language and the route grade system, close the app completely (swipe away) and reopen it. Expected: all data is still there, and the language and grade system are the ones you chose.
 2. Rotate the phone, switch to dark mode and back. Expected: readable text and no layout breaks.
