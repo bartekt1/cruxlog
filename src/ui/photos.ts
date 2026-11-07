@@ -2,10 +2,9 @@ import { Directory, File, Paths } from 'expo-file-system';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import type { SQLiteDatabase } from 'expo-sqlite';
-import { Alert } from 'react-native';
+import { Alert, Linking } from 'react-native';
 import { activePhotos, addPhotos, type PhotoOwner } from '../db/repo';
 import { newId } from '../db/ids';
-import { AppError } from '../domain/errors';
 import { orphanFiles, PHOTO_EDGE, photoFileName, photoIdFromFile, PHOTO_QUALITY, scaleTo, slotsLeft } from '../domain/photos';
 import i18n from '../i18n';
 
@@ -50,7 +49,14 @@ export async function pickPhotos(limit: number): Promise<ImagePicker.ImagePicker
 /** The phone's camera, for one picture. The picture stays in the app's cache: it is not saved to the gallery. Cancelled = []. */
 export async function takePhoto(): Promise<ImagePicker.ImagePickerAsset[]> {
   const perm = await ImagePicker.requestCameraPermissionsAsync();
-  if (!perm.granted) throw new AppError('photos.cameraDenied');
+  if (!perm.granted) {
+    // Once refused for good, Android no longer asks: the switch is in the app's system settings.
+    Alert.alert(i18n.t('photos.cameraTitle'), i18n.t('photos.cameraDenied'), [
+      { text: i18n.t('common.cancel'), style: 'cancel' },
+      { text: i18n.t('photos.openSettings'), onPress: () => { void Linking.openSettings(); } },
+    ]);
+    return [];
+  }
   const res = await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 1, exif: false });
   return res.canceled ? [] : res.assets.slice(0, 1);
 }
