@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cruxlog · zegarek (test)</title>
+<meta name="robots" content="noindex">
+<style>
+:root{--bg:#f4efe4;--card:#fffaf0;--ink:#2b2620;--mute:#7a6f60;--line:#d9cfbd;--acc:#2f6f5e;--acc2:#b4532a;--hr:#c0392b;--ok:#2f6f5e;--err:#b4232a}
+@media (prefers-color-scheme:dark){:root{--bg:#1d1b18;--card:#27241f;--ink:#efe8da;--mute:#a89d8b;--line:#3d3830;--acc:#6cc0a6;--acc2:#e08a5c;--hr:#ef6b5b;--ok:#6cc0a6;--err:#f07a7a}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:860px;margin:0 auto;padding:16px}
+h1{font-size:22px;margin:4px 0 2px}
+h2{font-size:17px;margin:0 0 8px}
+.sub{color:var(--mute);font-size:14px;margin:0 0 14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin:0 0 14px}
+button{font:inherit;border:0;border-radius:10px;padding:10px 14px;background:var(--acc);color:#fff;cursor:pointer;margin:4px 6px 4px 0}
+button.sec{background:transparent;color:var(--acc);border:1px solid var(--acc)}
+button:disabled{opacity:.45;cursor:default}
+input,select{font:inherit;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);max-width:100%}
+table{width:100%;border-collapse:collapse;font-size:13px}
+td.num{white-space:nowrap}
+th,td{text-align:left;padding:5px 3px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--mute);font-weight:600}
+.num{font-variant-numeric:tabular-nums}
+#status{font-size:14px;color:var(--mute)}
+#status.ok{color:var(--ok)} #status.err{color:var(--err)}
+pre{white-space:pre-wrap;word-break:break-all;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;background:var(--bg);border-radius:8px;padding:8px;max-height:260px;overflow:auto;margin:6px 0 0}
+svg{width:100%;height:auto;display:block}
+.legend{font-size:13px;color:var(--mute)}
+.row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.hidden{display:none}
+.warn{font-size:14px;color:var(--acc2)}
+</style>
+</head>
+<body>
+<main>
+<h1>Zegarek Suunto → Cruxlog</h1>
+<p class="sub">Strona testowa. Tylko odczyt: nic nie zapisuje w zegarku, aplikacja Suunto dalej dostaje wszystkie sesje. Działa w Chrome na Androidzie, na telefonie sparowanym z zegarkiem.</p>
+
+<div class="card">
+  <div class="row">
+    <button id="btnConnect">Połącz z zegarkiem</button>
+    <button id="btnDisconnect" class="sec" disabled>Rozłącz</button>
+  </div>
+  <div id="status">Niepołączony.</div>
+  <p id="nobt" class="warn hidden">Ta przeglądarka nie obsługuje Web Bluetooth. Otwórz stronę w Chrome na Androidzie.</p>
+</div>
+
+<div class="card" id="cardSessions">
+  <h2>Sesje na zegarku</h2>
+  <div class="row">
+    <button id="btnList" disabled>Pobierz listę sesji</button>
+    <button id="btnClimbs" class="sec" disabled>Pobierz wszystkie wspinaczki</button>
+  </div>
+  <table id="tblSessions" class="hidden"><thead><tr><th>Start</th><th>Czas</th><th>Typ</th><th></th></tr></thead><tbody></tbody></table>
+</div>
+
+<div class="card hidden" id="cardSession">
+  <h2 id="sessTitle">Sesja</h2>
+  <div id="sessInfo" class="legend"></div>
+  <div id="chartAlt"></div>
+  <div class="legend">Wysokość nad podłogą (dryf barometru usunięty). Pola w tle: wykryte drogi.</div>
+  <div id="chartHr"></div>
+  <div class="legend">Tętno [bpm]</div>
+  <div style="overflow-x:auto;margin-top:10px"><table id="tblClimbs"><thead><tr><th>#</th><th>Start</th><th>Czas</th><th>Wys.</th><th>Opuszcz.</th><th>HR max</th></tr></thead><tbody></tbody></table></div>
+  <div class="row" style="margin-top:8px"><button id="btnCsv" class="sec">Zapisz próbki (CSV)</button><button id="btnRaw" class="sec">Zapisz surowe dane (.bin)</button></div>
+</div>
+
+<div class="card">
+  <h2>Sen, tętno dzienne, HRV, ustawienia (odczyt surowy)</h2>
+  <p class="legend">Formaty tych danych nie są jeszcze rozszyfrowane. Przyciski odczytują surowe odpowiedzi zegarka (tylko GET). Po odczycie zapisz plik i wyślij go do analizy razem ze zrzutami z aplikacji Suunto (sen, HRV, tętno z dnia).</p>
+  <div class="row">
+    <button class="sec probe" data-path="/Daily/Sleep/Timeline/Data">Sen</button>
+    <button class="sec probe" data-path="/Activity/TrainingLab/StressBalance">Bilans stresu</button>
+    <button class="sec probe" data-path="/TrainingZone/Recovery">Regeneracja</button>
+    <button class="sec probe" data-path="/TrainingZone/Progress">Postęp</button>
+    <button class="sec probe" data-path="/TrainingZone/Training">Trening</button>
+    <button class="sec probe" data-path="/Activity/Moments/Sync/Data">Momenty</button>
+    <button class="sec probe" data-path="/Settings/User/Zones/1/0/LowerLimits">Strefy tętna</button>
+    <button class="sec probe" data-path="/Dev/Capabilities">Możliwości</button>
+  </div>
+  <div class="row" style="margin-top:6px">
+    <label>Trendy dnia (tętno, kroki…) od: <input type="datetime-local" id="trendFrom"></label>
+    <button class="sec" id="btnTrend">Odczytaj trendy</button>
+  </div>
+  <div class="row" style="margin-top:6px">
+    <input id="customPath" placeholder="/Inna/Sciezka" size="28">
+    <button class="sec" id="btnCustom">Odczytaj ścieżkę</button>
+  </div>
+  <pre id="probeOut" class="hidden"></pre>
+  <div class="row"><button id="btnProbeSave" class="sec" disabled>Zapisz odczyty (JSON)</button></div>
+</div>
+
+<div class="card">
+  <h2>Dziennik</h2>
+  <pre id="log"></pre>
+</div>
+</main>
+
+<script>
+"use strict";
+// ================= stałe =================
+const SVC = "61353090-8231-49cc-b57a-886370740041";
+const WRITE_UUID = "17816557-5652-417f-909f-3aee61e5fa85";
+const NOTIFY_UUID = "34802252-7185-4d5d-b431-630e7050e8f0";
+const HELLO = hex("0909201645564110044110100000000401020000000000030000000000000000");
+const RQ = {HELLO:18, RESOLVE:10, GET:13, SUBSCRIBE:16, UNSUBSCRIBE:17, RELEASE:11};
+const CLIMBING = 16;
+
+// ================= pomocnicze =================
+function hex(s){const a=new Uint8Array(s.length/2);for(let i=0;i<a.length;i++)a[i]=parseInt(s.substr(i*2,2),16);return a}
+function toHex(a,sep=" "){return Array.from(a,b=>b.toString(16).padStart(2,"0")).join(sep)}
+function concat(...arrs){const n=arrs.reduce((s,a)=>s+a.length,0);const o=new Uint8Array(n);let p=0;for(const a of arrs){o.set(a,p);p+=a.length}return o}
+function le(n,bytes){const o=new Uint8Array(bytes);let v=BigInt(n);for(let i=0;i<bytes;i++){o[i]=Number(v&255n);v>>=8n}return o}
+function u16(a,i){return a[i]|(a[i+1]<<8)}
+function i16(a,i){const v=u16(a,i);return v>=0x8000?v-0x10000:v}
+function u32(a,i){return (a[i]|(a[i+1]<<8)|(a[i+2]<<16))+a[i+3]*0x1000000}
+function i32(a,i){const v=u32(a,i);return v>=0x80000000?v-0x100000000:v}
+function uN(a,i,n){let v=0;for(let k=n-1;k>=0;k--)v=v*256+a[i+k];return v}
+function i8(b){return b>=128?b-256:b}
+function f32(a,i){return new DataView(a.buffer,a.byteOffset+i,4).getFloat32(0,true)}
+const CRC_T=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+function crc32(a){let c=0xFFFFFFFF;for(const b of a)c=CRC_T[(c^b)&255]^(c>>>8);return (c^0xFFFFFFFF)>>>0}
+const $=id=>document.getElementById(id);
+function log(msg){const el=$("log");el.textContent+=msg+"\n";el.scrollTop=el.scrollHeight}
+function setStatus(msg,cls=""){const s=$("status");s.textContent=msg;s.className=cls}
+function fmtTime(ms){const d=new Date(ms);const p=n=>String(n).padStart(2,"0");return `${p(d.getUTCHours())}:${p(d.getUTCMinutes())}:${p(d.getUTCSeconds())}`} // czas lokalny zegarka zapisany jako ms
+function fmtDur(s){s=Math.round(s);return s>=60?`${Math.floor(s/60)} min ${s%60} s`:`${s} s`}
+function download(name,data,type){const url=URL.createObjectURL(new Blob([data],{type}));const a=document.createElement("a");a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),2000)}
+
+// ================= ramki =================
+function buildFrame(typ,seq,body){
+  const core=concat(new Uint8Array([0xA5,typ]),le(body.length,2),le(seq,2),body);
+  const full=concat(core,le(crc32(core),4));
+  const out=[0x7E];for(const b of full){if(b===0x7E||b===0x7D)out.push(0x7D,b^0x20);else out.push(b)}out.push(0x7E);
+  return new Uint8Array(out);
+}
+class FrameParser{
+  constructor(onFrame){this.onFrame=onFrame;this.buf=null;this.crcErrors=0}
+  push(bytes){
+    for(const b of bytes){
+      if(this.buf===null){if(b===0x7E)this.buf=[];continue}
+      if(b===0x7E){if(this.buf.length===0)continue;this.frame(this.buf);this.buf=null}else this.buf.push(b)
+    }
+  }
+  frame(raw){
+    const u=[];for(let k=0;k<raw.length;k++){if(raw[k]===0x7D&&k+1<raw.length){u.push(raw[k+1]^0x20);k++}else u.push(raw[k])}
+    const a=Uint8Array.from(u);if(a.length<10||a[0]!==0xA5)return;
+    const L=u16(a,2);const crc=u32(a,6+L);
+    if(crc32(a.subarray(0,6+L))!==crc){this.crcErrors++;return}
+    this.onFrame(a[1],u16(a,4),a.slice(6,6+L));
+  }
+}
+
+// ================= zegarek =================
+class Watch{
+  constructor(){this.seq=0x3000;this.waiting=new Map();this.streams=new Map();this.parser=new FrameParser((t,s,b)=>this.onFrame(t,s,b));this.queue=Promise.resolve()}
+  async connect(){
+    this.device=await navigator.bluetooth.requestDevice({filters:[{namePrefix:"Suunto"}],optionalServices:[SVC]});
+    this.device.addEventListener("gattserverdisconnected",()=>{setStatus("Rozłączono.","err");log("Rozłączono.");ui(false)});
+    log("Łączę z "+this.device.name+"…");
+    this.server=await this.device.gatt.connect();
+    const svc=await this.server.getPrimaryService(SVC);
+    this.wr=await svc.getCharacteristic(WRITE_UUID);
+    this.nt=await svc.getCharacteristic(NOTIFY_UUID);
+    this.nt.addEventListener("characteristicvaluechanged",e=>{const v=e.target.value;this.parser.push(new Uint8Array(v.buffer,v.byteOffset,v.byteLength))});
+    await this.nt.startNotifications();
+    log("Powiadomienia włączone.");
+  }
+  disconnect(){if(this.device&&this.device.gatt.connected)this.device.gatt.disconnect()}
+  onFrame(typ,seq,body){
+    if(typ===1&&body.length>=22){ // fragment strumienia
+      const key=u16(body,1);const st=this.streams.get(key);if(!st)return;
+      const off=u32(body,10),ln=u16(body,14);
+      if(ln){st.chunks.set(off,body.slice(22,22+ln));st.onProgress&&st.onProgress(st.chunks.size)}else st.resolve();
+      return;
+    }
+    const w=this.waiting.get(seq);if(w){this.waiting.delete(seq);clearTimeout(w.timer);w.resolve({typ,body})}
+  }
+  async write(frame){
+    try{await this.wr.writeValueWithoutResponse(frame)}
+    catch(e){for(let i=0;i<frame.length;i+=20)await this.wr.writeValueWithoutResponse(frame.slice(i,i+20))}
+  }
+  send(typ,body,timeout=10000){
+    if(![RQ.HELLO,RQ.RESOLVE,RQ.GET,RQ.SUBSCRIBE,RQ.UNSUBSCRIBE,RQ.RELEASE].includes(typ))throw new Error("Zablokowano: ta strona wysyła tylko odczyt.");
+    const seq=++this.seq&0xFFFF;
+    const p=new Promise((resolve,reject)=>{const timer=setTimeout(()=>{this.waiting.delete(seq);reject(new Error("Brak odpowiedzi zegarka (typ "+typ+")"))},timeout);this.waiting.set(seq,{resolve,timer})});
+    this.queue=this.queue.then(()=>this.write(buildFrame(typ,seq,body))).catch(e=>log("Błąd zapisu: "+e.message));
+    return p;
+  }
+  static status(body){return body.length>=8?u16(body,6):null}
+  async hello(){const r=await this.send(RQ.HELLO,HELLO);return r.typ===19}
+  async resolve(path){
+    const p=new TextEncoder().encode(path);
+    const r=await this.send(RQ.RESOLVE,concat(new Uint8Array([1,0x80,0,p.length]),p));
+    const st=Watch.status(r.body);if(st!==200)throw new Error(path+": status "+st);
+    return r.body.slice(0,3);
+  }
+  async get(handle,param){ // param: Uint8Array lub undefined
+    const body=param?concat(handle,new Uint8Array([1,0x80,0]),param):concat(handle,new Uint8Array([1,0x80,0,0]));
+    const r=await this.send(RQ.GET,body);return {status:Watch.status(r.body),payload:r.body.slice(8),raw:r.body};
+  }
+  async getAll(handle){ // stronicowanie: status 100 = jest dalszy ciąg (parametr typu 06 = przesunięcie w bajtach)
+    let r=await this.get(handle);const parts=[r];let off=0,guard=0;
+    while(r.status===100&&guard++<200){off+=r.payload.length;r=await this.get(handle,concat(new Uint8Array([1,6,0]),le(off,4)));parts.push(r)}
+    return parts;
+  }
+  async stream(handle,onProgress,timeout=180000){
+    const key=u16(handle,1);let resolveEnd;const done=new Promise(r=>resolveEnd=r);
+    const st={chunks:new Map(),resolve:resolveEnd,onProgress};this.streams.set(key,st);
+    const r=await this.send(RQ.SUBSCRIBE,concat(handle,new Uint8Array([1,0x80,0,0])));
+    if(Watch.status(r.body)!==200){this.streams.delete(key);throw new Error("Subskrypcja: status "+Watch.status(r.body))}
+    await Promise.race([done,new Promise((_,rej)=>setTimeout(()=>rej(new Error("Przekroczony czas pobierania")),timeout))]);
+    await this.send(RQ.UNSUBSCRIBE,concat(handle,new Uint8Array([1,0x80,0,0])));
+    this.streams.delete(key);
+    const offs=[...st.chunks.keys()].sort((a,b)=>a-b);let total=0;
+    for(const o of offs){if(o!==total)throw new Error("Dziura w danych przy "+total);total+=st.chunks.get(o).length}
+    return concat(...offs.map(o=>st.chunks.get(o)));
+  }
+  async sessions(){
+    const h=await this.resolve("/Logbook/Entries");const parts=await this.getAll(h);
+    const p=concat(...parts.map(x=>x.payload));const found=[];
+    for(let k=0;k+8<=p.length;k++){const a=u32(p,k),b=u32(p,k+4);
+      if(a>1.6e9&&a<2.1e9&&b-a>0&&b-a<48*3600&&!found.some(f=>f.id===a))found.push({id:a,end:b})}
+    return found.sort((x,y)=>y.id-x.id);
+  }
+  async sessionData(id,onProgress){const h=await this.resolve(`/Logbook/byId/${id}/Data`);return this.stream(h,onProgress)}
+}
+
+// ================= dekoder sesji =================
+function heatshrink(d,W=7,L=5){
+  const n=d.length*8;let bit=0;const out=[];
+  const rd=k=>{let v=0;for(let i=0;i<k;i++){v=(v<<1)|((d[bit>>3]>>(7-(bit&7)))&1);bit++}return v};
+  while(bit<n){
+    if((d[bit>>3]>>(7-(bit&7)))&1){if(bit+9>n)break;bit++;out.push(rd(8))}
+    else{if(bit+1+W+L>n)break;bit++;const idx=rd(W)+1,cnt=rd(L)+1;for(let i=0;i<cnt;i++)out.push(idx<=out.length?out[out.length-idx]:0)}
+  }
+  return Uint8Array.from(out);
+}
+function decodeSession(raw){
+  const r=heatshrink(raw);
+  if(new TextDecoder().decode(r.subarray(0,8))!=="SBEM0103")throw new Error("Brak nagłówka SBEM0103");
+  let i=8,t=0,env=null;const out={start:null,activity:null,mode:"",hr:[],env:[],gps:[],pauses:[],other:[],battery:[]};
+  while(i+2<=r.length){
+    const tag=r[i],ln=r[i+1];if(i+2+ln>r.length)break;const p=r.subarray(i+2,i+2+ln);i+=2+ln;
+    if(tag===0x01){t=uN(p,0,7);out.start=t;continue}
+    t+=i16(p,0);const q=p.subarray(2);
+    switch(tag){
+      case 0x12: out.hr.push({t,bpm:q[0]});break;
+      case 0x0C: out.gps.push({t,lat:i32(q,8)/1e7,lon:i32(q,12)/1e7,alt:u16(q,16)/5-1000});break;
+      case 0x15: env={dist:u32(q,0),absp:u32(q,4),slp:u16(q,8),spd:u16(q,10),vs:i16(q,12),temp:u16(q,14),alt:u16(q,16),pwr:u16(q,18)};
+                 out.env.push(envRow(t,env,q[20]));break;
+      case 0x16: if(!env)break;["dist","absp","slp","spd","vs","temp","alt","pwr"].forEach((k,j)=>env[k]+=i8(q[j]));
+                 out.env.push(envRow(t,env,q[8]));break;
+      case 0x08: out.activity=q[0];out.mode=new TextDecoder().decode(q.subarray(1)).replace(/\0.*$/,"");break;
+      case 0x03: out.pauses.push({t,on:q[1]===1});break;
+      case 0x17: out.battery.push({t,mA:i16(q,0)/128,mV:u16(q,2),pct:q[4]});break;
+      default: out.other.push({t,tag,hex:toHex(q,"")});
+    }
+  }
+  return out;
+}
+function envRow(t,e,cad){return {t,dist:e.dist,absp:e.absp,slp:e.slp+85000,spd:e.spd/50,vs:e.vs/50,tempC:+(e.temp/100-273.15).toFixed(2),alt:e.alt/5-1000,pwr:e.pwr===0xFFFF?null:e.pwr,cad}}
+
+// ================= wykrywanie dróg i podłoga =================
+function detectClimbs(env,rise=3,back=0.6,gapS=30){
+  const segs=[];let c0=0;
+  const chunks=[];for(let k=1;k<=env.length;k++){if(k===env.length||(env[k].t-env[k-1].t)/1000>gapS){chunks.push([c0,k-1]);c0=k}}
+  for(const [a,b] of chunks){
+    let lo=a,state="low",top=a;
+    for(let k=a+1;k<=b;k++){
+      if(state==="low"){if(env[k].alt<env[lo].alt)lo=k;if(env[k].alt-env[lo].alt>=rise){state="up";top=k}}
+      else{
+        if(env[k].alt>env[top].alt)top=k;const gain=env[top].alt-env[lo].alt;
+        if(env[top].alt-env[k].alt>=back*gain||k===b){let end=k;while(end+1<=b&&env[end+1].alt<env[end].alt-0.05)end++;segs.push({lo,top,end});lo=end;state="low"}
+      }
+    }
+  }
+  for(const s of segs){ // podłoga = poziom po opuszczeniu; start = ostatni punkt przed szczytem przy podłodze
+    const after=env.filter(e=>e.t>=env[s.end].t&&e.t-env[s.end].t<=20000).map(e=>e.alt).sort((x,y)=>x-y);
+    s.ground=after[Math.floor(after.length/2)];let k=s.top;
+    while(k>0&&env[k].alt>s.ground+0.5&&env[k].t-env[k-1].t<30000)k--;s.start=k;
+    s.gain=env[s.top].alt-s.ground;s.upS=(env[s.top].t-env[s.start].t)/1000;s.downS=(env[s.end].t-env[s.top].t)/1000;
+  }
+  return segs;
+}
+function floorCurve(env,segs,winS=90){
+  const inside=e=>segs.some(s=>e.t>=env[s.start].t&&e.t<=env[s.end].t);
+  const g=env.filter(e=>!inside(e));const pts=[];
+  for(let i=0;i<g.length;i++){const w=[];for(let j=Math.max(0,i-200);j<Math.min(g.length,i+200);j++)if(Math.abs(g[j].t-g[i].t)<=winS*1000)w.push(g[j].alt);w.sort((x,y)=>x-y);pts.push({t:g[i].t,v:w[Math.floor(w.length/2)]})}
+  return t=>{if(!pts.length)return 0;if(t<=pts[0].t)return pts[0].v;if(t>=pts[pts.length-1].t)return pts[pts.length-1].v;
+    let lo=0,hi=pts.length-1;while(hi-lo>1){const m=(lo+hi)>>1;if(pts[m].t<=t)lo=m;else hi=m}
+    const a=pts[lo],b=pts[hi];return b.t===a.t?a.v:a.v+(b.v-a.v)*(t-a.t)/(b.t-a.t)};
+}
+
+// ================= wykresy (SVG) =================
+function chart(series,{h=200,yLabel="",bands=[],color="var(--acc)",t0,t1,yMin,yMax}){
+  const W=600,H=h,pl=34,pr=6,pt=6,pb=20;
+  if(yMin===undefined)yMin=Math.min(...series.map(p=>p.y));
+  if(yMax===undefined)yMax=Math.max(...series.map(p=>p.y));
+  if(yMax-yMin<1)yMax=yMin+1;
+  const X=t=>pl+(t-t0)/(t1-t0)*(W-pl-pr),Y=v=>pt+(1-(v-yMin)/(yMax-yMin))*(H-pt-pb);
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img">`;
+  for(const b of bands)s+=`<rect x="${X(b.a)}" y="${pt}" width="${Math.max(1,X(b.b)-X(b.a))}" height="${H-pt-pb}" fill="var(--acc2)" opacity=".15"/><text x="${X(b.a)+3}" y="${pt+14}" font-size="13" fill="var(--acc2)">${b.label}</text>`;
+  const step=(yMax-yMin)>40?20:(yMax-yMin)>10?5:(yMax-yMin)>4?2:1;
+  for(let v=Math.ceil(yMin/step)*step;v<=yMax;v+=step)s+=`<line x1="${pl}" x2="${W-pr}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${pl-6}" y="${Y(v)+4}" font-size="12" text-anchor="end" fill="var(--mute)">${v}</text>`;
+  const tickMin=Math.max(1,Math.round((t1-t0)/60000/5));
+  for(let t=Math.ceil(t0/60000/tickMin)*tickMin*60000;t<=t1;t+=tickMin*60000)s+=`<text x="${X(t)}" y="${H-5}" font-size="12" text-anchor="middle" fill="var(--mute)">${fmtTime(t).slice(0,5)}</text>`;
+  const every=Math.max(1,Math.floor(series.length/1500));let d="";let prev=null;
+  for(let i=0;i<series.length;i+=every){const p=series[i];d+=(prev&&p.t-prev.t>60000?"M":(d?"L":"M"))+X(p.t).toFixed(1)+","+Y(p.y).toFixed(1);prev=p}
+  s+=`<path d="${d}" fill="none" stroke="${color}" stroke-width="1.6"/></svg>`;
+  return s;
+}
+
+// ================= interfejs =================
+let watch=null,current=null;const probes=[];
+function ui(connected){$("btnConnect").disabled=connected;$("btnDisconnect").disabled=!connected;$("btnList").disabled=!connected;$("btnClimbs").disabled=!connected;document.querySelectorAll(".probe,#btnTrend,#btnCustom").forEach(b=>b.disabled=!connected)}
+if(!navigator.bluetooth){$("nobt").classList.remove("hidden");$("btnConnect").disabled=true}
+ui(false);
+{const d=new Date(Date.now()-24*3600e3);d.setMinutes(d.getMinutes()-d.getTimezoneOffset());$("trendFrom").value=d.toISOString().slice(0,16)}
+
+async function guarded(fn){try{await fn()}catch(e){log("Błąd: "+e.message);setStatus("Błąd: "+e.message,"err")}}
+
+$("btnConnect").onclick=()=>guarded(async()=>{
+  watch=new Watch();setStatus("Wybierz zegarek z listy…");
+  await watch.connect();
+  const ok=await watch.hello().catch(()=>false);
+  log(ok?"Powitanie OK.":"Powitanie bez odpowiedzi (nie zawsze potrzebne).");
+  setStatus("Połączono z "+watch.device.name+".","ok");ui(true);
+});
+$("btnDisconnect").onclick=()=>{watch&&watch.disconnect()};
+
+let sessionsCache=[];
+$("btnList").onclick=()=>guarded(async()=>{
+  setStatus("Pobieram listę sesji…");sessionsCache=await watch.sessions();renderSessions();
+  setStatus(`Na zegarku jest ${sessionsCache.length} sesji.`,"ok");
+});
+function renderSessions(){
+  const tb=$("tblSessions").querySelector("tbody");tb.innerHTML="";$("tblSessions").classList.remove("hidden");
+  for(const s of sessionsCache){
+    const tr=document.createElement("tr");const d=new Date(s.id*1000);
+    tr.innerHTML=`<td class="num">${d.toLocaleDateString("pl-PL")} ${d.toLocaleTimeString("pl-PL",{hour:"2-digit",minute:"2-digit"})}</td><td class="num">${Math.round((s.end-s.id)/60)} min</td><td>${s.type??"?"}</td><td></td>`;
+    const b=document.createElement("button");b.className="sec";b.textContent="Pobierz";b.onclick=()=>guarded(()=>loadSession(s));tr.lastChild.appendChild(b);tb.appendChild(tr);
+  }
+}
+async function loadSession(s){
+  setStatus(`Pobieram sesję ${s.id}…`);
+  const raw=await watch.sessionData(s.id,n=>setStatus(`Pobieram sesję ${s.id}… fragmentów: ${n}`));
+  log(`Sesja ${s.id}: ${raw.length} B.`);
+  const ses=decodeSession(raw);s.type=ses.activity===CLIMBING?"wspinaczka":"typ "+ses.activity;renderSessions();
+  current={id:s.id,raw,ses};showSession(current);setStatus(`Sesja pobrana (${raw.length} B).`,"ok");
+  return ses;
+}
+$("btnClimbs").onclick=()=>guarded(async()=>{
+  if(!sessionsCache.length)sessionsCache=await watch.sessions();
+  let found=0;for(const s of sessionsCache){const ses=await loadSession(s);if(ses.activity===CLIMBING)found++}
+  setStatus(`Gotowe. Wspinaczek: ${found}. Na wykresie ostatnia pobrana sesja.`,"ok");
+});
+
+function showSession({id,ses}){
+  $("cardSession").classList.remove("hidden");
+  const env=ses.env,segs=env.length?detectClimbs(env):[];const f=floorCurve(env,segs);
+  $("sessTitle").textContent=`Sesja ${new Date(id*1000).toLocaleString("pl-PL")}`;
+  const hrv=ses.hr.map(h=>h.bpm);
+  $("sessInfo").textContent=`Typ aktywności: ${ses.activity}${ses.activity===CLIMBING?" (wspinaczka)":""} · próbek: tętno ${ses.hr.length}, barometr ${env.length}, GPS ${ses.gps.length} · pauzy: ${ses.pauses.filter(p=>p.on).length}`+(hrv.length?` · tętno ${Math.min(...hrv)}–${Math.max(...hrv)}`:"");
+  const t0=Math.min(...[env[0]?.t,ses.hr[0]?.t].filter(x=>x!==undefined)),t1=Math.max(...[env.at(-1)?.t,ses.hr.at(-1)?.t].filter(x=>x!==undefined));
+  const bands=segs.map((s,n)=>({a:env[s.start].t,b:env[s.end].t,label:String(n+1)}));
+  $("chartAlt").innerHTML=env.length?chart(env.map(e=>({t:e.t,y:e.alt-f(e.t)})),{bands,t0,t1,yMin:-1}):"<p class='legend'>Brak danych z barometru.</p>";
+  $("chartHr").innerHTML=ses.hr.length?chart(ses.hr.map(h=>({t:h.t,y:h.bpm})),{h:140,bands,color:"var(--hr)",t0,t1}):"<p class='legend'>Brak tętna (zegarek na uprzęży?).</p>";
+  const tb=$("tblClimbs").querySelector("tbody");tb.innerHTML="";
+  segs.forEach((s,n)=>{const hr=ses.hr.filter(h=>h.t>=env[s.start].t&&h.t<=env[s.top].t).map(h=>h.bpm);
+    const tr=document.createElement("tr");tr.innerHTML=`<td>${n+1}</td><td class="num">${fmtTime(env[s.start].t)}</td><td class="num">${fmtDur(s.upS)}</td><td class="num">${s.gain.toFixed(1)} m</td><td class="num">${s.downS>0?(s.gain/s.downS).toFixed(2)+" m/s":"–"}</td><td class="num">${hr.length?Math.max(...hr):"–"}</td>`;tb.appendChild(tr)});
+  if(!segs.length)tb.innerHTML="<tr><td colspan='6' class='legend'>Nie wykryto dróg.</td></tr>";
+}
+$("btnCsv").onclick=()=>{if(!current)return;const s=current.ses;
+  const rows=[["czas","typ","tetno","wysokosc_m","cisnienie_pa","temp_c","predkosc_ms","pionowa_ms","dystans_m","lat","lon"]];
+  for(const h of s.hr)rows.push([fmtTime(h.t),"hr",h.bpm]);
+  for(const e of s.env)rows.push([fmtTime(e.t),"env","",e.alt.toFixed(1),e.absp,e.tempC,e.spd,e.vs,e.dist]);
+  for(const g of s.gps)rows.push([fmtTime(g.t),"gps","",g.alt.toFixed(1),"","","","","",g.lat,g.lon]);
+  rows.sort((a,b)=>a[0]<b[0]?-1:1);download(`sesja_${current.id}.csv`,rows.map(r=>r.join(",")).join("\n"),"text/csv")};
+$("btnRaw").onclick=()=>{if(current)download(`sesja_${current.id}.bin`,current.raw,"application/octet-stream")};
+
+// ---- odczyt surowy ----
+async function probe(path,param){
+  const h=await watch.resolve(path);const parts=param?[await watch.get(h,param)]:await watch.getAll(h);
+  const entry={path,param:param?toHex(param,""):null,time:new Date().toISOString(),parts:parts.map(p=>({status:p.status,len:p.payload.length,hex:toHex(p.raw,"")}))};
+  probes.push(entry);$("btnProbeSave").disabled=false;
+  const out=$("probeOut");out.classList.remove("hidden");
+  out.textContent=`${path}${param?" (od "+$("trendFrom").value+")":""}\n`+parts.map((p,i)=>`[${i+1}] status ${p.status}, ${p.payload.length} B${p.status===204?" (brak danych)":""}\n${toHex(p.payload.subarray(0,512))}${p.payload.length>512?" …":""}`).join("\n")+"\n\n"+out.textContent;
+  log(`${path}: ${parts.map(p=>p.status+"/"+p.payload.length+"B").join(", ")}`);
+}
+document.querySelectorAll(".probe").forEach(b=>b.onclick=()=>guarded(()=>probe(b.dataset.path)));
+$("btnCustom").onclick=()=>guarded(()=>{const p=$("customPath").value.trim();if(!p.startsWith("/"))throw new Error("Ścieżka musi zaczynać się od /");return probe(p)});
+$("btnTrend").onclick=()=>guarded(async()=>{ // parametr typu 08 = czas w ms (jak w aplikacji Suunto)
+  const ms=new Date($("trendFrom").value).getTime();if(!ms)throw new Error("Podaj datę");
+  let from=ms;for(let n=0;n<40;n++){
+    const param=concat(new Uint8Array([1,8,0]),le(from,8));await probe("/Activity/TrendData",param);
+    const last=probes.at(-1).parts[0];if(last.status!==200||last.len<40)break;
+    // następna strona: najpóźniejszy znacznik czasu (ms) w odpowiedzi
+    const pl=hex(last.hex).subarray(8);let mx=0;for(let k=0;k+8<=pl.length;k++){const v=uN(pl,k,8);if(v>from&&v<Date.now()+864e5)mx=Math.max(mx,v)}
+    if(!mx||mx<=from)break;from=mx;
+  }
+  setStatus("Trendy odczytane. Zapisz odczyty i wyślij plik do analizy.","ok");
+});
+$("btnProbeSave").onclick=()=>download(`odczyty_${new Date().toISOString().slice(0,16).replace(/[:T]/g,"-")}.json`,JSON.stringify(probes,null,1),"application/json");
+</script>
+</body>
+</html>
