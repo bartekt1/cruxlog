@@ -70,24 +70,26 @@ svg{width:100%;height:auto;display:block}
 
 <div class="card">
   <h2>Sen, tętno dzienne, HRV, ustawienia (odczyt surowy)</h2>
-  <p class="legend">Formaty tych danych nie są jeszcze rozszyfrowane. Przyciski odczytują surowe odpowiedzi zegarka (tylko GET). Po odczycie zapisz plik i wyślij go do analizy razem ze zrzutami z aplikacji Suunto (sen, HRV, tętno z dnia).</p>
+  <p class="legend">„Sen” i „Momenty” biorą dane od daty w polu „Od” (domyślnie ostatnie 2 doby). Formaty tych danych nie są jeszcze w pełni rozszyfrowane. Przyciski odczytują surowe odpowiedzi zegarka (tylko GET). Po odczycie zapisz plik i wyślij go do analizy razem ze zrzutami z aplikacji Suunto (sen, HRV, tętno z dnia).</p>
   <div class="row">
-    <button class="sec probe" data-path="/Daily/Sleep/Timeline/Data">Sen</button>
+    <button class="sec" id="btnSleep">Sen</button>
+    <button class="sec" id="btnMoments">Momenty dnia</button>
     <button class="sec probe" data-path="/Activity/TrainingLab/StressBalance">Bilans stresu</button>
     <button class="sec probe" data-path="/TrainingZone/Recovery">Regeneracja</button>
     <button class="sec probe" data-path="/TrainingZone/Progress">Postęp</button>
     <button class="sec probe" data-path="/TrainingZone/Training">Trening</button>
-    <button class="sec probe" data-path="/Activity/Moments/Sync/Data">Momenty</button>
     <button class="sec probe" data-path="/Settings/User/Zones/1/0/LowerLimits">Strefy tętna</button>
     <button class="sec probe" data-path="/Dev/Capabilities">Możliwości</button>
   </div>
   <div class="row" style="margin-top:6px">
-    <label>Trendy dnia (tętno, kroki…) od: <input type="datetime-local" id="trendFrom"></label>
-    <button class="sec" id="btnTrend">Odczytaj trendy</button>
+    <label>Od: <input type="datetime-local" id="trendFrom"></label>
+    <button class="sec" id="btnTrend">Trendy dnia (tętno, kroki…)</button>
   </div>
   <div class="row" style="margin-top:6px">
-    <input id="customPath" placeholder="/Inna/Sciezka" size="28">
+    <input id="customPath" placeholder="/Inna/Sciezka" size="22">
     <button class="sec" id="btnCustom">Odczytaj ścieżkę</button>
+    <input id="fileName" placeholder="plik, np. mdsSlp.sbm" size="18">
+    <button class="sec" id="btnFile">Odczytaj plik</button>
   </div>
   <pre id="probeOut" class="hidden"></pre>
   <div class="row"><button id="btnProbeSave" class="sec" disabled>Zapisz odczyty (JSON)</button></div>
@@ -129,6 +131,12 @@ function setStatus(msg,cls=""){const s=$("status");s.textContent=msg;s.className
 function fmtTime(ms){const d=new Date(ms);const p=n=>String(n).padStart(2,"0");return `${p(d.getUTCHours())}:${p(d.getUTCMinutes())}:${p(d.getUTCSeconds())}`} // czas lokalny zegarka zapisany jako ms
 function fmtDur(s){s=Math.round(s);return s>=60?`${Math.floor(s/60)} min ${s%60} s`:`${s} s`}
 function download(name,data,type){const url=URL.createObjectURL(new Blob([data],{type}));const a=document.createElement("a");a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),2000)}
+
+// ================= parametry zapytań: [liczba][typ][00][wartość]... =================
+function pU32(v){return concat(new Uint8Array([6,0]),le(v,4))}        // typ 06: uint32 (np. przesunięcie w pliku)
+function pTime(ms){return concat(new Uint8Array([8,0]),le(ms,8))}     // typ 08: 64 bity (czas)
+function pStr(s){return concat(new Uint8Array([0x0c,0]),new TextEncoder().encode(s),new Uint8Array([0]))} // typ 0c: tekst
+function params(...p){return concat(new Uint8Array([p.length]),...p)}
 
 // ================= ramki =================
 function buildFrame(typ,seq,body){
@@ -196,28 +204,39 @@ class Watch{
     const p=new TextEncoder().encode(path);
     const r=await this.send(RQ.RESOLVE,concat(new Uint8Array([1,0x80,0,p.length]),p));
     const st=Watch.status(r.body);if(st!==200)throw new Error(path+": status "+st);
-    return r.body.slice(0,3);
+    return r.body.slice(0,6); // uchwyt (3 B) + 3 B kontekstu, np. 01 80 00 albo 03 80 01
   }
-  async get(handle,param){ // param: Uint8Array lub undefined
-    const body=param?concat(handle,new Uint8Array([1,0x80,0]),param):concat(handle,new Uint8Array([1,0x80,0,0]));
+  async get(handle,param){ // handle: 6 B z resolve; param: z params(...) albo brak
+    const body=concat(handle,param||new Uint8Array([0]));
     const r=await this.send(RQ.GET,body);return {status:Watch.status(r.body),payload:r.body.slice(8),raw:r.body};
   }
   async getAll(handle){ // stronicowanie: status 100 = jest dalszy ciąg (parametr typu 06 = przesunięcie w bajtach)
     let r=await this.get(handle);const parts=[r];let off=0,guard=0;
-    while(r.status===100&&guard++<200){off+=r.payload.length;r=await this.get(handle,concat(new Uint8Array([1,6,0]),le(off,4)));parts.push(r)}
+    while(r.status===100&&guard++<200){off+=r.payload.length;r=await this.get(handle,params(pU32(off)));parts.push(r)}
     return parts;
   }
   async stream(handle,onProgress,timeout=180000){
     const key=u16(handle,1);let resolveEnd;const done=new Promise(r=>resolveEnd=r);
     const st={chunks:new Map(),resolve:resolveEnd,onProgress};this.streams.set(key,st);
-    const r=await this.send(RQ.SUBSCRIBE,concat(handle,new Uint8Array([1,0x80,0,0])));
+    const r=await this.send(RQ.SUBSCRIBE,concat(handle,new Uint8Array([0])));
     if(Watch.status(r.body)!==200){this.streams.delete(key);throw new Error("Subskrypcja: status "+Watch.status(r.body))}
     await Promise.race([done,new Promise((_,rej)=>setTimeout(()=>rej(new Error("Przekroczony czas pobierania")),timeout))]);
-    await this.send(RQ.UNSUBSCRIBE,concat(handle,new Uint8Array([1,0x80,0,0])));
+    await this.send(RQ.UNSUBSCRIBE,concat(handle,new Uint8Array([0])));
     this.streams.delete(key);
     const offs=[...st.chunks.keys()].sort((a,b)=>a-b);let total=0;
     for(const o of offs){if(o!==total)throw new Error("Dziura w danych przy "+total);total+=st.chunks.get(o).length}
     return concat(...offs.map(o=>st.chunks.get(o)));
+  }
+  async readFile(name){ // jak aplikacja Suunto: /Dev/FileSystem/Stream (nazwa, przesunięcie), status 100 = jest dalszy ciąg
+    const h=await this.resolve("/Dev/FileSystem/Stream");const parts=[];let off=0;
+    for(let n=0;n<500;n++){
+      const r=await this.get(h,params(pStr(name),pU32(off)));
+      if(r.status!==200&&r.status!==100){parts.push(r);break}
+      const pl=r.payload;const chunk=pl.length>=11?pl.subarray(11):pl; // 11 B nagłówka fragmentu
+      parts.push({status:r.status,payload:chunk,raw:r.raw});off+=chunk.length;
+      if(r.status===200||!chunk.length)break;
+    }
+    return {data:concat(...parts.filter(p=>p.status===200||p.status===100).map(p=>p.payload)),parts};
   }
   async sessions(){
     const h=await this.resolve("/Logbook/Entries");const parts=await this.getAll(h);
@@ -316,10 +335,10 @@ function chart(series,{h=200,yLabel="",bands=[],color="var(--acc)",t0,t1,yMin,yM
 
 // ================= interfejs =================
 let watch=null,current=null;const probes=[];
-function ui(connected){$("btnConnect").disabled=connected;$("btnDisconnect").disabled=!connected;$("btnList").disabled=!connected;$("btnClimbs").disabled=!connected;document.querySelectorAll(".probe,#btnTrend,#btnCustom").forEach(b=>b.disabled=!connected)}
+function ui(connected){$("btnConnect").disabled=connected;$("btnDisconnect").disabled=!connected;$("btnList").disabled=!connected;$("btnClimbs").disabled=!connected;document.querySelectorAll(".probe,#btnTrend,#btnCustom,#btnSleep,#btnMoments,#btnFile").forEach(b=>b.disabled=!connected)}
 if(!navigator.bluetooth){$("nobt").classList.remove("hidden");$("btnConnect").disabled=true}
 ui(false);
-{const d=new Date(Date.now()-24*3600e3);d.setMinutes(d.getMinutes()-d.getTimezoneOffset());$("trendFrom").value=d.toISOString().slice(0,16)}
+{const d=new Date(Date.now()-48*3600e3);d.setMinutes(d.getMinutes()-d.getTimezoneOffset());$("trendFrom").value=d.toISOString().slice(0,16)}
 
 async function guarded(fn){try{await fn()}catch(e){log("Błąd: "+e.message);setStatus("Błąd: "+e.message,"err")}}
 
@@ -396,7 +415,7 @@ $("btnCustom").onclick=()=>guarded(()=>{const p=$("customPath").value.trim();if(
 $("btnTrend").onclick=()=>guarded(async()=>{ // parametr typu 08 = czas w ms (jak w aplikacji Suunto)
   const ms=new Date($("trendFrom").value).getTime();if(!ms)throw new Error("Podaj datę");
   let from=ms;for(let n=0;n<40;n++){
-    const param=concat(new Uint8Array([1,8,0]),le(from,8));await probe("/Activity/TrendData",param);
+    const param=params(pTime(from));await probe("/Activity/TrendData",param);
     const last=probes.at(-1).parts[0];if(last.status!==200||last.len<40)break;
     // następna strona: najpóźniejszy znacznik czasu (ms) w odpowiedzi
     const pl=hex(last.hex).subarray(8);let mx=0;for(let k=0;k+8<=pl.length;k++){const v=uN(pl,k,8);if(v>from&&v<Date.now()+864e5)mx=Math.max(mx,v)}
@@ -404,6 +423,32 @@ $("btnTrend").onclick=()=>guarded(async()=>{ // parametr typu 08 = czas w ms (ja
   }
   setStatus("Trendy odczytane. Zapisz odczyty i wyślij plik do analizy.","ok");
 });
+function fromMs(){const ms=new Date($("trendFrom").value).getTime();if(!ms)throw new Error("Podaj datę w polu Od");return ms}
+function usTimes(a){const out=[];for(let k=0;k+8<=a.length;k++){const v=uN(a,k,8);if(v>1.6e15&&v<2.1e15)out.push({k,v})}return out}
+async function readFileProbe(name){
+  const {data,parts}=await watch.readFile(name);
+  probes.push({file:name,time:new Date().toISOString(),len:data.length,hex:toHex(data,""),statuses:parts.map(p=>p.status)});$("btnProbeSave").disabled=false;
+  log(`Plik ${name}: ${data.length} B, statusy ${parts.map(p=>p.status).join(",")}`);
+  return data;
+}
+function showOut(text){const out=$("probeOut");out.classList.remove("hidden");out.textContent=text+"\n\n"+out.textContent}
+$("btnSleep").onclick=()=>guarded(async()=>{ // 1) zegarek przygotowuje plik snu od podanej chwili, 2) odczyt pliku
+  const ms=fromMs();
+  const h=await watch.resolve("/Daily/Sleep/Timeline/Data");
+  const r=await watch.get(h,params(pTime(ms),pStr("mdsSlp.sbm")));
+  probes.push({path:"/Daily/Sleep/Timeline/Data",from:new Date(ms).toISOString(),status:r.status,hex:toHex(r.raw,"")});
+  log(`Sen od ${$("trendFrom").value}: status ${r.status}`);
+  const data=await readFileProbe("mdsSlp.sbm");
+  const strs=new TextDecoder("latin1").decode(data).match(/[ -~]{4,}/g)||[];
+  const times=usTimes(data).map(t=>new Date(t.v/1000).toLocaleString("pl-PL"));
+  showOut(`SEN (plik mdsSlp.sbm, ${data.length} B)\nZnaczniki czasu w pliku: ${times.join(" | ")||"brak"}\nTeksty: ${strs.join(" | ")}\n${toHex(data.subarray(0,512))}`);
+  setStatus("Sen odczytany. Zapisz odczyty i wyślij plik do analizy.","ok");
+});
+$("btnMoments").onclick=()=>guarded(async()=>{ // parametr: czas w sekundach (64 bity), jak w aplikacji Suunto
+  const sec=Math.floor(fromMs()/1000);await probe("/Activity/Moments/Sync/Data",params(concat(new Uint8Array([8,0]),le(sec,8))));
+});
+$("btnFile").onclick=()=>guarded(async()=>{const n=$("fileName").value.trim();if(!n)throw new Error("Podaj nazwę pliku");
+  const data=await readFileProbe(n);showOut(`PLIK ${n}: ${data.length} B\n${toHex(data.subarray(0,512))}`)});
 $("btnProbeSave").onclick=()=>download(`odczyty_${new Date().toISOString().slice(0,16).replace(/[:T]/g,"-")}.json`,JSON.stringify(probes,null,1),"application/json");
 </script>
 </body>
