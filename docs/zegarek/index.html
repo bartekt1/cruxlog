@@ -446,10 +446,11 @@ async function probe(path,param){
 document.querySelectorAll(".probe").forEach(b=>b.onclick=()=>guarded(()=>probe(b.dataset.path)));
 $("btnCustom").onclick=()=>guarded(()=>{const p=$("customPath").value.trim();if(!p.startsWith("/"))throw new Error("Ścieżka musi zaczynać się od /");return probe(p)});
 // ---- trendy dnia: rekordy po 40 B co 10 min; status 202 = jest dalszy ciąg ----
-function parseTrend(pl){ // [0..7] czas ms, [8] 01, [9] tętno, [28] 1 = sen, [32..35] energia J (float), [36..39] kroki
-  const out=[];let k=0;while(k+8<=pl.length&&!(uN(pl,k,8)>1.6e12&&uN(pl,k,8)<2.1e12))k++;
-  for(;k+40<=pl.length;k+=40){const t=uN(pl,k,8);if(!(t>1.6e12&&t<2.1e12))break;
-    out.push({t,hr:pl[k+8]===1?pl[k+9]:null,sleep:pl[k+28]===1,kcal:f32(pl,k+32)/4186.8,steps:u32(pl,k+36)})}
+function parseTrend(pl){ // nagłówek 18 B (w nim liczba rekordów, u16 @6), potem rekordy po 40 B:
+  // [0..3] aktywna energia J (float32), [4..7] kroki, [8..15] czas ms, [16] 01, [17] średnie tętno, [36] 1 = sen
+  const n=Math.min(u16(pl,6)||10,Math.floor((pl.length-18)/40)),out=[];
+  for(let i=0;i<n;i++){const o=18+40*i;const t=uN(pl,o+8,8);if(!(t>1.6e12&&t<2.1e12))continue;
+    out.push({t,hr:pl[o+16]===1?pl[o+17]:null,sleep:pl[o+36]===1,kcal:f32(pl,o)/4186.8,steps:u32(pl,o+4)})}
   return out;
 }
 let trend=[];
@@ -461,8 +462,9 @@ $("btnTrend").onclick=()=>guarded(async()=>{
     if(r.status!==200&&r.status!==202)break;
     const recs=parseTrend(r.payload);recs.forEach(x=>all.set(x.t,x));
     setStatus(`Trendy: ${all.size} rekordów…`);
-    if(r.status===200||!recs.length||recs.at(-1).t<=from)break;
-    from=recs.at(-1).t+1;
+    const mx=recs.length?Math.max(...recs.map(x=>x.t)):0;
+    if(r.status===200||!mx||mx<from)break;
+    from=mx+1;
   }
   $("btnProbeSave").disabled=false;trend=[...all.values()].sort((x,y)=>x.t-y.t);
   log(`Trendy: ${trend.length} rekordów (${trend.length?new Date(trend[0].t).toLocaleString("pl-PL")+" – "+new Date(trend.at(-1).t).toLocaleString("pl-PL"):"brak"})`);
