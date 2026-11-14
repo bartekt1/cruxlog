@@ -43,7 +43,9 @@ svg{width:100%;height:auto;display:block}
   <div class="row">
     <button id="btnConnect">Połącz z zegarkiem</button>
     <button id="btnDisconnect" class="sec" disabled>Rozłącz</button>
+    <button id="btnConnectAll" class="sec">Pokaż wszystkie urządzenia</button>
   </div>
+  <p class="legend">Nie widać zegarka na liście? Zegarek pokazuje się tylko wtedy, gdy nie jest połączony z aplikacją Suunto: zamknij ją (Ustawienia › Aplikacje › Suunto › Wymuś zatrzymanie), wyłącz i włącz Bluetooth w telefonie, wybudź zegarek i spróbuj ponownie w ciągu kilkunastu sekund.</p>
   <div id="status">Niepołączony.</div>
   <p id="nobt" class="warn hidden">Ta przeglądarka nie obsługuje Web Bluetooth. Otwórz stronę w Chrome na Androidzie.</p>
 </div>
@@ -165,8 +167,8 @@ class FrameParser{
 // ================= zegarek =================
 class Watch{
   constructor(){this.seq=0x3000;this.waiting=new Map();this.streams=new Map();this.parser=new FrameParser((t,s,b)=>this.onFrame(t,s,b));this.queue=Promise.resolve()}
-  async connect(){
-    this.device=await navigator.bluetooth.requestDevice({filters:[{namePrefix:"Suunto"}],optionalServices:[SVC]});
+  async connect(all=false){
+    this.device=await navigator.bluetooth.requestDevice(all?{acceptAllDevices:true,optionalServices:[SVC]}:{filters:[{namePrefix:"Suunto"},{services:[SVC]}],optionalServices:[SVC]});
     this.device.addEventListener("gattserverdisconnected",()=>{setStatus("Rozłączono.","err");log("Rozłączono.");ui(false)});
     log("Łączę z "+this.device.name+"…");
     this.server=await this.device.gatt.connect();
@@ -335,20 +337,22 @@ function chart(series,{h=200,yLabel="",bands=[],color="var(--acc)",t0,t1,yMin,yM
 
 // ================= interfejs =================
 let watch=null,current=null;const probes=[];
-function ui(connected){$("btnConnect").disabled=connected;$("btnDisconnect").disabled=!connected;$("btnList").disabled=!connected;$("btnClimbs").disabled=!connected;document.querySelectorAll(".probe,#btnTrend,#btnCustom,#btnSleep,#btnMoments,#btnFile").forEach(b=>b.disabled=!connected)}
+function ui(connected){$("btnConnect").disabled=connected;$("btnConnectAll").disabled=connected;$("btnDisconnect").disabled=!connected;$("btnList").disabled=!connected;$("btnClimbs").disabled=!connected;document.querySelectorAll(".probe,#btnTrend,#btnCustom,#btnSleep,#btnMoments,#btnFile").forEach(b=>b.disabled=!connected)}
 if(!navigator.bluetooth){$("nobt").classList.remove("hidden");$("btnConnect").disabled=true}
 ui(false);
 {const d=new Date(Date.now()-48*3600e3);d.setMinutes(d.getMinutes()-d.getTimezoneOffset());$("trendFrom").value=d.toISOString().slice(0,16)}
 
 async function guarded(fn){try{await fn()}catch(e){log("Błąd: "+e.message);setStatus("Błąd: "+e.message,"err")}}
 
-$("btnConnect").onclick=()=>guarded(async()=>{
+async function doConnect(all){
   watch=new Watch();setStatus("Wybierz zegarek z listy…");
-  await watch.connect();
+  await watch.connect(all);
   const ok=await watch.hello().catch(()=>false);
   log(ok?"Powitanie OK.":"Powitanie bez odpowiedzi (nie zawsze potrzebne).");
   setStatus("Połączono z "+watch.device.name+".","ok");ui(true);
-});
+}
+$("btnConnect").onclick=()=>guarded(()=>doConnect(false));
+$("btnConnectAll").onclick=()=>guarded(()=>doConnect(true));
 $("btnDisconnect").onclick=()=>{watch&&watch.disconnect()};
 
 let sessionsCache=[];
