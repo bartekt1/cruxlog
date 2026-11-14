@@ -70,9 +70,17 @@ svg{width:100%;height:auto;display:block}
   <div class="row" style="margin-top:8px"><button id="btnCsv" class="sec">Zapisz próbki (CSV)</button><button id="btnRaw" class="sec">Zapisz surowe dane (.bin)</button></div>
 </div>
 
+<div class="card hidden" id="cardDaily">
+  <h2>Sen i dane dnia</h2>
+  <div id="sleepBox"></div>
+  <div id="hrBox"></div>
+  <div id="stepsBox"></div>
+  <div id="resBox"></div>
+</div>
+
 <div class="card">
   <h2>Sen, tętno dzienne, HRV, ustawienia (odczyt surowy)</h2>
-  <p class="legend">„Sen” i „Momenty” biorą dane od daty w polu „Od” (domyślnie ostatnie 2 doby). Formaty tych danych nie są jeszcze w pełni rozszyfrowane. Przyciski odczytują surowe odpowiedzi zegarka (tylko GET). Po odczycie zapisz plik i wyślij go do analizy razem ze zrzutami z aplikacji Suunto (sen, HRV, tętno z dnia).</p>
+  <p class="legend">„Sen”, „Trendy dnia” i „Momenty dnia” biorą dane od daty w polu „Od” (domyślnie ostatnie 2 doby) i pokazują je w karcie „Sen i dane dnia”. Pozostałe przyciski czytają surowe dane, jeszcze nie rozszyfrowane. Przyciski odczytują surowe odpowiedzi zegarka (tylko GET). Po odczycie zapisz plik i wyślij go do analizy razem ze zrzutami z aplikacji Suunto (sen, HRV, tętno z dnia).</p>
   <div class="row">
     <button class="sec" id="btnSleep">Sen</button>
     <button class="sec" id="btnMoments">Momenty dnia</button>
@@ -317,7 +325,7 @@ function floorCurve(env,segs,winS=90){
 }
 
 // ================= wykresy (SVG) =================
-function chart(series,{h=200,yLabel="",bands=[],color="var(--acc)",t0,t1,yMin,yMax}){
+function chart(series,{h=200,yLabel="",bands=[],color="var(--acc)",t0,t1,yMin,yMax,gapMs=60000}){
   const W=600,H=h,pl=34,pr=6,pt=6,pb=20;
   if(yMin===undefined)yMin=Math.min(...series.map(p=>p.y));
   if(yMax===undefined)yMax=Math.max(...series.map(p=>p.y));
@@ -325,12 +333,12 @@ function chart(series,{h=200,yLabel="",bands=[],color="var(--acc)",t0,t1,yMin,yM
   const X=t=>pl+(t-t0)/(t1-t0)*(W-pl-pr),Y=v=>pt+(1-(v-yMin)/(yMax-yMin))*(H-pt-pb);
   let s=`<svg viewBox="0 0 ${W} ${H}" role="img">`;
   for(const b of bands)s+=`<rect x="${X(b.a)}" y="${pt}" width="${Math.max(1,X(b.b)-X(b.a))}" height="${H-pt-pb}" fill="var(--acc2)" opacity=".15"/><text x="${X(b.a)+3}" y="${pt+14}" font-size="13" fill="var(--acc2)">${b.label}</text>`;
-  const step=(yMax-yMin)>40?20:(yMax-yMin)>10?5:(yMax-yMin)>4?2:1;
+  const raw=(yMax-yMin)/4,mag=Math.pow(10,Math.floor(Math.log10(raw)));const step=[1,2,5,10].map(m=>m*mag).find(x=>x>=raw)||mag*10;
   for(let v=Math.ceil(yMin/step)*step;v<=yMax;v+=step)s+=`<line x1="${pl}" x2="${W-pr}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${pl-6}" y="${Y(v)+4}" font-size="12" text-anchor="end" fill="var(--mute)">${v}</text>`;
   const tickMin=Math.max(1,Math.round((t1-t0)/60000/5));
   for(let t=Math.ceil(t0/60000/tickMin)*tickMin*60000;t<=t1;t+=tickMin*60000)s+=`<text x="${X(t)}" y="${H-5}" font-size="12" text-anchor="middle" fill="var(--mute)">${fmtTime(t).slice(0,5)}</text>`;
   const every=Math.max(1,Math.floor(series.length/1500));let d="";let prev=null;
-  for(let i=0;i<series.length;i+=every){const p=series[i];d+=(prev&&p.t-prev.t>60000?"M":(d?"L":"M"))+X(p.t).toFixed(1)+","+Y(p.y).toFixed(1);prev=p}
+  for(let i=0;i<series.length;i+=every){const p=series[i];d+=(prev&&p.t-prev.t>gapMs?"M":(d?"L":"M"))+X(p.t).toFixed(1)+","+Y(p.y).toFixed(1);prev=p}
   s+=`<path d="${d}" fill="none" stroke="${color}" stroke-width="1.6"/></svg>`;
   return s;
 }
@@ -416,17 +424,42 @@ async function probe(path,param){
 }
 document.querySelectorAll(".probe").forEach(b=>b.onclick=()=>guarded(()=>probe(b.dataset.path)));
 $("btnCustom").onclick=()=>guarded(()=>{const p=$("customPath").value.trim();if(!p.startsWith("/"))throw new Error("Ścieżka musi zaczynać się od /");return probe(p)});
-$("btnTrend").onclick=()=>guarded(async()=>{ // parametr typu 08 = czas w ms (jak w aplikacji Suunto)
-  const ms=new Date($("trendFrom").value).getTime();if(!ms)throw new Error("Podaj datę");
-  let from=ms;for(let n=0;n<40;n++){
-    const param=params(pTime(from));await probe("/Activity/TrendData",param);
-    const last=probes.at(-1).parts[0];if(last.status!==200||last.len<40)break;
-    // następna strona: najpóźniejszy znacznik czasu (ms) w odpowiedzi
-    const pl=hex(last.hex).subarray(8);let mx=0;for(let k=0;k+8<=pl.length;k++){const v=uN(pl,k,8);if(v>from&&v<Date.now()+864e5)mx=Math.max(mx,v)}
-    if(!mx||mx<=from)break;from=mx;
+// ---- trendy dnia: rekordy po 40 B co 10 min; status 202 = jest dalszy ciąg ----
+function parseTrend(pl){ // [0..7] czas ms, [8] 01, [9] tętno, [28] 1 = sen, [32..35] energia J (float), [36..39] kroki
+  const out=[];let k=0;while(k+8<=pl.length&&!(uN(pl,k,8)>1.6e12&&uN(pl,k,8)<2.1e12))k++;
+  for(;k+40<=pl.length;k+=40){const t=uN(pl,k,8);if(!(t>1.6e12&&t<2.1e12))break;
+    out.push({t,hr:pl[k+8]===1?pl[k+9]:null,sleep:pl[k+28]===1,kcal:f32(pl,k+32)/4186.8,steps:u32(pl,k+36)})}
+  return out;
+}
+let trend=[];
+$("btnTrend").onclick=()=>guarded(async()=>{
+  const h=await watch.resolve("/Activity/TrendData");let from=fromMs();const all=new Map();
+  for(let n=0;n<200;n++){
+    const r=await watch.get(h,params(pTime(from)));
+    probes.push({path:"/Activity/TrendData",param:toHex(params(pTime(from)),""),parts:[{status:r.status,len:r.payload.length,hex:toHex(r.raw,"")}]});
+    if(r.status!==200&&r.status!==202)break;
+    const recs=parseTrend(r.payload);recs.forEach(x=>all.set(x.t,x));
+    setStatus(`Trendy: ${all.size} rekordów…`);
+    if(r.status===200||!recs.length||recs.at(-1).t<=from)break;
+    from=recs.at(-1).t+1;
   }
-  setStatus("Trendy odczytane. Zapisz odczyty i wyślij plik do analizy.","ok");
+  $("btnProbeSave").disabled=false;trend=[...all.values()].sort((x,y)=>x.t-y.t);
+  log(`Trendy: ${trend.length} rekordów (${trend.length?new Date(trend[0].t).toLocaleString("pl-PL")+" – "+new Date(trend.at(-1).t).toLocaleString("pl-PL"):"brak"})`);
+  renderTrend();setStatus("Trendy odczytane.","ok");
 });
+function dayKey(t){const d=new Date(t);return d.toLocaleDateString("pl-PL")}
+function renderTrend(){
+  if(!trend.length)return;$("cardDaily").classList.remove("hidden");
+  const t0=trend[0].t,t1=trend.at(-1).t+600e3;
+  const hr=trend.filter(x=>x.hr).map(x=>({t:x.t,y:x.hr}));
+  const bands=[];let st=null;for(const x of trend){if(x.sleep&&st===null)st=x.t;if(!x.sleep&&st!==null){bands.push({a:st,b:x.t,label:"sen"});st=null}}if(st!==null)bands.push({a:st,b:t1,label:"sen"});
+  $("hrBox").innerHTML=`<h2 style="margin-top:10px">Tętno w ciągu dnia</h2>`+chart(hr,{h:170,color:"var(--hr)",bands,t0,t1,gapMs:3600e3})+`<div class="legend">Średnie tętno co 10 min, pola w tle: sen.</div>`;
+  const days=new Map();for(const x of trend){const k=dayKey(x.t);const d=days.get(k)||{steps:0,kcal:0,min:999};d.steps+=x.steps;d.kcal+=x.kcal;if(x.hr&&!x.sleep)d.min=Math.min(d.min,x.hr);days.set(k,d)}
+  let cum=0,last="";const steps=trend.map(x=>{const k=dayKey(x.t);if(k!==last){cum=0;last=k}cum+=x.steps;return {t:x.t,y:cum}});
+  $("stepsBox").innerHTML=`<h2 style="margin-top:10px">Kroki i aktywne kalorie</h2>`+chart(steps,{h:150,t0,t1,yMin:0,gapMs:3600e3})+
+   `<table><thead><tr><th>Dzień</th><th>Kroki</th><th>Aktywne kcal</th><th>Min. tętno dzienne</th></tr></thead><tbody>`+
+   [...days].map(([k,d])=>`<tr><td>${k}</td><td class="num">${d.steps}</td><td class="num">${Math.round(d.kcal)}</td><td class="num">${d.min<999?d.min:"–"}</td></tr>`).join("")+`</tbody></table><div class="legend">Dzień częściowy, jeśli odczyt zaczyna się lub kończy w jego trakcie.</div>`;
+}
 function fromMs(){const ms=new Date($("trendFrom").value).getTime();if(!ms)throw new Error("Podaj datę w polu Od");return ms}
 function usTimes(a){const out=[];for(let k=0;k+8<=a.length;k++){const v=uN(a,k,8);if(v>1.6e15&&v<2.1e15)out.push({k,v})}return out}
 async function readFileProbe(name){
@@ -436,20 +469,50 @@ async function readFileProbe(name){
   return data;
 }
 function showOut(text){const out=$("probeOut");out.classList.remove("hidden");out.textContent=text+"\n\n"+out.textContent}
+// ---- sen: plik mdsSlp.sbm, rekordy [znacznik][długość][wartość]; każda noc zaczyna się od pola 02 ----
+function parseSleep(d){
+  const nights=[],ends=[];let cur=null,lastTs=null;let i=8;
+  while(i+2<=d.length){const t=d[i],l=d[i+1];const v=d.subarray(i+2,i+2+l);i+=2+l;if(v.length<l)break;
+    if(t===0x0e&&l===8){lastTs=uN(v,0,8)/1000;continue}          // zdarzenie: czas (µs)…
+    if(t===0x01&&l===1){if(v[0]===1&&lastTs)ends.push(lastTs);continue} // …01 = koniec snu, 00 = początek
+    if(t===0x02&&l===8){cur={start:uN(v,0,8)/1000};nights.push(cur);continue}
+    if(!cur)continue;const f=l===4?f32(v,0):l===1?v[0]:null;
+    ({3:"durS",4:"awakeS",5:"quality",6:"deepS",7:"f7",8:"f8",15:"spo2",16:"altM",17:"hrv",18:"f18"})[t]&&(cur[({3:"durS",4:"awakeS",5:"quality",6:"deepS",7:"f7",8:"f8",15:"spo2",16:"altM",17:"hrv",18:"f18"})[t]]=f);
+  }
+  for(const n of nights){n.end=ends.filter(e=>e>n.start).sort((a,b)=>a-b)[0]??(n.durS?n.start+(n.durS+(n.awakeS||0))*1000:null)}
+  return nights;
+}
+function hm(s){s=Math.round(s/60);return `${Math.floor(s/60)} h ${String(s%60).padStart(2,"0")} min`}
 $("btnSleep").onclick=()=>guarded(async()=>{ // 1) zegarek przygotowuje plik snu od podanej chwili, 2) odczyt pliku
   const ms=fromMs();
   const h=await watch.resolve("/Daily/Sleep/Timeline/Data");
   const r=await watch.get(h,params(pTime(ms),pStr("mdsSlp.sbm")));
   probes.push({path:"/Daily/Sleep/Timeline/Data",from:new Date(ms).toISOString(),status:r.status,hex:toHex(r.raw,"")});
   log(`Sen od ${$("trendFrom").value}: status ${r.status}`);
-  const data=await readFileProbe("mdsSlp.sbm");
-  const strs=new TextDecoder("latin1").decode(data).match(/[ -~]{4,}/g)||[];
-  const times=usTimes(data).map(t=>new Date(t.v/1000).toLocaleString("pl-PL"));
-  showOut(`SEN (plik mdsSlp.sbm, ${data.length} B)\nZnaczniki czasu w pliku: ${times.join(" | ")||"brak"}\nTeksty: ${strs.join(" | ")}\n${toHex(data.subarray(0,512))}`);
-  setStatus("Sen odczytany. Zapisz odczyty i wyślij plik do analizy.","ok");
+  const data=await readFileProbe("mdsSlp.sbm");const nights=parseSleep(data);
+  $("cardDaily").classList.remove("hidden");
+  const tm=t=>new Date(t).toLocaleTimeString("pl-PL",{hour:"2-digit",minute:"2-digit"});
+  $("sleepBox").innerHTML=`<h2>Sen</h2>`+(nights.length?`<div style="overflow-x:auto"><table><thead><tr><th>Noc</th><th>Sen</th><th>Głęboki</th><th>Jakość</th><th>HRV</th><th>SpO₂</th></tr></thead><tbody>`+
+    nights.map(n=>`<tr><td class="num">${new Date(n.start).toLocaleDateString("pl-PL",{day:"numeric",month:"numeric"})}<br>${tm(n.start)}–${n.end?tm(n.end):"?"}</td><td class="num">${n.durS!=null?hm(n.durS):"–"}</td><td class="num">${n.deepS!=null?hm(n.deepS):"–"}</td><td class="num">${n.quality??"–"}%</td><td class="num">${n.hrv??"–"} ms</td><td class="num">${n.spo2!=null?Math.round(n.spo2*100)+"%":"–"}</td></tr>`).join("")+
+    `</tbody></table></div><div class="legend">Odczyt zgodny z aplikacją Suunto (czas snu, sen głęboki, jakość, średni nocny HRV, SpO₂). Nie wszystkie pola są jeszcze rozpoznane.</div>`:"<p class='legend'>Brak nocy w pliku od podanej daty.</p>");
+  setStatus(`Sen odczytany: ${nights.length} noc(e).`,"ok");
 });
-$("btnMoments").onclick=()=>guarded(async()=>{ // parametr: czas w sekundach (64 bity), jak w aplikacji Suunto
-  const sec=Math.floor(fromMs()/1000);await probe("/Activity/Moments/Sync/Data",params(concat(new Uint8Array([8,0]),le(sec,8))));
+// ---- momenty (krzywa zasobów/energii): rekordy po 8 B co 30 min: czas s (u32), poziom % (u8) ----
+function parseMoments(pl){const out=[];let k=0;while(k+4<=pl.length&&!(u32(pl,k)>1.6e9&&u32(pl,k)<2.1e9&&pl[k+4]<=100&&u32(pl,k+8)-u32(pl,k)===1800))k++;
+  for(;k+8<=pl.length;k+=8){const t=u32(pl,k);if(!(t>1.6e9&&t<2.1e9))break;out.push({t:t*1000,pct:pl[k+4]})}return out}
+$("btnMoments").onclick=()=>guarded(async()=>{
+  const h=await watch.resolve("/Activity/Moments/Sync/Data");let sec=Math.floor(fromMs()/1000);const all=new Map();
+  for(let n=0;n<50;n++){
+    const prm=params(concat(new Uint8Array([8,0]),le(sec,8)));const r=await watch.get(h,prm);
+    probes.push({path:"/Activity/Moments/Sync/Data",param:toHex(prm,""),parts:[{status:r.status,len:r.payload.length,hex:toHex(r.raw,"")}]});
+    if(r.status!==200&&r.status!==100)break;const recs=parseMoments(r.payload);recs.forEach(x=>all.set(x.t,x));
+    if(r.status===200||!recs.length||recs.at(-1).t/1000<=sec)break;sec=recs.at(-1).t/1000+1;
+  }
+  $("btnProbeSave").disabled=false;const res=[...all.values()].sort((a,b)=>a.t-b.t);
+  log(`Momenty: ${res.length} punktów`);if(!res.length)return;
+  $("cardDaily").classList.remove("hidden");
+  $("resBox").innerHTML=`<h2 style="margin-top:10px">Zasoby (energia)</h2>`+chart(res.map(x=>({t:x.t,y:x.pct})),{h:150,t0:res[0].t,t1:res.at(-1).t,yMin:0,yMax:100,gapMs:7200e3})+`<div class="legend">Poziom zasobów w %, co 30 min.</div>`;
+  setStatus("Momenty odczytane.","ok");
 });
 $("btnFile").onclick=()=>guarded(async()=>{const n=$("fileName").value.trim();if(!n)throw new Error("Podaj nazwę pliku");
   const data=await readFileProbe(n);showOut(`PLIK ${n}: ${data.length} B\n${toHex(data.subarray(0,512))}`)});
