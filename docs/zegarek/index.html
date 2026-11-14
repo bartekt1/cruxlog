@@ -43,9 +43,10 @@ svg{width:100%;height:auto;display:block}
   <div class="row">
     <button id="btnConnect">Połącz z zegarkiem</button>
     <button id="btnDisconnect" class="sec" disabled>Rozłącz</button>
+    <button id="btnReconnect" class="sec" disabled>Połącz ponownie</button>
     <button id="btnConnectAll" class="sec">Pokaż wszystkie urządzenia</button>
   </div>
-  <p class="legend">Nie widać zegarka na liście? Zegarek pokazuje się tylko wtedy, gdy nie jest połączony z aplikacją Suunto: zamknij ją (Ustawienia › Aplikacje › Suunto › Wymuś zatrzymanie), wyłącz i włącz Bluetooth w telefonie, wybudź zegarek i spróbuj ponownie w ciągu kilkunastu sekund.</p>
+  <p class="legend">Pierwsze połączenie: zegarek widać na liście tylko, gdy nie jest połączony z aplikacją Suunto (wymuś jej zatrzymanie albo wyłącz i włącz Bluetooth). Potem strona pamięta zegarek: „Połącz ponownie” łączy się bez szukania, także gdy aplikacja Suunto jest połączona. Po zerwaniu połączenia strona sama próbuje się połączyć.</p>
   <div id="status">Niepołączony.</div>
   <p id="nobt" class="warn hidden">Ta przeglądarka nie obsługuje Web Bluetooth. Otwórz stronę w Chrome na Androidzie.</p>
 </div>
@@ -175,11 +176,12 @@ class FrameParser{
 // ================= zegarek =================
 class Watch{
   constructor(){this.seq=0x3000;this.waiting=new Map();this.streams=new Map();this.parser=new FrameParser((t,s,b)=>this.onFrame(t,s,b));this.queue=Promise.resolve()}
-  async connect(all=false){
-    this.device=await navigator.bluetooth.requestDevice(all?{acceptAllDevices:true,optionalServices:[SVC]}:{filters:[{namePrefix:"Suunto"},{services:[SVC]}],optionalServices:[SVC]});
-    this.device.addEventListener("gattserverdisconnected",()=>{setStatus("Rozłączono.","err");log("Rozłączono.");ui(false)});
-    log("Łączę z "+this.device.name+"…");
-    this.server=await this.device.gatt.connect();
+  async connect(all=false,device=null){
+    this.device=device||await navigator.bluetooth.requestDevice(all?{acceptAllDevices:true,optionalServices:[SVC]}:{filters:[{namePrefix:"Suunto"},{services:[SVC]}],optionalServices:[SVC]});
+    knownDevice=this.device;
+    if(!this.device._cruxListener){this.device._cruxListener=true;this.device.addEventListener("gattserverdisconnected",()=>onDisconnected(this.device))}
+    log("Łączę z "+(this.device.name||"zegarkiem")+"…");
+    this.server=await this.device.gatt.connect(); // dla znanego urządzenia: bez okna wyboru i bez skanowania
     const svc=await this.server.getPrimaryService(SVC);
     this.wr=await svc.getCharacteristic(WRITE_UUID);
     this.nt=await svc.getCharacteristic(NOTIFY_UUID);
@@ -344,24 +346,43 @@ function chart(series,{h=200,yLabel="",bands=[],color="var(--acc)",t0,t1,yMin,yM
 }
 
 // ================= interfejs =================
-let watch=null,current=null;const probes=[];
-function ui(connected){$("btnConnect").disabled=connected;$("btnConnectAll").disabled=connected;$("btnDisconnect").disabled=!connected;$("btnList").disabled=!connected;$("btnClimbs").disabled=!connected;document.querySelectorAll(".probe,#btnTrend,#btnCustom,#btnSleep,#btnMoments,#btnFile").forEach(b=>b.disabled=!connected)}
+let watch=null,current=null,knownDevice=null,manualDisconnect=false;const probes=[];
+function ui(connected){$("btnConnect").disabled=connected;$("btnReconnect").disabled=connected||!(knownDevice||navigator.bluetooth?.getDevices);$("btnConnectAll").disabled=connected;$("btnDisconnect").disabled=!connected;$("btnList").disabled=!connected;$("btnClimbs").disabled=!connected;document.querySelectorAll(".probe,#btnTrend,#btnCustom,#btnSleep,#btnMoments,#btnFile").forEach(b=>b.disabled=!connected)}
 if(!navigator.bluetooth){$("nobt").classList.remove("hidden");$("btnConnect").disabled=true}
 ui(false);
+if(navigator.bluetooth?.getDevices)navigator.bluetooth.getDevices().then(l=>{if(l.length){knownDevice=l.find(d=>(d.name||"").startsWith("Suunto"))||l[0];$("btnReconnect").disabled=false;log("Zapamiętany zegarek: "+(knownDevice.name||"?")+" – możesz użyć „Połącz ponownie”.")}}).catch(()=>{});
 {const d=new Date(Date.now()-48*3600e3);d.setMinutes(d.getMinutes()-d.getTimezoneOffset());$("trendFrom").value=d.toISOString().slice(0,16)}
 
 async function guarded(fn){try{await fn()}catch(e){log("Błąd: "+e.message);setStatus("Błąd: "+e.message,"err")}}
 
-async function doConnect(all){
-  watch=new Watch();setStatus("Wybierz zegarek z listy…");
-  await watch.connect(all);
+// Zegarek połączony z aplikacją Suunto przestaje się ogłaszać, więc okno wyboru go nie widzi.
+// Dlatego zapamiętujemy urządzenie i łączymy się z nim bezpośrednio (bez skanowania), jak nRF Connect.
+async function doConnect(all,device=null){
+  watch=new Watch();if(!device)setStatus("Wybierz zegarek z listy…");
+  await watch.connect(all,device);manualDisconnect=false;
   const ok=await watch.hello().catch(()=>false);
   log(ok?"Powitanie OK.":"Powitanie bez odpowiedzi (nie zawsze potrzebne).");
-  setStatus("Połączono z "+watch.device.name+".","ok");ui(true);
+  setStatus("Połączono z "+(watch.device.name||"zegarkiem")+".","ok");ui(true);
+}
+async function reconnect(){
+  if(!knownDevice&&navigator.bluetooth.getDevices){ // urządzenia, na które strona dostała już zgodę (po odświeżeniu)
+    const list=await navigator.bluetooth.getDevices();knownDevice=list.find(d=>(d.name||"").startsWith("Suunto"))||list[0]||null;
+  }
+  if(!knownDevice)throw new Error("Brak zapamiętanego zegarka – użyj „Połącz z zegarkiem”.");
+  setStatus("Łączę ponownie…");
+  let err;for(let n=1;n<=3;n++){try{await doConnect(false,knownDevice);return}catch(e){err=e;log(`Próba ${n} nieudana: ${e.message}`);await new Promise(r=>setTimeout(r,1500))}}
+  throw err;
+}
+function onDisconnected(dev){
+  ui(false);$("btnReconnect").disabled=false;
+  if(manualDisconnect){setStatus("Rozłączono.");log("Rozłączono.");return}
+  setStatus("Połączenie przerwane – łączę ponownie…","err");log("Połączenie przerwane, próbuję ponownie.");
+  guarded(reconnect);
 }
 $("btnConnect").onclick=()=>guarded(()=>doConnect(false));
 $("btnConnectAll").onclick=()=>guarded(()=>doConnect(true));
-$("btnDisconnect").onclick=()=>{watch&&watch.disconnect()};
+$("btnReconnect").onclick=()=>guarded(reconnect);
+$("btnDisconnect").onclick=()=>{manualDisconnect=true;watch&&watch.disconnect()};
 
 let sessionsCache=[];
 $("btnList").onclick=()=>guarded(async()=>{
