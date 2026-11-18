@@ -357,6 +357,12 @@ Since the automatic backup (§6a) these buttons are under Settings › "Other wa
 3. Refuse twice (or turn it off in the settings), then "Zrób zdjęcie" again: a message with "Otwórz ustawienia" opens the app's system settings. "Anuluj" closes it without a photo.
 4. Photos from the gallery work without any permission, as before.
 
+## 6t. Security fixes (18.11.2026)
+
+1. After the update the app works as before. Android's own cloud backup no longer copies Cruxlog's data (`allowBackup: false`); Cruxlog's own backup to a folder is unchanged.
+2. After the new sheet script is deployed (Zarządzaj wdrożeniami › Nowa wersja): edit a route in the app, then "Wyślij teraz" in Settings. The row appears in the sheet.
+3. Opening the script address in a browser still shows `{"ok":true,"app":"cruxlog-propozycje"}`.
+
 ## 7. Robustness
 1. Change the language and the route grade system, close the app completely (swipe away) and reopen it. Expected: all data is still there, and the language and grade system are the ones you chose.
 2. Rotate the phone, switch to dark mode and back. Expected: readable text and no layout breaks.

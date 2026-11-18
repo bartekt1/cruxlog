@@ -11,6 +11,7 @@
       "bundleIdentifier": "app.cruxlog"
     },
     "android": {
+      "allowBackup": false,
       "adaptiveIcon": {
         "backgroundColor": "#F2EBE2",
         "foregroundImage": "./assets/android-icon-foreground.png",
