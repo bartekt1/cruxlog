@@ -1,6 +1,8 @@
 # Cruxlog: przegląd projektu
 
-Stan na 23 października 2026. Dokument dla zespołu i dla agenta AI, który ma pracować z projektem bez dostępu do kodu. Kod jest w publicznym repozytorium `github.com/bartekt1/cruxlog`, gałąź robocza `claude/optimize-costs-quality-ux-5janpl`, główna `main`.
+Stan na 23 października 2026 (opis aplikacji); stan publikacji i plany uzupełnione 18 listopada 2026 (punkt 9). Dokument dla zespołu i dla agenta AI, który ma pracować z projektem bez dostępu do kodu.
+
+Aktualny stan prac, decyzje i plany są w prywatnym repozytorium właściciela (odesłanie w `CLAUDE.md`). Kod jest w publicznym repozytorium `github.com/bartekt1/cruxlog`, gałąź robocza `claude/optimize-costs-quality-ux-5janpl`, główna `main`.
 
 ## 1. Czym jest Cruxlog
 
@@ -186,12 +188,14 @@ Zasady importu:
 4. Sprawdzenia na urządzeniu: TalkBack, największa czcionka, tryb ciemny na każdym ekranie.
 5. Pomysły do topo: wstawianie punktu między przelotami, lupa pod palcem.
 
-Przed publikacją w sklepie: sprawdzenie nazwy i domeny, polityka prywatności, licencja, opinia prawna o danych z przewodników, wersja na iOS. Potem funkcje społecznościowe z moderacją proponowanych dróg.
+**Publikacja w Google Play (stan 18.11.2026):** konto dewelopera jest aktywne (osobiste, nazwa dewelopera BotaniCrow). Polityka prywatności, opisy i grafiki są gotowe (`docs/GOOGLE_PLAY.md`, `docs/sklep/`). Zostało: uzupełnić imię i nazwisko w `docs/privacy.html`, wersja sklepowa (AAB) bez samoaktualizacji, klucz podpisywania, wpis w konsoli, zrzuty ekranu, test zamknięty (12 testerów przez 14 dni). Plan: `docs/PUBLIKACJA.md`.
+
+Później: licencja (plik `LICENSE`), opinia prawna o danych z przewodników, wersja na iOS, funkcje społecznościowe z moderacją proponowanych dróg.
 
 ## 10. Pytania do dyskusji w zespole
 
 - **Synchronizacja i konta:** czy i kiedy? Dane są na to przygotowane (identyfikatory, daty zmian, miękkie usuwanie).
 - **Prawa do danych z przewodników** przed udostępnieniem innym użytkownikom.
 - **Model katalogu:** wspólna baza skał czy każdy importuje swoją?
-- **Monetyzacja i publikacja:** sklep Google Play, później App Store.
+- **Monetyzacja i publikacja:** sklep Google Play (w toku), później App Store. Ustalenia w prywatnym repozytorium właściciela.
 - **Moderacja dróg proponowanych przez użytkowników:** kto akceptuje i jakie minimum danych.

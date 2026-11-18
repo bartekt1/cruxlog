@@ -1,5 +1,7 @@
 # Next steps
 
+Current status, decisions and plans are kept in the owner's private repo (see `CLAUDE.md`). This file is the older feature list.
+
 Status (2026-10-21): the app runs on the owner's phone (APK from GitHub Actions). Code clean-up after an audit done the same day (see `docs/TESTING.md` §6e). Done:
 - journal, ascent form with own grade, route history;
 - crags tree (region › area › group › crag › sector) with editing, and one import format, the Cruxlog template (`docs/IMPORT.md`; the owner builds his own base, free of third-party data), and a positions file;

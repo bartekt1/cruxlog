@@ -1,6 +1,6 @@
-# Publikacja w sklepach – plan (wstrzymany)
+# Publikacja w sklepach – plan
 
-Stan: **w toku** (2026-10-29): konto Google Play w weryfikacji; polityka prywatności (`docs/privacy.html`) i ściąga do konsoli (`docs/GOOGLE_PLAY.md`, grafiki w `docs/sklep/`) gotowe. Następnie: wersja sklepowa i klucz podpisywania (kroki 1–2). Wcześniej wstrzymane decyzją właściciela (2026-10-28). Aplikacja jest rozprowadzana jako APK z wydań GitHuba (`releases/latest`) z samoaktualizacją. Ten plik zbiera ustalenia, żeby można było wrócić do tematu bez zaczynania od nowa.
+Stan: **w toku** (2026-11-18): konto Google Play **aktywne** (osobiste, nazwa dewelopera BotaniCrow). Polityka prywatności (`docs/privacy.html`, trzeba jeszcze wpisać imię i nazwisko w miejsce `[IMIĘ I NAZWISKO]`) i ściąga do konsoli (`docs/GOOGLE_PLAY.md`, grafiki w `docs/sklep/`) gotowe. Następnie: wersja sklepowa i klucz podpisywania (kroki 1–2). Aplikacja jest na razie rozprowadzana jako APK z wydań GitHuba (`releases/latest`) z samoaktualizacją. Bieżący stan i decyzje (w tym model zarabiania i miejsce budowania wersji sklepowej): prywatne repo `bartekt1/cruxlog-pro`, `docs/STAN_I_DECYZJE.md`.
 
 ## Google Play
 
