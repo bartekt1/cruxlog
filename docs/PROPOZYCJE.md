@@ -21,7 +21,14 @@ Aplikacja wysyła poprawki skał, sektorów i dróg (dodanie, zmiana, usunięcie
 6. Skopiuj **Adres URL aplikacji internetowej** (kończy się na `/exec`) i wyślij go Claude'owi; trafi do `PROPOSALS_URL` w aplikacji.
 7. Sprawdzenie: otwórz ten adres w przeglądarce. Powinno się pokazać `{"ok":true,"app":"cruxlog-propozycje"}`, a w arkuszu pojawi się karta **Propozycje** z nagłówkami.
 
-Zmiana skryptu później (np. wersja z menu sprzątania): wklej nowy kod, potem **Wdróż › Zarządzaj wdrożeniami › ołówek › Wersja: Nowa wersja › Wdróż** (adres zostaje ten sam).
+Zmiana skryptu później (np. wersja z menu sprzątania): wklej nowy kod, potem **Wdróż › Zarządzaj wdrożeniami › ołówek › Wersja: Nowa wersja › Wdróż** (adres zostaje ten sam). Nie wybieraj „Nowe wdrożenie”: to daje nowy adres, którego aplikacja nie zna.
+
+Zabezpieczenia skryptu (wersja z 18.11.2026):
+- `@OnlyCurrentDoc`: skrypt ma dostęp tylko do tego arkusza, nie do innych plików na koncie. Po wklejeniu Google może raz poprosić o zgodę na nowy, węższy zakres.
+- Przyjmuje tylko paczki z aplikacji: znany rodzaj zmiany, poprawny kod telefonu, najwyżej 200 wierszy i 500 kB.
+- Limity na dobę: 2000 wierszy z jednego telefonu i 20 000 ze wszystkich razem.
+- Tekst zaczynający się od `=`, `+`, `-` lub `@` nie staje się formułą.
+- Błędy nie zdradzają szczegółów; są w dzienniku skryptu (Wykonania).
 
 ## Sprzątanie
 

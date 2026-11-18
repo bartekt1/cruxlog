@@ -1,3 +1,7 @@
+/**
+ * @OnlyCurrentDoc  Skrypt widzi tylko ten jeden arkusz, nie inne pliki na koncie.
+ */
+
 // Cruxlog – wspólna baza robocza skał (Google Apps Script przy arkuszu „Cruxlog – propozycje”).
 // Przyjmuje od aplikacji paczki zmian (JSON) i dopisuje je jako wiersze arkusza „Propozycje”.
 // Można tylko dopisywać: nikt z zewnątrz nie odczyta ani nie usunie arkusza. Instrukcja: docs/PROPOZYCJE.md.
@@ -11,31 +15,44 @@ const KEYS = ['at', 'kind', 'changes', 'device', ...TEMPLATE, 'appId', 'appCragI
 const HEADER = ['Kiedy', 'Zmiana', 'Co zmieniono', 'Urządzenie', ...TEMPLATE, 'ID w aplikacji', 'ID skały w aplikacji'];
 const MAX_ROWS = 200;          // w jednej paczce
 const MAX_PER_DAY = 2000;      // z jednego telefonu na dobę
+const MAX_ALL_PER_DAY = 20000; // ze wszystkich telefonów razem na dobę (ochrona przed zasypaniem arkusza)
+const MAX_BODY = 500000;       // największa paczka w bajtach
+// Rodzaje zmian, które wysyła aplikacja (KIND_LABEL w src/domain/proposals.ts); „TEST…” do sprawdzania skryptu.
+const KINDS = ['nowa skała', 'poprawka skały', 'położenie skały', 'usunięcie skały', 'nowy sektor', 'poprawka sektora', 'usunięcie sektora',
+  'nowa droga', 'poprawka drogi', 'usunięcie drogi'];
+const DEVICE = /^[a-z0-9]{6}$/; // losowy kod telefonu z aplikacji
 
 function doPost(e) {
   try {
+    if (!e || !e.postData || e.postData.contents.length > MAX_BODY) return out({ ok: false, error: 'bad request' });
     const body = JSON.parse(e.postData.contents);
     if (!body || body.app !== 'cruxlog' || !Array.isArray(body.rows)) return out({ ok: false, error: 'bad request' });
     if (body.rows.length > MAX_ROWS) return out({ ok: false, error: 'too many rows' });
     const rows = body.rows.map((r) => KEYS.map((k) => clean(r && r[k])));
     if (!rows.length) return out({ ok: true, added: 0 });
-    const device = rows[0][3] || '?';
+    // Każdy wiersz: znany rodzaj zmiany i ten sam, poprawny kod telefonu. Inaczej cała paczka jest odrzucana.
+    const device = rows[0][3];
+    const valid = DEVICE.test(device) && rows.every((r) => r[3] === device && (KINDS.indexOf(r[1]) >= 0 || /^TEST/.test(r[1])));
+    if (!valid) return out({ ok: false, error: 'bad request' });
+    const day = new Date().toISOString().slice(0, 10);
     const cache = CacheService.getScriptCache();
-    const key = 'n-' + device + '-' + new Date().toISOString().slice(0, 10);
-    const today = Number(cache.get(key) || 0);
-    if (today + rows.length > MAX_PER_DAY) return out({ ok: false, error: 'daily limit' });
     const lock = LockService.getScriptLock();
     lock.waitLock(20000);
     try {
+      const mine = Number(cache.get('n-' + device + '-' + day) || 0);
+      const all = Number(cache.get('all-' + day) || 0);
+      if (mine + rows.length > MAX_PER_DAY || all + rows.length > MAX_ALL_PER_DAY) return out({ ok: false, error: 'daily limit' });
       const sh = sheet();
       sh.getRange(sh.getLastRow() + 1, 1, rows.length, KEYS.length).setValues(rows);
+      cache.put('n-' + device + '-' + day, String(mine + rows.length), 6 * 60 * 60);
+      cache.put('all-' + day, String(all + rows.length), 6 * 60 * 60);
     } finally {
       lock.releaseLock();
     }
-    cache.put(key, String(today + rows.length), 6 * 60 * 60);
     return out({ ok: true, added: rows.length });
   } catch (err) {
-    return out({ ok: false, error: String(err) });
+    console.error(err); // szczegóły tylko w dzienniku skryptu (Wykonania), nie w odpowiedzi
+    return out({ ok: false, error: 'error' });
   }
 }
 
