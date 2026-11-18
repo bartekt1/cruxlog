@@ -2,7 +2,7 @@
 
 Stan na 23 października 2026 (opis aplikacji); stan publikacji i plany uzupełnione 18 listopada 2026 (punkt 9). Dokument dla zespołu i dla agenta AI, który ma pracować z projektem bez dostępu do kodu.
 
-Aktualny stan prac, decyzje i plany (publikacja, zegarek Suunto, kod QR drogi, wersja Pro) są w prywatnym repozytorium `bartekt1/cruxlog-pro`, plik `docs/STAN_I_DECYZJE.md`. Agent z dostępem do tego repo powinien zacząć od niego. Kod jest w publicznym repozytorium `github.com/bartekt1/cruxlog`, gałąź robocza `claude/optimize-costs-quality-ux-5janpl`, główna `main`.
+Aktualny stan prac, decyzje i plany są w prywatnym repozytorium właściciela (odesłanie w `CLAUDE.md`). Kod jest w publicznym repozytorium `github.com/bartekt1/cruxlog`, gałąź robocza `claude/optimize-costs-quality-ux-5janpl`, główna `main`.
 
 ## 1. Czym jest Cruxlog
 
@@ -197,5 +197,5 @@ Później: licencja (plik `LICENSE`), opinia prawna o danych z przewodników, we
 - **Synchronizacja i konta:** czy i kiedy? Dane są na to przygotowane (identyfikatory, daty zmian, miękkie usuwanie).
 - **Prawa do danych z przewodników** przed udostępnieniem innym użytkownikom.
 - **Model katalogu:** wspólna baza skał czy każdy importuje swoją?
-- **Monetyzacja i publikacja:** sklep Google Play (w toku), później App Store. Ustalenia w `bartekt1/cruxlog-pro`.
+- **Monetyzacja i publikacja:** sklep Google Play (w toku), później App Store. Ustalenia w prywatnym repozytorium właściciela.
 - **Moderacja dróg proponowanych przez użytkowników:** kto akceptuje i jakie minimum danych.

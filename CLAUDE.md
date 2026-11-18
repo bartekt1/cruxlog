@@ -2,7 +2,7 @@
 
 Cruxlog: climbing logbook and crag guide. Expo SDK 57, React Native, TypeScript, expo-router, expo-sqlite, Zustand, i18next.
 
-- **Current status, decisions and plans live in the private repo `bartekt1/cruxlog-pro`** (`docs/STAN_I_DECYZJE.md`, plus plans for the Suunto watch, route QR codes and the Pro version). If that repo is attached to the session, read `docs/STAN_I_DECYZJE.md` first. If it is not, tell the owner to attach it. Never copy its content into this public repo.
+- **Current status, decisions and plans live in the private repo `bartekt1/cruxlog-pro`** (`docs/STAN_I_DECYZJE.md`). If that repo is attached to the session, read `docs/STAN_I_DECYZJE.md` first. If it is not, tell the owner to attach it. Never copy its content into this public repo.
 
 - Expo APIs change between SDKs. Check https://docs.expo.dev/versions/v57.0.0/ before using one you are unsure of.
 - Install Expo packages with versions from `node_modules/expo/bundledNativeModules.json` (the `expo install` command cannot reach the Expo API from the cloud sandbox).

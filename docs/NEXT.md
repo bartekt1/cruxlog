@@ -1,6 +1,6 @@
 # Next steps
 
-Current status, decisions and plans (Google Play release, Suunto watch, route QR codes, Pro version) are kept in the private repo `bartekt1/cruxlog-pro`, `docs/STAN_I_DECYZJE.md` (updated 2026-11-18). This file is the older feature list.
+Current status, decisions and plans are kept in the owner's private repo (see `CLAUDE.md`). This file is the older feature list.
 
 Status (2026-10-21): the app runs on the owner's phone (APK from GitHub Actions). Code clean-up after an audit done the same day (see `docs/TESTING.md` §6e). Done:
 - journal, ascent form with own grade, route history;
