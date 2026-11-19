@@ -16,6 +16,8 @@ import { shareCardImage } from '../../src/ui/shareImage';
 import { GoalsCard, STATS_CARD_RATIO, type CardPalette, type GoalsCardData, type GoalsCardItem } from '../../src/ui/StatsCard';
 import { Text } from '../../src/ui/Text';
 import { useTheme } from '../../src/ui/theme';
+import { pro } from '../../src/pro';
+import { ProChip } from '../../src/ui/ProTeaser';
 
 const MAX = 5;
 
@@ -31,7 +33,8 @@ export default function GoalsShare() {
   const [goals, setGoals] = useState<GoalRow[] | undefined>(undefined);
   const [ascents, setAscents] = useState<StatAscent[]>([]);
   const [chosen, setChosen] = useState<string[]>([]);
-  const [look, setLook] = useState<CardPalette>(cardStyle === 'night' ? 'night' : 'paper');
+  const nightLook = pro.has('cardStyles'); // the night look is Pro (src/pro)
+  const [look, setLook] = useState<CardPalette>(nightLook && cardStyle === 'night' ? 'night' : 'paper');
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -94,7 +97,7 @@ export default function GoalsShare() {
       <Label>{t('cards.look')}</Label>
       <ChipRow>
         <Chip label={t('cards.styles.guide')} on={look === 'paper'} onPress={() => setLook('paper')} />
-        <Chip label={t('cards.styles.night')} on={look === 'night'} onPress={() => setLook('night')} />
+        {nightLook ? <Chip label={t('cards.styles.night')} on={look === 'night'} onPress={() => setLook('night')} /> : <ProChip label={t('cards.styles.night')} />}
       </ChipRow>
       <Label>{t('share.message')}</Label>
       <Field value={message} onChangeText={setMessage} maxLength={120} placeholder={t('goalsShare.messagePlaceholder')} accessibilityLabel={t('share.message')} />

@@ -1,8 +1,7 @@
-import type { ReactElement } from 'react';
 import { View } from 'react-native';
 import type { CardStyle } from '../domain/settings';
+import { pro } from '../pro';
 import { CARD_RATIO, CardFooter, PhotoBox, type CardProps, type ShareCardData } from './cardParts';
-import { FullCard, NightCard, PolaroidCard, PosterCard, TicketCard, TopoCard } from './cardStyles';
 import { Contours } from './Contours';
 import { F } from './fonts';
 import { Text } from './Text';
@@ -51,17 +50,19 @@ function PhotoCard({ data, width, onPhotoLoaded }: CardProps) {
   );
 }
 
-const STYLES: Record<Exclude<CardStyle, 'guide'>, (p: CardProps) => ReactElement> = {
-  full: FullCard, polaroid: PolaroidCard, poster: PosterCard, ticket: TicketCard, night: NightCard, topo: TopoCard,
-};
-
 /**
  * The picture sent to a friend, in the look the user picked (`look`), the same whatever the phone's theme.
  * Sized by `width` (dp) so the preview and the saved image look the same.
  */
 export function ShareCard({ look = 'guide', ...p }: CardProps & { look?: CardStyle }) {
-  if (look !== 'guide') { const Card = STYLES[look]; return <Card {...p} />; }
-  return <GuideCard {...p} />;
+  // Looks other than "guide" are Pro (src/pro); without them the guide look is drawn.
+  const Card = look !== 'guide' && pro.has('cardStyles') ? pro.cardStyles?.[look] : undefined;
+  return Card ? <Card {...p} /> : <GuideCard {...p} />;
+}
+
+/** The card look actually drawn for a chosen one: the guide look when the chosen one is not available. */
+export function cardLook(look: CardStyle): CardStyle {
+  return look !== 'guide' && pro.has('cardStyles') && pro.cardStyles?.[look] ? look : 'guide';
 }
 
 /** "Przewodnik": the app's own look on paper. */

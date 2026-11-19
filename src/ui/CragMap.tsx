@@ -1,13 +1,16 @@
 import { Camera, GeoJSONSource, Layer, Map, UserLocation, type CameraRef } from '@maplibre/maplibre-react-native';
+import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 import { boundsOf, distanceM, formatDistance, isLatLng, type LatLng } from '../domain/geo';
+import { pro } from '../pro';
 import { F } from './fonts';
 import { IconButton } from './icons';
 import { Button } from './kit';
 import { DEFAULT_VIEW, LABEL_FONT, mapStyle } from './mapStyles';
 import { navigateTo } from './navigate';
+import { ProBadge } from './ProTeaser';
 import { useSettings } from './settingsStore';
 import { Text } from './Text';
 import { useTheme } from './theme';
@@ -20,7 +23,11 @@ export type MapCrag = { id: string; name: string; lat: number | null; lng: numbe
 export function CragMap({ crags, onOpen }: { crags: MapCrag[]; onOpen: (id: string) => void }) {
   const { t, i18n } = useTranslation();
   const th = useTheme();
-  const { mapBase, setMapBase } = useSettings();
+  const router = useRouter();
+  const { mapBase: chosenBase, setMapBase } = useSettings();
+  // The hiking map with contour lines is Pro (src/pro); without it the standard map is shown and its button opens the Pro screen.
+  const topoMap = pro.has('topoMap');
+  const mapBase = topoMap ? chosenBase : 'standard';
   const loc = useLocation();
   const camera = useRef<CameraRef>(null);
   const [selected, setSelected] = useState<string | null>(null);
@@ -70,10 +77,13 @@ export function CragMap({ crags, onOpen }: { crags: MapCrag[]; onOpen: (id: stri
       </Map>
 
       <View style={{ position: 'absolute', top: 12, right: 12, gap: 8, alignItems: 'flex-end' }}>
-        <Pressable onPress={() => setMapBase(mapBase === 'topo' ? 'standard' : 'topo')} accessibilityRole="button"
+        <Pressable onPress={() => (topoMap ? setMapBase(mapBase === 'topo' ? 'standard' : 'topo') : router.push('/pro'))} accessibilityRole="button"
           accessibilityLabel={t('map.switchBase')}
           style={({ pressed }) => ({ backgroundColor: th.surface, borderColor: th.line, borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, minHeight: 44, justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
-          <Text style={{ color: th.ink, fontFamily: F.semi }}>{mapBase === 'topo' ? t('map.standard') : t('map.topo')}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Text style={{ color: th.ink, fontFamily: F.semi }}>{mapBase === 'topo' ? t('map.standard') : t('map.topo')}</Text>
+            {topoMap ? null : <ProBadge />}
+          </View>
         </Pressable>
         <View style={{ backgroundColor: th.surface, borderColor: th.line, borderWidth: 1, borderRadius: 12 }}>
           <IconButton name={loc.busy ? 'hourglass-outline' : 'locate'} size={26} label={t('map.showMe')} onPress={showMe} color={th.ink} />
