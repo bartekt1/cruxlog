@@ -50,14 +50,12 @@ export default function RootLayout() {
         <Stack.Screen name="area/[id]" options={{ title: t('areas.level.region') }} />
         <Stack.Screen name="area/new" options={{ title: t('areas.addItem.region') }} />
         <Stack.Screen name="goal/[id]" options={{ title: t('goals.editTitle') }} />
-        <Stack.Screen name="trip/[id]" options={{ title: t('trip.title') }} />
-        <Stack.Screen name="trip/edit" options={{ title: t('trip.newTitle') }} />
-        <Stack.Screen name="trip/share" options={{ title: t('share.title'), presentation: 'modal' }} />
         <Stack.Screen name="day/share" options={{ title: t('dayShare.title'), presentation: 'modal' }} />
         <Stack.Screen name="stats/share" options={{ title: t('statsShare.title'), presentation: 'modal' }} />
         <Stack.Screen name="goal/share" options={{ title: t('goalsShare.title'), presentation: 'modal' }} />
         <Stack.Screen name="settings" options={{ title: t('settings.title') }} />
         <Stack.Screen name="mine" options={{ title: t('mine.title') }} />
+        <Stack.Screen name="pro" options={{ title: t('pro.title') }} />
         <Stack.Screen name="packs" options={{ title: t('packs.title') }} />
       </Stack>
     </SQLiteProvider>

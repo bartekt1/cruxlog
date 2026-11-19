@@ -16,6 +16,8 @@ import { useSettings } from '../../src/ui/settingsStore';
 import { shareCardImage } from '../../src/ui/shareImage';
 import { Text } from '../../src/ui/Text';
 import { useTheme } from '../../src/ui/theme';
+import { pro } from '../../src/pro';
+import { ProChip } from '../../src/ui/ProTeaser';
 import { TRIP_CARD_RATIO, TripCard, type TripCardData, type TripCardRow } from '../../src/ui/TripCard';
 
 const ROWS = 8; // routes that fit on the card; the rest are counted
@@ -32,7 +34,8 @@ export default function DayShare() {
   const [ascents, setAscents] = useState<AscentRow[] | undefined>(undefined);
   const [crags, setCrags] = useState<CragDetail[]>([]);
   const [areas, setAreas] = useState<AreaRow[]>([]);
-  const [night, setNight] = useState(cardStyle === 'night');
+  const nightLook = pro.has('cardStyles'); // the night look is Pro (src/pro)
+  const [night, setNight] = useState(nightLook && cardStyle === 'night');
   const [withPlace, setWithPlace] = useState(true);
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
@@ -105,7 +108,7 @@ export default function DayShare() {
       <Label>{t('cards.look')}</Label>
       <ChipRow>
         <Chip label={t('cards.styles.guide')} on={!night} onPress={() => setNight(false)} />
-        <Chip label={t('cards.styles.night')} on={night} onPress={() => setNight(true)} />
+        {nightLook ? <Chip label={t('cards.styles.night')} on={night} onPress={() => setNight(true)} /> : <ProChip label={t('cards.styles.night')} />}
       </ChipRow>
       <Label>{t('share.message')}</Label>
       <Field value={message} onChangeText={setMessage} maxLength={140} multiline placeholder={t('trip.bragPlaceholder')}

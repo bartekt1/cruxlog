@@ -363,6 +363,16 @@ Since the automatic backup (§6a) these buttons are under Settings › "Other wa
 2. After the new sheet script is deployed (Zarządzaj wdrożeniami › Nowa wersja): edit a route in the app, then "Wyślij teraz" in Settings. The row appears in the sheet.
 3. Opening the script address in a browser still shows `{"ok":true,"app":"cruxlog-propozycje"}`.
 
+## 6u. Free version without Pro features
+
+1. Progress: the season's tiles and "the hardest by month" only, with no year arrows. Below them is a "PRO" card "Więcej statystyk w Cruxlog Pro"; tapping it opens the Cruxlog Pro screen ("Wkrótce w wersji z Google Play").
+2. Plans: no trips. A "PRO" card "Wyprawy w Cruxlog Pro" sits above the goals. Goals work as before. Existing trips stay in the data and in backups, only hidden.
+3. Crag screen › "⋯": no "Zaplanuj wyprawę". In the ascent form there are no routes proposed from a trip.
+4. Map: the "Turystyczna" button has a PRO mark and opens the Pro screen; the map stays standard (also after the update, if the hiking map was chosen before).
+5. Share an ascent: "Przewodnik" can be chosen; the other 6 looks are chips with PRO that open the Pro screen. A look chosen before the update falls back to "Przewodnik".
+6. Share the year: this season only (no year chips), no partners switch, "Noc" with PRO. Share the day and goals: "Noc" with PRO.
+7. Backup and restore still work, including a backup with trips.
+
 ## 7. Robustness
 1. Change the language and the route grade system, close the app completely (swipe away) and reopen it. Expected: all data is still there, and the language and grade system are the ones you chose.
 2. Rotate the phone, switch to dark mode and back. Expected: readable text and no layout breaks.
