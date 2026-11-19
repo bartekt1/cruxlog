@@ -23,6 +23,8 @@ Aplikacja wysyła poprawki skał, sektorów i dróg (dodanie, zmiana, usunięcie
 
 Zmiana skryptu później (np. wersja z menu sprzątania): wklej nowy kod, potem **Wdróż › Zarządzaj wdrożeniami › ołówek › Wersja: Nowa wersja › Wdróż** (adres zostaje ten sam). Nie wybieraj „Nowe wdrożenie”: to daje nowy adres, którego aplikacja nie zna.
 
+Aktywne wdrożenie (od 19.11.2026): „Cruxloger-pro”, konto cruxlogger@gmail.com, „Kto ma dostęp: Każdy”; jego adres jest w `PROPOSALS_URL` (`src/domain/proposals.ts`). Poprzednie wdrożenia są zarchiwizowane. Jeśli kiedyś trzeba będzie zrobić nowe wdrożenie, nowy adres trzeba wpisać do aplikacji i wydać aktualizację.
+
 Zabezpieczenia skryptu (wersja z 18.11.2026):
 - `@OnlyCurrentDoc`: skrypt ma dostęp tylko do tego arkusza, nie do innych plików na koncie. Po wklejeniu Google może raz poprosić o zgodę na nowy, węższy zakres.
 - Przyjmuje tylko paczki z aplikacji: znany rodzaj zmiany, poprawny kod telefonu, najwyżej 200 wierszy i 500 kB.
