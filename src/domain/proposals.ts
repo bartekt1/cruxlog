@@ -3,7 +3,7 @@
 // Only crag and route facts are sent: never ascents, partners, goals, photos or the user's position.
 
 /** The Apps Script web app the proposals go to; empty until it is set up (then nothing is sent). */
-export const PROPOSALS_URL = 'https://script.google.com/macros/s/AKfycbwP2sFy-EFjVILfgYKGz47enntQ1q1gnuEjBsGtX6vSgGGqi6bp_NEf0VhAg3S08zmFfg/exec';
+export const PROPOSALS_URL = 'https://script.google.com/macros/s/AKfycbzarQHxLP6q_NaZGHebiMusbijxxj5fM-sPd-iFY2gqi1kBu0k7IrrvSK_LYdd0YysJZA/exec';
 
 /** The columns of the Cruxlog template (docs/IMPORT.md), so a good row can be pasted into the base as it is. */
 export const PROPOSAL_COLUMNS = [
