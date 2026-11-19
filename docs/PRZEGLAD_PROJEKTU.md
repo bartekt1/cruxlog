@@ -186,11 +186,10 @@ Zasady importu:
 2. Multipitch w formularzu przejścia: wyciągi, kto prowadził, styl na wyciąg.
 3. Skały bez pozycji: poprawianie na miejscu, ewentualnie ponowne dopasowanie z OSM.
 4. Sprawdzenia na urządzeniu: TalkBack, największa czcionka, tryb ciemny na każdym ekranie.
-5. Pomysły do topo: wstawianie punktu między przelotami, lupa pod palcem.
 
-**Publikacja w Google Play (stan 18.11.2026):** konto dewelopera jest aktywne (osobiste, nazwa dewelopera BotaniCrow). Polityka prywatności, opisy i grafiki są gotowe (`docs/GOOGLE_PLAY.md`, `docs/sklep/`). Zostało: uzupełnić imię i nazwisko w `docs/privacy.html`, wersja sklepowa (AAB) bez samoaktualizacji, klucz podpisywania, wpis w konsoli, zrzuty ekranu, test zamknięty (12 testerów przez 14 dni). Plan: `docs/PUBLIKACJA.md`.
+**Publikacja w Google Play (stan 18.11.2026):** konto dewelopera jest aktywne (osobiste, nazwa dewelopera BotaniCrow). Polityka prywatności, opisy i grafiki są gotowe (`docs/GOOGLE_PLAY.md`, `docs/sklep/`). Polityka jest uzupełniona i opublikowana. Zostało: wersja sklepowa (AAB) bez samoaktualizacji, klucz podpisywania, wpis w konsoli, zrzuty ekranu, test zamknięty (12 testerów przez 14 dni). Plan: `docs/PUBLIKACJA.md`.
 
-Później: licencja (plik `LICENSE`), opinia prawna o danych z przewodników, wersja na iOS, funkcje społecznościowe z moderacją proponowanych dróg.
+Licencja: plik `LICENSE` (wszystkie prawa zastrzeżone). Później: opinia prawna o danych z przewodników, wersja na iOS, funkcje społecznościowe z moderacją proponowanych dróg.
 
 ## 10. Pytania do dyskusji w zespole
 

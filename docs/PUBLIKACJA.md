@@ -1,6 +1,6 @@
 # Publikacja w sklepach – plan
 
-Stan: **w toku** (2026-11-18): konto Google Play **aktywne** (osobiste, nazwa dewelopera BotaniCrow). Polityka prywatności (`docs/privacy.html`, trzeba jeszcze wpisać imię i nazwisko w miejsce `[IMIĘ I NAZWISKO]`) i ściąga do konsoli (`docs/GOOGLE_PLAY.md`, grafiki w `docs/sklep/`) gotowe. Następnie: wersja sklepowa i klucz podpisywania (kroki 1–2). Aplikacja jest na razie rozprowadzana jako APK z wydań GitHuba (`releases/latest`) z samoaktualizacją. Bieżący stan i decyzje (w tym model zarabiania i miejsce budowania wersji sklepowej): prywatne repo `bartekt1/cruxlog-pro`, `docs/STAN_I_DECYZJE.md`.
+Stan: **w toku** (2026-11-19): konto Google Play **aktywne** (osobiste, nazwa dewelopera BotaniCrow). Polityka prywatności (`docs/privacy.html`, opublikowana na GitHub Pages) i ściąga do konsoli (`docs/GOOGLE_PLAY.md`, grafiki w `docs/sklep/`) gotowe. Następnie: wersja sklepowa i klucz podpisywania (kroki 1–2). Aplikacja jest na razie rozprowadzana jako APK z wydań GitHuba (`releases/latest`) z samoaktualizacją. Bieżący stan i decyzje: prywatne repo właściciela (patrz `CLAUDE.md`).
 
 ## Google Play
 
@@ -42,7 +42,7 @@ Stan: **w toku** (2026-11-18): konto Google Play **aktywne** (osobiste, nazwa de
 
 - ~~E-mail kontaktowy~~: cruxlogger@gmail.com.
 - ~~Nazwa w sklepie~~: „Cruxlog – dziennik wspinacza” / „Cruxlog – climbing logbook” (limit 30 znaków).
-- Administrator danych w polityce: imię i nazwisko właściciela (do wpisania w `docs/privacy.html` w miejsce [IMIĘ I NAZWISKO] / [FULL NAME]).
+- ~~Administrator danych w polityce~~: Bartosz Tyczyński (wpisane 19.11.2026).
 
 ## iPhone (iOS)
 
