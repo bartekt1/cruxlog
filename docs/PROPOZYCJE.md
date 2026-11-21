@@ -23,6 +23,8 @@ Aplikacja wysyła poprawki skał, sektorów i dróg (dodanie, zmiana, usunięcie
 
 Zmiana skryptu później (np. wersja z menu sprzątania): wklej nowy kod, potem **Wdróż › Zarządzaj wdrożeniami › ołówek › Wersja: Nowa wersja › Wdróż** (adres zostaje ten sam). Nie wybieraj „Nowe wdrożenie”: to daje nowy adres, którego aplikacja nie zna.
 
+Prośba o usunięcie zgłoszeń (RODO): użytkownik podaje kod telefonu z Ustawień › Wspólna baza skał; w arkuszu filtr po kolumnie „Urządzenie” › zaznacz wiersze › Usuń wiersze › krótka odpowiedź mailem. Raz w roku usuń wiersze starsze niż 2 lata (obietnica z polityki prywatności).
+
 Aktywne wdrożenie (od 19.11.2026): „Cruxloger-pro”, konto cruxlogger@gmail.com, „Kto ma dostęp: Każdy”; jego adres jest w `PROPOSALS_URL` (`src/domain/proposals.ts`). Poprzednie wdrożenia są zarchiwizowane. Jeśli kiedyś trzeba będzie zrobić nowe wdrożenie, nowy adres trzeba wpisać do aplikacji i wydać aktualizację.
 
 Zabezpieczenia skryptu (wersja z 18.11.2026):

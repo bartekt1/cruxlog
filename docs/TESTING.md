@@ -373,6 +373,11 @@ Since the automatic backup (§6a) these buttons are under Settings › "Other wa
 6. Share the year: this season only (no year chips), no partners switch, "Noc" with PRO. Share the day and goals: "Noc" with PRO.
 7. Backup and restore still work, including a backup with trips.
 
+## 6v. Device code in Settings
+
+1. Before anything was ever sent: Settings › Wspólna baza skał shows no code.
+2. After "Wyślij teraz" (or an automatic send): the section shows "Kod tego telefonu w zgłoszeniach: xxxxxx". The same code is in the sheet's "Urządzenie" column. The code can be selected and copied.
+
 ## 7. Robustness
 1. Change the language and the route grade system, close the app completely (swipe away) and reopen it. Expected: all data is still there, and the language and grade system are the ones you chose.
 2. Rotate the phone, switch to dark mode and back. Expected: readable text and no layout breaks.
