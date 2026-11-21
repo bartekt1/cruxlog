@@ -13,8 +13,9 @@ import { formatDateTime } from '../../domain/dates';
 import { AppError } from '../../domain/errors';
 import { backupStatus } from '../../domain/history';
 import { formatBytes } from '../../domain/photos';
-import { backupNow, listBackups, restorePhotos, restoreBackup, scanFolder, withBackupLock, type FolderBackup } from '../autoBackup';
+import { backupNow, listBackups, restoreBackup, scanFolder, withBackupLock, type FolderBackup } from '../autoBackup';
 import { pickBackupFolder, testBackupFolder } from '../backupFolder';
+import { restorePhotosInBackground, usePhotoRestore } from '../photoRestore';
 import { ask } from '../confirm';
 import { errorMessage } from '../errors';
 import { F } from '../fonts';
@@ -38,6 +39,11 @@ export function BackupSection({ run, busy }: { run: Run; busy: boolean }) {
   useEffect(() => { hasAscents(db).then(setHasData); }, [db]);
   useEffect(() => { activePhotos(db).then((p) => setPhotoStats({ count: p.length, bytes: p.reduce((sum, x) => sum + x.bytes, 0) })); }, [db]);
   const backup = backupStatus(s.lastBackupAt, Date.now(), hasData);
+  const photoRestore = usePhotoRestore();
+  const photoLine = photoRestore.active
+    ? (photoRestore.total ? t('photos.restoreProgress', { done: photoRestore.done, total: photoRestore.total }) : t('photos.restoreLooking'))
+    : photoRestore.error ? t('photos.restoreFailed', { message: photoRestore.error })
+    : photoRestore.restored != null ? t('photos.restored', { count: photoRestore.restored }) : '';
 
   const doExport = () => run(async () => {
     const file = new File(Paths.cache, `cruxlog-backup-${Date.now()}.json`);
@@ -85,10 +91,11 @@ export function BackupSection({ run, busy }: { run: Run; busy: boolean }) {
   const doRestore = (b: FolderBackup) => run(async () => {
     const ok = await ask(t('settings.restoreTitle'), t('settings.restoreQuestion', { when: when(b.at) }), t('settings.restoreYes'), t('common.cancel'));
     if (!ok) return;
-    const { records, photos } = await withBackupLock(async () => ({
-      records: await restoreBackup(db, b), photos: await restorePhotos(db, s.backupDir!),
-    }));
-    return t('settings.importDone', { count: records }) + (photos ? `\n\n${t('photos.restored', { count: photos })}` : '');
+    // The data first (seconds); the photos follow in the background with their progress shown below, as on Google Drive
+    // they can take minutes.
+    const records = await withBackupLock(() => restoreBackup(db, b));
+    restorePhotosInBackground(db, s.backupDir!);
+    return `${t('settings.importDone', { count: records })}\n\n${t('photos.restoringLater')}`;
   });
 
   const doImport = () => run(async () => {
@@ -104,10 +111,9 @@ export function BackupSection({ run, busy }: { run: Run; busy: boolean }) {
       throw new AppError('settings.notBackup');
     }
     const n = await importBackup(db, data);
-    // The pictures come from the backup folder, if one is chosen.
-    const dir = s.backupDir;
-    const photos = dir ? await withBackupLock(() => restorePhotos(db, dir)).catch(() => 0) : 0;
-    return t('settings.importDone', { count: n }) + (photos ? `\n\n${t('photos.restored', { count: photos })}` : '');
+    // The pictures come from the backup folder, if one is chosen, in the background.
+    if (s.backupDir) restorePhotosInBackground(db, s.backupDir);
+    return t('settings.importDone', { count: n }) + (s.backupDir ? `\n\n${t('photos.restoringLater')}` : '');
   });
 
   return (
@@ -122,6 +128,7 @@ export function BackupSection({ run, busy }: { run: Run; busy: boolean }) {
             {s.autoBackupError ? (s.autoBackupError.startsWith('photos:') ? t('photos.backupFailed', { message: s.autoBackupError.slice(7) }) : t('settings.autoFailed', { message: s.autoBackupError }))
               : s.autoBackupAt ? t('settings.autoLast', { when: when(s.autoBackupAt) }) : t('settings.autoNever')}
           </Text>
+          {photoLine ? <Text accessibilityLiveRegion="polite" style={{ color: photoRestore.error ? th.warn : th.ink, marginTop: 4, fontWeight: '600' }}>{photoLine}</Text> : null}
           {photoStats.count ? <Text style={{ color: th.muted, marginTop: 2 }}>{t('photos.stats', { count: photoStats.count, size: formatBytes(photoStats.bytes, i18n.language) })}</Text> : null}
           <Button label={t('settings.backupNow')} onPress={doBackupNow} disabled={busy} />
           <Button label={copies ? t('settings.hideCopies') : t('settings.showCopies')} onPress={showCopies} variant="plain" disabled={busy} />

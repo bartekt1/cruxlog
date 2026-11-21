@@ -49,6 +49,15 @@ export function dropCopies(index: BackupIndex, uris: string[]): BackupIndex {
 }
 
 /** What a look through the folder found, merged into what is already known. */
+/**
+ * Adds the copies found by a quick look at the folder (the copies only, not the photos). The photos stay as they were and the
+ * folder does not count as looked through, so a later backup of photos still checks what the folder has.
+ */
+export function mergeCopies(index: BackupIndex, copies: FolderCopy[]): BackupIndex {
+  const byUri = new Map([...copies, ...index.copies].map((c) => [c.uri, c]));
+  return { ...index, copies: sortCopies([...byUri.values()]) };
+}
+
 export function mergeScan(index: BackupIndex, found: { copies: FolderCopy[]; photos: Record<string, string>; photoDir: string | null }): BackupIndex {
   const byUri = new Map([...found.copies, ...index.copies].map((c) => [c.uri, c]));
   return {

@@ -1,4 +1,4 @@
-import { backupDue, photosDue, backupFileName, devicePath, folderKind, packBackup, RETRY_AFTER_MS, unpackBackup } from '../src/domain/autoBackup';
+import { backupDue, photosDue, backupFileName, devicePath, folderKind, packBackup, peekBackup, PEEK_BYTES, RETRY_AFTER_MS, unpackBackup } from '../src/domain/autoBackup';
 
 const DAY = 86_400_000;
 
@@ -60,5 +60,25 @@ describe('photosDue', () => {
     expect(photosDue({ ...base, failed: true, lastTryAt: now - 60_000 })).toBe(false);
     expect(photosDue({ ...base, failed: true, lastTryAt: now - RETRY_AFTER_MS - 1 })).toBe(true);
     expect(photosDue({ ...base, failed: false, lastTryAt: now - 60_000 })).toBe(true);
+  });
+});
+
+describe('peekBackup', () => {
+  // A backup as exportBackup writes it, with enough rows that the file is much longer than the peeked start.
+  const rows = Array.from({ length: 3000 }, (_, i) => ({ id: `r${i}`, name: `Droga ${i} ${Math.random()}`, grade: i % 40 }));
+  const json = JSON.stringify({ app: 'cruxlog', version: 9, exportedAt: 1763700000000, tables: { route: rows } });
+  it('recognises a gzipped copy from its first bytes', () => {
+    const bytes = packBackup(json);
+    expect(bytes.length).toBeGreaterThan(PEEK_BYTES * 4);
+    expect(peekBackup(bytes.subarray(0, PEEK_BYTES))).toEqual({ at: 1763700000000 });
+  });
+  it('recognises a plain JSON copy', () => {
+    expect(peekBackup(new TextEncoder().encode(json).subarray(0, PEEK_BYTES))).toEqual({ at: 1763700000000 });
+  });
+  it('says no to other files', () => {
+    expect(peekBackup(packBackup(JSON.stringify({ app: 'other', version: 1, exportedAt: 1 })).subarray(0, PEEK_BYTES))).toBeNull();
+    expect(peekBackup(new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3]))).toBeNull();
+    expect(peekBackup(new Uint8Array([0x1f, 0x8b, 0, 0]))).toBeNull();
+    expect(peekBackup(new Uint8Array())).toBeNull();
   });
 });

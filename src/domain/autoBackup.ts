@@ -1,5 +1,5 @@
 // Rules for the automatic backup into a folder: file names, which old files to delete, when a new copy is due.
-import { gunzipSync, gzipSync, strFromU8, strToU8 } from 'fflate';
+import { Gunzip, gunzipSync, gzipSync, strFromU8, strToU8 } from 'fflate';
 
 export const BACKUP_KEEP = 5;
 export const BACKUP_INTERVAL_DAYS = 7;
@@ -53,6 +53,31 @@ export function devicePath(uri: string): string {
 /** A backup file is gzipped JSON (about 20 times smaller than plain JSON). */
 export function packBackup(json: string): Uint8Array {
   return gzipSync(strToU8(json), { level: 6 });
+}
+
+/** How many first bytes of a file `peekBackup` needs: the backup's header is at the very start. */
+export const PEEK_BYTES = 4096;
+
+/**
+ * Recognises a Cruxlog backup from its first bytes only (see PEEK_BYTES), gzipped or plain, without reading the whole file:
+ * exportBackup writes `{"app":"cruxlog","version":…,"exportedAt":…` first. Returns when it was made, or null for any other file.
+ */
+export function peekBackup(head: Uint8Array): { at: number } | null {
+  let text = '';
+  if (head.length > 2 && head[0] === 0x1f && head[1] === 0x8b) {
+    try {
+      const parts: Uint8Array[] = [];
+      const g = new Gunzip((chunk) => { parts.push(chunk); });
+      g.push(head, false);
+      text = parts.map((p) => strFromU8(p)).join('');
+    } catch {
+      return null;
+    }
+  } else {
+    text = strFromU8(head.subarray(0, Math.min(head.length, 512)));
+  }
+  const m = /^\{"app":"cruxlog","version":\d+,"exportedAt":(\d+)/.exec(text);
+  return m ? { at: Number(m[1]) } : null;
 }
 
 /** Reads a backup file's bytes, gzipped or plain; throws when it is not JSON. */

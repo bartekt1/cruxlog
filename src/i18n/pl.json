@@ -133,7 +133,7 @@
   "photos": { "sourceQuestion": "Skąd wziąć zdjęcie?", "fromGallery": "Z galerii", "fromCamera": "Zrób zdjęcie", "cameraTitle": "Aparat", "openSettings": "Otwórz ustawienia", "cameraDenied": "Cruxlog nie ma dostępu do aparatu. Włącz go w ustawieniach aplikacji (Uprawnienia › Aparat) albo dodaj zdjęcie z galerii.",
     "title": "Zdjęcia", "add": "Dodaj zdjęcia", "usage": "Zdjęcia: {{count}} z {{max}}", "preparing": "Przygotowuję zdjęcia…",
     "cragTitle": "Zdjęcia skały", "addWall": "Dodaj zdjęcia ściany: {{sector}}", "delete": "Usuń zdjęcie", "deleteTitle": "Usunąć zdjęcie?", "deleteQuestion": "Zdjęcie zniknie z tego telefonu. Kopia na Dysku zostaje.", "removeA11y": "Usuń zdjęcie", "openA11y": "Otwórz zdjęcie {{n}}", "missing": "Zdjęcie niedostępne", "viewerTitle": "Zdjęcie {{n}} z {{total}}",
-    "failed": "Nie udało się dodać zdjęć: {{message}}", "stats": "Zdjęcia: {{count}} ({{size}})", "restored": "Przywrócone zdjęcia: {{count}}.",
+    "failed": "Nie udało się dodać zdjęć: {{message}}", "stats": "Zdjęcia: {{count}} ({{size}})", "restored": "Przywrócone zdjęcia: {{count}}.", "restoringLater": "Zdjęcia wczytują się teraz w tle. Postęp zobaczysz w Ustawieniach › Kopia zapasowa; możesz w tym czasie korzystać z aplikacji.", "restoreLooking": "Wczytywanie zdjęć: szukam ich w folderze…", "restoreProgress": "Wczytywanie zdjęć: {{done}} z {{total}}", "restoreFailed": "Nie udało się wczytać zdjęć: {{message}}",
     "backupFailed": "Kopia bazy zapisana, ale zdjęć nie udało się skopiować: {{message}}",
     "useOnCard": "Dołącz zdjęcie", "cardHint": "Na zdjęciach często są inni ludzie. Zdjęcie wysyłasz tylko wtedy, gdy je tu włączysz."
   },

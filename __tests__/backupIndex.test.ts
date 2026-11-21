@@ -1,4 +1,4 @@
-import { addCopy, dropCopies, emptyIndex, expiredCopies, mergeScan, parseIndex, readPhotoMarker, withPhotoMarker } from '../src/domain/backupIndex';
+import { addCopy, dropCopies, emptyIndex, expiredCopies, mergeCopies, mergeScan, parseIndex, readPhotoMarker, withPhotoMarker } from '../src/domain/backupIndex';
 
 const copy = (n: number) => ({ uri: `content://drive/doc/${n}`, at: n * 1000, size: 400_000 });
 
@@ -44,5 +44,15 @@ describe('photo marker', () => {
     expect(readPhotoMarker(new Uint8Array([1, 2, 3, 4, 5, 6, 7]))).toBeNull();
     expect(readPhotoMarker(new Uint8Array([]))).toBeNull();
     expect(withPhotoMarker(new Uint8Array([1, 2, 3, 4, 5]), 'x')).toEqual(new Uint8Array([1, 2, 3, 4, 5])); // not a JPEG: unchanged
+  });
+});
+
+describe('mergeCopies', () => {
+  it('adds copies but keeps the photos and the "looked through" mark', () => {
+    const index = { ...emptyIndex(), photos: { p1: 'uri-p1' }, copies: [{ uri: 'a', at: 1, size: 10 }] };
+    const merged = mergeCopies(index, [{ uri: 'b', at: 2, size: 20 }, { uri: 'a', at: 1, size: 10 }]);
+    expect(merged.copies.map((c) => c.uri)).toEqual(['b', 'a']);
+    expect(merged.photos).toEqual({ p1: 'uri-p1' });
+    expect(merged.scanned).toBe(false);
   });
 });
