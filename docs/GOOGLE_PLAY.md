@@ -37,7 +37,7 @@ Cruxlog to dziennik wspinaczkowy i przewodnik po skałach, który mieści się w
 DZIENNIK PRZEJŚĆ
 • Zapisz przejście w kilka sekund: droga, data, styl (OS, flash, RP, PP, TR, próba), podejścia, ocena i partner.
 • Twoja wycena, warunki, notatki i do 5 zdjęć – gdy chcesz więcej szczegółów.
-• Statystyki roku: przejścia, dni w skałach, najtrudniejsza droga i postęp wycen.
+• Wynik sezonu: przejścia, dni w skałach, najtrudniejsza droga i przejścia w kolejnych miesiącach.
 
 SKAŁY I DROGI
 • Paczki skał do pobrania: regiony, rejony, skały, sektory i drogi z wycenami, długością i liczbą ringów.
@@ -46,15 +46,16 @@ SKAŁY I DROGI
 • Własne skały i drogi dodasz w kilka chwil.
 
 MAPA
-• Skały na mapie i skały w pobliżu, także mapa turystyczna z poziomicami.
+• Skały na mapie i skały w pobliżu, z Twoją pozycją.
 • „Prowadź do skały” otwiera Twoją aplikację nawigacyjną z celem ustawionym na skałę.
 
-PLANY I WYPRAWY
-• Projekty i cele (np. 30 dróg w sezonie) z postępem.
-• Wyprawy z listą dróg do zrobienia – zaproszenie dla ekipy jako obrazek.
+CELE I PROJEKTY
+• Cele na sezon (np. 30 dróg albo 10 dróg od VI.2) z postępem.
+• Projekty i lista życzeń – drogi, które chcesz zrobić.
 
 UDOSTĘPNIANIE
-• Ładne karty przejścia, dnia, roku i wyprawy do wysłania znajomym lub na relację.
+• Karty przejścia, dnia, roku i celów do wysłania znajomym lub na relację.
+• Skała z linkiem do mapy – wystarczy wysłać ekipie.
 
 TWOJE DANE SĄ TWOJE
 • Bez konta, bez reklam, bez śledzenia.
@@ -83,7 +84,7 @@ Cruxlog is a climbing logbook and crag guide that fits in your harness pocket.
 LOGBOOK
 • Log an ascent in seconds: route, date, style (onsight, flash, redpoint, pinkpoint, top rope, attempt), attempts, rating and partner.
 • Your own grade, conditions, notes and up to 5 photos – when you want more detail.
-• Yearly stats: sends, days at the crag, hardest route and grade progress.
+• Season summary: sends, days at the crag, hardest route and sends month by month.
 
 CRAGS AND ROUTES
 • Crag packs to download: regions, areas, crags, sectors and routes with grades, length and bolts.
@@ -92,15 +93,16 @@ CRAGS AND ROUTES
 • Add your own crags and routes in moments.
 
 MAP
-• Crags on the map and crags nearby, including a hiking map with contour lines.
+• Crags on the map and crags nearby, with your position.
 • "Navigate to the crag" opens your navigation app with the crag as the destination.
 
-PLANS AND TRIPS
-• Projects and goals (e.g. 30 routes this season) with progress.
-• Trips with a list of routes to do – an invitation picture for your team.
+GOALS AND PROJECTS
+• Season goals (e.g. 30 routes, or 10 routes from 7a) with progress.
+• Projects and a wishlist – the routes you want to climb.
 
 SHARING
-• Good-looking cards of an ascent, a day, a year or a trip to send to friends or post as a story.
+• Cards of an ascent, a day, a year or your goals to send to friends or post as a story.
+• A crag with a map link – just send it to your team.
 
 YOUR DATA IS YOURS
 • No account, no ads, no tracking.
@@ -126,7 +128,7 @@ Proponowane zrzuty (kolejność = kolejność w sklepie):
 2. Ekran skały z listą dróg (np. skała z paczki Czarnorzeki).
 3. Topo: zdjęcie ściany z narysowaną drogą.
 4. Mapa ze skałami.
-5. Postępy (statystyki roku).
+5. Postępy (wynik sezonu i przejścia po miesiącach).
 6. Karta „Udostępnij dzień” albo przejścia.
 7. (opcjonalnie) Formularz nowego przejścia.
 
@@ -195,7 +197,7 @@ Przejścia z oceną i partnerem nie opuszczają telefonu.
 ### Uprawnienia
 - **Położenie** tylko w trakcie używania aplikacji (bez położenia w tle): osobna deklaracja nie jest potrzebna.
 - **Aparat**: bez deklaracji.
-- **REQUEST_INSTALL_PACKAGES**: w wersji sklepowej **musi zostać usunięte**, razem z samoaktualizacją. Zrobię to w wersji sklepowej (`docs/PUBLIKACJA.md`, krok 1). Z tym uprawnieniem Google prawdopodobnie odrzuci aplikację.
+- **REQUEST_INSTALL_PACKAGES**: wersja sklepowa go **nie ma** i nie sprawdza aktualizacji (osobny wariant budowania od 19.11.2026; samoaktualizacja tylko w APK z GitHuba). Przed wgraniem pierwszego AAB warto potwierdzić, że konsola nie pokazuje tego uprawnienia (Pakiet aplikacji › Szczegóły).
 
 ### Pozostałe deklaracje
 - Aplikacja rządowa: Nie.
@@ -224,7 +226,61 @@ Wskazówka: testerzy z Twojego klubu albo grupy wspinaczkowej dadzą najlepsze u
 
 ## 5. Co jeszcze po stronie technicznej (przed wgraniem AAB)
 
-Z `docs/PUBLIKACJA.md`:
-1. Wersja sklepowa (AAB) bez samoaktualizacji i bez REQUEST_INSTALL_PACKAGES.
-2. Własny klucz podpisywania w sekretach GitHuba oraz włączone „Podpisywanie aplikacji przez Google Play”.
-3. Włączone GitHub Pages dla polityki prywatności.
+1. ~~Wersja sklepowa bez samoaktualizacji i bez REQUEST_INSTALL_PACKAGES~~: zrobione (19.11.2026). Budowanie pliku AAB odbywa się poza tym repozytorium.
+2. Własny klucz podpisywania i włączone „Podpisywanie aplikacji przez Google Play”.
+3. ~~GitHub Pages dla polityki prywatności~~: działa (19.11.2026).
+
+## 6. Pozostałe teksty do konsoli
+
+### Informacje o wersji („Co nowego”, max 500 znaków)
+
+Polski:
+```
+Pierwsza wersja Cruxloga w Google Play: dziennik przejść, skały i paczki skał, topo, mapa, cele i kopia zapasowa do Twojego folderu. Masz uwagi? Napisz: cruxlogger@gmail.com
+```
+
+English:
+```
+The first Cruxlog release on Google Play: ascent logbook, crags and crag packs, topos, map, goals and backup to a folder you choose. Feedback welcome: cruxlogger@gmail.com
+```
+
+### Zaproszenie dla testerów (do wysłania mailem lub na grupę)
+
+```
+Cześć!
+Szukam osób do przetestowania Cruxloga – mojej aplikacji na Androida do zapisywania przejść i przeglądania skał (dziennik, topo, mapa, paczki skał). Google wymaga, żeby przed publikacją co najmniej 12 osób testowało aplikację przez 14 dni.
+
+Co trzeba zrobić:
+1. Podaj mi adres e-mail konta Google, którego używasz w Sklepie Play.
+2. Gdy dostaniesz link, dołącz do testu i zainstaluj Cruxloga ze Sklepu Play.
+3. Nie odinstalowuj aplikacji przez 14 dni. Wystarczy, że zajrzysz do niej od czasu do czasu, a najlepiej zapiszesz kilka przejść.
+4. Uwagi, błędy i pomysły przesyłaj na cruxlogger@gmail.com albo do mnie (zrzut ekranu bardzo pomaga).
+
+Jeśli masz już Cruxloga z GitHuba: najpierw zrób kopię zapasową (Ustawienia › Kopia zapasowa), odinstaluj go, zainstaluj wersję ze Sklepu i przywróć kopię.
+
+Aplikacja nie wymaga konta, nie ma reklam, a Twoje przejścia zostają w telefonie.
+Dzięki!
+```
+
+### Wniosek o dostęp produkcyjny (szkic odpowiedzi)
+
+Google pyta po angielsku o przebieg testu. Odpowiedzi uzupełnij po teście o prawdziwe liczby i uwagi w miejscach w nawiasach kwadratowych.
+
+- **How did you recruit users for your closed test?**
+  `I invited members of my climbing club and climbing friends, many of whom already used an earlier version of the app installed from GitHub.`
+- **How easy was it to recruit testers?**
+  `[Easy / Moderately easy] – climbers I know were interested because the app covers Polish crags and works offline.`
+- **Describe the engagement you received from testers during your closed test.**
+  `Testers logged ascents at the climbing wall and at the crags, downloaded crag packs, drew topos and used backups. [About N testers used the app regularly.]`
+- **Summarize the feedback you received from testers. Include how you collected it.**
+  `Feedback came by email and messages with screenshots. [Main points: …]`
+- **Who is the intended audience of your app?**
+  `Rock climbers (sport and multi-pitch), mainly in Poland and Central Europe, who want to log their ascents and find routes at the crags.`
+- **Describe how your app provides value to users.**
+  `It is a climbing logbook and crag guide in one: quick ascent logging, statistics and goals, downloadable crag packs with routes and topos, a map with nearby crags. It works without an account and without signal, and the data stays on the phone with backup to a folder the user chooses.`
+- **How many installs do you expect your app to have in your first year?**
+  `[np. 0–10K]`
+- **What changes did you make to your app based on what you learned during your closed test?**
+  `[List of fixes and improvements from tester feedback.]`
+- **How did you decide that your app is ready for production?**
+  `All features were tested on several phones, the issues reported by testers were fixed, and testers confirmed that logging ascents, crag packs and backups work reliably.`
