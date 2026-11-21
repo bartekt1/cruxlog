@@ -18,7 +18,7 @@ export function ProposalSection({ run, busy }: { run: Run; busy: boolean }) {
   const db = useSQLiteContext();
   const { t } = useTranslation();
   const th = useTheme();
-  const { shareEdits, setShareEdits, setShareNoticeShown } = useSettings();
+  const { shareEdits, setShareEdits, setShareNoticeShown, deviceCode } = useSettings();
   const [pending, setPending] = useState(0);
   const refresh = useCallback(() => { countOutbox(db).then(setPending); }, [db]);
   useFocusEffect(refresh);
@@ -36,6 +36,10 @@ export function ProposalSection({ run, busy }: { run: Run; busy: boolean }) {
       {shareEdits ? null : <Text style={{ color: th.muted, marginTop: 6 }}>{t('proposals.pending', { count: pending })}</Text>}
       {!PROPOSALS_URL ? <Text style={{ color: th.muted, marginTop: 4 }}>{t('proposals.notReadyHint')}</Text> : null}
       {shareEdits && PROPOSALS_URL ? <Button label={t('proposals.sendNow')} variant="plain" onPress={sendNow} disabled={busy || !pending} /> : null}
+      {/* The random code sent with this phone's changes (made at the first sending): quoted in a request to delete them. */}
+      {deviceCode ? (
+        <Text selectable style={{ color: th.muted, marginTop: 10 }}>{t('proposals.deviceCode', { code: deviceCode })}</Text>
+      ) : null}
     </FoldSection>
   );
 }
