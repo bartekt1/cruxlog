@@ -45,7 +45,8 @@
           "cameraPermission": "Cruxlog uses the camera only when you take a photo of a wall or an ascent. The photo stays in the app.",
           "microphonePermission": false
         }
-      ]
+      ],
+      "./plugins/withOptionalPortrait"
     ]
   }
 }
