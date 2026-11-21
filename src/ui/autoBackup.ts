@@ -2,8 +2,8 @@ import { Directory, File, FileMode } from 'expo-file-system';
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { exportBackup, importBackup, latestChange } from '../db/backup';
 import { activePhotos, latestPhotoChange } from '../db/repo';
-import { backupDue, backupFileName, packBackup, photosDue, unpackBackup } from '../domain/autoBackup';
-import { addCopy, dropCopies, expiredCopies, mergeScan, readPhotoMarker, withPhotoMarker, type FolderCopy } from '../domain/backupIndex';
+import { backupDue, backupFileName, packBackup, peekBackup, PEEK_BYTES, photosDue, unpackBackup } from '../domain/autoBackup';
+import { addCopy, dropCopies, expiredCopies, mergeCopies, mergeScan, readPhotoMarker, withPhotoMarker, type FolderCopy } from '../domain/backupIndex';
 import { BACKUP_PHOTO_DIR, missingIds, photoFileName } from '../domain/photos';
 import { getBackupIndex, setBackupIndex } from './backupIndexStore';
 import { photoFile } from './photos';
@@ -20,11 +20,22 @@ export type FolderBackup = FolderCopy;
 const isFile = (x: unknown): x is File => x instanceof File;
 const isDirectory = (x: unknown): x is Directory => x instanceof Directory;
 
-/** A file of ours? Reads it and checks it is a Cruxlog backup (gzipped or plain). */
+/**
+ * A file of ours? Checks it is a Cruxlog backup (gzipped or plain) from its first bytes, which on Google Drive is much faster
+ * than reading the whole file; a file whose start does not tell is read whole, as before.
+ */
 async function identifyCopy(file: File): Promise<FolderCopy | null> {
   try {
     const size = file.size ?? 0;
     if (size < 3 || size > 60_000_000) return null;
+    let head: Uint8Array | null = null;
+    try {
+      const handle = file.open(FileMode.ReadOnly);
+      try { head = handle.readBytes(Math.min(size, PEEK_BYTES)); } finally { handle.close(); }
+    } catch { /* fall back to reading the whole file */ }
+    const peeked = head ? peekBackup(head) : null;
+    if (peeked) return { uri: file.uri, at: peeked.at, size };
+    if (head && !(head[0] === 0x1f && head[1] === 0x8b) && head[0] !== 0x7b) return null; // neither gzip nor JSON
     const data = unpackBackup(new Uint8Array(await file.arrayBuffer())) as { app?: unknown; exportedAt?: unknown };
     if (data?.app !== 'cruxlog') return null;
     return { uri: file.uri, at: typeof data.exportedAt === 'number' ? data.exportedAt : file.modificationTime ?? 0, size };
@@ -71,10 +82,21 @@ async function ensureScanned(dirUri: string): Promise<void> {
   try { await scanFolder(dirUri); } catch { /* not important enough to stop a backup */ }
 }
 
-/** The copies in the folder, newest first. An empty list is looked up in the folder once more. */
+/** Looks for copies only (the files at the top of the folder), not the photos: quick even on a new phone with many photos. */
+async function scanCopies(dirUri: string): Promise<void> {
+  const copies: FolderCopy[] = [];
+  for (const item of new Directory(dirUri).list()) {
+    if (!isFile(item)) continue;
+    const copy = await identifyCopy(item);
+    if (copy) copies.push(copy);
+  }
+  setBackupIndex(mergeCopies(getBackupIndex(), copies));
+}
+
+/** The copies in the folder, newest first. An empty list is looked up in the folder once more (copies only; photos when they are restored). */
 export async function listBackups(dirUri: string): Promise<FolderBackup[]> {
   const index = getBackupIndex();
-  if (!index.scanned || !index.copies.length) await scanFolder(dirUri);
+  if (!index.copies.length) await scanCopies(dirUri);
   return getBackupIndex().copies;
 }
 
@@ -143,14 +165,21 @@ export async function syncPhotos(db: SQLiteDatabase, dirUri: string): Promise<nu
   return todo.length;
 }
 
-/** Brings back the picture files that the database knows but this phone lacks, from the folder. Returns how many. */
-export async function restorePhotos(db: SQLiteDatabase, dirUri: string): Promise<number> {
+/**
+ * Brings back the picture files that the database knows but this phone lacks, from the folder. Returns how many.
+ * `onProgress` hears how many of the missing ones were handled (total 0 while the folder is still being looked through).
+ */
+export async function restorePhotos(db: SQLiteDatabase, dirUri: string, onProgress?: (done: number, total: number) => void): Promise<number> {
   const missing = (await activePhotos(db)).filter((p) => !photoFile(p.id).exists);
   if (!missing.length) return 0;
+  onProgress?.(0, 0);
   if (missing.some((p) => !getBackupIndex().photos[p.id])) await scanFolder(dirUri);
   const where = getBackupIndex().photos;
   let restored = 0;
+  let done = 0;
+  onProgress?.(0, missing.length);
   for (const p of missing) {
+    onProgress?.(done++, missing.length);
     const uri = where[p.id];
     if (!uri) continue;
     try {
@@ -161,6 +190,7 @@ export async function restorePhotos(db: SQLiteDatabase, dirUri: string): Promise
       restored++;
     } catch { /* this one stays missing; the rest are still restored */ }
   }
+  onProgress?.(missing.length, missing.length);
   return restored;
 }
 
