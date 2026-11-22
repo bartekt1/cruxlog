@@ -46,7 +46,17 @@
           "microphonePermission": false
         }
       ],
-      "./plugins/withOptionalPortrait"
+      "./plugins/withOptionalPortrait",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableMinifyInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true,
+            "extraProguardRules": "-keep class org.maplibre.** { *; }\n-dontwarn org.maplibre.**"
+          }
+        }
+      ]
     ]
   }
 }
