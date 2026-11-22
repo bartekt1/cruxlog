@@ -7,11 +7,13 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 import { exportBackup, importBackup } from '../../db/backup';
-import { activePhotos, hasAscents } from '../../db/repo';
+import { activePhotos, hasAscents, listAscentsForExport } from '../../db/repo';
 import { devicePath, folderKind, unpackBackup } from '../../domain/autoBackup';
-import { formatDateTime } from '../../domain/dates';
+import { formatDateTime, isoDate } from '../../domain/dates';
 import { AppError } from '../../domain/errors';
 import { backupStatus } from '../../domain/history';
+import { ASCENT_STYLES } from '../../domain/grades';
+import { csvSeparator, JOURNAL_CSV_COLUMNS, journalCsv } from '../../domain/journalCsv';
 import { formatBytes } from '../../domain/photos';
 import { backupNow, listBackups, restoreBackup, scanFolder, withBackupLock, type FolderBackup } from '../autoBackup';
 import { pickBackupFolder, testBackupFolder } from '../backupFolder';
@@ -51,6 +53,24 @@ export function BackupSection({ run, busy }: { run: Run; busy: boolean }) {
     file.write(JSON.stringify(await exportBackup(db)));
     await Sharing.shareAsync(file.uri, { mimeType: 'application/json' });
     s.setLastBackupAt(Date.now());
+  });
+
+  // The journal as a spreadsheet file (Excel, Google Sheets): one row per ascent, grades in the chosen scale.
+  const doExportCsv = () => run(async () => {
+    const rows = await listAscentsForExport(db);
+    if (!rows.length) return t('settings.journalCsvEmpty');
+    const label = <K extends string>(keys: readonly K[], word: (k: K) => string) =>
+      Object.fromEntries(keys.map((k) => [k, word(k)])) as Record<K, string>;
+    const csv = journalCsv(rows, s.routeSystem, {
+      columns: label(JOURNAL_CSV_COLUMNS, (k) => t(`settings.journalCsvColumns.${k}`)),
+      styles: label(ASCENT_STYLES, (k) => t(`styles.${k}`)),
+      types: label(['sport', 'multipitch'] as const, (k) => t(`types.${k}`)),
+    }, csvSeparator(i18n.language));
+    const file = new File(Paths.cache, `${t('settings.journalCsvFile')}-${isoDate(new Date())}.csv`);
+    if (file.exists) file.delete();
+    file.create();
+    file.write(csv);
+    await Sharing.shareAsync(file.uri, { mimeType: 'text/csv', dialogTitle: t('settings.journalCsv') });
   });
 
   // Picks the folder for automatic backups and proves it can be written to before remembering it.
@@ -146,6 +166,9 @@ export function BackupSection({ run, busy }: { run: Run; busy: boolean }) {
       ) : (
         <Button label={t('settings.pickFolder')} onPress={doPickFolder} variant="plain" disabled={busy} />
       )}
+      <Label>{t('settings.journalCsv')}</Label>
+      <MoreText short={t('settings.journalCsvShort')} long={t('settings.journalCsvHelp')} />
+      <Button label={t('settings.journalCsvButton')} onPress={doExportCsv} variant="plain" disabled={busy} />
       {/* The manual copy (one file, without photos) stays available but folded away: the automatic one is the main way. */}
       <Pressable onPress={() => setShowManual(!showManual)} accessibilityRole="button" accessibilityState={{ expanded: showManual }}
         style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 20, minHeight: 44 }}>

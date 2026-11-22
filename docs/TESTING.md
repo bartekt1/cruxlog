@@ -386,6 +386,14 @@ Since the automatic backup (§6a) these buttons are under Settings › "Other wa
 4. At the end the line says "Przywrócone zdjęcia: M." and the pictures show on ascents and crags.
 5. Manual import of a file (Ręczna kopia › Importuj) with a backup folder chosen: same background photo loading.
 
+## 6x. Logbook to Excel (CSV)
+
+1. Settings › Kopia zapasowa › "Dziennik do Excela" › "Eksportuj dziennik (CSV)". Expected: the share sheet opens with `cruxlog-dziennik-<date>.csv`.
+2. Save it to Drive or email it, open it in Excel and in Google Sheets. Expected: one row per ascent, oldest first, columns split correctly, Polish letters readable, grades in the scale chosen in Settings.
+3. An ascent with a note that has a semicolon, quotes or a line break: the note stays in one cell.
+4. Switch the language to English and export again: English column titles, comma-separated (`cruxlog-logbook-<date>.csv`).
+5. With an empty logbook: the message says there is nothing to export.
+
 ## 7. Robustness
 1. Change the language and the route grade system, close the app completely (swipe away) and reopen it. Expected: all data is still there, and the language and grade system are the ones you chose.
 2. Rotate the phone, switch to dark mode and back. Expected: readable text and no layout breaks.

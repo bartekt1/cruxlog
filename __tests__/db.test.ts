@@ -5,7 +5,7 @@ import { packBackup, unpackBackup } from '../src/domain/autoBackup';
 import { MIGRATIONS, migrate } from '../src/db/migrate';
 import {
   addAscent, addGoal, addUserRoute, saveAscent, installPack, listInstalledPacks, removePack, saveTrip, getTrip, listTrips, deleteTrip, tripRoutesOn, listAscentsBetween, applyImport, cragUsage, deleteAscent, deleteCrag, deleteGoal, deleteArea, deleteRoute, deleteSector,
-  getAscent, getCrag, getArea, getRoute, getSector, listAscents, listCragRoutes, listCrags, listGoals, listAreas, listSectorNames, addArea, areaIdFor,
+  getAscent, listAscentsForExport, getCrag, getArea, getRoute, getSector, listAscents, listCragRoutes, listCrags, listGoals, listAreas, listSectorNames, addArea, areaIdFor,
   renameArea, renameSector, routeUsage, countOutbox, deleteOutbox, listOutbox, reportDeletion, listMyCrags, listMyRoutes, deleteMine, listEmptyAreas, saveCrag, searchRoutes, sectorUsage, setGoalDone, updateAscent, updateRoute, type NewRoute, type RouteFilter,
   listCragChoices, listPartners, applyCragPositions, addRouteGoal, routeGoalKinds, addPhotos, listPhotos, listPhotosOf, removePhotos, activePhotos, latestPhotoChange, getPhoto, listTopoLines, topoRoutes, saveTopoLine, deleteTopoLine, routeTopos, setCragLocation, listRouteAscents, recentRoutes, listSectors, addSector, createRoute, importedUsage, removeImported, findRoutes, getGoal, updateGoal, routeGoals,
 } from '../src/db/repo';
@@ -75,6 +75,18 @@ describe('repo', () => {
     expect(rows.map((a) => a.date)).toEqual(['2026-10-01', '2026-09-01']);
     expect(rows[0]).toMatchObject({ route_name: 'Test Route 1', crag_name: 'Test Crag', style: 'attempt', partner_name: null });
     expect(rows[1]).toMatchObject({ partner_name: 'Anna', attempts: 2, rating: 4 });
+  });
+  it('lists every ascent for the export, oldest first, without deleted ones', async () => {
+    const db = await freshDb();
+    const r = await addUserRoute(db, route());
+    await addAscent(db, ascent(r, { date: '2026-10-01', partnerName: '' }));
+    const gone = await addAscent(db, ascent(r, { date: '2026-08-01' }));
+    await addAscent(db, ascent(r, { date: '2026-09-01' }));
+    await deleteAscent(db, gone);
+    const rows = await listAscentsForExport(db);
+    expect(rows.map((a) => a.date)).toEqual(['2026-09-01', '2026-10-01']);
+    expect(rows[0]).toMatchObject({ route_name: 'Test Route 1', crag_name: 'Test Crag', partner_name: 'Anna', attempts: 2 });
+    expect(rows[0].sector_name).toBeTruthy();
   });
   it('rolls back the ascent and its new partner when the insert fails', async () => {
     const db = await freshDb();
