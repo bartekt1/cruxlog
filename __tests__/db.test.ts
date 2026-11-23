@@ -5,11 +5,12 @@ import { packBackup, unpackBackup } from '../src/domain/autoBackup';
 import { MIGRATIONS, migrate } from '../src/db/migrate';
 import {
   addAscent, addGoal, addUserRoute, saveAscent, installPack, listInstalledPacks, removePack, saveTrip, getTrip, listTrips, deleteTrip, tripRoutesOn, listAscentsBetween, applyImport, cragUsage, deleteAscent, deleteCrag, deleteGoal, deleteArea, deleteRoute, deleteSector,
-  getAscent, listAscentsForExport, listChecklist, addChecklistItems, setChecklistDone, resetChecklist, deleteChecklistItem, getCrag, getArea, getRoute, getSector, listAscents, listCragRoutes, listCrags, listGoals, listAreas, listSectorNames, addArea, areaIdFor,
+  getAscent, listMergedPackCrags, listAscentsForExport, listChecklist, addChecklistItems, setChecklistDone, resetChecklist, deleteChecklistItem, getCrag, getArea, getRoute, getSector, listAscents, listCragRoutes, listCrags, listGoals, listAreas, listSectorNames, addArea, areaIdFor,
   renameArea, renameSector, routeUsage, countOutbox, deleteOutbox, listOutbox, reportDeletion, listMyCrags, listMyRoutes, deleteMine, listEmptyAreas, saveCrag, searchRoutes, sectorUsage, setGoalDone, updateAscent, updateRoute, type NewRoute, type RouteFilter,
   listCragChoices, listPartners, applyCragPositions, addRouteGoal, routeGoalKinds, addPhotos, listPhotos, listPhotosOf, removePhotos, activePhotos, latestPhotoChange, getPhoto, listTopoLines, topoRoutes, saveTopoLine, deleteTopoLine, routeTopos, setCragLocation, listRouteAscents, recentRoutes, listSectors, addSector, createRoute, importedUsage, removeImported, findRoutes, getGoal, updateGoal, routeGoals,
 } from '../src/db/repo';
 import { descendantIds } from '../src/domain/areas';
+import { packRepairOrder } from '../src/domain/packs';
 import { detectFormat, parseFlatCsv, parsePositionsCsv, planFromFlatRows, type FlatRow } from '../src/domain/flatImport';
 import { parseGrade } from '../src/domain/grades';
 import { openTestDb } from './helpers/sqlite';
@@ -636,6 +637,36 @@ describe('packs', () => {
       { name: 'Aligator', routes: ['Muchozol', 'Samsara'] },
       { name: 'Aligátor', routes: ['Malý komín', 'Zárez'] },
     ]);
+  });
+  it('finds crags merged by name before, and reinstalling in the repair order parts them', async () => {
+    const db = await freshDb();
+    await installPack(db, { id: 'strzelnica', name: 'Strzelnica', version: 1 }, strzelnicaPack);
+    await installPack(db, { id: 'peklo', name: 'Peklo', version: 1 }, pekloPack);
+    const crags = await listCrags(db);
+    const s = crags.find((c) => c.name === 'Aligator')!;
+    const p = crags.find((c) => c.name === 'Aligátor')!;
+    const samsara = (await listCragRoutes(db, s.id)).find((x) => x.name === 'Samsara')!;
+    await addAscent(db, ascent(samsara.id));
+    // What the old matching left behind: Peklo took Strzelnica's crag by name, moved it and dropped its other routes.
+    await db.execAsync(`
+      UPDATE sector SET crag_id = '${s.id}' WHERE crag_id = '${p.id}';
+      UPDATE crag SET name = 'Aligátor', region_id = (SELECT region_id FROM crag WHERE id = '${p.id}'), import_key = 'sk-66', pack_id = 'peklo' WHERE id = '${s.id}';
+      DELETE FROM crag WHERE id = '${p.id}';
+      UPDATE route SET deleted_at = 1 WHERE name = 'Muchozol';`);
+    expect(await aligators(db)).toEqual([{ name: 'Aligátor', routes: ['Malý komín', 'Samsara', 'Zárez'] }]);
+    const merged = await listMergedPackCrags(db);
+    expect(merged).toEqual([{ id: s.id, ownKey: 'sk-37', packId: 'peklo' }]);
+    const keys = new Map([['strzelnica', new Set(strzelnicaPack.crags.map((c) => c.key))], ['peklo', new Set(pekloPack.crags.map((c) => c.key))]]);
+    const order = packRepairOrder(merged, keys);
+    expect(order).toEqual(['strzelnica', 'peklo']);
+    const plans: Record<string, typeof pekloPack> = { strzelnica: strzelnicaPack, peklo: pekloPack };
+    for (const id of order) await installPack(db, { id, name: id, version: 2 }, plans[id]);
+    expect((await aligators(db)).sort((a, b) => a.name.localeCompare(b.name))).toEqual([
+      { name: 'Aligator', routes: ['Muchozol', 'Samsara'] },
+      { name: 'Aligátor', routes: ['Malý komín', 'Zárez'] },
+    ]);
+    expect((await listAscents(db)).map((a) => [a.route_name, a.crag_name])).toEqual([['Samsara', 'Aligator']]);
+    expect(await listMergedPackCrags(db)).toEqual([]);
   });
   it('installs, updates and removes packs one by one', async () => {
     const db = await freshDb();

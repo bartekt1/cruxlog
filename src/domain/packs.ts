@@ -43,3 +43,23 @@ export function groupPacks(packs: PackInfo[]): { region: string; area: string; p
   }
   return out;
 }
+
+/** A crag that one pack took over from another pack by name (see `listMergedPackCrags`): its own key and the pack holding it now. */
+export type MergedCrag = { ownKey: string; packId: string };
+
+/**
+ * The order to reinstall packs in so crags merged by name come apart: the pack a crag first came from (its own key is in that
+ * pack's file) before the pack that took it over. Crags whose own key is in no installed pack (the user's own file) are left
+ * alone. Empty when there is nothing to repair.
+ */
+export function packRepairOrder(merged: MergedCrag[], cragKeysByPack: Map<string, Set<string>>): string[] {
+  const owners: string[] = [];
+  const takers: string[] = [];
+  for (const m of merged) {
+    const owner = [...cragKeysByPack].find(([, keys]) => keys.has(m.ownKey))?.[0];
+    if (!owner || owner === m.packId || !cragKeysByPack.has(m.packId)) continue;
+    if (!owners.includes(owner)) owners.push(owner);
+    if (!takers.includes(m.packId)) takers.push(m.packId);
+  }
+  return [...owners, ...takers.filter((p) => !owners.includes(p))];
+}

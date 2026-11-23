@@ -268,3 +268,14 @@ export async function removePack(db: SQLiteDatabase, packId: string): Promise<vo
     await removeEmptyAreas(db, t);
   });
 }
+
+/**
+ * Crags of a pack that carry another key than their own: one pack took over another pack's crag by name (before crags of one
+ * name in different places were kept apart). A crag taken over from the user's own file looks the same; `packRepairOrder`
+ * tells them apart with the packs' files.
+ */
+export async function listMergedPackCrags(db: SQLiteDatabase): Promise<{ id: string; ownKey: string; packId: string }[]> {
+  return db.getAllAsync<{ id: string; ownKey: string; packId: string }>(
+    `SELECT id, substr(id, 10) AS ownKey, pack_id AS packId FROM crag
+     WHERE deleted_at IS NULL AND pack_id IS NOT NULL AND id LIKE 'imp:crag:%' AND import_key IS NOT NULL AND import_key <> substr(id, 10)`);
+}

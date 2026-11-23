@@ -417,6 +417,12 @@ Since the automatic backup (§6a) these buttons are under Settings › "Other wa
 1. Folder on Google Drive. Tap "Zrób kopię teraz" several times in a row (also with weak signal). Expected: each time the success message; never "Kopia zapisała się tylko częściowo" (Drive reports the size of a new file late; the app now asks again and reads the file back).
 2. Add a few photos and make a copy: the photos are copied without "Zdjęcie zapisało się tylko częściowo".
 
+## 6zb. Crags of the same name in different packs
+
+1. Fresh install: get the packs Strzelnica and Peklo (and Przełom Marcinka and Raj). Expected: two crags "Aligator" (Strzelnica) and "Aligátor" (Peklo), each with its own routes; the same for "Mnich" and "Mních".
+2. A phone where an older version merged them (one "Aligátor" in Peklo, Strzelnica's routes missing): Settings › Paczki shows the card "Połączone skały o tej samej nazwie" naming the packs to reinstall. Tap "Napraw połączone skały". Expected: both crags back, each with its routes; your ascents on the right crags; the card is gone.
+3. Without merged crags the card does not show.
+
 ## 7. Robustness
 1. Change the language and the route grade system, close the app completely (swipe away) and reopen it. Expected: all data is still there, and the language and grade system are the ones you chose.
 2. Rotate the phone, switch to dark mode and back. Expected: readable text and no layout breaks.

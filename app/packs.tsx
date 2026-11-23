@@ -3,9 +3,9 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, ScrollView, View } from 'react-native';
-import { installPack, listInstalledPacks, removePack, type InstalledPack } from '../src/db/repo';
+import { installPack, listInstalledPacks, listMergedPackCrags, removePack, type InstalledPack } from '../src/db/repo';
 import { AppError } from '../src/domain/errors';
-import { groupPacks, packState, packUrl, parsePackIndex, PACKS_INDEX_URL, type PackInfo } from '../src/domain/packs';
+import { groupPacks, packRepairOrder, packState, packUrl, parsePackIndex, PACKS_INDEX_URL, type PackInfo } from '../src/domain/packs';
 import { MissingColumnsError, planFromFiles, UnknownFileError } from '../src/domain/importPlan';
 import { formatBytes } from '../src/domain/photos';
 import { ask } from '../src/ui/confirm';
@@ -35,6 +35,8 @@ export default function Packs() {
   const [listError, setListError] = useState('');
   const [installed, setInstalled] = useState<InstalledPack[]>([]);
   const [busy, setBusy] = useState<string | null>(null); // the pack (or area) being worked on
+  // Packs to reinstall, in order, to part crags of one name that an older version merged ("Aligator" and "Aligátor").
+  const [repair, setRepair] = useState<PackInfo[]>([]);
 
   const loadInstalled = useCallback(() => listInstalledPacks(db).then(setInstalled), [db]);
   const loadList = useCallback(async () => {
@@ -50,8 +52,8 @@ export default function Packs() {
 
   const versionOf = new Map(installed.map((p) => [p.id, p.version]));
 
-  /** Downloads and writes one pack; returns the counts for the message. */
-  async function install(p: PackInfo) {
+  /** Downloads one pack and reads it. */
+  async function planOf(p: PackInfo) {
     const text = await fetchText(packUrl(PACKS_INDEX_URL, p));
     let plan;
     try {
@@ -61,8 +63,30 @@ export default function Packs() {
       throw e;
     }
     if (plan.errors.length) throw new AppError('packs.badPack', { name: p.name });
-    return installPack(db, { id: p.id, name: p.name, version: p.version }, plan);
+    return plan;
   }
+
+  /** Downloads and writes one pack; returns the counts for the message. */
+  async function install(p: PackInfo) {
+    return installPack(db, { id: p.id, name: p.name, version: p.version }, await planOf(p));
+  }
+
+  // Crags merged by name by an older version: only when the database shows some does it download the installed packs to see
+  // which pack each crag first came from. A failed download just leaves the repair out; the list above shows the error.
+  useEffect(() => {
+    if (!list) return;
+    let live = true;
+    (async () => {
+      const merged = await listMergedPackCrags(db);
+      if (!merged.length) { setRepair([]); return; }
+      const mine = list.filter((p) => installed.some((x) => x.id === p.id));
+      const keys = new Map<string, Set<string>>();
+      for (const p of mine) keys.set(p.id, new Set((await planOf(p)).crags.map((c) => c.key)));
+      const order = packRepairOrder(merged, keys);
+      if (live) setRepair(order.map((id) => mine.find((p) => p.id === id)!));
+    })().catch(() => { if (live) setRepair([]); });
+    return () => { live = false; };
+  }, [db, list, installed]);
 
   async function run(key: string, packs: PackInfo[]) {
     setBusy(key);
@@ -91,6 +115,14 @@ export default function Packs() {
     <ScrollView style={{ backgroundColor: th.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 48 }}>
       <Stack.Screen options={{ title: t('packs.title') }} />
       <Text style={{ color: th.muted }}>{t('packs.help')}</Text>
+      {repair.length ? (
+        <Card style={{ padding: 12, marginTop: 12, borderColor: th.warn }}>
+          <Text style={{ color: th.ink, fontWeight: '600' }}>{t('packs.repairTitle')}</Text>
+          <Text style={{ color: th.muted, marginTop: 4 }}>{t('packs.repairHint', { packs: repair.map((p) => p.name).join(', ') })}</Text>
+          <Button label={t('packs.repair')} onPress={() => run('repair', repair)} disabled={!!busy} />
+          {busy === 'repair' ? <ActivityIndicator color={th.accent} style={{ marginTop: 8 }} /> : null}
+        </Card>
+      ) : null}
       {listError ? (
         <>
           <Text style={{ color: th.warn, marginTop: 12 }}>{listError}</Text>
