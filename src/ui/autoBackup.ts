@@ -31,7 +31,7 @@ async function identifyCopy(file: File): Promise<FolderCopy | null> {
     let head: Uint8Array | null = null;
     try {
       const handle = file.open(FileMode.ReadOnly);
-      try { head = handle.readBytes(Math.min(size, PEEK_BYTES)); } finally { handle.close(); }
+      try { head = handle.readBytesSync(Math.min(size, PEEK_BYTES)); } finally { handle.close(); }
     } catch { /* fall back to reading the whole file */ }
     const peeked = head ? peekBackup(head) : null;
     if (peeked) return { uri: file.uri, at: peeked.at, size };
@@ -66,7 +66,7 @@ async function fullyWritten(uri: string, bytes: Uint8Array): Promise<boolean> {
 function photoIdOf(file: File): string | null {
   try {
     const handle = file.open(FileMode.ReadOnly);
-    try { return readPhotoMarker(handle.readBytes(128)); } finally { handle.close(); }
+    try { return readPhotoMarker(handle.readBytesSync(128)); } finally { handle.close(); }
   } catch {
     return null;
   }

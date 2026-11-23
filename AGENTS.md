@@ -1,8 +1,8 @@
-This is an Expo/React Native mobile application (Expo SDK 57). Prioritize mobile-first patterns, performance, and cross-platform compatibility. Project rules are in `CLAUDE.md`; repeatable procedures are skills in `.claude/skills/`.
+This is an Expo/React Native mobile application (Expo SDK 58). Prioritize mobile-first patterns, performance, and cross-platform compatibility. Project rules are in `CLAUDE.md`; repeatable procedures are skills in `.claude/skills/`.
 
 ## Expo has changed — do not trust your training data
 
-Expo ships breaking changes every SDK release. Before writing code that touches an Expo or React Native API, read the versioned docs: https://docs.expo.dev/versions/v57.0.0/ (index with LLM corrections: https://docs.expo.dev/llms.txt). Never answer from memory.
+Expo ships breaking changes every SDK release. Before writing code that touches an Expo or React Native API, read the versioned docs: https://docs.expo.dev/versions/v58.0.0/ (index with LLM corrections: https://docs.expo.dev/llms.txt). Never answer from memory.
 
 ## Commands
 

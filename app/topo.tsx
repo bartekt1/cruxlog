@@ -1,4 +1,4 @@
-import { Stack, useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, usePreventRemove, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -35,7 +35,6 @@ export default function TopoEditor() {
   const { photoId, routeId: startRoute } = useLocalSearchParams<{ photoId: string; routeId?: string }>();
   const db = useSQLiteContext();
   const router = useRouter();
-  const navigation = useNavigation();
   const { t } = useTranslation();
   const th = useTheme();
   const { routeSystem } = useSettings();
@@ -75,15 +74,14 @@ export default function TopoEditor() {
     setDirty(false);
   }, [routeId, lines]);
 
-  // Leaving with an unsaved line asks first.
-  useEffect(() => navigation.addListener('beforeRemove', (e) => {
-    if (!dirty || leaving.current) return;
-    e.preventDefault();
+  // Leaving with an unsaved line asks first. After saving or deleting (`leaving`), the way out is let through.
+  const allowLeave = usePreventRemove(dirty, ({ repeat }) => {
+    if (leaving.current) { allowLeave(); repeat(); return; }
     Alert.alert(t('topo.discardTitle'), t('topo.discardQuestion'), [
       { text: t('common.cancel'), style: 'cancel' },
-      { text: t('topo.discard'), style: 'destructive', onPress: () => navigation.dispatch(e.data.action) },
+      { text: t('topo.discard'), style: 'destructive', onPress: () => { leaving.current = true; allowLeave(); repeat(); } },
     ]);
-  }), [navigation, dirty, t]);
+  });
 
   const box = useMemo(() => (photo ? fitRect(photo.width, photo.height, canvas.w, canvas.h) : fitRect(0, 0, 0, 0)), [photo, canvas]);
   const points = draft ?? history.present;
@@ -132,13 +130,14 @@ export default function TopoEditor() {
     const ok = await runOrAlert(() => saveTopoLine(db, { photoId: photo.id, routeId: route.id, mode, points }));
     if (!ok) { setSaving(false); return; }
     leaving.current = true;
+    allowLeave();
     router.back();
   };
   const removeLine = () => {
     if (!existing) return;
     Alert.alert(t('topo.deleteLineTitle'), t('topo.deleteLineQuestion', { name: route.name }), [
       { text: t('common.cancel'), style: 'cancel' },
-      { text: t('common.delete'), style: 'destructive', onPress: () => runOrAlert(async () => { await deleteTopoLine(db, existing.id); leaving.current = true; router.back(); }) },
+      { text: t('common.delete'), style: 'destructive', onPress: () => runOrAlert(async () => { await deleteTopoLine(db, existing.id); leaving.current = true; allowLeave(); router.back(); }) },
     ]);
   };
 
