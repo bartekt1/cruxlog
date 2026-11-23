@@ -1,5 +1,5 @@
 import { Stack, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView } from 'react-native';
 import { Text } from './Text';
@@ -11,7 +11,7 @@ import { errorMessage } from './errors';
 import { FromPack } from './FromPack';
 
 /** Rename or delete something that only has a name (a sector, a region). One from a pack or an import is not deleted: `fromPack` says so. */
-export function NameEditor({ title, hint, load, rename, onDelete, deleteLabel, fromPack }: {
+export function NameEditor({ title, hint, load, rename, onDelete, deleteLabel, fromPack, children }: {
   title: string;
   hint?: string;
   load: () => Promise<NamedRow | null>;
@@ -21,6 +21,8 @@ export function NameEditor({ title, hint, load, rename, onDelete, deleteLabel, f
   deleteLabel: string;
   /** Shown instead of Delete when the loaded row is not the user's own; `onReport` reports it as gone. */
   fromPack: { note: string; onReport?: () => Promise<boolean> };
+  /** More fields under the name (e.g. a sector's aspect), saved by `rename`. */
+  children?: ReactNode;
 }) {
   const router = useRouter();
   const { t } = useTranslation();
@@ -54,6 +56,7 @@ export function NameEditor({ title, hint, load, rename, onDelete, deleteLabel, f
       <Label>{t('edit.name')}</Label>
       <Field value={name} onChangeText={setName} accessibilityLabel={t('edit.name')} returnKeyType="done" onSubmitEditing={save} />
       {hint && own ? <Text style={{ color: th.muted, marginTop: 8 }}>{hint}</Text> : null}
+      {children}
       {error ? <ErrorText>{error}</ErrorText> : null}
       <Button label={saving ? t('common.saving') : t('common.save')} onPress={save} disabled={saving || !loaded} />
       {!loaded ? null : own ? <Button label={deleteLabel} onPress={() => onDelete(name)} variant="danger" disabled={saving} />

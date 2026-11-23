@@ -6,6 +6,7 @@ import { Alert, Pressable, SectionList, View } from 'react-native';
 import { Text } from '../../src/ui/Text';
 import { getCrag, listAreas, listCragRoutes, listPhotos, listPhotosOf, listSectors, routeGoalKinds, type AreaRow, type CragDetail, type CragRouteRow, type PhotoOwner, type PhotoRow, type SectorRow } from '../../src/db/repo';
 import { pathLabel } from '../../src/domain/areas';
+import { parseAspect } from '../../src/domain/aspect';
 import { routeGrade } from '../../src/domain/grades';
 import { IconButton } from '../../src/ui/icons';
 import { Contours } from '../../src/ui/Contours';
@@ -85,7 +86,7 @@ export default function CragScreen() {
     for (const r of routes) if (matches(query, r.name)) bySector.set(r.sector_id, [...(bySector.get(r.sector_id) ?? []), r]);
     return [...sectorRows]
       .sort((a, b) => a.name.localeCompare(b.name))
-      .map((sec) => ({ sectorId: sec.id, sector: sec.name, photos: sectorPhotos.get(sec.id) ?? [], data: bySector.get(sec.id) ?? [] }))
+      .map((sec) => ({ sectorId: sec.id, sector: sec.name, aspect: parseAspect(sec.aspect), photos: sectorPhotos.get(sec.id) ?? [], data: bySector.get(sec.id) ?? [] }))
       .filter((sec) => !query.trim() || sec.data.length);
   }, [routes, sectorRows, sectorPhotos, query]);
 
@@ -156,7 +157,14 @@ export default function CragScreen() {
           <View style={{ paddingTop: 16, paddingBottom: 2, paddingLeft: 4, backgroundColor: th.bg }}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             {/* A sector named like the crag (routes imported without a sector) is headed just "Routes". */}
-            <Label style={{ flex: 1, marginTop: 0, marginBottom: 0 }}>{crag && sameName(section.sector, crag.name) ? t('ascent.routesHeader') : section.sector}</Label>
+            <View style={{ flex: 1 }}>
+              <Label style={{ marginTop: 0, marginBottom: 0 }}>{crag && sameName(section.sector, crag.name) ? t('ascent.routesHeader') : section.sector}</Label>
+              {section.aspect ? (
+                <Text style={{ color: th.muted, fontSize: 12 }} accessibilityLabel={t('aspect.facing', { name: t(`aspect.long.${section.aspect}`) })}>
+                  {t('aspect.inline', { name: t(`aspect.short.${section.aspect}`) })}
+                </Text>
+              ) : null}
+            </View>
             {section.photos.length < PHOTO_LIMIT.sector ? (
               <IconButton name={photoBusy === `sector:${section.sectorId}` ? 'hourglass-outline' : 'camera-outline'} size={22} label={t('photos.addWall', { sector: section.sector })}
                 onPress={() => addPhotoTo('sector', section.sectorId, section.photos.length)} />
