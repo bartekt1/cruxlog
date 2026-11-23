@@ -625,6 +625,8 @@ describe('packs', () => {
   // Two packs with a crag of the same name in different places ("Aligator" in Strzelnica, "Aligátor" in Peklo).
   const strzelnicaPack = pack('Czarnorzeki;Skałki;Strzelnica;Aligator;Samsara;VI+;sk-37;dr-391\nCzarnorzeki;Skałki;Strzelnica;Aligator;Muchozol;VI-;sk-37;dr-390\n');
   const pekloPack = pack('Slanské vrchy;Drevenik;Peklo;Aligátor;Zárez;IV+;sk-66;dr-767\nSlanské vrchy;Drevenik;Peklo;Aligátor;Malý komín;V;sk-66;dr-769\n');
+  const packKeys = new Map([['strzelnica', strzelnicaPack], ['peklo', pekloPack]].map(([id, pl]) => [id as string,
+    { crags: new Set((pl as typeof pekloPack).crags.map((c) => c.key)), routes: new Set((pl as typeof pekloPack).routes.map((x) => x.key)) }]));
   const aligators = async (db: SQLiteDatabase) => {
     const crags = (await listCrags(db)).filter((c) => /alig/i.test(c.name));
     return Promise.all(crags.map(async (c) => ({ name: c.name, routes: (await listCragRoutes(db, c.id)).map((r) => r.name).sort() })));
@@ -655,9 +657,8 @@ describe('packs', () => {
       UPDATE route SET deleted_at = 1 WHERE name = 'Muchozol';`);
     expect(await aligators(db)).toEqual([{ name: 'Aligátor', routes: ['Malý komín', 'Samsara', 'Zárez'] }]);
     const merged = await listMergedPackCrags(db);
-    expect(merged).toEqual([{ id: s.id, ownKey: 'sk-37', packId: 'peklo' }]);
-    const keys = new Map([['strzelnica', new Set(strzelnicaPack.crags.map((c) => c.key))], ['peklo', new Set(pekloPack.crags.map((c) => c.key))]]);
-    const order = packRepairOrder(merged, keys);
+    expect(merged).toEqual([{ id: s.id, ownKey: 'sk-37', packId: 'peklo', routeKeys: ['dr-391', 'dr-767', 'dr-769'] }]);
+    const order = packRepairOrder(merged, packKeys);
     expect(order).toEqual(['strzelnica', 'peklo']);
     const plans: Record<string, typeof pekloPack> = { strzelnica: strzelnicaPack, peklo: pekloPack };
     for (const id of order) await installPack(db, { id, name: id, version: 2 }, plans[id]);
@@ -667,6 +668,35 @@ describe('packs', () => {
     ]);
     expect((await listAscents(db)).map((a) => [a.route_name, a.crag_name])).toEqual([['Samsara', 'Aligator']]);
     expect(await listMergedPackCrags(db)).toEqual([]);
+  });
+  it('repairs a crag that came from the user\'s own file before the packs and was then merged', async () => {
+    const db = await freshDb();
+    // The user's own file first (its own keys), then the Strzelnica pack takes that crag over at the same place.
+    await applyImport(db, pack('Czarnorzeki;Skałki;Strzelnica;Aligator;Samsara;VI+;h-1;hr-1\nCzarnorzeki;Skałki;Strzelnica;Aligator;Muchozol;VI-;h-1;hr-2\n'));
+    await installPack(db, { id: 'strzelnica', name: 'Strzelnica', version: 1 }, strzelnicaPack);
+    await installPack(db, { id: 'peklo', name: 'Peklo', version: 1 }, pekloPack);
+    const crags = await listCrags(db);
+    const s = crags.find((c) => c.name === 'Aligator')!;
+    const p = crags.find((c) => c.name === 'Aligátor')!;
+    expect(s.id).toBe('imp:crag:h-1');
+    await addAscent(db, ascent((await listCragRoutes(db, s.id)).find((x) => x.name === 'Samsara')!.id));
+    // What the old matching left behind.
+    await db.execAsync(`
+      UPDATE sector SET crag_id = '${s.id}' WHERE crag_id = '${p.id}';
+      UPDATE crag SET name = 'Aligátor', region_id = (SELECT region_id FROM crag WHERE id = '${p.id}'), import_key = 'sk-66', pack_id = 'peklo' WHERE id = '${s.id}';
+      DELETE FROM crag WHERE id = '${p.id}';
+      UPDATE route SET deleted_at = 1 WHERE name = 'Muchozol';`);
+    const order = packRepairOrder(await listMergedPackCrags(db), packKeys);
+    expect(order).toEqual(['strzelnica', 'peklo']);
+    const plans: Record<string, typeof pekloPack> = { strzelnica: strzelnicaPack, peklo: pekloPack };
+    for (const id of order) await installPack(db, { id, name: id, version: 2 }, plans[id]);
+    expect((await aligators(db)).sort((a, b) => a.name.localeCompare(b.name))).toEqual([
+      { name: 'Aligator', routes: ['Muchozol', 'Samsara'] },
+      { name: 'Aligátor', routes: ['Malý komín', 'Zárez'] },
+    ]);
+    expect((await listAscents(db)).map((a) => [a.route_name, a.crag_name])).toEqual([['Samsara', 'Aligator']]);
+    // The crag taken from the user's own file is still marked, but nothing is left to repair.
+    expect(packRepairOrder(await listMergedPackCrags(db), packKeys)).toEqual([]);
   });
   it('installs, updates and removes packs one by one', async () => {
     const db = await freshDb();

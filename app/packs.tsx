@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, ScrollView, View } from 'react-native';
 import { installPack, listInstalledPacks, listMergedPackCrags, removePack, type InstalledPack } from '../src/db/repo';
 import { AppError } from '../src/domain/errors';
-import { groupPacks, packRepairOrder, packState, packUrl, parsePackIndex, PACKS_INDEX_URL, type PackInfo } from '../src/domain/packs';
+import { groupPacks, packRepairOrder, packState, packUrl, parsePackIndex, PACKS_INDEX_URL, type PackInfo, type PackKeys } from '../src/domain/packs';
 import { MissingColumnsError, planFromFiles, UnknownFileError } from '../src/domain/importPlan';
 import { formatBytes } from '../src/domain/photos';
 import { ask } from '../src/ui/confirm';
@@ -80,8 +80,11 @@ export default function Packs() {
       const merged = await listMergedPackCrags(db);
       if (!merged.length) { setRepair([]); return; }
       const mine = list.filter((p) => installed.some((x) => x.id === p.id));
-      const keys = new Map<string, Set<string>>();
-      for (const p of mine) keys.set(p.id, new Set((await planOf(p)).crags.map((c) => c.key)));
+      const keys = new Map<string, PackKeys>();
+      for (const p of mine) {
+        const plan = await planOf(p);
+        keys.set(p.id, { crags: new Set(plan.crags.map((c) => c.key)), routes: new Set(plan.routes.map((x) => x.key)) });
+      }
       const order = packRepairOrder(merged, keys);
       if (live) setRepair(order.map((id) => mine.find((p) => p.id === id)!));
     })().catch(() => { if (live) setRepair([]); });

@@ -421,7 +421,8 @@ Since the automatic backup (§6a) these buttons are under Settings › "Other wa
 
 1. Fresh install: get the packs Strzelnica and Peklo (and Przełom Marcinka and Raj). Expected: two crags "Aligator" (Strzelnica) and "Aligátor" (Peklo), each with its own routes; the same for "Mnich" and "Mních".
 2. A phone where an older version merged them (one "Aligátor" in Peklo, Strzelnica's routes missing): Settings › Paczki shows the card "Połączone skały o tej samej nazwie" naming the packs to reinstall. Tap "Napraw połączone skały". Expected: both crags back, each with its routes; your ascents on the right crags; the card is gone.
-3. Without merged crags the card does not show.
+3. Also when the crag first came from your own CSV file (before the packs): the card shows and the repair brings back "Aligator" in Strzelnica with its routes and your ascents.
+4. Without merged crags the card does not show; after the repair it is gone.
 
 ## 7. Robustness
 1. Change the language and the route grade system, close the app completely (swipe away) and reopen it. Expected: all data is still there, and the language and grade system are the ones you chose.

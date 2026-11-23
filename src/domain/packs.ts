@@ -44,22 +44,32 @@ export function groupPacks(packs: PackInfo[]): { region: string; area: string; p
   return out;
 }
 
-/** A crag that one pack took over from another pack by name (see `listMergedPackCrags`): its own key and the pack holding it now. */
-export type MergedCrag = { ownKey: string; packId: string };
+/**
+ * A crag that one pack took over from another by name (see `listMergedPackCrags`): its own key (from its id), the keys of the
+ * routes in it now, and the pack holding it.
+ */
+export type MergedCrag = { ownKey: string; routeKeys: string[]; packId: string };
+
+/** The keys in a pack's file: its crags and its routes. */
+export type PackKeys = { crags: Set<string>; routes: Set<string> };
 
 /**
- * The order to reinstall packs in so crags merged by name come apart: the pack a crag first came from (its own key is in that
- * pack's file) before the pack that took it over. Crags whose own key is in no installed pack (the user's own file) are left
- * alone. Empty when there is nothing to repair.
+ * The order to reinstall packs in so crags merged by name come apart. A pack whose crag (by its own key) or routes ended up in a
+ * crag of another pack is reinstalled first: it gets its crag back (made anew if the crag came from the user's own file first)
+ * and takes its routes, with their ascents, back. Then the pack holding the crag, so it gets back what the first one took.
+ * Crags taken from the user's own file, with only that pack's routes, are left alone. Empty when there is nothing to repair.
  */
-export function packRepairOrder(merged: MergedCrag[], cragKeysByPack: Map<string, Set<string>>): string[] {
-  const owners: string[] = [];
+export function packRepairOrder(merged: MergedCrag[], keysByPack: Map<string, PackKeys>): string[] {
+  const victims: string[] = [];
   const takers: string[] = [];
   for (const m of merged) {
-    const owner = [...cragKeysByPack].find(([, keys]) => keys.has(m.ownKey))?.[0];
-    if (!owner || owner === m.packId || !cragKeysByPack.has(m.packId)) continue;
-    if (!owners.includes(owner)) owners.push(owner);
-    if (!takers.includes(m.packId)) takers.push(m.packId);
+    if (!keysByPack.has(m.packId)) continue;
+    for (const [id, keys] of keysByPack) {
+      if (id === m.packId) continue;
+      if (!keys.crags.has(m.ownKey) && !m.routeKeys.some((k) => keys.routes.has(k))) continue;
+      if (!victims.includes(id)) victims.push(id);
+      if (!takers.includes(m.packId)) takers.push(m.packId);
+    }
   }
-  return [...owners, ...takers.filter((p) => !owners.includes(p))];
+  return [...victims, ...takers.filter((p) => !victims.includes(p))];
 }

@@ -270,12 +270,21 @@ export async function removePack(db: SQLiteDatabase, packId: string): Promise<vo
 }
 
 /**
- * Crags of a pack that carry another key than their own: one pack took over another pack's crag by name (before crags of one
- * name in different places were kept apart). A crag taken over from the user's own file looks the same; `packRepairOrder`
- * tells them apart with the packs' files.
+ * Crags of a pack that carry another key than their own (the key in their id), with the keys of the routes in them: one pack
+ * may have taken over another pack's crag by name (before crags of one name in different places were kept apart). A crag taken
+ * over from the user's own file looks the same; `packRepairOrder` tells them apart with the packs' files.
  */
-export async function listMergedPackCrags(db: SQLiteDatabase): Promise<{ id: string; ownKey: string; packId: string }[]> {
-  return db.getAllAsync<{ id: string; ownKey: string; packId: string }>(
-    `SELECT id, substr(id, 10) AS ownKey, pack_id AS packId FROM crag
-     WHERE deleted_at IS NULL AND pack_id IS NOT NULL AND id LIKE 'imp:crag:%' AND import_key IS NOT NULL AND import_key <> substr(id, 10)`);
+export async function listMergedPackCrags(db: SQLiteDatabase): Promise<{ id: string; ownKey: string; packId: string; routeKeys: string[] }[]> {
+  const crags = await db.getAllAsync<{ id: string; ownKey: string; packId: string }>(
+    `SELECT id, CASE WHEN id LIKE 'imp:crag:%' THEN substr(id, 10) ELSE '' END AS ownKey, pack_id AS packId FROM crag
+     WHERE deleted_at IS NULL AND pack_id IS NOT NULL AND import_key IS NOT NULL AND id <> 'imp:crag:' || import_key
+     ORDER BY id`);
+  const out = [];
+  for (const c of crags) {
+    const routes = await db.getAllAsync<{ k: string }>(
+      `SELECT DISTINCT r.import_key AS k FROM route r JOIN sector s ON s.id = r.sector_id
+       WHERE s.crag_id = ? AND r.deleted_at IS NULL AND s.deleted_at IS NULL AND r.import_key IS NOT NULL ORDER BY k`, [c.id]);
+    out.push({ ...c, routeKeys: routes.map((x) => x.k) });
+  }
+  return out;
 }
