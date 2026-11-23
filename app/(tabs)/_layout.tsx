@@ -26,11 +26,11 @@ export default function TabsLayout() {
     >
       <Tabs.Screen
         name="index"
-        options={{ title: t('tabs.journal'), tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'book' : 'book-outline'} size={size} color={color} /> }}
+        options={{ title: t('tabs.journal'), tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'book' : 'book-outline'} size={size} color={color as string} /> }}
       />
       <Tabs.Screen
         name="progress"
-        options={{ title: t('tabs.progress'), tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'stats-chart' : 'stats-chart-outline'} size={size} color={color} /> }}
+        options={{ title: t('tabs.progress'), tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'stats-chart' : 'stats-chart-outline'} size={size} color={color as string} /> }}
       />
       <Tabs.Screen
         name="add"
@@ -58,11 +58,11 @@ export default function TabsLayout() {
       />
       <Tabs.Screen
         name="crags"
-        options={{ title: t('tabs.crags'), tabBarIcon: ({ color, size, focused }) => <MaterialCommunityIcons name={focused ? 'image-filter-hdr' : 'image-filter-hdr-outline'} size={size + 2} color={color} /> }}
+        options={{ title: t('tabs.crags'), tabBarIcon: ({ color, size, focused }) => <MaterialCommunityIcons name={focused ? 'image-filter-hdr' : 'image-filter-hdr-outline'} size={size + 2} color={color as string} /> }}
       />
       <Tabs.Screen
         name="goals"
-        options={{ title: t('tabs.plans'), tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'flag' : 'flag-outline'} size={size} color={color} /> }}
+        options={{ title: t('tabs.plans'), tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'flag' : 'flag-outline'} size={size} color={color as string} /> }}
       />
     </Tabs>
   );

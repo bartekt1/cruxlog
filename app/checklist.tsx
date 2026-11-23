@@ -80,7 +80,7 @@ export default function Checklist() {
             <Button label={t('checklist.useDefaults')} disabled={busy}
               onPress={() => change(() => addChecklistItems(db, DEFAULT_CHECKLIST.map((k) => t(`checklist.defaults.${k}`))))} />
           </View>
-        ) : null}
+        ) : undefined}
         renderItem={({ item, index }) => (
           <View style={{ flexDirection: 'row', alignItems: 'center', borderTopWidth: index ? 1 : 0, borderColor: th.line }}>
             <Pressable onPress={() => change(() => setChecklistDone(db, item.id, !item.done))}

@@ -1,11 +1,11 @@
 # CLAUDE.md
 
-Cruxlog: climbing logbook and crag guide. Expo SDK 57, React Native, TypeScript, expo-router, expo-sqlite, Zustand, i18next.
+Cruxlog: climbing logbook and crag guide. Expo SDK 58, React Native, TypeScript, expo-router, expo-sqlite, Zustand, i18next.
 
 - **Current status, decisions and plans live in the private repo `bartekt1/cruxlog-pro`** (`docs/STAN_I_DECYZJE.md`). If that repo is attached to the session, read `docs/STAN_I_DECYZJE.md` first. If it is not, tell the owner to attach it. Never copy its content into this public repo.
 
 - **Pro features are not in this repo.** `src/pro/` is the socket: `types.ts` (the `ProModule` shape, kept stable), `index.ts` (here a stub: `pro.has()` is false, no slots). The private repo replaces `index.ts` and adds the Pro screens in the store build. In this repo, a Pro feature shows `ProTeaser`/`ProChip`/`ProBadge` (`src/ui/ProTeaser.tsx`) and the `/pro` screen; never add Pro code here. Data (tables, queries, backup) stays here for every feature, so backups match across versions.
-- Expo APIs change between SDKs. Check https://docs.expo.dev/versions/v57.0.0/ before using one you are unsure of.
+- Expo APIs change between SDKs. Check https://docs.expo.dev/versions/v58.0.0/ before using one you are unsure of.
 - Install Expo packages with versions from `node_modules/expo/bundledNativeModules.json` (the `expo install` command cannot reach the Expo API from the cloud sandbox).
 - Checks: `npm run typecheck` and `npm test` must pass before committing (`verify` skill). Tests include i18n key sync and DB tests on `node:sqlite`.
 - All user-visible strings go through i18n in `src/i18n/pl.json` and `en.json`. Keep both files in sync.

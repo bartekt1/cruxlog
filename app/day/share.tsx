@@ -1,6 +1,6 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ComponentRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, ScrollView, Share, useWindowDimensions, View } from 'react-native';
 import { getCrag, listAreas, listAscentsBetween, type AreaRow, type AscentRow, type CragDetail } from '../../src/db/repo';
@@ -30,7 +30,7 @@ export default function DayShare() {
   const th = useTheme();
   const { routeSystem, cardStyle } = useSettings();
   const { width: screenWidth } = useWindowDimensions();
-  const cardRef = useRef<View>(null);
+  const cardRef = useRef<ComponentRef<typeof View>>(null);
   const [ascents, setAscents] = useState<AscentRow[] | undefined>(undefined);
   const [crags, setCrags] = useState<CragDetail[]>([]);
   const [areas, setAreas] = useState<AreaRow[]>([]);

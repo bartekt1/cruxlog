@@ -1,6 +1,6 @@
 import { Stack } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ComponentRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, ScrollView, Share, useWindowDimensions, View } from 'react-native';
 import { listAscents, listGoals, type GoalRow } from '../../src/db/repo';
@@ -28,7 +28,7 @@ export default function GoalsShare() {
   const th = useTheme();
   const { routeSystem, cardStyle } = useSettings();
   const { width: screenWidth } = useWindowDimensions();
-  const cardRef = useRef<View>(null);
+  const cardRef = useRef<ComponentRef<typeof View>>(null);
   const year = new Date().getFullYear();
   const [goals, setGoals] = useState<GoalRow[] | undefined>(undefined);
   const [ascents, setAscents] = useState<StatAscent[]>([]);

@@ -424,6 +424,16 @@ Since the automatic backup (§6a) these buttons are under Settings › "Other wa
 3. Also when the crag first came from your own CSV file (before the packs): the card shows and the repair brings back "Aligator" in Strzelnica with its routes and your ascents.
 4. Without merged crags the card does not show; after the repair it is gone.
 
+## 6zc. After an Expo SDK update (full pass)
+
+Go through everything once, watching for the app closing by itself or something not loading:
+1. Start: the logbook shows your ascents. 2. New ascent with a camera photo and a gallery photo; edit and save it.
+3. Crags: search, open a crag, sector and route; route history. 4. Map: loads, your position, tourist map on and off, "Prowadź".
+5. Topo: draw or move a line, save; draw one and leave without saving: the question "porzucić?" appears; after saving it does not.
+6. Progress and Plans; packing list. 7. Share an ascent card, a day card and the trip invitation (DEV build): the picture is sharp and complete.
+8. Backup now, show copies, restore. 9. Packs list; Excel export. 10. Send proposals. 11. Language and theme switch; date picker on a new ascent.
+12. Close the app fully and reopen: everything is kept.
+
 ## 7. Robustness
 1. Change the language and the route grade system, close the app completely (swipe away) and reopen it. Expected: all data is still there, and the language and grade system are the ones you chose.
 2. Rotate the phone, switch to dark mode and back. Expected: readable text and no layout breaks.

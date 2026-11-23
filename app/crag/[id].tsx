@@ -149,7 +149,7 @@ export default function CragScreen() {
                 <Field value={query} onChangeText={setQuery} placeholder={t('crags.searchRoutes')} accessibilityLabel={t('crags.searchRoutes')} returnKeyType="search" style={{ marginTop: 8 }} />
               ) : null}
             </View>
-          ) : null
+          ) : undefined
         }
         ListEmptyComponent={<EmptyState title={query.trim() ? t('crags.noRouteHits', { query: query.trim() }) : t('crags.noRoutes')} />}
         renderSectionHeader={({ section }) => (

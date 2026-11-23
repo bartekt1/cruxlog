@@ -52,7 +52,7 @@ Najważniejsze ekrany poza zakładkami:
 
 | Obszar | Technologia |
 |---|---|
-| Platforma | React Native 0.86 + Expo SDK 57, TypeScript (tryb ścisły) |
+| Platforma | React Native 0.88 + Expo SDK 58, TypeScript (tryb ścisły) |
 | Nawigacja | expo-router (pliki w `app/` to ekrany) |
 | Baza danych | SQLite przez expo-sqlite (asynchroniczne API), migracje przez `PRAGMA user_version` |
 | Ustawienia | Zustand + `expo-sqlite/kv-store` |

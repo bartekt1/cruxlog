@@ -1,7 +1,7 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
 import * as Sharing from 'expo-sharing';
 import { useSQLiteContext } from 'expo-sqlite';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ComponentRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, ScrollView, Share, useWindowDimensions, View } from 'react-native';
 import { captureRef } from 'react-native-view-shot';
@@ -42,7 +42,7 @@ export default function ShareScreen() {
   const { routeSystem, cardStyle: chosenStyle, setCardStyle, photoFit, setPhotoFit } = useSettings();
   const cardStyle = cardLook(chosenStyle); // looks other than "guide" are Pro
   const { width: screenWidth } = useWindowDimensions();
-  const cardRef = useRef<View>(null);
+  const cardRef = useRef<ComponentRef<typeof View>>(null);
   const [content, setContent] = useState<Content | null | undefined>(undefined);
   const [message, setMessage] = useState('');
   const [withPlace, setWithPlace] = useState(true);

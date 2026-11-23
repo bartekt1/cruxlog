@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ComponentRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, View } from 'react-native';
 import { getAscent, getRoute, listAreas, listCragChoices, listPartners, routeGoals, saveAscent, tripRoutesOn, type AreaRow, type CragChoice, type RouteRow } from '../../src/db/repo';
@@ -126,8 +126,8 @@ export default function NewAscent() {
   }
 
   const fail = (key: string) => setError({ key, field: FIELD_OF[key] });
-  const scrollRef = useRef<ScrollView>(null);
-  const feltRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
+  const feltRef = useRef<ComponentRef<typeof ScrollView>>(null);
   const feltWidth = useRef(0);
 
   async function save() {

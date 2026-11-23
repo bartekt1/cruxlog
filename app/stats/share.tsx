@@ -1,6 +1,6 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ComponentRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, ScrollView, Share, useWindowDimensions, View } from 'react-native';
 import { listAscents } from '../../src/db/repo';
@@ -24,7 +24,7 @@ export default function StatsShare() {
   const th = useTheme();
   const { routeSystem, cardStyle } = useSettings();
   const { width: screenWidth } = useWindowDimensions();
-  const cardRef = useRef<View>(null);
+  const cardRef = useRef<ComponentRef<typeof View>>(null);
   const currentYear = new Date().getFullYear();
   const [ascents, setAscents] = useState<StatAscent[]>([]);
   // Past seasons, the partners line and the night look are Pro (src/pro); the free card is this season's, in the guide look.

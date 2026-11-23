@@ -121,7 +121,7 @@ export default function Goals() {
             )}
           </View>
         }
-        ListEmptyComponent={adding ? null : <EmptyState title={t('goals.empty')} hint={t('goals.emptyHint')} />}
+        ListEmptyComponent={adding ? undefined : <EmptyState title={t('goals.empty')} hint={t('goals.emptyHint')} />}
         renderItem={({ item }) => {
           const done = item.done_at != null;
           return (
