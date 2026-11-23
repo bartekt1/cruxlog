@@ -52,6 +52,7 @@ export default function RootLayout() {
         <Stack.Screen name="goal/[id]" options={{ title: t('goals.editTitle') }} />
         <Stack.Screen name="day/share" options={{ title: t('dayShare.title'), presentation: 'modal' }} />
         <Stack.Screen name="stats/share" options={{ title: t('statsShare.title'), presentation: 'modal' }} />
+        <Stack.Screen name="checklist" options={{ title: t('checklist.title') }} />
         <Stack.Screen name="goal/share" options={{ title: t('goalsShare.title'), presentation: 'modal' }} />
         <Stack.Screen name="settings" options={{ title: t('settings.title') }} />
         <Stack.Screen name="mine" options={{ title: t('mine.title') }} />

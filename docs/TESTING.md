@@ -394,6 +394,16 @@ Since the automatic backup (§6a) these buttons are under Settings › "Other wa
 4. Switch the language to English and export again: English column titles, comma-separated (`cruxlog-logbook-<date>.csv`).
 5. With an empty logbook: the message says there is nothing to export.
 
+## 6y. Packing list
+
+1. Plany: under trips there is a "Lista do spakowania" card with the hint "Odhacz sprzęt przed wyjazdem". Tap it.
+2. Empty list: the message and "Użyj podstawowej listy". Tap it: 18 items (rope, quickdraws, harness...).
+3. Tick a few: each gets a check and is crossed out; the top shows "Spakowane: 3 z 18". Back on Plany the card shows the same count.
+4. Add "Lina 70 m" with the field and the + button (or the keyboard's done key): it appears at the end. An empty field shows a message.
+5. Delete an item with the bin icon. "Odznacz wszystko" unticks everything.
+6. Close the app and reopen: the list and ticks are kept. Make a backup, restore it on a fresh install: the list comes back once (no duplicates).
+7. TalkBack: each item reads as a checkbox with its state; the bin reads "Usuń: <name>".
+
 ## 7. Robustness
 1. Change the language and the route grade system, close the app completely (swipe away) and reopen it. Expected: all data is still there, and the language and grade system are the ones you chose.
 2. Rotate the phone, switch to dark mode and back. Expected: readable text and no layout breaks.

@@ -5,7 +5,7 @@ import { packBackup, unpackBackup } from '../src/domain/autoBackup';
 import { MIGRATIONS, migrate } from '../src/db/migrate';
 import {
   addAscent, addGoal, addUserRoute, saveAscent, installPack, listInstalledPacks, removePack, saveTrip, getTrip, listTrips, deleteTrip, tripRoutesOn, listAscentsBetween, applyImport, cragUsage, deleteAscent, deleteCrag, deleteGoal, deleteArea, deleteRoute, deleteSector,
-  getAscent, listAscentsForExport, getCrag, getArea, getRoute, getSector, listAscents, listCragRoutes, listCrags, listGoals, listAreas, listSectorNames, addArea, areaIdFor,
+  getAscent, listAscentsForExport, listChecklist, addChecklistItems, setChecklistDone, resetChecklist, deleteChecklistItem, getCrag, getArea, getRoute, getSector, listAscents, listCragRoutes, listCrags, listGoals, listAreas, listSectorNames, addArea, areaIdFor,
   renameArea, renameSector, routeUsage, countOutbox, deleteOutbox, listOutbox, reportDeletion, listMyCrags, listMyRoutes, deleteMine, listEmptyAreas, saveCrag, searchRoutes, sectorUsage, setGoalDone, updateAscent, updateRoute, type NewRoute, type RouteFilter,
   listCragChoices, listPartners, applyCragPositions, addRouteGoal, routeGoalKinds, addPhotos, listPhotos, listPhotosOf, removePhotos, activePhotos, latestPhotoChange, getPhoto, listTopoLines, topoRoutes, saveTopoLine, deleteTopoLine, routeTopos, setCragLocation, listRouteAscents, recentRoutes, listSectors, addSector, createRoute, importedUsage, removeImported, findRoutes, getGoal, updateGoal, routeGoals,
 } from '../src/db/repo';
@@ -564,6 +564,56 @@ describe('trips', () => {
     const target = await freshDb();
     await importBackup(target, JSON.parse(JSON.stringify(await exportBackup(db))));
     expect(await listTrips(target)).toEqual(await listTrips(db));
+  });
+});
+
+describe('checklist', () => {
+  it('adds in order, ticks, unticks all and deletes', async () => {
+    const db = await freshDb();
+    await addChecklistItems(db, ['Lina', 'Ekspresy']);
+    await addChecklistItems(db, ['Kask']);
+    let items = await listChecklist(db);
+    expect(items.map((i) => i.label)).toEqual(['Lina', 'Ekspresy', 'Kask']);
+    await setChecklistDone(db, items[0].id, true);
+    await setChecklistDone(db, items[2].id, true);
+    expect((await listChecklist(db)).map((i) => i.done)).toEqual([true, false, true]);
+    await resetChecklist(db);
+    expect((await listChecklist(db)).every((i) => !i.done)).toBe(true);
+    await deleteChecklistItem(db, items[1].id);
+    items = await listChecklist(db);
+    expect(items.map((i) => i.label)).toEqual(['Lina', 'Kask']);
+    await addChecklistItems(db, ['Buty']);
+    expect((await listChecklist(db)).map((i) => i.label)).toEqual(['Lina', 'Kask', 'Buty']);
+  });
+  it('arrives on a database that already has data', async () => {
+    const db = openTestDb();
+    await db.execAsync(MIGRATIONS.slice(0, 13).join('\n') + 'PRAGMA user_version = 13;');
+    await addGoal(db, { kind: 'project', title: 'Keep me', target: null, gradeIndex: null, routeId: null });
+    await migrate(db);
+    expect(await count(db, 'goal')).toBe(1);
+    await addChecklistItems(db, ['Lina']);
+    expect((await listChecklist(db)).map((i) => i.label)).toEqual(['Lina']);
+  });
+  it('keeps lists apart', async () => {
+    const db = await freshDb();
+    await addChecklistItems(db, ['Lina']);
+    await addChecklistItems(db, ['Namiot'], 'trip:1');
+    expect((await listChecklist(db)).map((i) => i.label)).toEqual(['Lina']);
+    expect((await listChecklist(db, 'trip:1')).map((i) => i.label)).toEqual(['Namiot']);
+  });
+  it('goes into the backup and comes back; an older backup without it still imports', async () => {
+    const db = await freshDb();
+    await addChecklistItems(db, ['Lina', 'Kask']);
+    await setChecklistDone(db, (await listChecklist(db))[1].id, true);
+    const backup = JSON.parse(JSON.stringify(await exportBackup(db)));
+    const target = await freshDb();
+    await importBackup(target, backup);
+    expect(await listChecklist(target)).toEqual(await listChecklist(db));
+    delete backup.tables.checklist_item;
+    backup.version = 9;
+    const older = await freshDb();
+    await importBackup(older, backup);
+    expect(await listChecklist(older)).toEqual([]);
   });
 });
 
