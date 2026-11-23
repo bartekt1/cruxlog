@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Alert, ScrollView } from 'react-native';
+import { Alert, ScrollView } from 'react-native';
 import { ROUTE_SYSTEMS } from '../src/domain/grades';
 import type { Lang } from '../src/domain/settings';
 import i18n from '../src/i18n';
+import { hideBusy, showBusy } from '../src/ui/busy';
+import { BusyOverlay } from '../src/ui/BusyOverlay';
 import { showError } from '../src/ui/errors';
 import { FoldSection } from '../src/ui/Fold';
 import { Chip, ChipRow, Label } from '../src/ui/kit';
@@ -22,16 +24,22 @@ export default function Settings() {
   const [busy, setBusy] = useState(false);
 
   // Results go to an alert so they are seen even when the button is far down the screen.
-  const run: Run = async (fn) => {
+  // Long work shows a card in the middle of the screen (BusyOverlay) with what is happening; it goes away before the result.
+  const run: Run = async (fn, status) => {
     setBusy(true);
+    if (status) showBusy(status);
+    let msg: string | void = undefined;
+    let error: unknown = null;
     try {
-      const msg = await fn();
-      if (msg) Alert.alert(t('settings.done'), msg);
+      msg = await fn();
     } catch (e) {
-      showError(e);
+      error = e;
     } finally {
+      hideBusy();
       setBusy(false);
     }
+    if (error) showError(error);
+    else if (msg) Alert.alert(t('settings.done'), msg);
   };
 
   const setLanguage = (lang: Lang) => {
@@ -61,7 +69,7 @@ export default function Settings() {
       <ProposalSection run={run} busy={busy} />
       <BackupSection run={run} busy={busy} />
       <UpdateSection run={run} busy={busy} />
-      {busy ? <ActivityIndicator color={th.accent} style={{ marginTop: 16 }} /> : null}
+      <BusyOverlay />
     </ScrollView>
   );
 }

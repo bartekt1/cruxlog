@@ -18,7 +18,7 @@ export function UpdateSection({ run, busy }: { run: Run; busy: boolean }) {
     const r = await fetchLatestRelease();
     if (r && shouldOffer(r, installedCode(), null)) return offerRelease(r, false);
     Alert.alert(t('updates.title'), r && installedCode() == null ? t('updates.devBuild', { version: r.name }) : t('updates.upToDate'));
-  });
+  }, t('busy.checkingUpdates'));
   return (
     <FoldSection title={t('updates.section')} summary={t('updates.current', { version: installedName() })}>
       {/* The store build is updated by Google Play and the DEV build by hand; only the GitHub APK looks for updates itself. */}

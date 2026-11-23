@@ -3,7 +3,7 @@ import type { SQLiteDatabase } from 'expo-sqlite';
 import { exportBackup, importBackup, latestChange } from '../db/backup';
 import { activePhotos, latestPhotoChange } from '../db/repo';
 import { backupDue, backupFileName, packBackup, peekBackup, PEEK_BYTES, photosDue, unpackBackup } from '../domain/autoBackup';
-import { addCopy, dropCopies, expiredCopies, mergeCopies, mergeScan, readPhotoMarker, withPhotoMarker, type FolderCopy } from '../domain/backupIndex';
+import { addCopy, dropCopies, expiredCopies, withFoundCopies, mergeScan, readPhotoMarker, withPhotoMarker, type FolderCopy } from '../domain/backupIndex';
 import { BACKUP_PHOTO_DIR, missingIds, photoFileName } from '../domain/photos';
 import { getBackupIndex, setBackupIndex } from './backupIndexStore';
 import { photoFile } from './photos';
@@ -90,13 +90,15 @@ async function scanCopies(dirUri: string): Promise<void> {
     const copy = await identifyCopy(item);
     if (copy) copies.push(copy);
   }
-  setBackupIndex(mergeCopies(getBackupIndex(), copies));
+  setBackupIndex(withFoundCopies(getBackupIndex(), copies));
 }
 
-/** The copies in the folder, newest first. An empty list is looked up in the folder once more (copies only; photos when they are restored). */
+/**
+ * The copies in the folder, newest first. Looked up in the folder each time (copies only, from their first bytes; photos when
+ * they are restored), so copies another phone made in the same folder show too.
+ */
 export async function listBackups(dirUri: string): Promise<FolderBackup[]> {
-  const index = getBackupIndex();
-  if (!index.copies.length) await scanCopies(dirUri);
+  await scanCopies(dirUri);
   return getBackupIndex().copies;
 }
 
@@ -127,8 +129,8 @@ export async function writeBackup(db: SQLiteDatabase, dirUri: string): Promise<{
 }
 
 /** Merges a copy from the folder into the database (newer entries win, nothing is deleted). */
-export async function restoreBackup(db: SQLiteDatabase, copy: FolderBackup): Promise<number> {
-  return importBackup(db, unpackBackup(new Uint8Array(await new File(copy.uri).arrayBuffer())));
+export async function restoreBackup(db: SQLiteDatabase, copy: FolderBackup, onProgress?: (done: number, total: number) => void): Promise<number> {
+  return importBackup(db, unpackBackup(new Uint8Array(await new File(copy.uri).arrayBuffer())), onProgress);
 }
 
 /**

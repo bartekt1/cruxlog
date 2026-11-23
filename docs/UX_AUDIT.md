@@ -180,3 +180,16 @@ Każdy etap to osobna wersja do sprawdzenia na telefonie i osobne „scalaj”. 
 - **Etap 5 – zrobione (2026-10-28, gałąź robocza):** przejście – udostępnij i edytuj w nagłówku, na dole tylko Usuń (i „Dodaj jako projekt”); „Udostępnij …” zamiast „Pochwal się …”, „Wyślij obrazek/tekst” (zaproszenie na wyprawę zostaje „Zaproś”); na ekranach udostępniania „Udostępnij obrazek” zaraz pod podglądem, tekst na dole; ikony przy dniach w Dzienniku szare; cele w Planach – ikona udostępniania przy nagłówku; wyprawa – pomarańczowe „Zaproś” tylko przed wyprawą, potem zwykłe; import CSV zwykłym przyciskiem (pomarańczowe zostają Paczki).
 - **Etap 6 – zrobione (2026-10-28, gałąź robocza):** topo – instrukcja w jednej linii z „Więcej ›”; kwadraty wycen jednej szerokości (długa wycena mniejszą czcionką); karta wyprawy i dnia mierzy swoją treść i ma wysokość od 4:5 do 9:16 (`tripCardRatio`) – krótki dzień bez pustej połowy, a długa lista z wiadomością nie ucina już stopki (błąd znaleziony w podglądzie); kółko ładowania na ekranach skały, drogi, przejścia, wyprawy i regionu. Zakładka „Plany” – w etapie 1.
 - **Plan z §9 zrealizowany w całości.**
+
+## 10. Nowe ekrany, 2026-11-23 (lista kontrolna `ux-audit`)
+
+| Ekran | Sprawa | Waga | Stan |
+|---|---|---|---|
+| Ustawienia (wszystkie długie akcje) | Kółko było na dole ekranu, poza widokiem, bez opisu, co się dzieje. Teraz karta na środku ekranu z opisem („Przywracam dane z kopii…”) i paskiem postępu; blokuje dotyk do końca. | wysoka | poprawione |
+| Ustawienia › przywracanie kopii | Ponad 30 s dla kilku tysięcy wierszy (zapis po jednym). Teraz zapis hurtem i postęp „1 200 / 4 800”. | wysoka | poprawione, sprawdzić czas na telefonie |
+| Ustawienia › lista kopii | Kopie z innego telefonu nie pokazywały się, a usunięte ręcznie zostawały. Lista jest odczytywana z folderu przy każdym otwarciu. | średnia | poprawione |
+| Ustawienia › liczba zdjęć | Nie odświeżała się po wczytaniu zdjęć w tle. | niska | poprawione |
+| Ustawienia › Dziennik do Excela | Etykieta, krótki i długi opis, pusty dziennik ma komunikat zamiast pustego pliku. | – | w porządku |
+| Lista do spakowania | Pole ma widoczną etykietę; pusty stan z przyciskiem; komunikat przy pustym lub za długim wpisie; brak podwójnego zapisu; wiersz 52 pt, kosz z większym obszarem dotyku; TalkBack: pole wyboru ze stanem, kosz „Usuń: …”; przekreślenie i ikona, nie tylko kolor. | – | w porządku |
+| Lista do spakowania | Usunięcie rzeczy bez pytania (łatwo dopisać ją z powrotem). | niska | otwarte, do decyzji, jeśli będzie przeszkadzać |
+| Karta „Lista do spakowania” w Planach | Cała karta jest przyciskiem 56 pt; licznik w tekście. Sprawdzić na telefonie z największą czcionką. | niska | sprawdzić na telefonie |

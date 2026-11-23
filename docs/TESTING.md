@@ -404,6 +404,14 @@ Since the automatic backup (§6a) these buttons are under Settings › "Other wa
 6. Close the app and reopen: the list and ticks are kept. Make a backup, restore it on a fresh install: the list comes back once (no duplicates).
 7. TalkBack: each item reads as a checkbox with its state; the bin reads "Usuń: <name>".
 
+## 6z. Busy card and quicker restore
+
+1. Settings › Kopia zapasowa › Pokaż kopie: a card in the middle says "Szukam kopii w folderze…"; then the list. Make a copy on another phone into the same folder, tap Pokaż kopie twice (hide and show): the new copy is on the list.
+2. Przywróć a copy: after the question, the card says "Przywracam dane z kopii…" with a bar and "done / all". Note how long it takes (before: over 30 s); expected a few seconds.
+3. The card blocks taps; the back button does nothing until it ends; then the result message.
+4. When photos finish loading in the background, "Zdjęcia: N (size)" above updates without leaving the screen.
+5. Other actions show their card too: Zrób kopię teraz, Importuj skały z CSV (after the question), Wyślij teraz, Sprawdź aktualizacje (GitHub build). Export and CSV: the card goes away before the share sheet.
+
 ## 7. Robustness
 1. Change the language and the route grade system, close the app completely (swipe away) and reopen it. Expected: all data is still there, and the language and grade system are the ones you chose.
 2. Rotate the phone, switch to dark mode and back. Expected: readable text and no layout breaks.

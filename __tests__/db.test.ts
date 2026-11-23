@@ -1011,6 +1011,29 @@ describe('automatic backup support', () => {
     await deleteAscent(db, a); // a deletion counts as a change too
     expect(await latestChange(db)).toBeGreaterThan(first!);
   });
+  it('restores a big backup with few queries and reports progress', async () => {
+    const db = await freshDb();
+    await installPack(db, { id: 'big', name: 'Big', version: 1 }, planFromFlatRows(parseFlatCsv(
+      'Region;Rejon;Grupa;Skała;Nazwa;Wycena;ID_skały;ID_drogi\n'
+      + Array.from({ length: 1500 }, (_, i) => `R;A;G;Crag ${i % 30};Route ${i};VI.${(i % 6) + 1};sk-${i % 30};dr-${i}`).join('\n'))));
+    const r = await addUserRoute(db, route());
+    for (let i = 0; i < 40; i++) await addAscent(db, ascent(r, { date: `2026-05-${String((i % 28) + 1).padStart(2, '0')}` }));
+    const backup = JSON.parse(JSON.stringify(await exportBackup(db)));
+    const rows = Object.values(backup.tables as Record<string, unknown[]>).reduce((n, x) => n + x.length, 0);
+    const other = await freshDb();
+    let calls = 0;
+    const run = other.runAsync.bind(other);
+    other.runAsync = ((...args: Parameters<typeof run>) => { calls++; return run(...args); }) as typeof run;
+    const seen: [number, number][] = [];
+    expect(await importBackup(other, backup, (d, t) => seen.push([d, t]))).toBe(rows);
+    expect(calls).toBeLessThan(rows / 10);
+    expect(seen[0]).toEqual([0, rows]);
+    expect(seen[seen.length - 1]).toEqual([rows, rows]);
+    expect(await count(other, 'route')).toBe(await count(db, 'route'));
+    expect((await listAscents(other)).length).toBe(40);
+    // Again: nothing is newer, so nothing is written.
+    expect(await importBackup(other, backup)).toBe(0);
+  });
   it('a gzipped copy restores into an empty database', async () => {
     const db = await freshDb();
     const r = await addUserRoute(db, route());
