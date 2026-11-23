@@ -1,4 +1,4 @@
-import { backupDue, photosDue, backupFileName, devicePath, folderKind, packBackup, peekBackup, PEEK_BYTES, RETRY_AFTER_MS, unpackBackup } from '../src/domain/autoBackup';
+import { backupDue, photosDue, backupFileName, devicePath, folderKind, packBackup, peekBackup, PEEK_BYTES, RETRY_AFTER_MS, sameBytes, unpackBackup } from '../src/domain/autoBackup';
 
 const DAY = 86_400_000;
 
@@ -80,5 +80,14 @@ describe('peekBackup', () => {
     expect(peekBackup(new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3]))).toBeNull();
     expect(peekBackup(new Uint8Array([0x1f, 0x8b, 0, 0]))).toBeNull();
     expect(peekBackup(new Uint8Array())).toBeNull();
+  });
+});
+
+describe('sameBytes', () => {
+  it('is true only for the same length and content', () => {
+    expect(sameBytes(new Uint8Array([1, 2, 3]), new Uint8Array([1, 2, 3]))).toBe(true);
+    expect(sameBytes(new Uint8Array([1, 2]), new Uint8Array([1, 2, 3]))).toBe(false);
+    expect(sameBytes(new Uint8Array([1, 2, 4]), new Uint8Array([1, 2, 3]))).toBe(false);
+    expect(sameBytes(new Uint8Array(), new Uint8Array())).toBe(true);
   });
 });

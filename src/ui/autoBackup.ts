@@ -2,7 +2,7 @@ import { Directory, File, FileMode } from 'expo-file-system';
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { exportBackup, importBackup, latestChange } from '../db/backup';
 import { activePhotos, latestPhotoChange } from '../db/repo';
-import { backupDue, backupFileName, packBackup, peekBackup, PEEK_BYTES, photosDue, unpackBackup } from '../domain/autoBackup';
+import { backupDue, backupFileName, packBackup, peekBackup, PEEK_BYTES, photosDue, sameBytes, unpackBackup } from '../domain/autoBackup';
 import { addCopy, dropCopies, expiredCopies, withFoundCopies, mergeScan, readPhotoMarker, withPhotoMarker, type FolderCopy } from '../domain/backupIndex';
 import { BACKUP_PHOTO_DIR, missingIds, photoFileName } from '../domain/photos';
 import { getBackupIndex, setBackupIndex } from './backupIndexStore';
@@ -41,6 +41,24 @@ async function identifyCopy(file: File): Promise<FolderCopy | null> {
     return { uri: file.uri, at: typeof data.exportedAt === 'number' ? data.exportedAt : file.modificationTime ?? 0, size };
   } catch {
     return null;
+  }
+}
+
+const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
+
+/**
+ * Whether a file just written into the folder holds all of `bytes`. Google Drive reports the size of a new file late (it
+ * keeps the file and uploads it in the background), so a short size is asked again a few times, then the file is read back.
+ */
+async function fullyWritten(uri: string, bytes: Uint8Array): Promise<boolean> {
+  for (let i = 0; i < 6; i++) {
+    if ((new File(uri).size ?? 0) >= bytes.length) return true;
+    await sleep(400);
+  }
+  try {
+    return sameBytes(new Uint8Array(await new File(uri).arrayBuffer()), bytes);
+  } catch {
+    return false;
   }
 }
 
@@ -113,7 +131,7 @@ export async function writeBackup(db: SQLiteDatabase, dirUri: string): Promise<{
   const file = dir.createFile(name, 'application/gzip');
   try {
     file.write(bytes);
-    if ((file.size ?? 0) < bytes.length) throw new AppError('errors.partialCopy');
+    if (!(await fullyWritten(file.uri, bytes))) throw new AppError('errors.partialCopy');
   } catch (e) {
     try { file.delete(); } catch { /* nothing more to do */ }
     throw e;
@@ -156,7 +174,7 @@ export async function syncPhotos(db: SQLiteDatabase, dirUri: string): Promise<nu
     const file = target.createFile(photoFileName(id), 'image/jpeg');
     try {
       file.write(bytes);
-      if ((file.size ?? 0) < bytes.length) throw new AppError('errors.partialPhoto');
+      if (!(await fullyWritten(file.uri, bytes))) throw new AppError('errors.partialPhoto');
     } catch (e) {
       try { file.delete(); } catch { /* nothing more to do */ }
       throw e;

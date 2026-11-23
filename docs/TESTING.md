@@ -412,6 +412,11 @@ Since the automatic backup (§6a) these buttons are under Settings › "Other wa
 4. When photos finish loading in the background, "Zdjęcia: N (size)" above updates without leaving the screen.
 5. Other actions show their card too: Zrób kopię teraz, Importuj skały z CSV (after the question), Wyślij teraz, Sprawdź aktualizacje (GitHub build). Export and CSV: the card goes away before the share sheet.
 
+## 6za. Backup to Google Drive does not fail on a late size
+
+1. Folder on Google Drive. Tap "Zrób kopię teraz" several times in a row (also with weak signal). Expected: each time the success message; never "Kopia zapisała się tylko częściowo" (Drive reports the size of a new file late; the app now asks again and reads the file back).
+2. Add a few photos and make a copy: the photos are copied without "Zdjęcie zapisało się tylko częściowo".
+
 ## 7. Robustness
 1. Change the language and the route grade system, close the app completely (swipe away) and reopen it. Expected: all data is still there, and the language and grade system are the ones you chose.
 2. Rotate the phone, switch to dark mode and back. Expected: readable text and no layout breaks.
