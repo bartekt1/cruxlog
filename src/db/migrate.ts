@@ -129,6 +129,14 @@ export const MIGRATIONS: string[] = [
   ALTER TABLE outbox ADD COLUMN crag_id TEXT;
   CREATE INDEX idx_outbox_crag ON outbox(crag_id);
   `,
+  // 14: the packing checklist: things to take, ticked off before leaving. `list` names the list ('pack' is the basic one),
+  // so more lists (e.g. one per trip) can be added later without a new table. Part of backups.
+  `
+  CREATE TABLE checklist_item (
+    id TEXT PRIMARY KEY, list TEXT NOT NULL DEFAULT 'pack', label TEXT NOT NULL, done INTEGER NOT NULL DEFAULT 0,
+    position INTEGER NOT NULL DEFAULT 0, ${COMMON});
+  CREATE INDEX idx_checklist_list ON checklist_item(list, position);
+  `,
 ];
 
 export async function migrate(db: SQLiteDatabase): Promise<void> {

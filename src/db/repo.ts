@@ -1,6 +1,7 @@
 // All database queries, by topic. Screens import from here.
 export * from './areas';
 export * from './ascents';
+export * from './checklist';
 export * from './crags';
 export * from './goals';
 export * from './imports';

@@ -386,6 +386,44 @@ Since the automatic backup (§6a) these buttons are under Settings › "Other wa
 4. At the end the line says "Przywrócone zdjęcia: M." and the pictures show on ascents and crags.
 5. Manual import of a file (Ręczna kopia › Importuj) with a backup folder chosen: same background photo loading.
 
+## 6x. Logbook to Excel (.xlsx)
+
+1. Settings › Kopia zapasowa › "Dziennik do Excela" › "Eksportuj dziennik (Excel)". Expected: the share sheet opens with `cruxlog-dziennik-<date>.xlsx`.
+2. Open it in Google Sheets on the phone, and in Excel or Sheets on a computer. Expected: one row per ascent, oldest first; Polish and Slovak letters right (Jaskółka, Aligátor); bold header that stays on top; attempts and rating are numbers; grades in the scale chosen in Settings.
+3. An ascent with a note that has a semicolon, quotes, < > or a line break: the note stays in one cell as typed.
+4. Switch the language to English and export again: English column titles, sheet "Logbook", `cruxlog-logbook-<date>.xlsx`.
+5. With an empty logbook: the message says there is nothing to export.
+
+## 6y. Packing list
+
+1. Plany: under trips there is a "Lista do spakowania" card with the hint "Odhacz sprzęt przed wyjazdem". Tap it.
+2. Empty list: the message and "Użyj podstawowej listy". Tap it: 18 items (rope, quickdraws, harness...).
+3. Tick a few: each gets a check and is crossed out; the top shows "Spakowane: 3 z 18". Back on Plany the card shows the same count.
+4. Add "Lina 70 m" with the field and the + button (or the keyboard's done key): it appears at the end. An empty field shows a message.
+5. Delete an item with the bin icon. "Odznacz wszystko" unticks everything.
+6. Close the app and reopen: the list and ticks are kept. Make a backup, restore it on a fresh install: the list comes back once (no duplicates).
+7. TalkBack: each item reads as a checkbox with its state; the bin reads "Usuń: <name>".
+
+## 6z. Busy card and quicker restore
+
+1. Settings › Kopia zapasowa › Pokaż kopie: a card in the middle says "Szukam kopii w folderze…"; then the list. Make a copy on another phone into the same folder, tap Pokaż kopie twice (hide and show): the new copy is on the list.
+2. Przywróć a copy: after the question, the card says "Przywracam dane z kopii…" with a bar and "done / all". Note how long it takes (before: over 30 s); expected a few seconds.
+3. The card blocks taps; the back button does nothing until it ends; then the result message.
+4. When photos finish loading in the background, "Zdjęcia: N (size)" above updates without leaving the screen.
+5. Other actions show their card too: Zrób kopię teraz, Importuj skały z CSV (after the question), Wyślij teraz, Sprawdź aktualizacje (GitHub build). Export and CSV: the card goes away before the share sheet.
+
+## 6za. Backup to Google Drive does not fail on a late size
+
+1. Folder on Google Drive. Tap "Zrób kopię teraz" several times in a row (also with weak signal). Expected: each time the success message; never "Kopia zapisała się tylko częściowo" (Drive reports the size of a new file late; the app now asks again and reads the file back).
+2. Add a few photos and make a copy: the photos are copied without "Zdjęcie zapisało się tylko częściowo".
+
+## 6zb. Crags of the same name in different packs
+
+1. Fresh install: get the packs Strzelnica and Peklo (and Przełom Marcinka and Raj). Expected: two crags "Aligator" (Strzelnica) and "Aligátor" (Peklo), each with its own routes; the same for "Mnich" and "Mních".
+2. A phone where an older version merged them (one "Aligátor" in Peklo, Strzelnica's routes missing): Settings › Paczki shows the card "Połączone skały o tej samej nazwie" naming the packs to reinstall. Tap "Napraw połączone skały". Expected: both crags back, each with its routes; your ascents on the right crags; the card is gone.
+3. Also when the crag first came from your own CSV file (before the packs): the card shows and the repair brings back "Aligator" in Strzelnica with its routes and your ascents.
+4. Without merged crags the card does not show; after the repair it is gone.
+
 ## 7. Robustness
 1. Change the language and the route grade system, close the app completely (swipe away) and reopen it. Expected: all data is still there, and the language and grade system are the ones you chose.
 2. Rotate the phone, switch to dark mode and back. Expected: readable text and no layout breaks.

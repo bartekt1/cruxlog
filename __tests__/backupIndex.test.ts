@@ -1,4 +1,4 @@
-import { addCopy, dropCopies, emptyIndex, expiredCopies, mergeCopies, mergeScan, parseIndex, readPhotoMarker, withPhotoMarker } from '../src/domain/backupIndex';
+import { addCopy, dropCopies, emptyIndex, expiredCopies, withFoundCopies, mergeScan, parseIndex, readPhotoMarker, withPhotoMarker } from '../src/domain/backupIndex';
 
 const copy = (n: number) => ({ uri: `content://drive/doc/${n}`, at: n * 1000, size: 400_000 });
 
@@ -47,10 +47,10 @@ describe('photo marker', () => {
   });
 });
 
-describe('mergeCopies', () => {
-  it('adds copies but keeps the photos and the "looked through" mark', () => {
-    const index = { ...emptyIndex(), photos: { p1: 'uri-p1' }, copies: [{ uri: 'a', at: 1, size: 10 }] };
-    const merged = mergeCopies(index, [{ uri: 'b', at: 2, size: 20 }, { uri: 'a', at: 1, size: 10 }]);
+describe('withFoundCopies', () => {
+  it('takes the copies found (new ones in, removed ones out) but keeps the photos and the "looked through" mark', () => {
+    const index = { ...emptyIndex(), photos: { p1: 'uri-p1' }, copies: [{ uri: 'a', at: 1, size: 10 }, { uri: 'gone', at: 0, size: 5 }] };
+    const merged = withFoundCopies(index, [{ uri: 'a', at: 1, size: 10 }, { uri: 'b', at: 2, size: 20 }]);
     expect(merged.copies.map((c) => c.uri)).toEqual(['b', 'a']);
     expect(merged.photos).toEqual({ p1: 'uri-p1' });
     expect(merged.scanned).toBe(false);

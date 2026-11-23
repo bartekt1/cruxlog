@@ -3,7 +3,9 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, Keyboard, Pressable, View } from 'react-native';
-import { addGoal, listAreas, listAscents, listGoals, type GoalRow } from '../../src/db/repo';
+import { addGoal, listAreas, listAscents, listChecklist, listGoals, type GoalRow } from '../../src/db/repo';
+import { checklistProgress } from '../../src/domain/checklist';
+import { Ionicons } from '@expo/vector-icons';
 import { pathLabels } from '../../src/domain/areas';
 import { formatDay, isoDate } from '../../src/domain/dates';
 import type { GoalKind } from '../../src/domain/forms';
@@ -30,6 +32,7 @@ export default function Goals() {
   const [ascents, setAscents] = useState<StatAscent[]>([]);
   const [labels, setLabels] = useState<Map<string, string>>(new Map());
   const [adding, setAdding] = useState(false);
+  const [packing, setPacking] = useState<{ done: number; total: number } | null>(null);
   const Plans = pro.has('trips') ? pro.PlansMore : undefined;
   const year = new Date().getFullYear();
 
@@ -37,6 +40,7 @@ export default function Goals() {
     listGoals(db).then(setRows);
     listAscents(db).then((a) => setAscents(a.map(toStat)));
     listAreas(db).then((a) => setLabels(pathLabels(a)));
+    listChecklist(db).then((i) => setPacking(checklistProgress(i)));
   }, [db]);
   useFocusEffect(load);
 
@@ -86,6 +90,18 @@ export default function Goals() {
           <View style={{ paddingBottom: 8 }}>
             {/* Trips are Pro (src/pro `PlansMore`); the free tab shows what they would give. */}
             {Plans ? <Plans /> : <ProTeaser title={t('pro.tripsTitle')} hint={t('pro.tripsHint')} />}
+            {/* The packing checklist (free); its own screen. */}
+            <Pressable onPress={() => router.push('/checklist')} accessibilityRole="button"
+              style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 12, padding: 14, minHeight: 56, backgroundColor: th.surface, borderWidth: 1, borderColor: th.line, borderRadius: 14, opacity: pressed ? 0.7 : 1 })}>
+              <Ionicons name="checkbox-outline" size={24} color={th.accent} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: th.ink, fontFamily: F.semi, fontSize: 16 }}>{t('checklist.title')}</Text>
+                <Text style={{ color: th.muted, fontSize: 13 }}>
+                  {packing?.total ? t('checklist.progress', { done: packing.done, total: packing.total }) : t('checklist.cardHint')}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={th.muted} />
+            </Pressable>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <Label>{t('tabs.goals')}</Label>
               {rows.length ? <IconButton name="share-social-outline" size={22} label={t('goalsShare.open')} onPress={() => router.push('/goal/share')} /> : null}

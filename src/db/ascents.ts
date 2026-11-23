@@ -1,5 +1,6 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { type AscentStyle, type GradeSystem, type RouteType } from '../domain/grades';
+import type { JournalExportRow } from '../domain/journalExport';
 import { addRouteGoal, completeRouteGoals } from './goals';
 import { deletePhotoRows, insertPhotoRows, type NewPhoto } from './photos';
 import { newId, now } from './ids';
@@ -32,6 +33,18 @@ export async function listAscents(db: SQLiteDatabase): Promise<AscentRow[]> {
   return db.getAllAsync<AscentRow>(
     `${ASCENT_SELECT}
      WHERE a.deleted_at IS NULL ORDER BY a.date DESC, a.created_at DESC`,
+  );
+}
+
+/** Every ascent with its route, sector, crag and area, oldest first: the journal export (`journalXlsx`). */
+export async function listAscentsForExport(db: SQLiteDatabase): Promise<JournalExportRow[]> {
+  return db.getAllAsync<JournalExportRow>(
+    `SELECT a.date, a.style, a.attempts, a.rating, a.felt_grade_index, a.notes, a.weather, p.name AS partner_name,
+       r.name AS route_name, r.type, r.grade_index, r.grade_label, r.grade_system, s.name AS sector_name, c.name AS crag_name,
+       g.name AS region_name
+     FROM ascent a JOIN route r ON r.id = a.route_id JOIN sector s ON s.id = r.sector_id JOIN crag c ON c.id = s.crag_id
+     LEFT JOIN region g ON g.id = c.region_id LEFT JOIN partner p ON p.id = a.partner_id
+     WHERE a.deleted_at IS NULL ORDER BY a.date, a.created_at`,
   );
 }
 

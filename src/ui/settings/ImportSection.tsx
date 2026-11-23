@@ -13,6 +13,7 @@ import { FoldSection, MoreText } from '../Fold';
 import { Button, Label } from '../kit';
 import { Text } from '../Text';
 import { useTheme } from '../theme';
+import { showBusy } from '../busy';
 import type { Run } from './run';
 
 /** Settings › crags and routes: packs, the user's own crags and routes, importing CSV files (route lists or crag positions) and removing imported ones. */
@@ -51,6 +52,7 @@ export function ImportSection({ run, busy }: { run: Run; busy: boolean }) {
       t('settings.csvConfirmYes'), t('common.cancel'),
     );
     if (!ok) return;
+    showBusy(t('busy.importing'));
     const done = await applyImport(db, plan);
     return t('settings.csvDone', done) + (done.taken ? `\n\n${t('settings.csvTaken', { count: done.taken })}` : '');
   });
@@ -64,6 +66,7 @@ export function ImportSection({ run, busy }: { run: Run; busy: boolean }) {
       t('settings.positionsConfirm', { count: rows.length }) + (approx ? `\n\n${t('settings.positionsApprox', { count: approx })}` : ''),
       t('settings.csvConfirmYes'), t('common.cancel'));
     if (!ok) return;
+    showBusy(t('busy.importing'));
     const { updated, kept, unmatched } = await applyCragPositions(db, rows);
     const names = unmatched.slice(0, 8).map((r) => r.name || r.key).join(', ');
     return t('settings.positionsDone', { count: updated })
@@ -76,6 +79,7 @@ export function ImportSection({ run, busy }: { run: Run; busy: boolean }) {
     if (!n.routes && !n.crags) return t('settings.removeImportedNone');
     const ok = await ask(t('settings.removeImportedTitle'), t('settings.removeImportedConfirm', n), t('common.delete'), t('common.cancel'));
     if (!ok) return;
+    showBusy(t('busy.removing'));
     await removeImported(db);
     return t('settings.removeImportedDone', n);
   });

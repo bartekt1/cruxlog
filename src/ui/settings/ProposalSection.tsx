@@ -27,7 +27,7 @@ export function ProposalSection({ run, busy }: { run: Run; busy: boolean }) {
     const n = await sendProposals(db, true);
     refresh();
     return n ? t('proposals.sent', { count: n }) : t('proposals.nothing');
-  });
+  }, t('busy.sending'));
   const summary = shareEdits ? `${t('proposals.on')} · ${t('proposals.pending', { count: pending })}` : t('proposals.off');
   return (
     <FoldSection title={t('proposals.section')} summary={summary}>

@@ -5,11 +5,12 @@ import { packBackup, unpackBackup } from '../src/domain/autoBackup';
 import { MIGRATIONS, migrate } from '../src/db/migrate';
 import {
   addAscent, addGoal, addUserRoute, saveAscent, installPack, listInstalledPacks, removePack, saveTrip, getTrip, listTrips, deleteTrip, tripRoutesOn, listAscentsBetween, applyImport, cragUsage, deleteAscent, deleteCrag, deleteGoal, deleteArea, deleteRoute, deleteSector,
-  getAscent, getCrag, getArea, getRoute, getSector, listAscents, listCragRoutes, listCrags, listGoals, listAreas, listSectorNames, addArea, areaIdFor,
+  getAscent, listMergedPackCrags, listAscentsForExport, listChecklist, addChecklistItems, setChecklistDone, resetChecklist, deleteChecklistItem, getCrag, getArea, getRoute, getSector, listAscents, listCragRoutes, listCrags, listGoals, listAreas, listSectorNames, addArea, areaIdFor,
   renameArea, renameSector, routeUsage, countOutbox, deleteOutbox, listOutbox, reportDeletion, listMyCrags, listMyRoutes, deleteMine, listEmptyAreas, saveCrag, searchRoutes, sectorUsage, setGoalDone, updateAscent, updateRoute, type NewRoute, type RouteFilter,
   listCragChoices, listPartners, applyCragPositions, addRouteGoal, routeGoalKinds, addPhotos, listPhotos, listPhotosOf, removePhotos, activePhotos, latestPhotoChange, getPhoto, listTopoLines, topoRoutes, saveTopoLine, deleteTopoLine, routeTopos, setCragLocation, listRouteAscents, recentRoutes, listSectors, addSector, createRoute, importedUsage, removeImported, findRoutes, getGoal, updateGoal, routeGoals,
 } from '../src/db/repo';
 import { descendantIds } from '../src/domain/areas';
+import { packRepairOrder } from '../src/domain/packs';
 import { detectFormat, parseFlatCsv, parsePositionsCsv, planFromFlatRows, type FlatRow } from '../src/domain/flatImport';
 import { parseGrade } from '../src/domain/grades';
 import { openTestDb } from './helpers/sqlite';
@@ -75,6 +76,18 @@ describe('repo', () => {
     expect(rows.map((a) => a.date)).toEqual(['2026-10-01', '2026-09-01']);
     expect(rows[0]).toMatchObject({ route_name: 'Test Route 1', crag_name: 'Test Crag', style: 'attempt', partner_name: null });
     expect(rows[1]).toMatchObject({ partner_name: 'Anna', attempts: 2, rating: 4 });
+  });
+  it('lists every ascent for the export, oldest first, without deleted ones', async () => {
+    const db = await freshDb();
+    const r = await addUserRoute(db, route());
+    await addAscent(db, ascent(r, { date: '2026-10-01', partnerName: '' }));
+    const gone = await addAscent(db, ascent(r, { date: '2026-08-01' }));
+    await addAscent(db, ascent(r, { date: '2026-09-01' }));
+    await deleteAscent(db, gone);
+    const rows = await listAscentsForExport(db);
+    expect(rows.map((a) => a.date)).toEqual(['2026-09-01', '2026-10-01']);
+    expect(rows[0]).toMatchObject({ route_name: 'Test Route 1', crag_name: 'Test Crag', partner_name: 'Anna', attempts: 2 });
+    expect(rows[0].sector_name).toBeTruthy();
   });
   it('rolls back the ascent and its new partner when the insert fails', async () => {
     const db = await freshDb();
@@ -555,10 +568,136 @@ describe('trips', () => {
   });
 });
 
+describe('checklist', () => {
+  it('adds in order, ticks, unticks all and deletes', async () => {
+    const db = await freshDb();
+    await addChecklistItems(db, ['Lina', 'Ekspresy']);
+    await addChecklistItems(db, ['Kask']);
+    let items = await listChecklist(db);
+    expect(items.map((i) => i.label)).toEqual(['Lina', 'Ekspresy', 'Kask']);
+    await setChecklistDone(db, items[0].id, true);
+    await setChecklistDone(db, items[2].id, true);
+    expect((await listChecklist(db)).map((i) => i.done)).toEqual([true, false, true]);
+    await resetChecklist(db);
+    expect((await listChecklist(db)).every((i) => !i.done)).toBe(true);
+    await deleteChecklistItem(db, items[1].id);
+    items = await listChecklist(db);
+    expect(items.map((i) => i.label)).toEqual(['Lina', 'Kask']);
+    await addChecklistItems(db, ['Buty']);
+    expect((await listChecklist(db)).map((i) => i.label)).toEqual(['Lina', 'Kask', 'Buty']);
+  });
+  it('arrives on a database that already has data', async () => {
+    const db = openTestDb();
+    await db.execAsync(MIGRATIONS.slice(0, 13).join('\n') + 'PRAGMA user_version = 13;');
+    await addGoal(db, { kind: 'project', title: 'Keep me', target: null, gradeIndex: null, routeId: null });
+    await migrate(db);
+    expect(await count(db, 'goal')).toBe(1);
+    await addChecklistItems(db, ['Lina']);
+    expect((await listChecklist(db)).map((i) => i.label)).toEqual(['Lina']);
+  });
+  it('keeps lists apart', async () => {
+    const db = await freshDb();
+    await addChecklistItems(db, ['Lina']);
+    await addChecklistItems(db, ['Namiot'], 'trip:1');
+    expect((await listChecklist(db)).map((i) => i.label)).toEqual(['Lina']);
+    expect((await listChecklist(db, 'trip:1')).map((i) => i.label)).toEqual(['Namiot']);
+  });
+  it('goes into the backup and comes back; an older backup without it still imports', async () => {
+    const db = await freshDb();
+    await addChecklistItems(db, ['Lina', 'Kask']);
+    await setChecklistDone(db, (await listChecklist(db))[1].id, true);
+    const backup = JSON.parse(JSON.stringify(await exportBackup(db)));
+    const target = await freshDb();
+    await importBackup(target, backup);
+    expect(await listChecklist(target)).toEqual(await listChecklist(db));
+    delete backup.tables.checklist_item;
+    backup.version = 9;
+    const older = await freshDb();
+    await importBackup(older, backup);
+    expect(await listChecklist(older)).toEqual([]);
+  });
+});
+
 describe('packs', () => {
   const pack = (rows: string) => planFromFlatRows(parseFlatCsv(`Region;Rejon;Grupa;Skała;Nazwa;Wycena;ID_skały;ID_drogi\n${rows}`));
   const kamieniec = 'Czarnorzeki;Skałki;Kamieniec;Krowia;Rysa;VI.1;sk-1;dr-1\nCzarnorzeki;Skałki;Kamieniec;Krowia;Filar;VI.2;sk-1;dr-2\n';
   const strzelnica = 'Czarnorzeki;Skałki;Strzelnica;Okap;Komin;V;sk-2;dr-3\n';
+  // Two packs with a crag of the same name in different places ("Aligator" in Strzelnica, "Aligátor" in Peklo).
+  const strzelnicaPack = pack('Czarnorzeki;Skałki;Strzelnica;Aligator;Samsara;VI+;sk-37;dr-391\nCzarnorzeki;Skałki;Strzelnica;Aligator;Muchozol;VI-;sk-37;dr-390\n');
+  const pekloPack = pack('Slanské vrchy;Drevenik;Peklo;Aligátor;Zárez;IV+;sk-66;dr-767\nSlanské vrchy;Drevenik;Peklo;Aligátor;Malý komín;V;sk-66;dr-769\n');
+  const packKeys = new Map([['strzelnica', strzelnicaPack], ['peklo', pekloPack]].map(([id, pl]) => [id as string,
+    { crags: new Set((pl as typeof pekloPack).crags.map((c) => c.key)), routes: new Set((pl as typeof pekloPack).routes.map((x) => x.key)) }]));
+  const aligators = async (db: SQLiteDatabase) => {
+    const crags = (await listCrags(db)).filter((c) => /alig/i.test(c.name));
+    return Promise.all(crags.map(async (c) => ({ name: c.name, routes: (await listCragRoutes(db, c.id)).map((r) => r.name).sort() })));
+  };
+  it('keeps crags of the same name in different places apart', async () => {
+    const db = await freshDb();
+    await installPack(db, { id: 'strzelnica', name: 'Strzelnica', version: 1 }, strzelnicaPack);
+    await installPack(db, { id: 'peklo', name: 'Peklo', version: 1 }, pekloPack);
+    expect((await aligators(db)).sort((a, b) => a.name.localeCompare(b.name))).toEqual([
+      { name: 'Aligator', routes: ['Muchozol', 'Samsara'] },
+      { name: 'Aligátor', routes: ['Malý komín', 'Zárez'] },
+    ]);
+  });
+  it('finds crags merged by name before, and reinstalling in the repair order parts them', async () => {
+    const db = await freshDb();
+    await installPack(db, { id: 'strzelnica', name: 'Strzelnica', version: 1 }, strzelnicaPack);
+    await installPack(db, { id: 'peklo', name: 'Peklo', version: 1 }, pekloPack);
+    const crags = await listCrags(db);
+    const s = crags.find((c) => c.name === 'Aligator')!;
+    const p = crags.find((c) => c.name === 'Aligátor')!;
+    const samsara = (await listCragRoutes(db, s.id)).find((x) => x.name === 'Samsara')!;
+    await addAscent(db, ascent(samsara.id));
+    // What the old matching left behind: Peklo took Strzelnica's crag by name, moved it and dropped its other routes.
+    await db.execAsync(`
+      UPDATE sector SET crag_id = '${s.id}' WHERE crag_id = '${p.id}';
+      UPDATE crag SET name = 'Aligátor', region_id = (SELECT region_id FROM crag WHERE id = '${p.id}'), import_key = 'sk-66', pack_id = 'peklo' WHERE id = '${s.id}';
+      DELETE FROM crag WHERE id = '${p.id}';
+      UPDATE route SET deleted_at = 1 WHERE name = 'Muchozol';`);
+    expect(await aligators(db)).toEqual([{ name: 'Aligátor', routes: ['Malý komín', 'Samsara', 'Zárez'] }]);
+    const merged = await listMergedPackCrags(db);
+    expect(merged).toEqual([{ id: s.id, ownKey: 'sk-37', packId: 'peklo', routeKeys: ['dr-391', 'dr-767', 'dr-769'] }]);
+    const order = packRepairOrder(merged, packKeys);
+    expect(order).toEqual(['strzelnica', 'peklo']);
+    const plans: Record<string, typeof pekloPack> = { strzelnica: strzelnicaPack, peklo: pekloPack };
+    for (const id of order) await installPack(db, { id, name: id, version: 2 }, plans[id]);
+    expect((await aligators(db)).sort((a, b) => a.name.localeCompare(b.name))).toEqual([
+      { name: 'Aligator', routes: ['Muchozol', 'Samsara'] },
+      { name: 'Aligátor', routes: ['Malý komín', 'Zárez'] },
+    ]);
+    expect((await listAscents(db)).map((a) => [a.route_name, a.crag_name])).toEqual([['Samsara', 'Aligator']]);
+    expect(await listMergedPackCrags(db)).toEqual([]);
+  });
+  it('repairs a crag that came from the user\'s own file before the packs and was then merged', async () => {
+    const db = await freshDb();
+    // The user's own file first (its own keys), then the Strzelnica pack takes that crag over at the same place.
+    await applyImport(db, pack('Czarnorzeki;Skałki;Strzelnica;Aligator;Samsara;VI+;h-1;hr-1\nCzarnorzeki;Skałki;Strzelnica;Aligator;Muchozol;VI-;h-1;hr-2\n'));
+    await installPack(db, { id: 'strzelnica', name: 'Strzelnica', version: 1 }, strzelnicaPack);
+    await installPack(db, { id: 'peklo', name: 'Peklo', version: 1 }, pekloPack);
+    const crags = await listCrags(db);
+    const s = crags.find((c) => c.name === 'Aligator')!;
+    const p = crags.find((c) => c.name === 'Aligátor')!;
+    expect(s.id).toBe('imp:crag:h-1');
+    await addAscent(db, ascent((await listCragRoutes(db, s.id)).find((x) => x.name === 'Samsara')!.id));
+    // What the old matching left behind.
+    await db.execAsync(`
+      UPDATE sector SET crag_id = '${s.id}' WHERE crag_id = '${p.id}';
+      UPDATE crag SET name = 'Aligátor', region_id = (SELECT region_id FROM crag WHERE id = '${p.id}'), import_key = 'sk-66', pack_id = 'peklo' WHERE id = '${s.id}';
+      DELETE FROM crag WHERE id = '${p.id}';
+      UPDATE route SET deleted_at = 1 WHERE name = 'Muchozol';`);
+    const order = packRepairOrder(await listMergedPackCrags(db), packKeys);
+    expect(order).toEqual(['strzelnica', 'peklo']);
+    const plans: Record<string, typeof pekloPack> = { strzelnica: strzelnicaPack, peklo: pekloPack };
+    for (const id of order) await installPack(db, { id, name: id, version: 2 }, plans[id]);
+    expect((await aligators(db)).sort((a, b) => a.name.localeCompare(b.name))).toEqual([
+      { name: 'Aligator', routes: ['Muchozol', 'Samsara'] },
+      { name: 'Aligátor', routes: ['Malý komín', 'Zárez'] },
+    ]);
+    expect((await listAscents(db)).map((a) => [a.route_name, a.crag_name])).toEqual([['Samsara', 'Aligator']]);
+    // The crag taken from the user's own file is still marked, but nothing is left to repair.
+    expect(packRepairOrder(await listMergedPackCrags(db), packKeys)).toEqual([]);
+  });
   it('installs, updates and removes packs one by one', async () => {
     const db = await freshDb();
     await installPack(db, { id: 'kamieniec', name: 'Kamieniec', version: 1 }, pack(kamieniec));
@@ -948,6 +1087,29 @@ describe('automatic backup support', () => {
     await new Promise((res) => setTimeout(res, 5));
     await deleteAscent(db, a); // a deletion counts as a change too
     expect(await latestChange(db)).toBeGreaterThan(first!);
+  });
+  it('restores a big backup with few queries and reports progress', async () => {
+    const db = await freshDb();
+    await installPack(db, { id: 'big', name: 'Big', version: 1 }, planFromFlatRows(parseFlatCsv(
+      'Region;Rejon;Grupa;Skała;Nazwa;Wycena;ID_skały;ID_drogi\n'
+      + Array.from({ length: 1500 }, (_, i) => `R;A;G;Crag ${i % 30};Route ${i};VI.${(i % 6) + 1};sk-${i % 30};dr-${i}`).join('\n'))));
+    const r = await addUserRoute(db, route());
+    for (let i = 0; i < 40; i++) await addAscent(db, ascent(r, { date: `2026-05-${String((i % 28) + 1).padStart(2, '0')}` }));
+    const backup = JSON.parse(JSON.stringify(await exportBackup(db)));
+    const rows = Object.values(backup.tables as Record<string, unknown[]>).reduce((n, x) => n + x.length, 0);
+    const other = await freshDb();
+    let calls = 0;
+    const run = other.runAsync.bind(other);
+    other.runAsync = ((...args: Parameters<typeof run>) => { calls++; return run(...args); }) as typeof run;
+    const seen: [number, number][] = [];
+    expect(await importBackup(other, backup, (d, t) => seen.push([d, t]))).toBe(rows);
+    expect(calls).toBeLessThan(rows / 10);
+    expect(seen[0]).toEqual([0, rows]);
+    expect(seen[seen.length - 1]).toEqual([rows, rows]);
+    expect(await count(other, 'route')).toBe(await count(db, 'route'));
+    expect((await listAscents(other)).length).toBe(40);
+    // Again: nothing is newer, so nothing is written.
+    expect(await importBackup(other, backup)).toBe(0);
   });
   it('a gzipped copy restores into an empty database', async () => {
     const db = await freshDb();

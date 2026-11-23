@@ -7,15 +7,20 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 import { exportBackup, importBackup } from '../../db/backup';
-import { activePhotos, hasAscents } from '../../db/repo';
+import { activePhotos, hasAscents, listAscentsForExport } from '../../db/repo';
 import { devicePath, folderKind, unpackBackup } from '../../domain/autoBackup';
-import { formatDateTime } from '../../domain/dates';
+import { formatDateTime, isoDate } from '../../domain/dates';
 import { AppError } from '../../domain/errors';
 import { backupStatus } from '../../domain/history';
+import { ASCENT_STYLES } from '../../domain/grades';
+import { JOURNAL_COLUMNS, journalXlsx } from '../../domain/journalExport';
+
+const XLSX_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 import { formatBytes } from '../../domain/photos';
 import { backupNow, listBackups, restoreBackup, scanFolder, withBackupLock, type FolderBackup } from '../autoBackup';
 import { pickBackupFolder, testBackupFolder } from '../backupFolder';
 import { restorePhotosInBackground, usePhotoRestore } from '../photoRestore';
+import { busyProgress, hideBusy, showBusy } from '../busy';
 import { ask } from '../confirm';
 import { errorMessage } from '../errors';
 import { F } from '../fonts';
@@ -40,6 +45,10 @@ export function BackupSection({ run, busy }: { run: Run; busy: boolean }) {
   useEffect(() => { activePhotos(db).then((p) => setPhotoStats({ count: p.length, bytes: p.reduce((sum, x) => sum + x.bytes, 0) })); }, [db]);
   const backup = backupStatus(s.lastBackupAt, Date.now(), hasData);
   const photoRestore = usePhotoRestore();
+  // When photos finish coming back in the background, the count and size above are read again.
+  useEffect(() => {
+    if (photoRestore.restored) activePhotos(db).then((p) => setPhotoStats({ count: p.length, bytes: p.reduce((sum, x) => sum + x.bytes, 0) }));
+  }, [db, photoRestore.restored]);
   const photoLine = photoRestore.active
     ? (photoRestore.total ? t('photos.restoreProgress', { done: photoRestore.done, total: photoRestore.total }) : t('photos.restoreLooking'))
     : photoRestore.error ? t('photos.restoreFailed', { message: photoRestore.error })
@@ -49,14 +58,36 @@ export function BackupSection({ run, busy }: { run: Run; busy: boolean }) {
     const file = new File(Paths.cache, `cruxlog-backup-${Date.now()}.json`);
     file.create();
     file.write(JSON.stringify(await exportBackup(db)));
+    hideBusy(); // the share sheet comes next
     await Sharing.shareAsync(file.uri, { mimeType: 'application/json' });
     s.setLastBackupAt(Date.now());
-  });
+  }, t('busy.preparingFile'));
+
+  // The logbook as an Excel file (opens in Excel and Google Sheets): one row per ascent, grades in the chosen scale.
+  const doExportXlsx = () => run(async () => {
+    const rows = await listAscentsForExport(db);
+    if (!rows.length) return t('settings.journalExportEmpty');
+    const label = <K extends string>(keys: readonly K[], word: (k: K) => string) =>
+      Object.fromEntries(keys.map((k) => [k, word(k)])) as Record<K, string>;
+    const bytes = journalXlsx(rows, s.routeSystem, {
+      columns: label(JOURNAL_COLUMNS, (k) => t(`settings.journalColumns.${k}`)),
+      styles: label(ASCENT_STYLES, (k) => t(`styles.${k}`)),
+      types: label(['sport', 'multipitch'] as const, (k) => t(`types.${k}`)),
+      sheet: t('settings.journalExportSheet'),
+    });
+    const file = new File(Paths.cache, `${t('settings.journalExportFile')}-${isoDate(new Date())}.xlsx`);
+    if (file.exists) file.delete();
+    file.create();
+    file.write(bytes);
+    hideBusy(); // the share sheet comes next
+    await Sharing.shareAsync(file.uri, { mimeType: XLSX_TYPE, dialogTitle: t('settings.journalExport') });
+  }, t('busy.preparingFile'));
 
   // Picks the folder for automatic backups and proves it can be written to before remembering it.
   const doPickFolder = () => run(async () => {
     const dir = await pickBackupFolder();
     if (!dir) return;
+    showBusy(t('busy.checkingFolder'));
     try {
       testBackupFolder(dir);
     } catch (e) {
@@ -80,20 +111,21 @@ export function BackupSection({ run, busy }: { run: Run; busy: boolean }) {
     const done = t('settings.backupNowDone', { name: copy.name, kb: Math.max(1, Math.round(copy.bytes / 1024)), count: copy.count });
     if (photos instanceof Error) return `${done}\n\n${t('photos.backupFailed', { message: errorMessage(photos) })}`;
     return photos ? `${done}\n\n${t('settings.photosCopied', { count: photos })}` : done;
-  });
+  }, t('busy.backingUp'));
 
-  // The list is looked up in the folder (a short wait on Google Drive), so it shows a spinner.
-  const showCopies = () => run(async () => {
+  // The list is looked up in the folder each time (a short wait on Google Drive), so copies made on another phone show too.
+  const showCopies = () => {
     if (copies) { setCopies(null); return; }
-    setCopies(await withBackupLock(() => listBackups(s.backupDir!)));
-  });
+    run(async () => { setCopies(await withBackupLock(() => listBackups(s.backupDir!))); }, t('busy.lookingForCopies'));
+  };
 
   const doRestore = (b: FolderBackup) => run(async () => {
     const ok = await ask(t('settings.restoreTitle'), t('settings.restoreQuestion', { when: when(b.at) }), t('settings.restoreYes'), t('common.cancel'));
     if (!ok) return;
     // The data first (seconds); the photos follow in the background with their progress shown below, as on Google Drive
     // they can take minutes.
-    const records = await withBackupLock(() => restoreBackup(db, b));
+    showBusy(t('busy.restoring'));
+    const records = await withBackupLock(() => restoreBackup(db, b, busyProgress));
     restorePhotosInBackground(db, s.backupDir!);
     return `${t('settings.importDone', { count: records })}\n\n${t('photos.restoringLater')}`;
   });
@@ -104,13 +136,14 @@ export function BackupSection({ run, busy }: { run: Run; busy: boolean }) {
       type: ['application/json', 'application/gzip', 'application/x-gzip', 'application/octet-stream'], copyToCacheDirectory: true,
     });
     if (res.canceled) return;
+    showBusy(t('busy.restoring'));
     let data: unknown;
     try {
       data = unpackBackup(new Uint8Array(await new File(res.assets[0].uri).arrayBuffer()));
     } catch {
       throw new AppError('settings.notBackup');
     }
-    const n = await importBackup(db, data);
+    const n = await importBackup(db, data, busyProgress);
     // The pictures come from the backup folder, if one is chosen, in the background.
     if (s.backupDir) restorePhotosInBackground(db, s.backupDir);
     return t('settings.importDone', { count: n }) + (s.backupDir ? `\n\n${t('photos.restoringLater')}` : '');
@@ -146,6 +179,9 @@ export function BackupSection({ run, busy }: { run: Run; busy: boolean }) {
       ) : (
         <Button label={t('settings.pickFolder')} onPress={doPickFolder} variant="plain" disabled={busy} />
       )}
+      <Label>{t('settings.journalExport')}</Label>
+      <MoreText short={t('settings.journalExportShort')} long={t('settings.journalExportHelp')} />
+      <Button label={t('settings.journalExportButton')} onPress={doExportXlsx} variant="plain" disabled={busy} />
       {/* The manual copy (one file, without photos) stays available but folded away: the automatic one is the main way. */}
       <Pressable onPress={() => setShowManual(!showManual)} accessibilityRole="button" accessibilityState={{ expanded: showManual }}
         style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 20, minHeight: 44 }}>

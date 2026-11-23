@@ -84,12 +84,17 @@ async function resolveIds(db: SQLiteDatabase, plan: ImportPlan): Promise<Ids> {
   const free = <T extends { id: string }>(rows: T[] | undefined) => (rows ?? []).filter((x) => !takenOver.has(x.id));
   const one = <T extends { id: string }>(rows: T[]) => (rows.length === 1 ? rows[0].id : null);
   const pathOf = (regionId: string | null) => { const p = pathNames(areas, regionId); return fold([p.region, p.area, p.group].join('|')); };
-  /** A crag by name; when several share it, the one at the same place (region, area, groups). Two at the same place: no guess. */
+  /**
+   * A crag by name, only at the same place (region, area, groups): crags of one name stand in many places ("Aligator" in
+   * Strzelnica and "Aligátor" in Peklo). Two at the same place: no guess. With none there, a crag the user added without a
+   * place and not from a file may be the one the file means.
+   */
   const cragByName = (c: ImportPlan['crags'][number]) => {
     const same = free(cragsByName.get(`|${fold(c.name)}`));
-    if (same.length <= 1) return one(same);
     const where = fold([c.region, c.area, c.group].join('|'));
-    return one(same.filter((x) => pathOf(x.region_id) === where));
+    const here = same.filter((x) => pathOf(x.region_id) === where);
+    if (here.length) return one(here);
+    return one(same.filter((x) => !x.region_id && !x.import_key && !x.id.startsWith('imp:')));
   };
   /** A route by name; routes of the same name on one wall are told apart by their grade. */
   const routeByName = (rows: typeof routes | undefined, grade: string) => {
@@ -262,4 +267,24 @@ export async function removePack(db: SQLiteDatabase, packId: string): Promise<vo
     await db.runAsync('UPDATE pack SET deleted_at = ?, updated_at = ? WHERE id = ?', [t, t, packId]);
     await removeEmptyAreas(db, t);
   });
+}
+
+/**
+ * Crags of a pack that carry another key than their own (the key in their id), with the keys of the routes in them: one pack
+ * may have taken over another pack's crag by name (before crags of one name in different places were kept apart). A crag taken
+ * over from the user's own file looks the same; `packRepairOrder` tells them apart with the packs' files.
+ */
+export async function listMergedPackCrags(db: SQLiteDatabase): Promise<{ id: string; ownKey: string; packId: string; routeKeys: string[] }[]> {
+  const crags = await db.getAllAsync<{ id: string; ownKey: string; packId: string }>(
+    `SELECT id, CASE WHEN id LIKE 'imp:crag:%' THEN substr(id, 10) ELSE '' END AS ownKey, pack_id AS packId FROM crag
+     WHERE deleted_at IS NULL AND pack_id IS NOT NULL AND import_key IS NOT NULL AND id <> 'imp:crag:' || import_key
+     ORDER BY id`);
+  const out = [];
+  for (const c of crags) {
+    const routes = await db.getAllAsync<{ k: string }>(
+      `SELECT DISTINCT r.import_key AS k FROM route r JOIN sector s ON s.id = r.sector_id
+       WHERE s.crag_id = ? AND r.deleted_at IS NULL AND s.deleted_at IS NULL AND r.import_key IS NOT NULL ORDER BY k`, [c.id]);
+    out.push({ ...c, routeKeys: routes.map((x) => x.k) });
+  }
+  return out;
 }
