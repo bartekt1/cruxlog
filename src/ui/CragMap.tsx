@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 import { boundsOf, distanceM, formatDistance, isLatLng, type LatLng } from '../domain/geo';
-import { pro } from '../pro';
+import { usePro } from '../pro/usePro';
 import { F } from './fonts';
 import { IconButton } from './icons';
 import { Button } from './kit';
@@ -21,6 +21,7 @@ export type MapCrag = { id: string; name: string; lat: number | null; lng: numbe
 
 /** Crags with a position as pins, the user's position, a "show me" button and a switch to the hiking map. */
 export function CragMap({ crags, onOpen }: { crags: MapCrag[]; onOpen: (id: string) => void }) {
+  const pro = usePro(); // re-renders when Pro is bought or restored
   const { t, i18n } = useTranslation();
   const th = useTheme();
   const router = useRouter();

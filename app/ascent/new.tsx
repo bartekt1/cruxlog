@@ -15,7 +15,7 @@ import { NewRouteForm, type NewRouteDraft } from '../../src/ui/ascent/NewRouteFo
 import { RouteChooser } from '../../src/ui/ascent/RouteChooser';
 import { useAscentPhotos } from '../../src/ui/ascent/useAscentPhotos';
 import { DateChips } from '../../src/ui/DateField';
-import { pro } from '../../src/pro';
+import { usePro } from '../../src/pro/usePro';
 import { errorMessage } from '../../src/ui/errors';
 import { F } from '../../src/ui/fonts';
 import { Button, Chip, ChipRow, ErrorText, Field, HIT, Label, LinkButton, Suggestions, type SuggestionItem } from '../../src/ui/kit';
@@ -35,6 +35,7 @@ const NO_AREAS = { region: '', area: '', group: '' };
 
 // Also the edit screen: /ascent/new?id=<ascent> edits, /ascent/new?routeId=<route> starts on that route.
 export default function NewAscent() {
+  const pro = usePro(); // re-renders when Pro is bought or restored
   const { id, routeId } = useLocalSearchParams<{ id?: string; routeId?: string }>();
   const db = useSQLiteContext();
   const router = useRouter();

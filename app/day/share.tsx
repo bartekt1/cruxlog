@@ -16,7 +16,7 @@ import { useSettings } from '../../src/ui/settingsStore';
 import { shareCardImage } from '../../src/ui/shareImage';
 import { Text } from '../../src/ui/Text';
 import { useTheme } from '../../src/ui/theme';
-import { pro } from '../../src/pro';
+import { usePro } from '../../src/pro/usePro';
 import { ProChip } from '../../src/ui/ProTeaser';
 import { TRIP_CARD_RATIO, TripCard, type TripCardData, type TripCardRow } from '../../src/ui/TripCard';
 
@@ -24,6 +24,7 @@ const ROWS = 8; // routes that fit on the card; the rest are counted
 
 /** /day/share?date=YYYY-MM-DD: one day of the journal as a picture and a text, like a trip summary without a trip. */
 export default function DayShare() {
+  const pro = usePro(); // re-renders when Pro is bought or restored
   const { date } = useLocalSearchParams<{ date: string }>();
   const db = useSQLiteContext();
   const { t, i18n } = useTranslation();
