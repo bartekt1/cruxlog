@@ -1,6 +1,6 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { type AscentStyle, type GradeSystem, type RouteType } from '../domain/grades';
-import type { JournalExportRow } from '../domain/journalCsv';
+import type { JournalExportRow } from '../domain/journalExport';
 import { addRouteGoal, completeRouteGoals } from './goals';
 import { deletePhotoRows, insertPhotoRows, type NewPhoto } from './photos';
 import { newId, now } from './ids';
@@ -36,7 +36,7 @@ export async function listAscents(db: SQLiteDatabase): Promise<AscentRow[]> {
   );
 }
 
-/** Every ascent with its route, sector, crag and area, oldest first: the journal export (`journalCsv`). */
+/** Every ascent with its route, sector, crag and area, oldest first: the journal export (`journalXlsx`). */
 export async function listAscentsForExport(db: SQLiteDatabase): Promise<JournalExportRow[]> {
   return db.getAllAsync<JournalExportRow>(
     `SELECT a.date, a.style, a.attempts, a.rating, a.felt_grade_index, a.notes, a.weather, p.name AS partner_name,

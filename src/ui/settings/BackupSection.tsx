@@ -13,7 +13,9 @@ import { formatDateTime, isoDate } from '../../domain/dates';
 import { AppError } from '../../domain/errors';
 import { backupStatus } from '../../domain/history';
 import { ASCENT_STYLES } from '../../domain/grades';
-import { csvSeparator, JOURNAL_CSV_COLUMNS, journalCsv } from '../../domain/journalCsv';
+import { JOURNAL_COLUMNS, journalXlsx } from '../../domain/journalExport';
+
+const XLSX_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 import { formatBytes } from '../../domain/photos';
 import { backupNow, listBackups, restoreBackup, scanFolder, withBackupLock, type FolderBackup } from '../autoBackup';
 import { pickBackupFolder, testBackupFolder } from '../backupFolder';
@@ -61,23 +63,24 @@ export function BackupSection({ run, busy }: { run: Run; busy: boolean }) {
     s.setLastBackupAt(Date.now());
   }, t('busy.preparingFile'));
 
-  // The journal as a spreadsheet file (Excel, Google Sheets): one row per ascent, grades in the chosen scale.
-  const doExportCsv = () => run(async () => {
+  // The logbook as an Excel file (opens in Excel and Google Sheets): one row per ascent, grades in the chosen scale.
+  const doExportXlsx = () => run(async () => {
     const rows = await listAscentsForExport(db);
-    if (!rows.length) return t('settings.journalCsvEmpty');
+    if (!rows.length) return t('settings.journalExportEmpty');
     const label = <K extends string>(keys: readonly K[], word: (k: K) => string) =>
       Object.fromEntries(keys.map((k) => [k, word(k)])) as Record<K, string>;
-    const csv = journalCsv(rows, s.routeSystem, {
-      columns: label(JOURNAL_CSV_COLUMNS, (k) => t(`settings.journalCsvColumns.${k}`)),
+    const bytes = journalXlsx(rows, s.routeSystem, {
+      columns: label(JOURNAL_COLUMNS, (k) => t(`settings.journalColumns.${k}`)),
       styles: label(ASCENT_STYLES, (k) => t(`styles.${k}`)),
       types: label(['sport', 'multipitch'] as const, (k) => t(`types.${k}`)),
-    }, csvSeparator(i18n.language));
-    const file = new File(Paths.cache, `${t('settings.journalCsvFile')}-${isoDate(new Date())}.csv`);
+      sheet: t('settings.journalExportSheet'),
+    });
+    const file = new File(Paths.cache, `${t('settings.journalExportFile')}-${isoDate(new Date())}.xlsx`);
     if (file.exists) file.delete();
     file.create();
-    file.write(csv);
+    file.write(bytes);
     hideBusy(); // the share sheet comes next
-    await Sharing.shareAsync(file.uri, { mimeType: 'text/csv', dialogTitle: t('settings.journalCsv') });
+    await Sharing.shareAsync(file.uri, { mimeType: XLSX_TYPE, dialogTitle: t('settings.journalExport') });
   }, t('busy.preparingFile'));
 
   // Picks the folder for automatic backups and proves it can be written to before remembering it.
@@ -176,9 +179,9 @@ export function BackupSection({ run, busy }: { run: Run; busy: boolean }) {
       ) : (
         <Button label={t('settings.pickFolder')} onPress={doPickFolder} variant="plain" disabled={busy} />
       )}
-      <Label>{t('settings.journalCsv')}</Label>
-      <MoreText short={t('settings.journalCsvShort')} long={t('settings.journalCsvHelp')} />
-      <Button label={t('settings.journalCsvButton')} onPress={doExportCsv} variant="plain" disabled={busy} />
+      <Label>{t('settings.journalExport')}</Label>
+      <MoreText short={t('settings.journalExportShort')} long={t('settings.journalExportHelp')} />
+      <Button label={t('settings.journalExportButton')} onPress={doExportXlsx} variant="plain" disabled={busy} />
       {/* The manual copy (one file, without photos) stays available but folded away: the automatic one is the main way. */}
       <Pressable onPress={() => setShowManual(!showManual)} accessibilityRole="button" accessibilityState={{ expanded: showManual }}
         style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 20, minHeight: 44 }}>
