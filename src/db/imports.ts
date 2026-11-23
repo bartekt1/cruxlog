@@ -84,12 +84,17 @@ async function resolveIds(db: SQLiteDatabase, plan: ImportPlan): Promise<Ids> {
   const free = <T extends { id: string }>(rows: T[] | undefined) => (rows ?? []).filter((x) => !takenOver.has(x.id));
   const one = <T extends { id: string }>(rows: T[]) => (rows.length === 1 ? rows[0].id : null);
   const pathOf = (regionId: string | null) => { const p = pathNames(areas, regionId); return fold([p.region, p.area, p.group].join('|')); };
-  /** A crag by name; when several share it, the one at the same place (region, area, groups). Two at the same place: no guess. */
+  /**
+   * A crag by name, only at the same place (region, area, groups): crags of one name stand in many places ("Aligator" in
+   * Strzelnica and "Aligátor" in Peklo). Two at the same place: no guess. With none there, a crag the user added without a
+   * place and not from a file may be the one the file means.
+   */
   const cragByName = (c: ImportPlan['crags'][number]) => {
     const same = free(cragsByName.get(`|${fold(c.name)}`));
-    if (same.length <= 1) return one(same);
     const where = fold([c.region, c.area, c.group].join('|'));
-    return one(same.filter((x) => pathOf(x.region_id) === where));
+    const here = same.filter((x) => pathOf(x.region_id) === where);
+    if (here.length) return one(here);
+    return one(same.filter((x) => !x.region_id && !x.import_key && !x.id.startsWith('imp:')));
   };
   /** A route by name; routes of the same name on one wall are told apart by their grade. */
   const routeByName = (rows: typeof routes | undefined, grade: string) => {

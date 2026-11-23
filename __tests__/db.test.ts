@@ -621,6 +621,22 @@ describe('packs', () => {
   const pack = (rows: string) => planFromFlatRows(parseFlatCsv(`Region;Rejon;Grupa;Skała;Nazwa;Wycena;ID_skały;ID_drogi\n${rows}`));
   const kamieniec = 'Czarnorzeki;Skałki;Kamieniec;Krowia;Rysa;VI.1;sk-1;dr-1\nCzarnorzeki;Skałki;Kamieniec;Krowia;Filar;VI.2;sk-1;dr-2\n';
   const strzelnica = 'Czarnorzeki;Skałki;Strzelnica;Okap;Komin;V;sk-2;dr-3\n';
+  // Two packs with a crag of the same name in different places ("Aligator" in Strzelnica, "Aligátor" in Peklo).
+  const strzelnicaPack = pack('Czarnorzeki;Skałki;Strzelnica;Aligator;Samsara;VI+;sk-37;dr-391\nCzarnorzeki;Skałki;Strzelnica;Aligator;Muchozol;VI-;sk-37;dr-390\n');
+  const pekloPack = pack('Slanské vrchy;Drevenik;Peklo;Aligátor;Zárez;IV+;sk-66;dr-767\nSlanské vrchy;Drevenik;Peklo;Aligátor;Malý komín;V;sk-66;dr-769\n');
+  const aligators = async (db: SQLiteDatabase) => {
+    const crags = (await listCrags(db)).filter((c) => /alig/i.test(c.name));
+    return Promise.all(crags.map(async (c) => ({ name: c.name, routes: (await listCragRoutes(db, c.id)).map((r) => r.name).sort() })));
+  };
+  it('keeps crags of the same name in different places apart', async () => {
+    const db = await freshDb();
+    await installPack(db, { id: 'strzelnica', name: 'Strzelnica', version: 1 }, strzelnicaPack);
+    await installPack(db, { id: 'peklo', name: 'Peklo', version: 1 }, pekloPack);
+    expect((await aligators(db)).sort((a, b) => a.name.localeCompare(b.name))).toEqual([
+      { name: 'Aligator', routes: ['Muchozol', 'Samsara'] },
+      { name: 'Aligátor', routes: ['Malý komín', 'Zárez'] },
+    ]);
+  });
   it('installs, updates and removes packs one by one', async () => {
     const db = await freshDb();
     await installPack(db, { id: 'kamieniec', name: 'Kamieniec', version: 1 }, pack(kamieniec));
