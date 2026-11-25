@@ -16,6 +16,7 @@ import { shareCardImage } from '../../src/ui/shareImage';
 import { GoalsCard, STATS_CARD_RATIO, type CardPalette, type GoalsCardData, type GoalsCardItem } from '../../src/ui/StatsCard';
 import { Text } from '../../src/ui/Text';
 import { useTheme } from '../../src/ui/theme';
+import { GoalsPosterCard } from '../../src/ui/listCardStyles';
 
 const MAX = 5;
 
@@ -31,7 +32,7 @@ export default function GoalsShare() {
   const [goals, setGoals] = useState<GoalRow[] | undefined>(undefined);
   const [ascents, setAscents] = useState<StatAscent[]>([]);
   const [chosen, setChosen] = useState<string[]>([]);
-  const [look, setLook] = useState<CardPalette>(cardStyle === 'night' ? 'night' : 'paper');
+  const [look, setLook] = useState<CardPalette | 'poster'>(cardStyle === 'night' ? 'night' : cardStyle === 'poster' ? 'poster' : 'paper');
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -84,7 +85,7 @@ export default function GoalsShare() {
       <Stack.Screen options={{ title: t('goalsShare.title') }} />
       <View style={{ alignItems: 'center' }}>
         <View ref={cardRef} collapsable={false} style={{ borderWidth: 1, borderColor: th.line }}>
-          <GoalsCard data={card} width={cardWidth} look={look} />
+          {look === 'poster' ? <GoalsPosterCard data={card} width={cardWidth} /> : <GoalsCard data={card} width={cardWidth} look={look} />}
         </View>
       </View>
       <Button label={t('share.sendImage')} onPress={sendImage} disabled={busy || !items.length} />
@@ -94,6 +95,7 @@ export default function GoalsShare() {
       <Label>{t('cards.look')}</Label>
       <ChipRow>
         <Chip label={t('cards.styles.guide')} on={look === 'paper'} onPress={() => setLook('paper')} />
+        <Chip label={t('cards.styles.poster')} on={look === 'poster'} onPress={() => setLook('poster')} />
         <Chip label={t('cards.styles.night')} on={look === 'night'} onPress={() => setLook('night')} />
       </ChipRow>
       <Label>{t('share.message')}</Label>

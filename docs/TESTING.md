@@ -441,6 +441,15 @@ Go through everything once, watching for the app closing by itself or something 
 4. A crag without a position: no weather card.
 5. TalkBack reads each day as one sentence (day, temperatures, rain, wind).
 
+## 6zf. More card looks for the day, trip, season and goals
+
+1. Journal › share a day with a photo: looks Przewodnik, Pełny kadr, Polaroid, Bilet, Noc. A day without photos: no Pełny kadr or Polaroid.
+2. Pełny kadr: the day's first photo fills the card, the routes (up to 4, then "i jeszcze N") on a dark strip. Polaroid: the photo turned on paper, the hardest grade stamped. "Wyślij obrazek" waits until the photo is drawn.
+3. Bilet (day): the number of sends big on dark, the crag, then boxes (attempts, hardest, date) and up to 3 routes.
+4. Trip invitation and summary: looks Przewodnik, Bilet, Noc. Invitation ticket: the trip's name big, boxes Kiedy, Skały, Dróg, up to 4 proposed routes.
+5. Season and goals: looks Przewodnik, Plakat, Noc. Season poster: sends huge, then days, hardest and crags, the pyramid. Goals poster: "3/4 zrobione" and each goal with its bar.
+6. The picture sent has the same shape as the preview (no cut-off footer) in every look.
+
 ## 7. Robustness
 1. Change the language and the route grade system, close the app completely (swipe away) and reopen it. Expected: all data is still there, and the language and grade system are the ones you chose.
 2. Rotate the phone, switch to dark mode and back. Expected: readable text and no layout breaks.

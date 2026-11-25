@@ -13,6 +13,7 @@ import { useSettings } from '../../src/ui/settingsStore';
 import { shareCardImage } from '../../src/ui/shareImage';
 import { STATS_CARD_RATIO, StatsCard, type CardPalette, type StatsCardData } from '../../src/ui/StatsCard';
 import { useTheme } from '../../src/ui/theme';
+import { StatsPosterCard } from '../../src/ui/listCardStyles';
 
 /** /stats/share?year=2026: the year's stats as a picture and a text to send. Partners' names only when switched on. */
 export default function StatsShare() {
@@ -25,9 +26,8 @@ export default function StatsShare() {
   const cardRef = useRef<ComponentRef<typeof View>>(null);
   const currentYear = new Date().getFullYear();
   const [ascents, setAscents] = useState<StatAscent[]>([]);
-  // Past seasons, the partners line and the night look are Pro (src/pro); the free card is this season's, in the guide look.
   const [year, setYear] = useState(Number(rawYear) || currentYear);
-  const [look, setLook] = useState<CardPalette>(cardStyle === 'night' ? 'night' : 'paper');
+  const [look, setLook] = useState<CardPalette | 'poster'>(cardStyle === 'night' ? 'night' : cardStyle === 'poster' ? 'poster' : 'paper');
   const [withPartners, setWithPartners] = useState(false);
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
@@ -73,13 +73,14 @@ export default function StatsShare() {
       <ChipRow>{years.slice().reverse().map((y) => <Chip key={y} label={String(y)} on={y === year} onPress={() => setYear(y)} />)}</ChipRow>
       <View style={{ alignItems: 'center', marginTop: 8 }}>
         <View ref={cardRef} collapsable={false} style={{ borderWidth: 1, borderColor: th.line }}>
-          <StatsCard data={card} width={cardWidth} look={look} />
+          {look === 'poster' ? <StatsPosterCard data={card} width={cardWidth} /> : <StatsCard data={card} width={cardWidth} look={look} />}
         </View>
       </View>
       <Button label={t('share.sendImage')} onPress={sendImage} disabled={busy} />
       <Label>{t('cards.look')}</Label>
       <ChipRow>
         <Chip label={t('cards.styles.guide')} on={look === 'paper'} onPress={() => setLook('paper')} />
+        <Chip label={t('cards.styles.poster')} on={look === 'poster'} onPress={() => setLook('poster')} />
         <Chip label={t('cards.styles.night')} on={look === 'night'} onPress={() => setLook('night')} />
       </ChipRow>
       {partners.length ? <SwitchRow label={t('statsShare.withPartners')} value={withPartners} onChange={setWithPartners} /> : null}

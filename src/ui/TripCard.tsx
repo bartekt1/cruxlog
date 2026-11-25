@@ -18,6 +18,8 @@ export type TripCardData = {
   rows: TripCardRow[];
   /** "and 5 more routes", or '' when every row fits. */
   more: string;
+  /** How many routes are left out of `rows` (counted by `more`); the shorter card looks count their own. */
+  rest: number;
   /** A line under the list, e.g. "4 of 6 proposed routes done". */
   note: string;
   message: string;

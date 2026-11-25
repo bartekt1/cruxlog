@@ -3,7 +3,7 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useRef, useState, type ComponentRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, ScrollView, Share, useWindowDimensions, View } from 'react-native';
-import { getCrag, listAreas, listAscentsBetween, type AreaRow, type AscentRow, type CragDetail } from '../../src/db/repo';
+import { getCrag, listAreas, listAscentsBetween, listPhotosOf, type AreaRow, type AscentRow, type CragDetail } from '../../src/db/repo';
 import { pathLabel } from '../../src/domain/areas';
 import { formatDay } from '../../src/domain/dates';
 import { isLatLng } from '../../src/domain/geo';
@@ -17,6 +17,14 @@ import { shareCardImage } from '../../src/ui/shareImage';
 import { Text } from '../../src/ui/Text';
 import { useTheme } from '../../src/ui/theme';
 import { TRIP_CARD_RATIO, TripCard, type TripCardData, type TripCardRow } from '../../src/ui/TripCard';
+import { CARD_RATIO } from '../../src/ui/cardParts';
+import { DayFullCard, DayPolaroidCard, TicketListCard, type DayPhoto } from '../../src/ui/listCardStyles';
+import { photoUri } from '../../src/ui/photos';
+
+/** The looks of the day card; the photo ones only when the day has a photo. */
+const DAY_LOOKS = ['guide', 'full', 'polaroid', 'ticket', 'night'] as const;
+type DayLook = (typeof DAY_LOOKS)[number];
+const PHOTO_LOOKS: DayLook[] = ['full', 'polaroid'];
 
 const ROWS = 8; // routes that fit on the card; the rest are counted
 
@@ -32,7 +40,9 @@ export default function DayShare() {
   const [ascents, setAscents] = useState<AscentRow[] | undefined>(undefined);
   const [crags, setCrags] = useState<CragDetail[]>([]);
   const [areas, setAreas] = useState<AreaRow[]>([]);
-  const [night, setNight] = useState(cardStyle === 'night');
+  const [look, setLook] = useState<DayLook>((DAY_LOOKS as readonly string[]).includes(cardStyle) ? (cardStyle as DayLook) : 'guide');
+  const [photo, setPhoto] = useState<DayPhoto | null>(null);
+  const [loadedPhoto, setLoadedPhoto] = useState<string | null>(null);
   const [withPlace, setWithPlace] = useState(true);
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
@@ -46,7 +56,11 @@ export default function DayShare() {
       const ids = [...new Set(a.map((x) => x.crag_id))];
       const c = (await Promise.all(ids.map((id) => getCrag(db, id)))).filter((x): x is CragDetail => x != null);
       const ar = await listAreas(db);
-      if (live) { setAscents(a); setCrags(c); setAreas(ar); }
+      // The day's photo for the photo looks: the first one of its ascents, in the order they were climbed.
+      const photos = await listPhotosOf(db, 'ascent', a.map((x) => x.id));
+      const first = a.map((x) => photos.get(x.id)?.[0]).find((p) => p != null);
+      const uri = first ? photoUri(first.id) : null;
+      if (live) { setAscents(a); setCrags(c); setAreas(ar); setPhoto(first && uri ? { uri, width: first.width, height: first.height } : null); }
     })();
     return () => { live = false; };
   }, [db, date]);
@@ -77,12 +91,16 @@ export default function DayShare() {
   const text = message.trim();
   const card: TripCardData = {
     tag: t('dayShare.tag'), title, dates: day, crags: '', path, stats, rows,
-    more: rest > 0 ? t('trip.more', { count: rest }) : '', note: '', message: text,
+    more: rest > 0 ? t('trip.more', { count: rest }) : '', rest, note: '', message: text,
     place: place ? { coords: coordsLabel(place), approx: place.approx } : null, approxLabel: t('share.approxCard'),
   };
   const cardWidth = Math.min(screenWidth - 32, 380);
 
-  const sendImage = async () => { setBusy(true); await shareCardImage(cardRef, ratio); setBusy(false); };
+  // The photo looks need a photo; without one the day falls back to the guide look.
+  const shown: DayLook = PHOTO_LOOKS.includes(look) && !photo ? 'guide' : look;
+  const fixed = shown === 'full' || shown === 'polaroid' || shown === 'ticket';
+  const photoPending = PHOTO_LOOKS.includes(shown) && !!photo && loadedPhoto !== photo.uri;
+  const sendImage = async () => { setBusy(true); await shareCardImage(cardRef, fixed ? CARD_RATIO : ratio); setBusy(false); };
   const sendText = async () => {
     const body = shareMessage({
       headline: `${card.tag}: ${title}`,
@@ -97,15 +115,19 @@ export default function DayShare() {
       <Stack.Screen options={{ title: t('dayShare.title') }} />
       <View style={{ alignItems: 'center' }}>
         <View ref={cardRef} collapsable={false} style={{ borderWidth: 1, borderColor: th.line }}>
-          <TripCard data={card} width={cardWidth} night={night} onRatio={setRatio} />
+          {shown === 'full' ? <DayFullCard data={card} width={cardWidth} photo={photo} onPhotoLoaded={() => setLoadedPhoto(photo?.uri ?? null)} />
+            : shown === 'polaroid' ? <DayPolaroidCard data={card} width={cardWidth} photo={photo} onPhotoLoaded={() => setLoadedPhoto(photo?.uri ?? null)} />
+            : shown === 'ticket' ? <TicketListCard data={card} width={cardWidth} />
+            : <TripCard data={card} width={cardWidth} night={shown === 'night'} onRatio={setRatio} />}
         </View>
       </View>
-      <Button label={t('share.sendImage')} onPress={sendImage} disabled={busy} />
+      <Button label={t('share.sendImage')} onPress={sendImage} disabled={busy || photoPending} />
       {!summary.sends ? <Text style={{ color: th.muted, marginTop: 10 }}>{t('dayShare.noSends')}</Text> : null}
       <Label>{t('cards.look')}</Label>
       <ChipRow>
-        <Chip label={t('cards.styles.guide')} on={!night} onPress={() => setNight(false)} />
-        <Chip label={t('cards.styles.night')} on={night} onPress={() => setNight(true)} />
+        {DAY_LOOKS.filter((l) => photo || !PHOTO_LOOKS.includes(l)).map((l) => (
+          <Chip key={l} label={t(`cards.styles.${l}`)} on={shown === l} onPress={() => setLook(l)} />
+        ))}
       </ChipRow>
       <Label>{t('share.message')}</Label>
       <Field value={message} onChangeText={setMessage} maxLength={140} multiline placeholder={t('trip.bragPlaceholder')}

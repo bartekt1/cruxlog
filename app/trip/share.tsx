@@ -11,7 +11,9 @@ import { isLatLng } from '../../src/domain/geo';
 import { formatGrade, routeGrade } from '../../src/domain/grades';
 import { coordsLabel, shareMessage, type SharePlace } from '../../src/domain/share';
 import { formatTripDates, tripSummary } from '../../src/domain/trips';
-import { Button, EmptyState, Field, Label } from '../../src/ui/kit';
+import { Button, Chip, ChipRow, EmptyState, Field, Label } from '../../src/ui/kit';
+import { CARD_RATIO } from '../../src/ui/cardParts';
+import { TicketListCard } from '../../src/ui/listCardStyles';
 import { SwitchRow } from '../../src/ui/rows';
 import { useSettings } from '../../src/ui/settingsStore';
 import { Text } from '../../src/ui/Text';
@@ -29,7 +31,7 @@ export default function TripShare() {
   const db = useSQLiteContext();
   const { t, i18n } = useTranslation();
   const th = useTheme();
-  const { routeSystem } = useSettings();
+  const { routeSystem, cardStyle } = useSettings();
   const { width: screenWidth } = useWindowDimensions();
   const cardRef = useRef<ComponentRef<typeof View>>(null);
   const [trip, setTrip] = useState<TripDetail | null | undefined>(undefined);
@@ -38,6 +40,7 @@ export default function TripShare() {
   const [message, setMessage] = useState<string | null>(null); // null until the trip's own message is filled in
   const [withPlace, setWithPlace] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [look, setLook] = useState<'guide' | 'ticket' | 'night'>(cardStyle === 'ticket' || cardStyle === 'night' ? cardStyle : 'guide');
   // The card's shape: it grows with its list (TripCard measures it).
   const [ratio, setRatio] = useState(TRIP_CARD_RATIO);
 
@@ -84,7 +87,7 @@ export default function TripShare() {
 
   const card: TripCardData = {
     tag: mode === 'invite' ? t('trip.cardInvite') : t('trip.cardSummary'), title: trip.name, dates, crags, path, stats, rows,
-    more: rest > 0 ? t('trip.more', { count: rest }) : '', note, message: text,
+    more: rest > 0 ? t('trip.more', { count: rest }) : '', rest, note, message: text,
     place: place ? { coords: coordsLabel(place), approx: place.approx } : null, approxLabel: t('share.approxCard'),
   };
   const cardWidth = Math.min(screenWidth - 32, 380);
@@ -92,7 +95,7 @@ export default function TripShare() {
   const sendImage = async () => {
     setBusy(true);
     try {
-      const uri = await captureRef(cardRef, { format: 'png', quality: 1, result: 'tmpfile', width: OUT_WIDTH, height: OUT_WIDTH * ratio });
+      const uri = await captureRef(cardRef, { format: 'png', quality: 1, result: 'tmpfile', width: OUT_WIDTH, height: OUT_WIDTH * (look === 'ticket' ? CARD_RATIO : ratio) });
       await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: t('share.title') });
     } catch {
       Alert.alert(t('share.title'), t('share.failed'));
@@ -115,12 +118,17 @@ export default function TripShare() {
       <Stack.Screen options={{ title: mode === 'invite' ? t('trip.invite') : t('trip.brag') }} />
       <View style={{ alignItems: 'center' }}>
         <View ref={cardRef} collapsable={false} style={{ borderWidth: 1, borderColor: th.line }}>
-          <TripCard data={card} width={cardWidth} onRatio={setRatio} />
+          {look === 'ticket' ? <TicketListCard data={card} width={cardWidth} />
+            : <TripCard data={card} width={cardWidth} night={look === 'night'} onRatio={setRatio} />}
         </View>
       </View>
       <Button label={t('share.sendImage')} onPress={sendImage} disabled={busy} />
       {mode === 'summary' && !summary.sends ? <Text style={{ color: th.muted, marginTop: 10 }}>{t('trip.nothingYet')}</Text> : null}
 
+      <Label>{t('cards.look')}</Label>
+      <ChipRow>
+        {(['guide', 'ticket', 'night'] as const).map((l) => <Chip key={l} label={t(`cards.styles.${l}`)} on={look === l} onPress={() => setLook(l)} />)}
+      </ChipRow>
       <Label>{t('share.message')}</Label>
       <Field value={message ?? ''} onChangeText={setMessage} maxLength={140} multiline placeholder={mode === 'invite' ? t('trip.messagePlaceholder') : t('trip.bragPlaceholder')}
         accessibilityLabel={t('share.message')} textAlignVertical="top" style={{ minHeight: 60 }} />
