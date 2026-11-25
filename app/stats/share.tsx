@@ -13,12 +13,11 @@ import { useSettings } from '../../src/ui/settingsStore';
 import { shareCardImage } from '../../src/ui/shareImage';
 import { STATS_CARD_RATIO, StatsCard, type CardPalette, type StatsCardData } from '../../src/ui/StatsCard';
 import { useTheme } from '../../src/ui/theme';
-import { usePro } from '../../src/pro/usePro';
+import { pro } from '../../src/pro';
 import { ProChip } from '../../src/ui/ProTeaser';
 
 /** /stats/share?year=2026: the year's stats as a picture and a text to send. Partners' names only when switched on. */
 export default function StatsShare() {
-  const pro = usePro(); // re-renders when Pro is bought or restored
   const { year: rawYear } = useLocalSearchParams<{ year?: string }>();
   const db = useSQLiteContext();
   const { t } = useTranslation();

@@ -7,7 +7,6 @@ import { Title } from '../src/ui/kit';
 import { ProBadge } from '../src/ui/ProTeaser';
 import { Text } from '../src/ui/Text';
 import { useTheme } from '../src/ui/theme';
-import { usePro } from '../src/pro/usePro';
 
 const ITEMS = ['stats', 'years', 'trips', 'topoMap', 'cards'] as const;
 
@@ -15,8 +14,6 @@ const ITEMS = ['stats', 'years', 'trips', 'topoMap', 'cards'] as const;
 export default function ProScreen() {
   const th = useTheme();
   const { t } = useTranslation();
-  const pro = usePro();
-  const Purchase = pro.Purchase;
   return (
     <ScrollView style={{ backgroundColor: th.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 48 }}>
       <Stack.Screen options={{ title: t('pro.title') }} />
@@ -34,13 +31,10 @@ export default function ProScreen() {
         ))}
       </View>
       <Text style={{ color: th.muted, marginTop: 12 }}>{t('pro.more')}</Text>
-      {/* Buying lives in the Pro builds (src/pro `Purchase`); this build only says Pro is coming. */}
-      {Purchase ? <Purchase /> : (
-        <View style={{ marginTop: 24, padding: 14, borderRadius: 14, borderWidth: 1, borderColor: th.line, backgroundColor: th.surface }}>
-          <Text style={{ color: th.ink, fontFamily: F.semi, fontSize: 16 }}>{t('pro.soon')}</Text>
-          <Text style={{ color: th.muted, marginTop: 4 }}>{t('pro.soonHint')}</Text>
-        </View>
-      )}
+      <View style={{ marginTop: 24, padding: 14, borderRadius: 14, borderWidth: 1, borderColor: th.line, backgroundColor: th.surface }}>
+        <Text style={{ color: th.ink, fontFamily: F.semi, fontSize: 16 }}>{t('pro.soon')}</Text>
+        <Text style={{ color: th.muted, marginTop: 4 }}>{t('pro.soonHint')}</Text>
+      </View>
     </ScrollView>
   );
 }

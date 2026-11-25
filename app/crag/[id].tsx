@@ -14,7 +14,7 @@ import { F } from '../../src/ui/fonts';
 import { Button, EmptyState, Field, GradeBadge, LinkButton, Loading, Screen, Label } from '../../src/ui/kit';
 import { matches, sameName } from '../../src/domain/text';
 import { MenuButton } from '../../src/ui/Menu';
-import { usePro } from '../../src/pro/usePro';
+import { pro } from '../../src/pro';
 import { useLocation } from '../../src/ui/useLocation';
 import { distanceM, formatDistance, isLatLng } from '../../src/domain/geo';
 import { Ionicons } from '@expo/vector-icons';
@@ -28,8 +28,6 @@ import { errorMessage } from '../../src/ui/errors';
 import { GroupedRow, routeFacts } from '../../src/ui/rows';
 
 export default function CragScreen() {
-  const pro = usePro(); // re-renders when Pro is bought or restored
-  const CragMore = pro.has('cragMore') ? pro.CragMore : undefined;
   const { id } = useLocalSearchParams<{ id: string }>();
   const db = useSQLiteContext();
   const router = useRouter();
@@ -143,10 +141,6 @@ export default function CragScreen() {
               )}
               {crag.description ? <Text style={{ color: th.ink }}>{crag.description}</Text> : null}
               {crag.approach ? <Text style={{ color: th.muted }}>{t('crags.approach')}: {crag.approach}</Text> : null}
-              {CragMore ? (
-                <CragMore crag={{ id: crag.id, name: crag.name, lat: crag.lat, lng: crag.lng }}
-                  walls={sectorRows.map((s) => ({ name: sameName(s.name, crag.name) ? '' : s.name, aspect: parseAspect(s.aspect) }))} />
-              ) : null}
               <Label style={{ marginTop: 8, marginBottom: 0 }}>{t('photos.cragTitle')}</Label>
               <PhotoSection owner="crag" ids={cragPhotos.map((p) => p.id)} busy={photoBusy === `crag:${crag.id}`}
                 onAdd={() => addPhotoTo('crag', crag.id, cragPhotos.length)} onOpen={(i) => openPhotos('crag', crag.id, i)} />

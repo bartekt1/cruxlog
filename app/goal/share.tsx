@@ -16,14 +16,13 @@ import { shareCardImage } from '../../src/ui/shareImage';
 import { GoalsCard, STATS_CARD_RATIO, type CardPalette, type GoalsCardData, type GoalsCardItem } from '../../src/ui/StatsCard';
 import { Text } from '../../src/ui/Text';
 import { useTheme } from '../../src/ui/theme';
-import { usePro } from '../../src/pro/usePro';
+import { pro } from '../../src/pro';
 import { ProChip } from '../../src/ui/ProTeaser';
 
 const MAX = 5;
 
 /** /goal/share: the chosen goals with their progress as a picture and a text to send. */
 export default function GoalsShare() {
-  const pro = usePro(); // re-renders when Pro is bought or restored
   const db = useSQLiteContext();
   const { t, i18n } = useTranslation();
   const th = useTheme();

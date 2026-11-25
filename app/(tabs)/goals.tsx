@@ -15,7 +15,7 @@ import { F } from '../../src/ui/fonts';
 import { EMPTY_GOAL, GoalForm } from '../../src/ui/GoalForm';
 import { ProgressBar, toStat } from '../../src/ui/progress';
 import { EmptyState, GradeBadge, Label, Screen } from '../../src/ui/kit';
-import { usePro } from '../../src/pro/usePro';
+import { pro } from '../../src/pro';
 import { ProTeaser } from '../../src/ui/ProTeaser';
 import { IconButton } from '../../src/ui/icons';
 import { useSettings } from '../../src/ui/settingsStore';
@@ -23,7 +23,6 @@ import { Text } from '../../src/ui/Text';
 import { useTheme } from '../../src/ui/theme';
 
 export default function Goals() {
-  const pro = usePro(); // re-renders when Pro is bought or restored
   const db = useSQLiteContext();
   const router = useRouter();
   const { t, i18n } = useTranslation();

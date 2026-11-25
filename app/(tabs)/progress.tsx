@@ -9,7 +9,7 @@ import { listAscents } from '../../src/db/repo';
 import { formatGrade } from '../../src/domain/grades';
 import { toStat } from '../../src/ui/progress';
 import { ascentYears, hardestByMonth, yearStats, type StatAscent } from '../../src/domain/stats';
-import { usePro } from '../../src/pro/usePro';
+import { pro } from '../../src/pro';
 import { Bars } from '../../src/ui/Bars';
 import { ProTeaser } from '../../src/ui/ProTeaser';
 import { EmptyState, HIT, Label, Screen, StatTile } from '../../src/ui/kit';
@@ -36,7 +36,6 @@ function YearArrow({ label, hint, target, onPress }: { label: string; hint: stri
 }
 
 export default function Progress() {
-  const pro = usePro(); // re-renders when Pro is bought or restored
   const db = useSQLiteContext();
   const router = useRouter();
   const { t } = useTranslation();
