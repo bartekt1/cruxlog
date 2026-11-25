@@ -6,7 +6,7 @@ import { MIGRATIONS, migrate } from '../src/db/migrate';
 import {
   addAscent, addGoal, addUserRoute, saveAscent, installPack, listInstalledPacks, removePack, saveTrip, getTrip, listTrips, deleteTrip, tripRoutesOn, listAscentsBetween, applyImport, cragUsage, deleteAscent, deleteCrag, deleteGoal, deleteArea, deleteRoute, deleteSector,
   getAscent, listMergedPackCrags, listAscentsForExport, listChecklist, addChecklistItems, setChecklistDone, resetChecklist, deleteChecklistItem, getCrag, getArea, getRoute, getSector, listAscents, listCragRoutes, listCrags, listGoals, listAreas, listSectorNames, addArea, areaIdFor,
-  renameArea, saveSector, routeUsage, countOutbox, deleteOutbox, listOutbox, reportDeletion, listMyCrags, listMyRoutes, deleteMine, listEmptyAreas, saveCrag, searchRoutes, sectorUsage, setGoalDone, updateAscent, updateRoute, type NewRoute, type RouteFilter,
+  renameArea, renameSector, routeUsage, countOutbox, deleteOutbox, listOutbox, reportDeletion, listMyCrags, listMyRoutes, deleteMine, listEmptyAreas, saveCrag, searchRoutes, sectorUsage, setGoalDone, updateAscent, updateRoute, type NewRoute, type RouteFilter,
   listCragChoices, listPartners, applyCragPositions, addRouteGoal, routeGoalKinds, addPhotos, listPhotos, listPhotosOf, removePhotos, activePhotos, latestPhotoChange, getPhoto, listTopoLines, topoRoutes, saveTopoLine, deleteTopoLine, routeTopos, setCragLocation, listRouteAscents, recentRoutes, listSectors, addSector, createRoute, importedUsage, removeImported, findRoutes, getGoal, updateGoal, routeGoals,
 } from '../src/db/repo';
 import { descendantIds } from '../src/domain/areas';
@@ -89,21 +89,6 @@ describe('repo', () => {
     expect(rows[0]).toMatchObject({ route_name: 'Test Route 1', crag_name: 'Test Crag', partner_name: 'Anna', attempts: 2 });
     expect(rows[0].sector_name).toBeTruthy();
   });
-  it('saves a sector\'s aspect with its name; only the name goes to the proposals', async () => {
-    const db = await freshDb();
-    const r = await addUserRoute(db, route());
-    const [c] = await listCrags(db);
-    const [sec] = await listSectors(db, c.id);
-    expect(sec.aspect).toBe('');
-    const sent = await countOutbox(db);
-    await saveSector(db, sec.id, sec.name, 'SW');
-    expect((await listSectors(db, c.id))[0].aspect).toBe('SW');
-    expect(await countOutbox(db)).toBe(sent);
-    await saveSector(db, sec.id, 'Nowa nazwa', null);
-    expect(await getSector(db, sec.id)).toMatchObject({ name: 'Nowa nazwa', aspect: '' });
-    expect(await countOutbox(db)).toBe(sent + 1);
-    expect(r).toBeTruthy();
-  });
   it('rolls back the ascent and its new partner when the insert fails', async () => {
     const db = await freshDb();
     await expect(addAscent(db, ascent('missing-route'))).rejects.toThrow();
@@ -132,9 +117,9 @@ describe('repo', () => {
     const db = await freshDb();
     const crag = await saveCrag(db, null, { name: 'Krowia', areas: A('Czarnorzeki', 'Kamieniec'), description: '', approach: '', sectorNames: ['Zachód', 'Wschód'] });
     const [east, west] = await listSectors(db, crag);
-    await expect(saveSector(db, east.id, 'zachod', null)).rejects.toMatchObject({ key: 'errors.nameTaken' });
-    await saveSector(db, east.id, 'Wschód główny', null);
-    await saveSector(db, east.id, 'WSCHÓD GŁÓWNY', null); // its own name, other letters: fine
+    await expect(renameSector(db, east.id, 'zachod')).rejects.toMatchObject({ key: 'errors.nameTaken' });
+    await renameSector(db, east.id, 'Wschód główny');
+    await renameSector(db, east.id, 'WSCHÓD GŁÓWNY'); // its own name, other letters: fine
     expect((await listSectors(db, crag)).map((x) => x.name)).toEqual(['WSCHÓD GŁÓWNY', west.name]);
     const other = await addArea(db, null, 'Jura');
     await expect(renameArea(db, other, 'czarnorzeki')).rejects.toMatchObject({ key: 'errors.nameTaken' });
@@ -314,7 +299,7 @@ describe('editing own crags, sectors, routes and regions', () => {
     const r2 = await addUserRoute(db, route({ sectorName: 'Left', name: 'Other' }));
     await addAscent(db, ascent(r1));
     const main = (await getRoute(db, r1))!.sector_id;
-    await saveSector(db, main, 'Middle', null);
+    await renameSector(db, main, 'Middle');
     expect(await getSector(db, main)).toMatchObject({ name: 'Middle', source: 'user' });
     expect(await sectorUsage(db, main)).toEqual({ sectors: 0, routes: 1, ascents: 1 });
     await deleteSector(db, main);
@@ -1207,7 +1192,7 @@ describe('proposals outbox', () => {
     await addSector(db, cragId, 'Wschód');
     await addSector(db, cragId, 'wschod'); // the same sector: not new
     const sectorId = (await listSectors(db, cragId)).find((s) => s.name === 'Wschód')!.id;
-    await saveSector(db, sectorId, 'Wschodnia', null);
+    await renameSector(db, sectorId, 'Wschodnia');
     await addAscent(db, ascent((await addUserRoute(db, route({ cragName: 'Krowia', sectorName: 'Zachód', name: 'Nowa' }))))); // a new route from the ascent form
     await applyImport(db, samples()); // an import is not a proposal
 

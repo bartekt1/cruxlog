@@ -45,7 +45,7 @@ export function ChipRow({ children }: { children: ReactNode }) {
   return <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>{children}</View>;
 }
 
-export function Chip({ label, on, onPress, accessibilityLabel }: { label: string; on?: boolean; onPress?: () => void; accessibilityLabel?: string }) {
+export function Chip({ label, on, onPress }: { label: string; on?: boolean; onPress?: () => void }) {
   const t = useTheme();
   return (
     <Pressable
@@ -53,7 +53,6 @@ export function Chip({ label, on, onPress, accessibilityLabel }: { label: string
       hitSlop={{ top: 4, bottom: 4 }}
       accessibilityRole="button"
       accessibilityState={{ selected: !!on }}
-      accessibilityLabel={accessibilityLabel}
       style={({ pressed }) => ({ borderWidth: 1, borderColor: on ? t.badge : t.outline, backgroundColor: on ? t.badge : t.surface, borderRadius: 18, paddingHorizontal: 14, minHeight: 40, justifyContent: 'center', marginRight: 8, marginBottom: 8, opacity: pressed ? 0.7 : 1 })}
     >
       <Text style={{ color: on ? t.onBadge : t.ink, fontFamily: F.medium }}>{label}</Text>

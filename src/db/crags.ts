@@ -6,7 +6,6 @@ import { AppError } from '../domain/errors';
 import { newId, now } from './ids';
 import { cragSnapshot, recordChange, recordDeletion, routeSnapshot, sectorSnapshot } from './proposals';
 import { count, findByName, sectorIdFor, type NamedRow, type PosSource } from './shared';
-import type { Aspect } from '../domain/aspect';
 
 export type CragChoice = { id: string; name: string; region_id: string | null; region_name: string | null; routes: number; lat: number | null; lng: number | null; pos_source: PosSource };
 
@@ -169,12 +168,11 @@ export async function saveCrag(db: SQLiteDatabase, id: string | null, c: CragInp
   return cragId;
 }
 
-/** A sector with its aspect ("wystawa": 'N' … 'NW', or '' when not given; see `domain/aspect`). */
-export type SectorRow = { id: string; name: string; source: string; aspect: string };
+export type SectorRow = { id: string; name: string; source: string };
 
 /** All sectors of a crag, also those without routes yet. */
 export async function listSectors(db: SQLiteDatabase, cragId: string): Promise<SectorRow[]> {
-  return db.getAllAsync<SectorRow>('SELECT id, name, source, aspect FROM sector WHERE crag_id = ? AND deleted_at IS NULL ORDER BY name', [cragId]);
+  return db.getAllAsync<SectorRow>('SELECT id, name, source FROM sector WHERE crag_id = ? AND deleted_at IS NULL ORDER BY name', [cragId]);
 }
 
 /** Adds a sector to a crag; returns the existing one when the name already exists (ignoring case and Polish letters). */
@@ -189,20 +187,17 @@ export async function addSector(db: SQLiteDatabase, cragId: string, name: string
   return id;
 }
 
-export async function getSector(db: SQLiteDatabase, id: string): Promise<(NamedRow & { aspect: string }) | null> {
-  return db.getFirstAsync<NamedRow & { aspect: string }>('SELECT id, name, source, crag_id AS parent_id, aspect FROM sector WHERE id = ? AND deleted_at IS NULL', [id]);
+export async function getSector(db: SQLiteDatabase, id: string): Promise<NamedRow | null> {
+  return db.getFirstAsync<NamedRow>('SELECT id, name, source, crag_id AS parent_id FROM sector WHERE id = ? AND deleted_at IS NULL', [id]);
 }
 
-/**
- * Saves a sector's name and aspect together. A name another sector of the same crag already has is refused. Only the name goes
- * to the proposals (the shared template has no aspect column yet); the aspect stays on the phone and in backups.
- */
-export async function saveSector(db: SQLiteDatabase, id: string, name: string, aspect: Aspect | null): Promise<void> {
+/** Renames a sector; a name another sector of the same crag already has is refused (names are how sectors are found). */
+export async function renameSector(db: SQLiteDatabase, id: string, name: string): Promise<void> {
   const same = await findByName(db, 'SELECT id, name FROM sector WHERE deleted_at IS NULL AND id <> ? AND crag_id = (SELECT crag_id FROM sector WHERE id = ?)', [id, id], name);
   if (same) throw new AppError('errors.nameTaken', { name: name.trim() });
   await db.withTransactionAsync(async () => {
     const before = await sectorSnapshot(db, id);
-    await db.runAsync('UPDATE sector SET name = ?, aspect = ?, updated_at = ? WHERE id = ?', [name, aspect ?? '', now(), id]);
+    await db.runAsync('UPDATE sector SET name = ?, updated_at = ? WHERE id = ?', [name, now(), id]);
     await recordChange(db, 'sector_edit', before, await sectorSnapshot(db, id));
   });
 }
