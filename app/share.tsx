@@ -18,7 +18,6 @@ import { sectorLine } from '../src/domain/text';
 import { Button, Chip, ChipRow, EmptyState, Field, Label } from '../src/ui/kit';
 import { photoUri } from '../src/ui/photos';
 import { CARD_RATIO, cardLook, ShareCard, type ShareCardData } from '../src/ui/ShareCard';
-import { ProChip } from '../src/ui/ProTeaser';
 import { useSettings } from '../src/ui/settingsStore';
 import { useTheme } from '../src/ui/theme';
 import { SwitchRow } from '../src/ui/rows';
@@ -205,9 +204,7 @@ export default function ShareScreen() {
       <Button label={t('share.sendImage')} onPress={sendImage} disabled={busy || photoPending} />
 
       <Label>{t('cards.look')}</Label>
-      <ChipRow>{CARD_STYLES.map((s) => (cardLook(s) === s
-        ? <Chip key={s} label={t(`cards.styles.${s}`)} on={cardStyle === s} onPress={() => setCardStyle(s)} />
-        : <ProChip key={s} label={t(`cards.styles.${s}`)} />))}</ChipRow>
+      <ChipRow>{CARD_STYLES.map((s) => <Chip key={s} label={t(`cards.styles.${s}`)} on={cardStyle === s} onPress={() => setCardStyle(s)} />)}</ChipRow>
 
       {photoIds.length ? (
         <>

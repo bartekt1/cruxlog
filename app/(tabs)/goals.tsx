@@ -15,8 +15,7 @@ import { F } from '../../src/ui/fonts';
 import { EMPTY_GOAL, GoalForm } from '../../src/ui/GoalForm';
 import { ProgressBar, toStat } from '../../src/ui/progress';
 import { EmptyState, GradeBadge, Label, Screen } from '../../src/ui/kit';
-import { pro } from '../../src/pro';
-import { ProTeaser } from '../../src/ui/ProTeaser';
+import { TripsSection } from '../../src/ui/TripsSection';
 import { IconButton } from '../../src/ui/icons';
 import { useSettings } from '../../src/ui/settingsStore';
 import { Text } from '../../src/ui/Text';
@@ -33,7 +32,6 @@ export default function Goals() {
   const [labels, setLabels] = useState<Map<string, string>>(new Map());
   const [adding, setAdding] = useState(false);
   const [packing, setPacking] = useState<{ done: number; total: number } | null>(null);
-  const Plans = pro.has('trips') ? pro.PlansMore : undefined;
   const year = new Date().getFullYear();
 
   const load = useCallback(() => {
@@ -88,8 +86,7 @@ export default function Goals() {
         contentContainerStyle={{ paddingBottom: 88 }}
         ListHeaderComponent={
           <View style={{ paddingBottom: 8 }}>
-            {/* Trips are Pro (src/pro `PlansMore`); the free tab shows what they would give. */}
-            {Plans ? <Plans /> : <ProTeaser title={t('pro.tripsTitle')} hint={t('pro.tripsHint')} />}
+            <TripsSection />
             {/* The packing checklist (free); its own screen. */}
             <Pressable onPress={() => router.push('/checklist')} accessibilityRole="button"
               style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 12, padding: 14, minHeight: 56, backgroundColor: th.surface, borderWidth: 1, borderColor: th.line, borderRadius: 14, opacity: pressed ? 0.7 : 1 })}>

@@ -13,8 +13,6 @@ import { useSettings } from '../../src/ui/settingsStore';
 import { shareCardImage } from '../../src/ui/shareImage';
 import { STATS_CARD_RATIO, StatsCard, type CardPalette, type StatsCardData } from '../../src/ui/StatsCard';
 import { useTheme } from '../../src/ui/theme';
-import { pro } from '../../src/pro';
-import { ProChip } from '../../src/ui/ProTeaser';
 
 /** /stats/share?year=2026: the year's stats as a picture and a text to send. Partners' names only when switched on. */
 export default function StatsShare() {
@@ -28,10 +26,8 @@ export default function StatsShare() {
   const currentYear = new Date().getFullYear();
   const [ascents, setAscents] = useState<StatAscent[]>([]);
   // Past seasons, the partners line and the night look are Pro (src/pro); the free card is this season's, in the guide look.
-  const pastYears = pro.has('pastYears');
-  const nightLook = pro.has('cardStyles');
-  const [year, setYear] = useState(pastYears ? Number(rawYear) || currentYear : currentYear);
-  const [look, setLook] = useState<CardPalette>(nightLook && cardStyle === 'night' ? 'night' : 'paper');
+  const [year, setYear] = useState(Number(rawYear) || currentYear);
+  const [look, setLook] = useState<CardPalette>(cardStyle === 'night' ? 'night' : 'paper');
   const [withPartners, setWithPartners] = useState(false);
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
@@ -45,7 +41,7 @@ export default function StatsShare() {
   const hardest = stats.hardest.sport != null ? formatGrade(stats.hardest.sport, routeSystem) : '–';
   const lines = [
     crag ? t('statsShare.favCrag', { name: crag.name, count: crag.days }) : '',
-    withPartners && pro.has('moreStats') && partners.length ? t('statsShare.partners', { names: partners.map((p) => p.name).join(', ') }) : '',
+    withPartners && partners.length ? t('statsShare.partners', { names: partners.map((p) => p.name).join(', ') }) : '',
   ].filter(Boolean);
   const card: StatsCardData = {
     tag: t('statsShare.tag'), title: String(year),
@@ -74,7 +70,7 @@ export default function StatsShare() {
   return (
     <ScrollView style={{ backgroundColor: th.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 48 }} keyboardShouldPersistTaps="handled">
       <Stack.Screen options={{ title: t('statsShare.title') }} />
-      {pastYears ? <ChipRow>{years.slice().reverse().map((y) => <Chip key={y} label={String(y)} on={y === year} onPress={() => setYear(y)} />)}</ChipRow> : null}
+      <ChipRow>{years.slice().reverse().map((y) => <Chip key={y} label={String(y)} on={y === year} onPress={() => setYear(y)} />)}</ChipRow>
       <View style={{ alignItems: 'center', marginTop: 8 }}>
         <View ref={cardRef} collapsable={false} style={{ borderWidth: 1, borderColor: th.line }}>
           <StatsCard data={card} width={cardWidth} look={look} />
@@ -84,9 +80,9 @@ export default function StatsShare() {
       <Label>{t('cards.look')}</Label>
       <ChipRow>
         <Chip label={t('cards.styles.guide')} on={look === 'paper'} onPress={() => setLook('paper')} />
-        {nightLook ? <Chip label={t('cards.styles.night')} on={look === 'night'} onPress={() => setLook('night')} /> : <ProChip label={t('cards.styles.night')} />}
+        <Chip label={t('cards.styles.night')} on={look === 'night'} onPress={() => setLook('night')} />
       </ChipRow>
-      {partners.length && pro.has('moreStats') ? <SwitchRow label={t('statsShare.withPartners')} value={withPartners} onChange={setWithPartners} /> : null}
+      {partners.length ? <SwitchRow label={t('statsShare.withPartners')} value={withPartners} onChange={setWithPartners} /> : null}
       <Label>{t('share.message')}</Label>
       <Field value={message} onChangeText={setMessage} maxLength={120} placeholder={t('statsShare.messagePlaceholder')} accessibilityLabel={t('share.message')} />
       <View style={{ marginTop: 12 }}>

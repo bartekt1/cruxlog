@@ -4,7 +4,7 @@ import type { StatAscent } from '../domain/stats';
 import type { CardProps } from '../ui/cardParts';
 
 /**
- * The Pro socket. This public build has no Pro features: `has` is always false and the slots are empty, so the app shows
+ * The Pro socket (Pro is frozen for now: see `PRO_VISIBLE` in index.ts). This public build has no Pro features: `has` is always false and the slots are empty, so the app shows
  * a "Pro" teaser in their place. The store build replaces `index.ts` (and adds the Pro screens) from the owner's private repo.
  * Keep these types stable: the private module implements them. Only `index.ts` is replaced in the store build.
  */

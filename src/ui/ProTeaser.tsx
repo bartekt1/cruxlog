@@ -5,11 +5,15 @@ import { Pressable, View } from 'react-native';
 import { F } from './fonts';
 import { Text } from './Text';
 import { useTheme } from './theme';
+import { PRO_VISIBLE } from '../pro';
+
+// Nothing shows while Pro is frozen (PRO_VISIBLE in src/pro).
 
 /** The small "PRO" mark. */
 export function ProBadge() {
   const th = useTheme();
   const { t } = useTranslation();
+  if (!PRO_VISIBLE) return null;
   return (
     <View style={{ paddingHorizontal: 6, paddingVertical: 1, borderRadius: 6, backgroundColor: th.accent }}>
       <Text style={{ color: th.onAccent, fontFamily: F.semi, fontSize: 11, letterSpacing: 1 }}>{t('pro.badge')}</Text>
@@ -21,6 +25,7 @@ export function ProBadge() {
 export function ProTeaser({ title, hint }: { title: string; hint: string }) {
   const th = useTheme();
   const router = useRouter();
+  if (!PRO_VISIBLE) return null;
   return (
     <Pressable onPress={() => router.push('/pro')} accessibilityRole="button" accessibilityLabel={`${title}. ${hint}`}
       style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 16, padding: 14, minHeight: 56, borderRadius: 14, borderWidth: 1, borderColor: th.line, backgroundColor: th.surface, opacity: pressed ? 0.7 : 1 })}>
@@ -41,6 +46,7 @@ export function ProChip({ label }: { label: string }) {
   const th = useTheme();
   const router = useRouter();
   const { t } = useTranslation();
+  if (!PRO_VISIBLE) return null;
   return (
     <Pressable onPress={() => router.push('/pro')} hitSlop={{ top: 4, bottom: 4 }} accessibilityRole="button" accessibilityLabel={`${label}, ${t('pro.title')}`}
       style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderColor: th.outline, backgroundColor: th.surface, borderRadius: 18, paddingHorizontal: 12, minHeight: 40, marginRight: 8, marginBottom: 8, opacity: pressed ? 0.7 : 1 })}>

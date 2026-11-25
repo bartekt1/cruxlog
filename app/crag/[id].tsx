@@ -13,7 +13,6 @@ import { F } from '../../src/ui/fonts';
 import { Button, EmptyState, Field, GradeBadge, LinkButton, Loading, Screen, Label } from '../../src/ui/kit';
 import { matches, sameName } from '../../src/domain/text';
 import { MenuButton } from '../../src/ui/Menu';
-import { pro } from '../../src/pro';
 import { useLocation } from '../../src/ui/useLocation';
 import { distanceM, formatDistance, isLatLng } from '../../src/domain/geo';
 import { Ionicons } from '@expo/vector-icons';
@@ -104,7 +103,7 @@ export default function CragScreen() {
                 <MenuButton size={26} label={crag.name} items={[
                   { icon: 'create-outline', label: t('edit.editCrag'), onPress: () => router.push({ pathname: '/crag/edit', params: { id: crag.id } }) },
                   // Trips are Pro (src/pro).
-                  ...(pro.has('trips') ? [{ icon: 'calendar-outline' as const, label: t('trip.planHere'), onPress: () => router.push({ pathname: '/trip/edit', params: { cragId: crag.id } }) }] : []),
+                  { icon: 'calendar-outline' as const, label: t('trip.planHere'), onPress: () => router.push({ pathname: '/trip/edit', params: { cragId: crag.id } }) },
                   { icon: 'add-circle-outline', label: t('edit.addSectorItem'), onPress: () => router.push({ pathname: '/sector/new', params: { cragId: crag.id } }) },
                 ]} />
               </View>

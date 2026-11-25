@@ -9,9 +9,8 @@ import { listAscents } from '../../src/db/repo';
 import { formatGrade } from '../../src/domain/grades';
 import { toStat } from '../../src/ui/progress';
 import { ascentYears, hardestByMonth, yearStats, type StatAscent } from '../../src/domain/stats';
-import { pro } from '../../src/pro';
 import { Bars } from '../../src/ui/Bars';
-import { ProTeaser } from '../../src/ui/ProTeaser';
+import { ProgressMore } from '../../src/ui/ProgressMore';
 import { EmptyState, HIT, Label, Screen, StatTile } from '../../src/ui/kit';
 import { F } from '../../src/ui/fonts';
 import { useSettings } from '../../src/ui/settingsStore';
@@ -50,10 +49,8 @@ export default function Progress() {
   }, [db]));
 
   // Past seasons and the fuller stats are Pro (src/pro); the free tab has the season's tiles and the hardest grade by month.
-  const pastYears = pro.has('pastYears');
-  const More = pro.has('moreStats') ? pro.ProgressMore : undefined;
   const stats = useMemo(() => yearStats(ascents, year), [ascents, year]);
-  const years = useMemo(() => (pastYears ? ascentYears(ascents, currentYear) : [currentYear]), [ascents, currentYear, pastYears]);
+  const years = useMemo(() => ascentYears(ascents, currentYear), [ascents, currentYear]);
   const byMonth = useMemo(() => hardestByMonth(ascents, year), [ascents, year]);
   const month = (m: number) => t(`progress.months.${m}`);
   const maxMonth = Math.max(0, ...byMonth.map((g) => g ?? 0));
@@ -64,9 +61,9 @@ export default function Progress() {
     <Screen>
       <ScrollView contentContainerStyle={{ paddingTop: 16, paddingBottom: 88 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 24 }}>
-          {pastYears ? <YearArrow label="‹" hint={t('progress.prevYear')} target={years[years.indexOf(year) + 1]} onPress={setYear} /> : null}
+          <YearArrow label="‹" hint={t('progress.prevYear')} target={years[years.indexOf(year) + 1]} onPress={setYear} />
           <Text accessibilityRole="header" style={{ color: th.ink, fontSize: 32, fontFamily: F.display, minWidth: 80, textAlign: 'center' }}>{year}</Text>
-          {pastYears ? <YearArrow label="›" hint={t('progress.nextYear')} target={years[years.indexOf(year) - 1]} onPress={setYear} /> : null}
+          <YearArrow label="›" hint={t('progress.nextYear')} target={years[years.indexOf(year) - 1]} onPress={setYear} />
           {stats.sends ? (
             <Pressable onPress={() => router.push(`/stats/share?year=${year}`)} hitSlop={HIT} accessibilityRole="button" accessibilityLabel={t('statsShare.title')}
               style={{ position: 'absolute', right: 0, padding: 6 }}>
@@ -86,7 +83,7 @@ export default function Progress() {
             <Bars rows={byMonth.flatMap((g, m) => (g == null ? [] : [{ key: String(m), label: month(m), ratio: (g + 1) / (maxMonth + 1), value: formatGrade(g, routeSystem) }]))} />
           </>
         ) : null}
-        {More ? <More ascents={ascents} year={year} /> : <ProTeaser title={t('pro.statsTitle')} hint={t('pro.statsHint')} />}
+        <ProgressMore ascents={ascents} year={year} />
       </ScrollView>
     </Screen>
   );

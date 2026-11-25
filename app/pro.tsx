@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Stack } from 'expo-router';
+import { Redirect, Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, View } from 'react-native';
 import { F } from '../src/ui/fonts';
@@ -7,6 +7,7 @@ import { Title } from '../src/ui/kit';
 import { ProBadge } from '../src/ui/ProTeaser';
 import { Text } from '../src/ui/Text';
 import { useTheme } from '../src/ui/theme';
+import { PRO_VISIBLE } from '../src/pro';
 
 const ITEMS = ['stats', 'years', 'trips', 'topoMap', 'cards'] as const;
 
@@ -14,6 +15,7 @@ const ITEMS = ['stats', 'years', 'trips', 'topoMap', 'cards'] as const;
 export default function ProScreen() {
   const th = useTheme();
   const { t } = useTranslation();
+  if (!PRO_VISIBLE) return <Redirect href="/" />; // Pro is frozen: no Pro screen
   return (
     <ScrollView style={{ backgroundColor: th.bg }} contentContainerStyle={{ padding: 16, paddingBottom: 48 }}>
       <Stack.Screen options={{ title: t('pro.title') }} />

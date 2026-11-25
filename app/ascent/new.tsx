@@ -15,7 +15,6 @@ import { NewRouteForm, type NewRouteDraft } from '../../src/ui/ascent/NewRouteFo
 import { RouteChooser } from '../../src/ui/ascent/RouteChooser';
 import { useAscentPhotos } from '../../src/ui/ascent/useAscentPhotos';
 import { DateChips } from '../../src/ui/DateField';
-import { pro } from '../../src/pro';
 import { errorMessage } from '../../src/ui/errors';
 import { F } from '../../src/ui/fonts';
 import { Button, Chip, ChipRow, ErrorText, Field, HIT, Label, LinkButton, Suggestions, type SuggestionItem } from '../../src/ui/kit';
@@ -92,10 +91,9 @@ export default function NewAscent() {
     listPartners(db).then(setPartners);
   }, [db]);
 
-  // A trip on the ascent's day puts its proposed routes first in the route search (trips are Pro, src/pro).
+  // A trip on the ascent's day puts its proposed routes first in the route search.
   const [tripRoutes, setTripRoutes] = useState<{ trip: string; routes: RouteRow[] } | null>(null);
   useEffect(() => {
-    if (!pro.has('trips')) return;
     let live = true;
     tripRoutesOn(db, date).then((x) => { if (live) setTripRoutes(x); });
     return () => { live = false; };
