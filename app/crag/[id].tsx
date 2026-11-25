@@ -22,6 +22,7 @@ import { navigateTo } from '../../src/ui/navigate';
 import { addPhotosTo } from '../../src/ui/photos';
 import { useSettings } from '../../src/ui/settingsStore';
 import { useTheme } from '../../src/ui/theme';
+import { CragWeather } from '../../src/ui/CragWeather';
 import { errorMessage } from '../../src/ui/errors';
 import { GroupedRow, routeFacts } from '../../src/ui/rows';
 
@@ -139,6 +140,7 @@ export default function CragScreen() {
               )}
               {crag.description ? <Text style={{ color: th.ink }}>{crag.description}</Text> : null}
               {crag.approach ? <Text style={{ color: th.muted }}>{t('crags.approach')}: {crag.approach}</Text> : null}
+              <CragWeather lat={crag.lat} lng={crag.lng} />
               <Label style={{ marginTop: 8, marginBottom: 0 }}>{t('photos.cragTitle')}</Label>
               <PhotoSection owner="crag" ids={cragPhotos.map((p) => p.id)} busy={photoBusy === `crag:${crag.id}`}
                 onAdd={() => addPhotoTo('crag', crag.id, cragPhotos.length)} onOpen={(i) => openPhotos('crag', crag.id, i)} />

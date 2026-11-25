@@ -433,6 +433,14 @@ Go through everything once, watching for the app closing by itself or something 
 8. Backup now, show copies, restore. 9. Packs list; Excel export. 10. Send proposals. 11. Language and theme switch; date picker on a new ascent.
 12. Close the app fully and reopen: everything is kept.
 
+## 6ze. Weather on the crag screen
+
+1. Open a crag with a position: under its description a "Pogoda" card shows a few days (weekday, icon, high and low temperature, rain when there is some, wind) and "Prognoza z <time> · Dane: MET Norway".
+2. Open it again within an hour: the same forecast at once (from the phone, the time unchanged).
+3. Airplane mode, open a crag seen before: the last forecast with "bez internetu"; a crag never seen: "Nie udało się pobrać prognozy".
+4. A crag without a position: no weather card.
+5. TalkBack reads each day as one sentence (day, temperatures, rain, wind).
+
 ## 7. Robustness
 1. Change the language and the route grade system, close the app completely (swipe away) and reopen it. Expected: all data is still there, and the language and grade system are the ones you chose.
 2. Rotate the phone, switch to dark mode and back. Expected: readable text and no layout breaks.
