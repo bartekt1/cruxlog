@@ -434,13 +434,6 @@ Go through everything once, watching for the app closing by itself or something 
 8. Backup now, show copies, restore. 9. Packs list; Excel export. 10. Send proposals. 11. Language and theme switch; date picker on a new ascent.
 12. Close the app fully and reopen: everything is kept.
 
-## 6zd. Wall aspect (wystawa)
-
-1. Crag screen › "⋯" by a sector › Edit: under the name "Wystawa ściany" with chips Brak, N … NW. Pick S and save.
-2. Back on the crag screen, under the sector's name: "wystawa S". TalkBack reads "Ściana zwrócona na południe".
-3. Edit again: S is still chosen; pick "Brak" and save: the line under the name is gone.
-4. Rename and set the aspect in one go: both are saved. The change of name is queued for the shared sheet; a change of aspect alone is not.
-
 ## 7. Robustness
 1. Change the language and the route grade system, close the app completely (swipe away) and reopen it. Expected: all data is still there, and the language and grade system are the ones you chose.
 2. Rotate the phone, switch to dark mode and back. Expected: readable text and no layout breaks.
